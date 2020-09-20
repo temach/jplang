@@ -1,0 +1,315 @@
+     42 KOU - COUlon
+     39 SHI - SHIlling
+     35 KAN - Gengis KAN
+     33 SHOU - SHOWdown
+     28 TOU - TOUrnament
+     27 KI - KItten
+     27 KEN - KENny
+     24 SOU - SOUvenier
+     23 KA - KAraoke
+     21 SHUU - SHUUbert (composer)
+     21 SHIN - SHINdler
+     21 KYOU - KIOsk
+     18 SEN - SENsor
+     20 SEI - SEIsmograph
+     18 SAI - CYcling
+     18 KEI - KEIth jarrett
+     18 CHOU - Margaret CHOU
+     17 KAI - KAIzer
+     17 I - Iodine (medical)
+     17 BOU - BOWling
+     16 KYUU - CUcumber
+     16 JOU - JOU Stalin
+     15 KO - KOjima
+     15 HOU - HOUnd
+     15 HI - HItman
+     14 FU - FUji
+     13 YUU - EUclid
+     13 YOU - YOUtube
+     13 TEI - TEInt
+     13 TAI - TAIwan
+     13 JI - JIsus
+     11 TAN - TANk
+     11 SEKI - SEXIst
+     11 KAKU - COCK
+     11 JUU - JUice
+     11 HAN - HAN solo
+     10 SUI - SWImsuit
+     10 SHU - SHOOting
+     10 SHA - SHAmpoo
+     10 RYOU - REOpen
+     10 HAI - HAIku
+     10 GEN - GENtoo
+     10 EN - ENlightment
+      9 SOKU - SOCKs
+      9 SHO - SHOtgun
+      9 SAN - SANdman
+      9 GI - GIlbert
+      9 EI - EInstein
+      9 CHUU - CHUrch
+      9 CHI - CHIpmunk
+      8 SO - SOda
+      8 REI - REIls
+      8 OU - Ozone
+      8 KON - CONus
+      8 KIN - KINgsman
+      8 IN - INvoice
+      8 GO - GOblin
+      8 GAI - GUIdebook
+      8 DOU - Douglas Adams
+      7 TEN - TENtacless
+      7 SHOKU - SHOCK
+      7 SETSU - SETS
+      7 SATSU - SATsurate
+      7 KYO - KYOto
+      7 JUN - JUNiper
+      7 HEN - Jimmy HENdrix
+      7 FUKU - FUKUshima
+      7 DAN - Glenn DANzing
+      6 YAKU - YAK
+      6 TO - TOr
+      6 SA - SAdism
+      6 RI - RIzotto
+      6 MEI - MAId
+      6 KOKU - COCUnut
+      6 KETSU - KETCHup
+      6 HYOU - HYOUston
+      6 GAN - GANgster
+      6 FUN - FUNgi
+      5 ZOU - ZOUrro
+      5 ZOKU - ZUCChini
+      5 ZEN - ZENna (warrior queen)
+      5 YU - YUmmy
+      5 YO - YO-yo (toy)
+      5 TEKI - TECHNIcian
+      5 TAKU - TAXIcab 
+      5 SON - SONgbird
+      5 SAKU - SACK
+      5 RYUU - RUUral
+      5 ROU - ROUter
+      5 RIN - RINgleader
+      5 NOU - NOOOOOO
+      5 MU - MUstang
+      5 JO - JOt
+      5 HO - HOmer Simpson
+      5 HAKU - HACKing
+      5 DO - DOra the explorer
+      4 ZAI - XYlophone
+      4 YOKU - YOLK
+      4 TOKU - TOKUgawa
+      4 TETSU - TITSu
+      4 SHITSU
+      4 RETSU
+      4 NIN
+      4 NEN
+      4 MOU
+      4 MAN
+      4 MAI
+      4 KU - CUBA
+      4 JIN
+      4 HEI - HEIl satan
+      4 GOU
+      4 BU
+      4 BO
+      4 BI
+      4 BAN
+      3 YA
+      3 U
+      3 SHUKU
+      3 SHIKI
+      3 SEI, SHOU
+      3 RO
+      3 RITSU
+      3 REN
+      3 RAI
+      3 ON
+      3 NAN
+      3 MOKU
+      3 MI
+      3 MEN
+      3 MA
+      3 KYOKU
+      3 KITSU
+      3 JU
+      3 HA
+      3 GEKI
+      3 GAKU
+      3 GA
+      3 EKI
+      3 DOKU
+      3 DAI
+      3 DA
+      3 CHIKU
+      3 BYOU
+      3 BEN
+      3 BAKU
+      3 BAI
+      3 AN
+      2 ZETSU
+      2 WAN
+      2 WAI
+      2 WA
+      2 UN
+      2 TSUU
+      2 TA
+      2 SHUN
+      2 RYOKU
+      2 RYO
+      2 RUI - RUIn
+      2 ROKU
+      2 RAN
+      2 RAKU
+      2 OKU
+      2 NYUU
+      2 MON
+      2 MIN
+      2 KUTSU
+      2 KUN
+      2 KOU, KU
+      2 KATSU
+      2 JUTSU
+      2 JUKU
+      2 JAKU
+      2 ITSU
+      2 HITSU
+      2 HIN
+      2 HEKI
+      2 HATSU
+      2 GYOU
+      2 GYAKU
+      2 GUU
+      2 GUN
+      2 GU
+      2 GEI
+      2 DON
+      2 DEN
+      2 DATSU
+      2 CHO
+      2 CHIN
+      2 BOKU
+      2 BIN
+      2 AKU
+      2 AI
+      1 ZU, TO
+      1 ZOU (not so useful)
+      1 ZEI
+      1 ZE
+      1 ZATSU
+      1 ZAN
+      1 ZA
+      1 YUI
+      1 WAKU
+      1 TSUI
+      1 TOTSU
+      1 TEI, DAI
+      1 TATSU/ TACHI
+      1 TAI - you don't need this
+      1 SUU
+      1 SUN
+      1 SOTSU
+      1 SO / SU
+      1 SHUTSU
+      1 SHU. You won't use this.
+      1 SHOKU, SHIKI
+      1 SHIN, JIN
+      1 SHIN - you don't need this.
+      1 SHIKI, SHOKU
+      1 SHICHI
+      1 SHAKU
+      1 SEI, JOU
+      1 SE,YO
+      1 SAN, ZAN
+      1 SAI or ZAI
+      1 RYAKU
+      1 RON
+      1 RIN - don't bother.
+      1 RIKU
+      1 REKI
+      1 RAKU, GAKU
+      1 RA
+      1 OTSU
+      1 ON - you don't need this
+      1 O or GO
+      1 O
+      1 NYOU
+      1 NOU, NATSU
+      1 none
+      1 NIN, JIN
+      1 NIKU
+      1 NICHI, JITSU
+      1 NI
+      1 NETSU
+      1 NAI
+      1 MYOU
+      1 MYAKU
+      1 MO
+      1 MITSU
+      1 METSU
+      1 MATSU
+      1 MAKU
+      1 MAI, BEI
+      1 KYUU, KU
+      1 KYUU - you don't need this
+      1 KYOU, KOU
+      1 KYOU / KEI
+      1 KYO, KO
+      1 KYAKU, KAKU
+      1 KYAKU
+      1 KUU
+      1 KOTSU
+      1 KATSU but not really
+      1 KAI - don't bother.
+      1 KA, but you don't need to learn it.
+      1 KA - same as the OTHER flower kanji
+      1 JU, SU
+      1 JOKU 
+      1 JITSU
+      1 JA
+      1 IKU
+      1 IKI
+      1 ICHI, ITSU
+      1 HYAKU
+      1 HON
+      1 HOKU
+      1 HIKI
+      1 HEI - you don't need this
+      1 HAN / BAN
+      1 HAKU, HYOU
+      1 HACHI
+      1 GYUU
+      1 GYO
+      1 GOKU
+      1 GO, KOU
+      1 GIN
+      1 GETSU
+      1 GE, KA
+      1 FUU / HOU
+      1 FUU - but half the time just FU.
+      1 FUTSU
+      1 FUN, BUN
+      1 FU, also FUU
+      1 EKI, I
+      1 E
+      1 DEI
+      1 DAI/TAI
+      1 DAI / TAI
+      1 CHOKU or JIKI
+      1 CHIN - you don't need this
+      1 CHI, JI
+      1 CHI or JI
+      1 CHAKU
+      1 CHA
+      1 BUTSU / MOTSU
+      1 BUTSU
+      1 BUN, MON
+      1 BUN
+      1 BOU / MOU
+      1 BOTSU
+      1 BON
+      1 BETSU
+      1 BATSU
+      1 BAI - you don't need this
+      1 BA
+      1 ATSU
+      1 A
+      1 "KI / GE -People forget about ""GE."""
