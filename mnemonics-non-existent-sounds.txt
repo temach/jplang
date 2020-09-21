@@ -1,0 +1,74 @@
+Candidate for mnemonic end:
+AA	odd     AA D
+AE	at		AE T
+AH	hut		HH AH T
+AO	ought	AO T
+AW	cow		K AW
+AY	hide	HH AY D
+B 	be		B IY
+CH	cheese	CH IY Z
+D 	dee		D IY
+DH	thee	DH IY
+EH	Ed		EH D
+ER	hurt	HH ER T
+EY	ate		EY T
+F 	fee		F IY
+G 	green	G R IY N
+HH	he		HH IY
+IH	it		IH T
+IY	eat		IY T
+JH	gee		JH IY
+K 	key		K IY
+L 	lee		L IY
+M 	me		M IY
+N 	knee	N IY
+NG	ping	P IH NG
+OW	oat		OW T
+OY	toy		T OY
+P 	pee		P IY
+R 	read	R IY D
+S 	sea		S IY
+SH	she		SH IY
+T 	tea		T IY
+TH	theta	TH EY T AH
+UH	hood	HH UH D
+UW	two		T UW
+V 	vee		V IY
+W 	we		W IY
+Y 	yield	Y IY L D
+Z 	zee		Z IY
+ZH	seizure	S IY ZH ER
+
+Vowels are not good to use at mnemonic's end.
+Letters that can be a mnemonic are bad, i.e. using "kits" for KI, because it sounds like its for KITSU.
+
+The sounds below can appear as second/third letters in ON yomi:
+チ or chi appears 14 times
+ク or ku appears 51 times
+キ or ki appears 13 times
+ウ or u appears 39 times
+ツ or tsu appears 41 times
+ン or n appears 63 times
+イ or i appears 31 times
+
+Therefore these sounds should be avoided when they fall on the end of mnemonic.
+
+CMU dict sounds that should be used at mnemonic's end i.e. to mark that mnemonic part is finished:
+B 	be		B IY
+D 	dee		D IY
+DH	thee	DH IY
+F 	fee		F IY
+HH	he		HH IY
+L 	lee		L IY
+M 	me		M IY
+OW	oat		OW T
+OY	toy		T OY
+P 	pee		P IY
+R 	read	R IY D
+S 	sea		S IY
+SH	she		SH IY
+TH	theta	TH EY T AH
+V 	vee		V IY
+W 	we		W IY
+Z 	zee		Z IY
+ZH	seizure	S IY ZH ER 
