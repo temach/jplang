@@ -50,25 +50,44 @@ The sounds below can appear as second/third letters in ON yomi:
 ツ or tsu appears 41 times
 ン or n appears 63 times
 イ or i appears 31 times
-
 Therefore these sounds should be avoided when they fall on the end of mnemonic.
 
+
 CMU dict sounds that should be used at mnemonic's end i.e. to mark that mnemonic part is finished:
-B 	be		B IY
-D 	dee		D IY
-DH	thee	DH IY
-F 	fee		F IY
-HH	he		HH IY
-L 	lee		L IY
-M 	me		M IY
-OW	oat		OW T
-OY	toy		T OY
-P 	pee		P IY
-R 	read	R IY D
-S 	sea		S IY
-SH	she		SH IY
-TH	theta	TH EY T AH
-V 	vee		V IY
-W 	we		W IY
-Z 	zee		Z IY
-ZH	seizure	S IY ZH ER 
+B, D, DH, F, HH, L, M, OW, OY, P, R, S, SH, TH, V, W, Z, ZH 
+
+Sounds that should NOT be used:
+AA, AE, AH, AO, AW, AY, CH, EH, ER, EY, G, IH, IY, JH, K, N, NG, T, UH, UW, Y ,
+
+
+The sound written as OW *always* means "ou" japanese sound.
+
+Some english words that start with "wrong" letter for the on yomi, can still be used:
+c -> K
+l -> R
+p ->
+q ->
+v -> 
+w -> 
+x -> Z
+
+There is no HIK*, therefore JIK* can use words that start with H.
+
+There is no SAN, so can use SAN for SHAN
+To get KU sound must be K + consonant
+Intermix K and HH
+To start H words they can start with W  (whack)
+
+ROKU ~ ROGUE
+ETSU ~ EH T S
+TSU ~ DH ZH Z
+EKU ~ EQU
+TSU ~ R T S
+GYA ~ GWA
+NYO ~ N UH
+JIK ~ JH I.?.? HH
+
+
+
+
+CH = CH, K, JH, HH, SH, T

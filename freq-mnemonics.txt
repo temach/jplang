@@ -1,315 +1,328 @@
-     42 KOU - COUlon
-     39 SHI - SHIlling
-     35 KAN - Gengis KAN
-     33 SHOU - SHOWdown
-     28 TOU - TOUrnament
-     27 KI - KItten
-     27 KEN - KENny
-     24 SOU - SOUvenier
-     23 KA - KAraoke
-     21 SHUU - SHUUbert (composer)
-     21 SHIN - SHINdler
-     21 KYOU - KIOsk
-     18 SEN - SENsor
-     20 SEI - SEIsmograph
-     18 SAI - CYcling
-     18 KEI - KEIth jarrett
-     18 CHOU - Margaret CHOU
-     17 KAI - KAIzer
-     17 I - Iodine (medical)
-     17 BOU - BOWling
-     16 KYUU - CUcumber
-     16 JOU - JOU Stalin
-     15 KO - KOjima
-     15 HOU - HOUnd
-     15 HI - HItman
-     14 FU - FUji
-     13 YUU - EUclid
-     13 YOU - YOUtube
-     13 TEI - TEInt
-     13 TAI - TAIwan
-     13 JI - JIsus
-     11 TAN - TANk
-     11 SEKI - SEXIst
-     11 KAKU - COCK
-     11 JUU - JUice
-     11 HAN - HAN solo
-     10 SUI - SWImsuit
-     10 SHU - SHOOting
-     10 SHA - SHAmpoo
-     10 RYOU - REOpen
-     10 HAI - HAIku
-     10 GEN - GENtoo
-     10 EN - ENlightment
-      9 SOKU - SOCKs
-      9 SHO - SHOtgun
-      9 SAN - SANdman
-      9 GI - GIlbert
-      9 EI - EInstein
-      9 CHUU - CHUrch
-      9 CHI - CHIpmunk
-      8 SO - SOda
-      8 REI - REIls
-      8 OU - Ozone
-      8 KON - CONus
-      8 KIN - KINgsman
-      8 IN - INvoice
-      8 GO - GOblin
-      8 GAI - GUIdebook
-      8 DOU - Douglas Adams
-      7 TEN - TENtacless
-      7 SHOKU - SHOCK
-      7 SETSU - SETS
-      7 SATSU - SATsurate
-      7 KYO - KYOto
-      7 JUN - JUNiper
-      7 HEN - Jimmy HENdrix
-      7 FUKU - FUKUshima
-      7 DAN - Glenn DANzing
-      6 YAKU - YAK
-      6 TO - TOr
-      6 SA - SAdism
-      6 RI - RIzotto
-      6 MEI - MAId
-      6 KOKU - COCUnut
-      6 KETSU - KETCHup
-      6 HYOU - HYOUston
-      6 GAN - GANgster
-      6 FUN - FUNgi
-      5 ZOU - ZOUrro
-      5 ZOKU - ZUCChini
-      5 ZEN - ZENna (warrior queen)
-      5 YU - YUmmy
-      5 YO - YO-yo (toy)
-      5 TEKI - TECHNIcian
-      5 TAKU - TAXIcab 
-      5 SON - SONgbird
-      5 SAKU - SACK
-      5 RYUU - RUUral
-      5 ROU - ROUter
-      5 RIN - RINgleader
-      5 NOU - NOOOOOO
-      5 MU - MUstang
-      5 JO - JOt
-      5 HO - HOmer Simpson
-      5 HAKU - HACKing
-      5 DO - DOra the explorer
-      4 ZAI - XYlophone
-      4 YOKU - YOLK
-      4 TOKU - TOKUgawa
-      4 TETSU - TITSu
-      4 SHITSU
-      4 RETSU
-      4 NIN
-      4 NEN
-      4 MOU
-      4 MAN
-      4 MAI
-      4 KU - CUBA
-      4 JIN
-      4 HEI - HEIl satan
-      4 GOU
-      4 BU
-      4 BO
-      4 BI
-      4 BAN
-      3 YA
-      3 U
-      3 SHUKU
-      3 SHIKI
-      3 SEI, SHOU
-      3 RO
-      3 RITSU
-      3 REN
-      3 RAI
-      3 ON
-      3 NAN
-      3 MOKU
-      3 MI
-      3 MEN
-      3 MA
-      3 KYOKU
-      3 KITSU
-      3 JU
-      3 HA
-      3 GEKI
-      3 GAKU
-      3 GA
-      3 EKI
-      3 DOKU
-      3 DAI
-      3 DA
-      3 CHIKU
-      3 BYOU
-      3 BEN
-      3 BAKU
-      3 BAI
-      3 AN
-      2 ZETSU
-      2 WAN
-      2 WAI
-      2 WA
-      2 UN
-      2 TSUU
-      2 TA
-      2 SHUN
-      2 RYOKU
-      2 RYO
-      2 RUI - RUIn
-      2 ROKU
-      2 RAN
-      2 RAKU
-      2 OKU
-      2 NYUU
-      2 MON
-      2 MIN
-      2 KUTSU
-      2 KUN
-      2 KOU, KU
-      2 KATSU
-      2 JUTSU
-      2 JUKU
-      2 JAKU
-      2 ITSU
-      2 HITSU
-      2 HIN
-      2 HEKI
-      2 HATSU
-      2 GYOU
-      2 GYAKU
-      2 GUU
-      2 GUN
-      2 GU
-      2 GEI
-      2 DON
-      2 DEN
-      2 DATSU
-      2 CHO
-      2 CHIN
-      2 BOKU
-      2 BIN
-      2 AKU
-      2 AI
-      1 ZU, TO
-      1 ZOU (not so useful)
-      1 ZEI
-      1 ZE
-      1 ZATSU
-      1 ZAN
-      1 ZA
-      1 YUI
-      1 WAKU
-      1 TSUI
-      1 TOTSU
-      1 TEI, DAI
-      1 TATSU/ TACHI
-      1 TAI - you don't need this
-      1 SUU
-      1 SUN
-      1 SOTSU
-      1 SO / SU
-      1 SHUTSU
-      1 SHU. You won't use this.
-      1 SHOKU, SHIKI
-      1 SHIN, JIN
-      1 SHIN - you don't need this.
-      1 SHIKI, SHOKU
-      1 SHICHI
-      1 SHAKU
-      1 SEI, JOU
-      1 SE,YO
-      1 SAN, ZAN
-      1 SAI or ZAI
-      1 RYAKU
-      1 RON
-      1 RIN - don't bother.
-      1 RIKU
-      1 REKI
-      1 RAKU, GAKU
-      1 RA
-      1 OTSU
-      1 ON - you don't need this
-      1 O or GO
-      1 O
-      1 NYOU
-      1 NOU, NATSU
-      1 none
-      1 NIN, JIN
-      1 NIKU
-      1 NICHI, JITSU
-      1 NI
-      1 NETSU
-      1 NAI
-      1 MYOU
-      1 MYAKU
-      1 MO
-      1 MITSU
-      1 METSU
-      1 MATSU
-      1 MAKU
-      1 MAI, BEI
-      1 KYUU, KU
-      1 KYUU - you don't need this
-      1 KYOU, KOU
-      1 KYOU / KEI
-      1 KYO, KO
-      1 KYAKU, KAKU
-      1 KYAKU
-      1 KUU
-      1 KOTSU
-      1 KATSU but not really
-      1 KAI - don't bother.
-      1 KA, but you don't need to learn it.
-      1 KA - same as the OTHER flower kanji
-      1 JU, SU
-      1 JOKU 
-      1 JITSU
-      1 JA
-      1 IKU
-      1 IKI
-      1 ICHI, ITSU
-      1 HYAKU
-      1 HON
-      1 HOKU
-      1 HIKI
-      1 HEI - you don't need this
-      1 HAN / BAN
-      1 HAKU, HYOU
-      1 HACHI
-      1 GYUU
-      1 GYO
-      1 GOKU
-      1 GO, KOU
-      1 GIN
-      1 GETSU
-      1 GE, KA
-      1 FUU / HOU
-      1 FUU - but half the time just FU.
-      1 FUTSU
-      1 FUN, BUN
-      1 FU, also FUU
-      1 EKI, I
-      1 E
-      1 DEI
-      1 DAI/TAI
-      1 DAI / TAI
-      1 CHOKU or JIKI
-      1 CHIN - you don't need this
-      1 CHI, JI
-      1 CHI or JI
-      1 CHAKU
-      1 CHA
-      1 BUTSU / MOTSU
-      1 BUTSU
-      1 BUN, MON
-      1 BUN
-      1 BOU / MOU
-      1 BOTSU
-      1 BON
-      1 BETSU
-      1 BATSU
-      1 BAI - you don't need this
-      1 BA
-      1 ATSU
-      1 A
-      1 "KI / GE -People forget about ""GE."""
+180418 = コウ = こう = kou = KOWalski
+172914 = ショウ = しょう = shou = SHOUlder-blade
+129223 = シ = し = shi = SHIlling
+101760 = ソウ = そう = sou = SOUWing
+98449 = トウ = とう = tou = TOUrnament
+97867 = キ = き = ki = KIdding
+97063 = カン = かん = kan = Genghis KAN
+92167 = キョウ = きょう = kyou = KEYOWner
+91679 = セイ = せい = sei = SEIsmograph
+84379 = カ = か = ka = KAraoke
+81308 = ケン = けん = ken = KENny
+77963 = シン = しん = shin = SHINdler
+76789 = チョウ = ちょう = chou = Margaret CHOU
+71812 = ケイ = けい = kei = KEIth jarrett
+69107 = セン = せん = sen = SENsor
+68004 = シュウ = しゅう = shuu = SHUgaring
+64753 = サイ = さい = sai = SAIlor
+64185 = ジョウ = じょう = jou = JOU Stalin
+64086 = カイ = かい = kai = KAIzer
+62051 = テイ = てい = tei = TEInt
+61367 = ホウ = ほう = hou = HOUnd
+58777 = イ = い = i = Imprison
+56097 = シュ = しゅ = shu = shoes
+54565 = ジ = じ = ji = JIsus
+54451 = タイ = たい = tai = TAIland
+53885 = ヨウ = よう = you = YOUga
+53416 = フ = ふ = fu = FUji (erupts)
+51854 = キュウ = きゅう = kyuu = QUEUE
+50183 = ハン = はん = han = HAN solo
+48403 = コ = こ = ko = KOjima
+47107 = リョウ = りょう = ryou = REOUpen / REOWn
+46906 = ボウ = ぼう = bou = BOUlder (falls)
+46519 = ク = く = ku = Kurt cobain
+46018 = カク = かく = kaku = CACtus
+44432 = エン = えん = en = ENhance
+43598 = ユウ = ゆう = yuu = EUclid
+42056 = ヒ = ひ = hi = HIppo
+40502 = キン = きん = kin = KINgsman
+39276 = ゴ = ご = go = GOblin
+38885 = オウ = おう = ou = OWl
+37588 = セキ = せき = seki = SEXIst
+37286 = タン = たん = tan = TANuki
+35639 = ゲン = げん = gen = Barefoot GEN
+34730 = サン = さん = san = SANdman
+34698 = シャ = しゃ = sha = SHAmpoo
+34013 = チ = ち = chi = CHIpmunk
+33117 = ドウ = どう = dou = DOUglas Adams
+32230 = コン = こん = kon = CONus
+31977 = スイ = すい = sui = SUIcide
+30731 = ショ = しょ = sho = SHOplifting
+30704 = ブ = ぶ = bu = BUdge
+29884 = ト = と = to = TOr
+29526 = ス = す = su = SUzuki (carry van)
+29482 = サ = さ = sa = SAdism
+
+29111 = ダイ = だい = dai = DIE
+28920 = ソ = そ = so = SOda
+28877 = ケ = け = ke = jim KErry
+28315 = チュウ = ちゅう = chuu = CHUrch
+27851 = ギ = ぎ = gi = GIlbert
+27811 = ソク = そく = soku = SOCKs
+27688 = ゾウ = ぞう = zou = ZOUrro
+27662 = エ = え = e = Epoxy
+27653 = レイ = れい = rei = REIndeer
+27403 = ジン = じん = jin = JINgle
+26951 = ショク = しょく = shoku = SHOCK
+26506 = イン = いん = in = INvoice
+26188 = ゴウ = ごう = gou = GHOUl
+26085 = ジュ = じゅ = ju = JUliette
+25973 = テン = てん = ten = TENtacless
+25785 = ガン = がん = gan = GANgster
+25661 = ロウ = ろう = rou = ROWing
+24971 = コク = こく = koku = COCUnut
+24739 = ホ = ほ = ho = HOmer Simpson
+24474 = ジュウ = じゅう = juu = JUice
+24375 = バン = ばん = ban = BANish
+24360 = ヘイ = へい = hei = HEIlstorm
+24259 = ハイ = はい = hai = HAIku
+23299 = ヒョウ = ひょう = hyou = HYOUzan (氷山 iceberg drifts)
+23169 = サク = さく = saku = SACK
+23078 = セツ = せつ = setsu = SETS
+22897 = ダン = だん = dan = Glenn DANzing
+22564 = リュウ = りゅう = ryuu = RUUral
+22452 = キョ = きょ = kyo = KYOto
+22222 = エイ = えい = ei = EInstein
+21362 = リ = り = ri = RIzotto
+21203 = ハク = はく = haku = HACKing
+20200 = バイ = ばい = bai = BAIkonur
+20099 = シツ = しつ = shitsu = SHITS
+19870 = ジュン = じゅん = jun = JUNiper
+19298 = ウ = う = u = Uphold
+19038 = フク = ふく = fuku = FUKUshima
+19028 = メイ = めい = mei = MAId
+18938 = タク = たく = taku = TAXIcab
+18887 = ガ = が = ga = GAzette
+18884 = ゼン = ぜん = zen = ZENna (warrior queen)
+18866 = ヘン = へん = hen = Jimmy HENdrix
+18642 = ガイ = がい = gai = GUIdebook
+18290 = グ = ぐ = gu = GUru
+18022 = オン = おん = on = ONslaught
+17984 = シャク = しゃく = shaku = SHACKles
+17733 = ビ = び = bi = BIsexual
+17554 = トク = とく = toku = TOKUgawa (first shogun to unite japan)
+17060 = モウ = もう = mou = MOUld (fungus)
+17002 = ニン = にん = nin = NINtendo
+16758 = ム = む = mu = MUstang
+16481 = ヤク = やく = yaku = YAK
+16293 = ミョウ = みょう = myou = MEOW
+16213 = ユ = ゆ = yu = YUmmy
+16155 = ボク = ぼく = boku = BOOKworm
+16052 = ボ = ぼ = bo = BOmbing
+15957 = ビョウ = びょう = byou = BIOUWarfare / BEOWolf
+15883 = ズ = ず = zu = ZOOm
+15589 = サツ = さつ = satsu = SATSUrate
+15578 = ゴン = ごん = gon = GONdola
+15556 = リン = りん = rin = RINgleader
+15544 = ネン = ねん = nen = NEN (hunter x hunter)
+15535 = カツ = かつ = katsu = CATSlady
+15034 = フン = ふん = fun = FUNgi
+14974 = ダ = だ = da = DAzzle
+14936 = ゲ = げ = ge = GEstapo
+14881 = ケツ = けつ = ketsu = KETTle
+14591 = デン = でん = den = DEN (of thieves)
+14532 = ソン = そん = son = SONgbook
+14486 = ハ = は = ha = HAgrid
+14463 = チン = ちん = chin = CHIN
+14261 = ジョ = じょ = jo = JOgging
+14129 = アン = あん = an = ANN Coulter
+13749 = テキ = てき = teki = TAEKwondo
+13705 = フウ = ふう = fuu = FOOl
+13671 = シュン = しゅん = shun = SHUNs
+13612 = ノウ = のう = nou = NOUn
+13263 = ホン = ほん = hon = HONeypot
+13259 = ゾク = ぞく = zoku = ZOKU (family)
+13213 = ライ = らい = rai = RAId
+13174 = ギョウ = ぎょう = gyou = GEOWarming
+12996 = ロク = ろく = roku = ROCKet
+12954 = バク = ばく = baku = BACKUp
+12910 = ロ = ろ = ro = ROdeo
+12906 = ナン = なん = nan = NANny
+12845 = エキ = えき = eki = EKIng
+12756 = レン = れん = ren = RENdering
+12674 = ヨ = よ = yo = YO-YO
+12456 = モン = もん = mon = MONarch
+11847 = ザイ = ざい = zai = XYlophone
+11811 = ヒン = ひん = hin = HINdsight
+11634 = テツ = てつ = tetsu = TITSu
+11515 = ル = る = ru = RUdolf
+11376 = ミ = み = mi = MIllion
+11157 = オ = お = o = Ornament
+11128 = シュク = しゅく = shuku = SHOOK
+11084 = タ = た = ta = TAtoeba
+11036 = マイ = まい = mai = MAIspace
+10866 = マン = まん = man = MANdarin
+10842 = ハツ = はつ = hatsu = HATS
+10743 = ベン = べん = ben = BENder
+10688 = ガク = がく = gaku = GAWK (stare)
+10681 = ド = ど = do = DOra the explorer
+10603 = シキ = しき = shiki = SHRIEK (or SHEIKH)
+10270 = ニ = に = ni = NIpples
+10256 = ワ = わ = wa = WArrior
+10031 = ラン = らん = ran = power RANgers
+9857 = ヨク = よく = yoku = YOLK
+9753 = ジャク = じゃく = jaku = JACKpot
+9742 = チク = ちく = chiku = CHIIC
+9710 = バツ = ばつ = batsu = BATS
+9622 = ゲキ = げき = geki = GEEKs
+9532 = ツイ = つい = tsui = T-SUIt
+9426 = ゲイ = げい = gei = GAY
+9346 = ブン = ぶん = bun = BUNny
+9294 = ヒツ = ひつ = hitsu = HITSman
+9087 = ラク = らく = raku = RACCOOn
+9027 = キョク = きょく = kyoku = CUCOO
+9023 = レツ = れつ = retsu = LETSplay
+9017 = リツ = りつ = ritsu = RIGHTwing / RISOtto
+8975 = キャク = きゃく = kyaku = KYAKU (customer 客)
+8817 = チョ = ちょ = cho = CHOpsticks
+8725 = ツ = つ = tsu = TSUnami
+8568 = ウン = うん = un = UNzip
+8533 = トン = とん = ton = TON
+8276 = モク = もく = moku = MOCKingbird
+8268 = ヤ = や = ya = YAhoo
+8264 = ミン = みん = min = MINcedmeat
+8210 = ナ = な = na = NApoleon
+8125 = ゼイ = ぜい = zei = xxx
+8016 = クウ = くう = kuu = QUbit
+7832 = シュツ = しゅつ = shutsu = SHOOTs
+7757 = グウ = ぐう = guu = GOOse
+7628 = ルイ = るい = rui = RUIning
+7582 = メン = めん = men = MENtallity
+7548 = ナイ = ない = nai = NAIve
+7490 = ビン = びん = bin = BINgo
+7490 = ユイ = ゆい = yui = xxx
+7431 = ザン = ざん = zan = xxx
+7391 = キツ = きつ = kitsu = KITS
+6877 = イツ = いつ = itsu =ITSelf
+6834 = グン = ぐん = gun = GUNner
+6748 = ビャク = びゃく = byaku = BUCKweed
+6598 = ドク = どく = doku = DOCKworker
+6568 = リョ = りょ = ryo = RIO de janeiro
+6567 = スウ = すう = suu = SUPERman
+6557 = クン = くん = kun = CUNnilingus
+6489 = チャク = ちゃく = chaku = CHALK
+6484 = マ = ま = ma = MAmmoth
+6468 = ニュウ = にゅう = nyuu = NUUdes
+6344 = オク = おく = oku = OCUlist
+6241 = シチ = しち = shichi = xxx
+6115 = ベイ = べい = bei = BAYwatch
+5931 = ジツ = じつ = jitsu = JITtter
+5724 = リク = りく = riku = LIQuefy
+5661 = ボン = ぼん = bon = BON jovi
+5659 = フツ = ふつ = futsu = FOOTsteps
+5611 = ギョ = ぎょ = gyo = GOpro
+5556 = コツ = こつ = kotsu = COATsmaker
+5542 = セ = せ = se = xxx
+5426 = ジキ = じき = jiki = JERKIng / taJIK / HICKEy
+5409 = アイ = あい = ai = AIming
+5271 = ジュツ = じゅつ = jutsu = JUTE (rope)
+5214 = ジャ = じゃ = ja = JAzz
+5210 = アク = あく = aku = AKUpuncture
+5155 = ホツ = ほつ = hotsu = HOTShots
+5077 = バ = ば = ba = BAzaar
+5024 = クツ = くつ = kutsu = KUTUzov
+5018 = ロン = ろん = ron = RON weasley
+5017 = ツウ = つう = tsuu = TOOthbrush
+4966 = ブツ = ぶつ = butsu = BOOTStraps
+4845 = ソツ = そつ = sotsu = SOCIal network
+4817 = モ = も = mo = MOdem
+4776 = ヒャク = ひゃく = hyaku = HYAKU (hundred)
+4758 = リョク = りょく = ryoku = REOCCUpy
+4512 = ア = あ = a = Avatar
+4486 = エツ = えつ = etsu = EARTHquake
+4431 = イク = いく = iku = EQUilibrium
+4400 = モツ = もつ = motsu = MOzzart / MOTorbike
+4292 = ワン = わん = wan = WANker
+4269 = キチ = きち = kichi = KITCHenware
+4244 = ダツ = だつ = datsu = DARTS
+4206 = ザ = ざ = za = ZApping
+4177 = ニョウ = にょう = nyou = NEOWoman
+4145 = ニョ = にょ = nyo = NEUron
+4079 = ズイ = ずい = zui = ZUWee (scuter sound)
+4018 = ハチ = はち = hachi = HATCHback
+4011 = ゴク = ごく = goku = GO-CArt
+4008 = ジュク = じゅく = juku = JUKUbox
+3853 = ギャク = ぎゃく = gyaku = GUACAmole
+3828 = ゲツ = げつ = getsu = GHETTO
+3649 = ギン = ぎん = gin = GINger
+3647 = イチ = いち = ichi = 	ITCHIng
+3603 = レキ = れき = reki = REKIss
+3597 = チョク = ちょく = choku = CHOCKing
+3538 = マツ = まつ = matsu = MATS
+3535 = ヘキ = へき = heki = HECtic
+3515 = チツ = ちつ = chitsu = CHITchat
+3487 = ラ = ら = ra = RAzor
+3464 = ホク = ほく = hoku = HOCUs-pocus
+3461 = リャク = りゃく = ryaku = LAGOOn / LUCK
+3386 = ゼツ = ぜつ = zetsu = ZEITgeist
+3361 = マク = まく = maku = BigMAK
+3336 = トツ = とつ = totsu = TOTE (carry something heavy)
+3303 = ベツ = べつ = betsu = BET
+3262 = オツ = おつ = otsu = OUGHT TO / OUTSOurce
+3250 = デ = で = de = DEvotion
+3226 = イキ = いき = iki = EQualizer
+3165 = ドン = どん = don = DON quixote
+3059 = ワイ = わい = wai = WIldfire
+2999 = ニチ = にち = nichi = NICHe
+2982 = ミツ = みつ = mitsu = MITSUbishi
+2981 = ジク = じく = jiku = HERCUles / JEJUne postulate
+2977 = ガツ = がつ = gatsu = GATSby
+2965 = シャン = しゃん = shan = SHANti (brockwood)
+2938 = リイ = りい = rii = LEApfrog
+2938 = リキ = りき = riki = LICKingdog
+2900 = フラン = ふらん = furan = FORERANner
+2845 = ワク = わく = waku = WHACK
+2838 = ケチ = けち = kechi = KETCHup
+2761 = ダス = だす = dasu = DAZZle
+2754 = ジカ = じか = jika = JIHAd
+2745 = ニク = にく = niku = NICKname
+2725 = キク = きく = kiku = KICK-ass
+2637 = デキ = でき = deki = DECrease
+2627 = ダク = だく = daku = DUCKtape
+2542 = ニャ = にゃ = nya = NYA-nya-cat
+2542 = ニャク = にゃく = nyaku = NEOYAnkee
+2514 = スン = すん = sun = SUNscreen
+2509 = ノン = のん = non = NONtoxic
+2500 = タツ = たつ = tatsu = sTATS
+2449 = キャ = きゃ = kya = KAYAking
+2423 = ゾン = ぞん = zon = ZONe
+2348 = ジョク = じょく = joku = JOKUbook
+2300 = ネツ = ねつ = netsu = NETScape
+2282 = アツ = あつ = atsu = ATHletic
+2263 = ギョク = ぎょく = gyoku = GOALKeeper
+2161 = ザツ = ざつ = zatsu = ZOOT-SUit 
+2073 = レ = れ = re = REvenge
+2066 = セチ = せち = sechi = SKETCHbook / SEssion
+2008 = リチ = りち = richi = RICHstone
+1962 = テ = て = te = TElescope
+1955 = ゼ = ぜ = ze = ZEppelin
+1884 = チャ = ちゃ = cha = CHArming
+1858 = マア = まあ = maa = MAyans
+1843 = セント = せんと = sento = CENTOxin
+1798 = ギュウ = ぎゅう = gyuu = GOUAche.
+1780 = バチ = ばち = bachi = BACHelor
+1779 = ヌ = ぬ = nu = NUmerology
+1778 = メツ = めつ = metsu = METH
+1615 = ボツ = ぼつ = botsu = BOTS
+1523 = ミャク = みゃく = myaku = MUCKing / mycology
+1511 = チャン = ちゃん = chan = CHANdler
+1453 = カチ = かち = kachi = CATCHword
+1451 = スク = すく = suku = SUCCUmb
+1411 = デイ = でい = dei = DEja vu
+1303 = ネイ = ねい = nei = NEIghbourhood
+1184 = ボチ = ぼち = bochi = BUSHwhacking (guerilla travelling)
+1171 = チュン = ちゅん = chun = TUNning
+1144 = ジャン = じゃん = jan = DJANgo (unchained)
+1034 = ベ = べ = be = 
+1022 = ノ = の = no 
+1016 = サチ = さち = sachi 
+851 = テチ = てち = techi 
+797 = ビツ = びつ = bitsu 
+740 = ニュ = にゅ = nyu 
+677 = ギャ = ぎゃ = gya 
+603 = ヒュウ = ひゅう = hyuu 
+575 = チュ = ちゅ = chu 
+568 = ケキ = けき = keki 
+537 = ツク = つく = tsuku 
+522 = コチ = こち = kochi 
+522 = キケ = きけ = kike 

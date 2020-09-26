@@ -8,3 +8,8 @@ English words ordered by frequency of use, taken from subtitles (https://github.
 
 Example mnemonics derived from above:
 - freq-mnemonics.txt
+
+
+CMU dictionary mapping of sound to ascii:
+http://www.speech.cs.cmu.edu/cgi-bin/cmudict
+
