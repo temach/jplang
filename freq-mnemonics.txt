@@ -53,36 +53,38 @@
 29526 = ス = す = su = SUzuki (carry van)
 29482 = サ = さ = sa = SAdism
 
-29111 = ダイ = だい = dai = DIE
-28920 = ソ = そ = so = SOda
+29111 = ダイ = だい = dai = DIving
+28920 = ソ = そ = so = SOprano
 28877 = ケ = け = ke = jim KErry
-28315 = チュウ = ちゅう = chuu = CHUrch
+28315 = チュウ = ちゅう = chuu = CHEW
 27851 = ギ = ぎ = gi = GIlbert
-27811 = ソク = そく = soku = SOCKs
+27811 = ソク = そく = soku = SOCrates
 27688 = ゾウ = ぞう = zou = ZOUrro
 27662 = エ = え = e = Epoxy
 27653 = レイ = れい = rei = REIndeer
 27403 = ジン = じん = jin = JINgle
-26951 = ショク = しょく = shoku = SHOCK
-26506 = イン = いん = in = INvoice
-26188 = ゴウ = ごう = gou = GHOUl
-26085 = ジュ = じゅ = ju = JUliette
+26951 = ショク = しょく = shoku = SHOCKwave
+26506 = イン = いん = in = INfrared
+26188 = ゴウ = ごう = gou = GHOUl / GOWn
+26085 = ジュ = じゅ = ju = JUdas
 25973 = テン = てん = ten = TENtacless
 25785 = ガン = がん = gan = GANgster
 25661 = ロウ = ろう = rou = ROWing
 24971 = コク = こく = koku = COCUnut
 24739 = ホ = ほ = ho = HOmer Simpson
-24474 = ジュウ = じゅう = juu = JUice
+24474 = ジュウ = じゅう = juu = JUliette
 24375 = バン = ばん = ban = BANish
-24360 = ヘイ = へい = hei = HEIlstorm
+
+24360 = ヘイ = へい = hei = HEIL hitler
 24259 = ハイ = はい = hai = HAIku
 23299 = ヒョウ = ひょう = hyou = HYOUzan (氷山 iceberg drifts)
 23169 = サク = さく = saku = SACK
-23078 = セツ = せつ = setsu = SETS
+23078 = セツ = せつ = setsu = SETup
 22897 = ダン = だん = dan = Glenn DANzing
 22564 = リュウ = りゅう = ryuu = RUUral
 22452 = キョ = きょ = kyo = KYOto
-22222 = エイ = えい = ei = EInstein
+22222 = エイ = えい = ei = EIffel tower
+
 21362 = リ = り = ri = RIzotto
 21203 = ハク = はく = haku = HACKing
 20200 = バイ = ばい = bai = BAIkonur
