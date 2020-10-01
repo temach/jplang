@@ -25,3 +25,11 @@ How to find mnemonics, inspirational commands:
 # egrep -i '^коу' russian-words.txt
 
 # egrep -n -i  ^bow english-long-frequency.txt 
+
+What letter combinations make the SH sound? Knowing this you can find unexpected
+but meaningful patterns to use, e.g. letters "sch" make the SH sound.
+# egrep '  SH' cmudict.dict | awk '{ print substr($1, 0, 3) }' | sort | uniq -c
+
+What sound do the words that start with letter T normally make in english?
+Knowing this helps decide which pattern to allocate to the most common sounds.
+# egrep '^t' cmudict.dict | awk '{ print $2 " " substr($3, 1, 1) }' | sort | uniq -c
