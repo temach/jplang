@@ -90,8 +90,8 @@
 19870 = ジュン = じゅん = jun = JUNiper
 19298 = ウ = う = u = Uphold
 19038 = フク = ふく = fuku = FUKUshima
-19028 = メイ = めい = mei = MAId
-18938 = タク = たく = taku = TAXIcab
+19028 = メイ = めい = mei = MEIosis (cell reproduction)
+18938 = タク = たく = taku = TAKEoff
 18887 = ガ = が = ga = GAzette
 18884 = ゼン = ぜん = zen = ZENna (warrior queen)
 18866 = ヘン = へん = hen = Jimmy HENdrix
@@ -99,18 +99,18 @@
 18290 = グ = ぐ = gu = GUru
 18022 = オン = おん = on = ONslaught
 17984 = シャク = しゃく = shaku = SHACKles
-17733 = ビ = び = bi = BIsexual
+17733 = ビ = び = bi = BIlbo
 17554 = トク = とく = toku = TOKUgawa (first shogun to unite japan)
 17060 = モウ = もう = mou = MOUld (fungus)
 17002 = ニン = にん = nin = NINtendo
-16758 = ム = む = mu = MUstang
+16758 = ム = む = mu = MUffin
 16481 = ヤク = やく = yaku = YAK
 16293 = ミョウ = みょう = myou = MEOW
 16213 = ユ = ゆ = yu = YUmmy
 16155 = ボク = ぼく = boku = BOOKworm
 16052 = ボ = ぼ = bo = BOmbing
 15957 = ビョウ = びょう = byou = BEOWolf / BIOUWarfare / BEOWolf
-15883 = ズ = ず = zu = ZOOm
+15883 = ズ = ず = zu = ZUlu
 15589 = サツ = さつ = satsu = SATSUrate
 15578 = ゴン = ごん = gon = GONdola
 15556 = リン = りん = rin = LINda
@@ -118,7 +118,7 @@
 15535 = カツ = かつ = katsu = CATSlady
 15034 = フン = ふん = fun = FUNgi
 14974 = ダ = だ = da = DAzzle
-14936 = ゲ = げ = ge = GEstapo
+14936 = ゲ = げ = ge = GEl
 14881 = ケツ = けつ = ketsu = KETTle
 14591 = デン = でん = den = DEN (of thieves)
 14532 = ソン = そん = son = SONgbook
@@ -129,7 +129,7 @@
 13749 = テキ = てき = teki = TAEKwondo
 13705 = フウ = ふう = fuu = FOOl
 13671 = シュン = しゅん = shun = SHUNs
-13612 = ノウ = のう = nou = NOUn
+13612 = ノウ = のう = nou = NOUn / NOUrish
 13263 = ホン = ほん = hon = HONeypot
 13259 = ゾク = ぞく = zoku = ZOKU (family)
 13213 = ライ = らい = rai = RAId
@@ -150,7 +150,7 @@
 11157 = オ = お = o = Ornament
 11128 = シュク = しゅく = shuku = SHUCK / SHOOK
 11084 = タ = た = ta = TAtoeba
-11036 = マイ = まい = mai = MAIspace
+11036 = マイ = まい = mai = MAId
 10866 = マン = まん = man = MANdarin
 10842 = ハツ = はつ = hatsu = HATS
 10743 = ベン = べん = ben = BENder
@@ -166,7 +166,7 @@
 9710 = バツ = ばつ = batsu = BATS
 9622 = ゲキ = げき = geki = GEEKs
 9532 = ツイ = つい = tsui = T-SUIt
-9426 = ゲイ = げい = gei = GAY
+9426 = ゲイ = げい = gei = GEIsha
 9346 = ブン = ぶん = bun = BUNny
 9294 = ヒツ = ひつ = hitsu = HITSman
 9087 = ラク = らく = raku = RACCOOn
@@ -205,7 +205,7 @@
 6468 = ニュウ = にゅう = nyuu = NUUdes
 6344 = オク = おく = oku = OCUlist
 6241 = シチ = しち = shichi = SHIWCHUk (russian songwriter)
-6115 = ベイ = べい = bei = BAYwatch
+6115 = ベイ = べい = bei = BEYonce / BAYwatch
 5931 = ジツ = じつ = jitsu = JITtter
 5724 = リク = りく = riku = LIQuefy
 5661 = ボン = ぼん = bon = BON jovi
