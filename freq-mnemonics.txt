@@ -55,7 +55,7 @@
 29111 = ダイ = だい = dai = DIving
 28920 = ソ = そ = so = SOprano
 28877 = ケ = け = ke = jim KErry
-28315 = チュウ = ちゅう = chuu = CHEW
+28315 = チュウ = ちゅう = chuu = CHOOsing / CHEW
 27851 = ギ = ぎ = gi = GIlbert
 27811 = ソク = そく = soku = SOCrates
 27688 = ゾウ = ぞう = zou = ZOUrro
@@ -165,7 +165,7 @@
 9742 = チク = ちく = chiku = CHIIC
 9710 = バツ = ばつ = batsu = BATS
 9622 = ゲキ = げき = geki = GEEKs
-9532 = ツイ = つい = tsui = T-SUIt
+9532 = ツイ = つい = tsui = TOIlet / T-SUIt
 9426 = ゲイ = げい = gei = GEIsha
 9346 = ブン = ぶん = bun = BUNny
 9294 = ヒツ = ひつ = hitsu = HITSman
@@ -175,7 +175,7 @@
 9017 = リツ = りつ = ritsu = LITUrgy / RIGHTwing / RISOtto
 8975 = キャク = きゃく = kyaku = QUACK / KYAKU (customer 客) / COAKley 
 8817 = チョ = ちょ = cho = CHOpsticks
-8725 = ツ = つ = tsu = TSUnami
+8725 = ツ = つ = tsu = THOrn / TSUnami
 8568 = ウン = うん = un = UNzip
 8533 = トン = とん = ton = TON
 8276 = モク = もく = moku = MOCKingbird
@@ -311,12 +311,12 @@
 1411 = デイ = でい = dei = DEja vu
 1303 = ネイ = ねい = nei = NEIghbourhood
 1184 = ボチ = ぼち = bochi = BOTCHed
-1171 = チュン = ちゅん = chun = CHUNk / TUNning
+1171 = チュン = ちゅん = chun = CHOON / CHUNk / TUNning
 1144 = ジャン = じゃん = jan = DJANgo (unchained)
 1034 = ベ = べ = be = 
 1022 = ノ = の = no 
 1016 = サチ = さち = sachi 
-851 = テチ = てち = techi 
+851 = テチ = てち = techi = TECHie
 797 = ビツ = びつ = bitsu 
 740 = ニュ = にゅ = nyu 
 677 = ギャ = ぎゃ = gya 
