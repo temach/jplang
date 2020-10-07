@@ -13,14 +13,14 @@
 76789 = チョウ = ちょう = chou = Margaret CHOU
 71812 = ケイ = けい = kei = KEIth jarrett
 69107 = セン = せん = sen = SENsor
-68004 = シュウ = しゅう = shuu = SHUUmaker / SHUEs / SHUgaring
+68004 = シュウ = しゅう = shuu = SCHUmacher / SHUEs / SHUgaring
 64753 = サイ = さい = sai = SAIlor
 64185 = ジョウ = じょう = jou = JOU Stalin
 64086 = カイ = かい = kai = KAIzer
 62051 = テイ = てい = tei = TEInt
 61367 = ホウ = ほう = hou = HOUnd
 58777 = イ = い = i = Imprison
-56097 = シュ = しゅ = shu = SHUffle / shoes
+56097 = シュ = しゅ = shu = SHUlts / SHUffle / shoes
 54565 = ジ = じ = ji = JIsus
 54451 = タイ = たい = tai = TAIland
 53885 = ヨウ = よう = you = YOUga
@@ -33,7 +33,7 @@
 46519 = ク = く = ku = KUmar
 46018 = カク = かく = kaku = CACtus
 44432 = エン = えん = en = ENhance
-43598 = ユウ = ゆう = yuu = EUclid
+43598 = ユウ = ゆう = yuu = YUgoslavia / YUppie / YUmmy / YEW / EUclid
 42056 = ヒ = ひ = hi = HIppo
 40502 = キン = きん = kin = KINgsman
 39276 = ゴ = ご = go = GOblin
@@ -83,7 +83,6 @@
 22452 = キョ = きょ = kyo = COOlest-cooler / KYOto / QUOrum
 22222 = エイ = えい = ei = EIffel tower
 21362 = リ = り = ri = LIzard
-
 21203 = ハク = はく = haku = HACKing
 20200 = バイ = ばい = bai = BAIkonur
 20099 = シツ = しつ = shitsu = SHITS
@@ -95,7 +94,7 @@
 18887 = ガ = が = ga = GAzette
 18884 = ゼン = ぜん = zen = ZENna (warrior queen)
 18866 = ヘン = へん = hen = Jimmy HENdrix
-18642 = ガイ = がい = gai = GUIdebook
+18642 = ガイ = がい = gai = GAIa / GUIdebook
 18290 = グ = ぐ = gu = GUru
 18022 = オン = おん = on = ONslaught
 17984 = シャク = しゃく = shaku = SHACKles
@@ -106,7 +105,7 @@
 16758 = ム = む = mu = MUffin
 16481 = ヤク = やく = yaku = YAK
 16293 = ミョウ = みょう = myou = MEOW
-16213 = ユ = ゆ = yu = YUmmy
+16213 = ユ = ゆ = yu = YUrt / YUmmy
 16155 = ボク = ぼく = boku = BOOKworm
 16052 = ボ = ぼ = bo = BOmbing
 15957 = ビョウ = びょう = byou = BEOWolf / BIOUWarfare / BEOWolf
@@ -131,11 +130,11 @@
 13671 = シュン = しゅん = shun = SHUNs
 13612 = ノウ = のう = nou = NOUn / NOUrish
 13263 = ホン = ほん = hon = HONeypot
-13259 = ゾク = ぞく = zoku = ZOKU (family)
-13213 = ライ = らい = rai = RAId
+13259 = ゾク = ぞく = zoku = The ZOKUs (family)
+13213 = ライ = らい = rai = RAIders
 13174 = ギョウ = ぎょう = gyou = GEOWarming
 12996 = ロク = ろく = roku = ROCKet
-12954 = バク = ばく = baku = BACKUp
+12954 = バク = ばく = baku = BACKdoor / BACKUp
 12910 = ロ = ろ = ro = ROdeo
 12906 = ナン = なん = nan = NANny
 12845 = エキ = えき = eki = EKIng
@@ -146,11 +145,11 @@
 11811 = ヒン = ひん = hin = HINdsight
 11634 = テツ = てつ = tetsu = TETris
 11515 = ル = る = ru = RUdolf
-11376 = ミ = み = mi = MIllion
+11376 = ミ = み = mi = MIrage
 11157 = オ = お = o = Ornament
-11128 = シュク = しゅく = shuku = SHUCK / SHOOK
+11128 = シュク = しゅく = shuku = SHOOK / SHUCK
 11084 = タ = た = ta = TAtoeba
-11036 = マイ = まい = mai = MAId
+11036 = マイ = まい = mai = MAIdan / MAId
 10866 = マン = まん = man = MANdarin
 10842 = ハツ = はつ = hatsu = HATS
 10743 = ベン = べん = ben = BENder
@@ -162,10 +161,10 @@
 10031 = ラン = らん = ran = power RANgers
 9857 = ヨク = よく = yoku = YOLK
 9753 = ジャク = じゃく = jaku = JACKpot
-9742 = チク = ちく = chiku = CHIIC
+9742 = チク = ちく = chiku = CHICK
 9710 = バツ = ばつ = batsu = BATS
 9622 = ゲキ = げき = geki = GEEKs
-9532 = ツイ = つい = tsui = TOIlet / T-SUIt
+9532 = ツイ = つい = tsui = TUItition / STImulus / TOIlet / T-SUIt
 9426 = ゲイ = げい = gei = GEIsha
 9346 = ブン = ぶん = bun = BUNny
 9294 = ヒツ = ひつ = hitsu = HITSman
@@ -175,27 +174,28 @@
 9017 = リツ = りつ = ritsu = LITUrgy / RIGHTwing / RISOtto
 8975 = キャク = きゃく = kyaku = QUACK / KYAKU (customer 客) / COAKley 
 8817 = チョ = ちょ = cho = CHOpsticks
-8725 = ツ = つ = tsu = THOrn / TSUnami
+8725 = ツ = つ = tsu = TUrret / TSUnami / THOrn
 8568 = ウン = うん = un = UNzip
 8533 = トン = とん = ton = TON
 8276 = モク = もく = moku = MOCKingbird
 8268 = ヤ = や = ya = YAhoo
 8264 = ミン = みん = min = MINcedmeat
 8210 = ナ = な = na = NApoleon
-8125 = ゼイ = ぜい = zei = xxx
-8016 = クウ = くう = kuu = KUUbik-rubik
-7832 = シュツ = しゅつ = shutsu = SHUTTle / SHOOTs
-7757 = グウ = ぐう = guu = GOOse
-7628 = ルイ = るい = rui = RUIning
+8125 = ゼイ = ぜい = zei = ZEWa
+8016 = クウ = くう = kuu = KUbik-rubik
+7832 = シュツ = しゅつ = shutsu = SHOOTs / SHUTTle
+7757 = グウ = ぐう = guu = GUlfstream / GOOse
+7628 = ルイ = るい = rui = RUIns
 7582 = メン = めん = men = MENtallity
 7548 = ナイ = ない = nai = NAIve
 7490 = ビン = びん = bin = BINgo
-7490 = ユイ = ゆい = yui = xxx
-7431 = ザン = ざん = zan = xxx
+7490 = ユイ = ゆい = yui = YIeld
+
+7431 = ザン = ざん = zan = ZANzibar
 7391 = キツ = きつ = kitsu = KITS
 6877 = イツ = いつ = itsu =ITSelf
 6834 = グン = ぐん = gun = GUNner
-6748 = ビャク = びゃく = byaku = BEAK / BOAK (vomit) / BUCKweed
+6748 = ビャク = びゃく = byaku = BUCKweed / BEAK / BOAK (vomit)
 6598 = ドク = どく = doku = DOCKworker
 6568 = リョ = りょ = ryo = REOffer / RIO de janeiro
 6567 = スウ = すう = suu = SUUPERman
@@ -210,7 +210,7 @@
 5724 = リク = りく = riku = LIQuefy
 5661 = ボン = ぼん = bon = BON jovi
 5659 = フツ = ふつ = futsu = FOOTsteps
-5611 = ギョ = ぎょ = gyo = GOpro
+5611 = ギョ = ぎょ = gyo = GEOid / GOpro
 5556 = コツ = こつ = kotsu = KNOTTs
 5542 = セ = せ = se = SEminar
 5426 = ジキ = じき = jiki = JERKIng / taJIK / HICKEy
@@ -222,11 +222,11 @@
 5077 = バ = ば = ba = BAzaar
 5024 = クツ = くつ = kutsu = KUTUzov
 5018 = ロン = ろん = ron = RON weasley
-5017 = ツウ = つう = tsuu = TOOthbrush
+5017 = ツウ = つう = tsuu = TUEsday / STUb / TOOthbrush
 4966 = ブツ = ぶつ = butsu = BUTane (flammable gas)
 4845 = ソツ = そつ = sotsu = SOCIal network
 4817 = モ = も = mo = MOdem
-4776 = ヒャク = ひゃく = hyaku = HYAKU (hundred)
+4776 = ヒャク = ひゃく = hyaku = HUCKster / HYAKU (hundred)
 4758 = リョク = りょく = ryoku = REOCCUr / REOCCUpy
 4512 = ア = あ = a = Avatar
 4486 = エツ = えつ = etsu = EARTHquake
@@ -239,7 +239,7 @@
 4177 = ニョウ = にょう = nyou = NEOWoman
 4145 = ニョ = にょ = nyo = NEUron
 4079 = ズイ = ずい = zui = ZUWee (scuter sound)
-4018 = ハチ = はち = hachi = HATCHback
+4018 = ハチ = はち = hachi = HATCHing
 4011 = ゴク = ごく = goku = GO-CArt
 4008 = ジュク = じゅく = juku = JUKUbox
 3853 = ギャク = ぎゃく = gyaku = GUACAmole
@@ -253,7 +253,7 @@
 3515 = チツ = ちつ = chitsu = CHITchat
 3487 = ラ = ら = ra = RAzor
 3464 = ホク = ほく = hoku = HOCUs-pocus
-3461 = リャク = りゃく = ryaku = LACtose / LAGOOn / LUCK
+3461 = リャク = りゃく = ryaku = RUCKsack / LACtose / LAGOOn / LUCK
 3386 = ゼツ = ぜつ = zetsu = ZEITgeist
 3361 = マク = まく = maku = BigMAK
 3336 = トツ = とつ = totsu = TOTE (carry something heavy)
@@ -280,7 +280,7 @@
 2637 = デキ = でき = deki = DECrease
 2627 = ダク = だく = daku = DUCKtape
 2542 = ニャ = にゃ = nya = NYA-nya-cat
-2542 = ニャク = にゃく = nyaku = NEOYAnkee
+2542 = ニャク = にゃく = nyaku = NUCleus / kNUCKles / NEOYAnkee
 2514 = スン = すん = sun = SUNscreen
 2509 = ノン = のん = non = NONtoxic
 2500 = タツ = たつ = tatsu = sTATS
@@ -289,7 +289,7 @@
 2348 = ジョク = じょく = joku = JOKUbook
 2300 = ネツ = ねつ = netsu = NETScape
 2282 = アツ = あつ = atsu = ATHletic
-2263 = ギョク = ぎょく = gyoku = GOALKeeper
+2263 = ギョク = ぎょく = gyoku = GEOKing / GEOCOOLer / GOALKeeper
 2161 = ザツ = ざつ = zatsu = ZOOT-SUit 
 2073 = レ = れ = re = REvenge
 2066 = セチ = せち = sechi = SKETCHbook / SEssion
@@ -319,10 +319,10 @@
 851 = テチ = てち = techi = TECHie
 797 = ビツ = びつ = bitsu 
 740 = ニュ = にゅ = nyu 
-677 = ギャ = ぎゃ = gya 
+677 = ギャ = ぎゃ = gya = GUAva
 603 = ヒュウ = ひゅう = hyuu 
 575 = チュ = ちゅ = chu 
 568 = ケキ = けき = keki 
-537 = ツク = つく = tsuku 
+537 = ツク = つく = tsuku = TUK-tuk / STUCK
 522 = コチ = こち = kochi = KOCHer
 522 = キケ = きけ = kike 
