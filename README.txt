@@ -95,8 +95,8 @@ Practical commands for finding possible onyomi keywords in the dictionaries:
 # egrep -i '^meets' cmudict.dict 
 # egrep -i '  M A.?.? [^tnk]' cmudict.dict  | column -t
 
-# egrep -i '= j' onyomi-keywords.txt 
-# egrep -i '= t' onyomi-keywords.txt | awk -F= '{print $4 " \t " $5}' | sort | column -t
+# egrep -i '^j' onyomi-keywords.txt 
+# egrep -i '^sh' onyomi-keywords.txt | awk -F= '{print $1 " \t " $4}' | sort | column -t
 
 # egrep -i '^коу' russian-words.txt
 
