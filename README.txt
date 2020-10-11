@@ -1,42 +1,14 @@
 
-English phonetical transcriptions:
-- cmudict.dict
+Sources for deciding on ONYOMI keywords are in resources/ directory:
+- cmudict.dict - English phonetical transcriptions, (http://www.speech.cs.cmu.edu/cgi-bin/cmudict)
+- english-long-frequency.txt  - English words ordered by frequency of use, taken from subtitles (https://github.com/nachocab/words-by-frequency):
 
-English words ordered by frequency of use, taken from subtitles (https://github.com/nachocab/words-by-frequency):
-- english-long-frequency.txt
-
-Example onyomi keywords derived from above:
+The derived onyomi keywords are in file:
 - onyomi-keywords.txt
 
 
-CMU dictionary mapping of sound to ascii:
-http://www.speech.cs.cmu.edu/cgi-bin/cmudict
-
-How to find onyomi keywords, example commands:
-
-# grep -P ' JH I.?.? (\w )?K' cmudict.dict 
-# egrep -i '^meets' cmudict.dict 
-# egrep -i '  M A.?.? [^tnk]' cmudict.dict  | column -t
-
-# egrep -i '= j' onyomi-keywords.txt 
-# egrep -i '= t' onyomi-keywords.txt | awk -F= '{print $4 " \t " $5}' | sort | column -t
-
-# egrep -i '^коу' russian-words.txt
-
-# egrep -n -i  ^bow english-long-frequency.txt 
-
-What letter combinations make the SH sound? Knowing this you can find unexpected
-but meaningful patterns to use, e.g. letters "sch" make the SH sound.
-# egrep '  SH' cmudict.dict | awk '{ print substr($1, 0, 3) }' | sort | uniq -c
-
-What sound do the words that start with letter T normally make in english?
-Knowing this helps decide which pattern to allocate to the most common sounds.
-# egrep '^t' cmudict.dict | awk '{ print $2 " " substr($3, 1, 1) }' | sort | uniq -c
-
-
-
-
 Guidelines for choosing onyomi keywords:
+- Try to use english words that are not in 10000 most common words (so normal words would not be mistaken for onyomi keywords)
 - The combination of english letters OW in the onyomi keyword represent "ou" japanese sound. For example HOWling = hou
 - The cobination of english letters UCK represent "yaku" japanese sound. For example BUCKweed = byaku and RUCKsack = ryaku
 - Prolonged sounds are distinguished by longer words: KUmar = KU and KUbic-rubik = KUU
@@ -71,6 +43,9 @@ B, D, DH, F, HH, L, M, OW, OY, P, R, S, SH, TH, V, W, Z, ZH
 
 Sounds that should NOT be used:
 AA, AE, AH, AO, AW, AY, CH, EH, ER, EY, G, IH, IY, JH, K, N, NG, T, UH, UW, Y ,
+
+CMU dictionary mapping of sound to ascii:
+http://www.speech.cs.cmu.edu/cgi-bin/cmudict
 
 Sound mapping in the cmudict.dict file:
 AA	odd     AA D
@@ -112,3 +87,26 @@ W 	we		W IY
 Y 	yield	Y IY L D
 Z 	zee		Z IY
 ZH	seizure	S IY ZH ER
+
+
+Practical commands for finding possible onyomi keywords in the dictionaries:
+
+# grep -P ' JH I.?.? (\w )?K' cmudict.dict 
+# egrep -i '^meets' cmudict.dict 
+# egrep -i '  M A.?.? [^tnk]' cmudict.dict  | column -t
+
+# egrep -i '= j' onyomi-keywords.txt 
+# egrep -i '= t' onyomi-keywords.txt | awk -F= '{print $4 " \t " $5}' | sort | column -t
+
+# egrep -i '^коу' russian-words.txt
+
+# egrep -n -i  ^bow english-long-frequency.txt 
+
+What letter combinations make the SH sound? Knowing this you can find unexpected
+but meaningful patterns to use, e.g. letters "sch" make the SH sound.
+# egrep '  SH' cmudict.dict | awk '{ print substr($1, 0, 3) }' | sort | uniq -c
+
+What sound do the words that start with letter T normally make in english?
+Knowing this helps decide which pattern to allocate to the most common sounds.
+# egrep '^t' cmudict.dict | awk '{ print $2 " " substr($3, 1, 1) }' | sort | uniq -c
+
