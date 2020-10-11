@@ -19,12 +19,12 @@ The results are also packaged as Anki deck in:
 - Prolonged sounds are distinguished by longer words: KUmar = KU and KUbic-rubik = KUU
 
 Some english letters remain unused, so they are repurposed as below:
-c -> K
-l -> R
-p -> unused
-q -> K
-v -> I
-x -> Z
+- c -> K
+- l -> R
+- p -> unused
+- q -> K
+- v -> I
+- x -> Z
 For example onyomi keyword for KYO begins with letter "C" instead of "K".
 
 
@@ -35,13 +35,13 @@ Letters that can be part of a onyomi keyword can not be used to end a onyomi key
 For example using word "kits" for sound KI is bad, because it sounds like its for KITSU.
 
 The sounds below can appear as second/third/fourth letters in ON yomi:
-チ or chi appears 14 times
-ク or ku appears 51 times
-キ or ki appears 13 times
-ウ or u appears 39 times
-ツ or tsu appears 41 times
-ン or n appears 63 times
-イ or i appears 31 times
+- チ or chi appears 14 times
+- ク or ku appears 51 times
+- キ or ki appears 13 times
+- ウ or u appears 39 times
+- ツ or tsu appears 41 times
+- ン or n appears 63 times
+- イ or i appears 31 times
 Therefore these sounds should be avoided when they fall on the end of the onyomi keyword.
 
 CMU dict sounds that are good to use at keyword's end (to mark that mnemonic part is finished):
@@ -54,6 +54,7 @@ CMU dictionary mapping of sound to ascii:
 http://www.speech.cs.cmu.edu/cgi-bin/cmudict
 
 Sound mapping in the cmudict.dict file:
+```
 AA	odd     AA D
 AE	at		AE T
 AH	hut		HH AH T
@@ -93,6 +94,7 @@ W 	we		W IY
 Y 	yield	Y IY L D
 Z 	zee		Z IY
 ZH	seizure	S IY ZH ER
+```
 
 
 ### Practical commands for finding possible onyomi keywords in the dictionaries
