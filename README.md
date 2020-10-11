@@ -147,3 +147,65 @@ Knowing this helps decide which pattern to allocate to the most common sounds.
 # egrep '^t' cmudict.dict | awk '{ print $2 " " substr($3, 1, 1) }' | sort | uniq -c
 ```
 
+# Kanji breakdown
+
+Radical is kanji with no ONYOMI and no sub-kanji. Regarding the breakdown it dows not matter if the element is a kanji, a radical or a handmade drawing. So against common usage lets call everything just kanji.
+
+There can be different ways to break kanji.
+
+To decide:
+1. Find possible breakdowns
+2. For each component in a breakdown find its possible appearances (as own kanji or sub-kanji in another kanji)
+3. For each appearance find how frequently this separate identity is enforced, i.e. frequency of own kanji, frequency of kanji with this redical.
+3. Sum up all the frequencies.
+4. The breakdown with highest frequency wins. Its members most often appear as components/kanji.
+
+
+Example investigation:
+What is the best way to break up 勇 ? Is it (マ + 男) OR (甬 + 力)?
+Maybe its best not to break it up at all, e.g. when the kanji appears much more often than its parts?
+
+Take the first possible breakdown (マ + 男).
+Investigate how the components are used (https://thekanjimap.com/index.html):
+マ never appears on its own and in 甬 
+男 appears on its own and in 虜 
+
+Frequency evaluation (http://scriptin.github.io/kanji-frequency/):
+- 甬appears 9 times
+- 男appears 95900 times
+- 虜appears 995 times
+
+In total components appear (9 + 95900 + 995) ~ 97000 times
+
+Take the second possible breakdown (甬 + 力).
+Investigate how the components are used (https://thekanjimap.com/index.html):
+甬 appears on its own and in 踊, 桶, 勇(current investigation), 痛, 通
+力 appears on its own and in about 24 other kanji
+
+Frequency evaluation:
+- 甬appears 9 times
+- 踊appears 8799 times
+- 痛appears 20230 times
+- 通appears 109080 times
+- 力appears 112027 times
+- ....
+
+In total components appear (9 + 8799 + 20230 + 109080 + 112027 + ...) ~ 240000 times
+
+The third possible breakdown is avoiding breakdown.
+Frequency evaluation:
+- 勇 appears 12432 times
+
+Looking at frequency evaluations, the most commonly seen pattern is breakdown with (甬 + 力),
+because its members get more apperances as kanji.
+
+
+# Kanji keywords
+
+Each kanji needs a keyword. 
+- it should NOT be one of 10000 most common english words.
+- it should NOT be one of the onyomi keywords.
+- it should be unique for each kanji.
+- it should reflect meaning of the kanji. 
+
+
