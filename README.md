@@ -160,27 +160,33 @@ To find the best breakdown:
 3. Sum up all the frequencies.
 4. The breakdown with highest frequency wins. Its members most often appear as components/kanji.
 
+For components breakdown and usage: https://thekanjimap.com/index.html
+For frequency evaluation: http://scriptin.github.io/kanji-frequency/
 
 Example investigation:
 What is the best way to break up 勇 ? Is it (マ + 男) OR (甬 + 力)?
 Maybe its best not to break it up at all, e.g. when the kanji appears much more often than its parts?
 
-Take the first possible breakdown (マ + 男).
-Investigate how the components are used (https://thekanjimap.com/index.html):
-マ never appears on its own and in 甬 
-男 appears on its own and in 虜 
 
-Frequency evaluation (http://scriptin.github.io/kanji-frequency/):
+**Take the first possible breakdown (マ + 男)**
+
+Investigate components:
+- マ never appears on its own and in 甬 
+- 男 appears on its own and in 虜 
+
+Frequency evaluation:
 - 甬 appears 9 times
 - 男 appears 95900 times
 - 虜 appears 995 times
 
 In total components appear (9 + 95900 + 995) ~ 97000 times
 
-Take the second possible breakdown (甬 + 力).
-Investigate how the components are used (https://thekanjimap.com/index.html):
-甬 appears on its own and in 踊, 桶, 勇(current investigation), 痛, 通
-力 appears on its own and in about 24 other kanji
+
+**Take the second possible breakdown (甬 + 力)**
+
+Investigate components:
+- 甬 appears on its own and in 踊, 桶, 勇(current investigation), 痛, 通
+- 力 appears on its own and in about 24 other kanji
 
 Frequency evaluation:
 - 甬 appears 9 times
@@ -192,9 +198,14 @@ Frequency evaluation:
 
 In total components appear (9 + 8799 + 20230 + 109080 + 112027 + ...) ~ 240000 times
 
-The third possible breakdown is avoiding breakdown.
+
+**Take third possible breakdown (no breakdown)**
+
 Frequency evaluation:
 - 勇 appears 12432 times
+
+
+**Result**
 
 Looking at frequency evaluations, the most commonly seen pattern is breakdown with (甬 + 力),
 because its members get more apperances as kanji.
