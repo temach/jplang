@@ -1,13 +1,18 @@
+# Keywords for kanji onyomi readings
 
-Sources for deciding on ONYOMI keywords are in resources/ directory:
-- cmudict.dict - English phonetical transcriptions, (http://www.speech.cs.cmu.edu/cgi-bin/cmudict)
-- english-long-frequency.txt  - English words ordered by frequency of use, taken from subtitles (https://github.com/nachocab/words-by-frequency):
+Sources used to decide the most appropriate ONYOMI keywords are in `resources/` directory:
+- cmudict.dict contains English phonetical transcriptions (http://www.speech.cs.cmu.edu/cgi-bin/cmudict)
+- english-long-frequency.txt contains English words ordered by frequency of use, taken from subtitles (https://github.com/nachocab/words-by-frequency):
 
-The derived onyomi keywords are in file:
+The resuling onyomi keywords in plain text format are in file:
 - onyomi-keywords.txt
 
+The results are also packaged as Anki deck in:
+- resources/onyomi-keywords.apkg
 
-Guidelines for choosing onyomi keywords:
+
+### Guidelines for choosing onyomi keywords
+
 - Try to use english words that are not in 10000 most common words (so normal words would not be mistaken for onyomi keywords)
 - The combination of english letters OW in the onyomi keyword represent "ou" japanese sound. For example HOWling = hou
 - The cobination of english letters UCK represent "yaku" japanese sound. For example BUCKweed = byaku and RUCKsack = ryaku
@@ -23,7 +28,8 @@ x -> Z
 For example onyomi keyword for KYO begins with letter "C" instead of "K".
 
 
-Additional notes:
+### Additional notes
+
 Vowels are not good to use at onyomi keyword's end.
 Letters that can be part of a onyomi keyword can not be used to end a onyomi keyword.
 For example using word "kits" for sound KI is bad, because it sounds like its for KITSU.
@@ -89,8 +95,9 @@ Z 	zee		Z IY
 ZH	seizure	S IY ZH ER
 
 
-Practical commands for finding possible onyomi keywords in the dictionaries:
+### Practical commands for finding possible onyomi keywords in the dictionaries
 
+```
 # grep -P ' JH I.?.? (\w )?K' cmudict.dict 
 # egrep -i '^meets' cmudict.dict 
 # egrep -i '  M A.?.? [^tnk]' cmudict.dict  | column -t
@@ -101,12 +108,17 @@ Practical commands for finding possible onyomi keywords in the dictionaries:
 # egrep -i '^коу' russian-words.txt
 
 # egrep -n -i  ^bow english-long-frequency.txt 
+```
 
 What letter combinations make the SH sound? Knowing this you can find unexpected
 but meaningful patterns to use, e.g. letters "sch" make the SH sound.
+```
 # egrep '  SH' cmudict.dict | awk '{ print substr($1, 0, 3) }' | sort | uniq -c
+```
 
 What sound do the words that start with letter T normally make in english?
 Knowing this helps decide which pattern to allocate to the most common sounds.
+```
 # egrep '^t' cmudict.dict | awk '{ print $2 " " substr($3, 1, 1) }' | sort | uniq -c
+```
 
