@@ -153,7 +153,7 @@ Radical is kanji with no ONYOMI and no sub-kanji. Regarding the breakdown it dow
 
 There can be different ways to break kanji.
 
-To decide:
+To find the best breakdown:
 1. Find possible breakdowns
 2. For each component in a breakdown find its possible appearances (as own kanji or sub-kanji in another kanji)
 3. For each appearance find how frequently this separate identity is enforced, i.e. frequency of own kanji, frequency of kanji with this redical.
@@ -171,9 +171,9 @@ Investigate how the components are used (https://thekanjimap.com/index.html):
 男 appears on its own and in 虜 
 
 Frequency evaluation (http://scriptin.github.io/kanji-frequency/):
-- 甬appears 9 times
-- 男appears 95900 times
-- 虜appears 995 times
+- 甬 appears 9 times
+- 男 appears 95900 times
+- 虜 appears 995 times
 
 In total components appear (9 + 95900 + 995) ~ 97000 times
 
@@ -183,11 +183,11 @@ Investigate how the components are used (https://thekanjimap.com/index.html):
 力 appears on its own and in about 24 other kanji
 
 Frequency evaluation:
-- 甬appears 9 times
-- 踊appears 8799 times
-- 痛appears 20230 times
-- 通appears 109080 times
-- 力appears 112027 times
+- 甬 appears 9 times
+- 踊 appears 8799 times
+- 痛 appears 20230 times
+- 通 appears 109080 times
+- 力 appears 112027 times
 - ....
 
 In total components appear (9 + 8799 + 20230 + 109080 + 112027 + ...) ~ 240000 times
