@@ -6,7 +6,7 @@ English words ordered by frequency of use, taken from subtitles (https://github.
 - english-long-frequency.txt
 
 Example onyomi keywords derived from above:
-- freq-mnemonics.txt
+- onyomi-keywords.txt
 
 
 CMU dictionary mapping of sound to ascii:
@@ -18,8 +18,8 @@ How to find onyomi keywords, example commands:
 # egrep -i '^meets' cmudict.dict 
 # egrep -i '  M A.?.? [^tnk]' cmudict.dict  | column -t
 
-# egrep -i '= j' freq-mnemonics.txt 
-# egrep -i '= t' freq-mnemonics.txt | awk -F= '{print $4 " \t " $5}' | sort | column -t
+# egrep -i '= j' onyomi-keywords.txt 
+# egrep -i '= t' onyomi-keywords.txt | awk -F= '{print $4 " \t " $5}' | sort | column -t
 
 # egrep -i '^коу' russian-words.txt
 
