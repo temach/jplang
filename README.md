@@ -1,14 +1,14 @@
-# Keywords for kanji onyomi readings
-
-Sources used to decide the most appropriate ONYOMI keywords are in `resources/` directory:
-- cmudict.dict contains English phonetical transcriptions (http://www.speech.cs.cmu.edu/cgi-bin/cmudict)
-- english-long-frequency.txt contains English words ordered by frequency of use, taken from subtitles (https://github.com/nachocab/words-by-frequency):
+# Onyomi keywords
 
 The resuling onyomi keywords in plain text format are in file:
 - onyomi-keywords.txt
 
 The results are also packaged as Anki deck in:
 - resources/onyomi-keywords.apkg
+
+Sources used to decide the most appropriate ONYOMI keywords are in `resources/` directory:
+- cmudict.dict contains English phonetical transcriptions (http://www.speech.cs.cmu.edu/cgi-bin/cmudict)
+- english-long-frequency.txt contains English words ordered by frequency of use, taken from subtitles (https://github.com/nachocab/words-by-frequency):
 
 
 ### Guidelines for choosing onyomi keywords
