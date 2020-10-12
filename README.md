@@ -160,10 +160,13 @@ To find the best breakdown:
 3. Sum up all the frequencies.
 4. The breakdown with highest frequency wins. Its members most often appear as components/kanji.
 
-For components breakdown and usage: https://thekanjimap.com/index.html
-For frequency evaluation: http://scriptin.github.io/kanji-frequency/
+Useful links:
+- components breakdown and usage: https://thekanjimap.com/index.html
+- frequency evaluation: http://scriptin.github.io/kanji-frequency/
+- google quick draw for character recognition: https://www.chenyuho.com/project/handwritingjs/
 
-Example investigation:
+**Example investigation**
+
 What is the best way to break up 勇 ? Is it (マ + 男) OR (甬 + 力)?
 Maybe its best not to break it up at all, e.g. when the kanji appears much more often than its parts?
 
@@ -219,4 +222,11 @@ Each kanji needs a keyword.
 - it should be unique for each kanji.
 - it should reflect meaning of the kanji. 
 
+Most common english words can be taken from 1/3 million of google english corpus (https://norvig.com/ngrams/count_1w.txt)
 
+
+To find names for kanji that are just made up junk consider using a drawing-to-keyword mapping software:
+- Draw and get accociated words: https://github.com/engelsjk/web-demo-quickdraw-visualizer
+- Using QuickDraw and AutoDraw API together: https://github.com/engelsjk/python-test-googledraw-api
+- Angular app that words against google quick draw API: https://github.com/Jdruwe/drawing-recognition/blob/1d7f57a5ca5fa63b4f53ed50bae03c289ffb563a/src/app/guess/guess.component.ts#L42
+- The dataset behind quick draw: https://github.com/googlecreativelab/quickdraw-dataset#the-raw-moderated-dataset
