@@ -14,6 +14,7 @@ Sources used to decide the most appropriate ONYOMI keywords are in `resources/` 
 - cmudict.dict contains English phonetical transcriptions (http://www.speech.cs.cmu.edu/cgi-bin/cmudict)
 - english-long-frequency.txt contains English words ordered by frequency of use, taken from subtitles (https://github.com/nachocab/words-by-frequency):
 - google-english-corpus.txt contains 1/3 of a million words from google english corpus ordered by frequency of use (https://norvig.com/ngrams/count_1w.txt) 
+- kanjidic2.xml is a kanji dictionary with frequency counts and all onyomi for each kanji (http://www.edrdg.org/wiki/index.php/KANJIDIC_Project)
 
 
 ### Guidelines for choosing onyomi keywords
@@ -107,10 +108,11 @@ ZH	seizure		S IY ZH ER
 ```
 
 
-### Tools to ease the task of finding possible onyomi keywords in the dictionaries
+### Tools 
 
-See the files in tools/ folder. For onyomi-keywords the tools boil down to grepping the english dictionaries for spelling, pronunciation and frequency of use data.
-To build and verify the anki decks, also see the python scripts in the tools/ directory.
+- Python script to extract and rank onyomi of the common kanji (kanji that are marked as "frequent" in kanjidic2.xml)
+- Markdown file with snippets showing how to grep dictionary files looking for good keywords keeping in mind spelling, pronunciation and frequency of use.
+- Python scripts to help build the anki deck.
 
 
 # Kanji breakdown
