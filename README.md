@@ -115,11 +115,42 @@ ZH	seizure		S IY ZH ER
 - Python scripts to help build the anki deck.
 
 
+# Kanji keywords
+
+Each kanji needs a keyword. 
+- it should NOT be one of 10000 most common english words.
+- it should NOT be one of the onyomi keywords.
+- it should be unique for each kanji.
+- it should reflect meaning of the kanji. 
+
+Most common english words can be taken from 1/3 million of google english corpus (https://norvig.com/ngrams/count_1w.txt)
+
+Previous works:
+- kanji keywords scriptin github (https://github.com/scriptin/kanji-keys)
+
+### Useful resources
+
+To find names for kanji that are just made up junk consider using a drawing-to-keyword mapping software:
+- Draw and get accociated words: https://github.com/engelsjk/web-demo-quickdraw-visualizer
+- Using QuickDraw and AutoDraw API together: https://github.com/engelsjk/python-test-googledraw-api
+- Angular app that words against google quick draw API: https://github.com/Jdruwe/drawing-recognition/blob/1d7f57a5ca5fa63b4f53ed50bae03c289ffb563a/src/app/guess/guess.component.ts#L42
+- The dataset behind quick draw: https://github.com/googlecreativelab/quickdraw-dataset#the-raw-moderated-dataset
+
+
 # Kanji breakdown
 
 Radical is kanji with no ONYOMI and no sub-kanji.
 Regarding the breakdown it dows not matter if the element is a kanji, a radical or a handmade drawing.
 So against common usage lets call everything just kanji.
+
+Extremely useful:
+- KanjiBreak by fasiha (https://fasiha.github.io/post/kanjibreak/)
+
+### Useful resources
+
+Previous works on kanji breakdown:
+- List-of-200-radicals-used-in-Hanyu-Da-Cidian.pdf breakdown for chinese characters
+- kradfile-u this is like kradfile but improved breakdowns and done in unicode!
 
 
 ### Methodology
@@ -185,21 +216,3 @@ Frequency evaluation:
 
 Looking at frequency evaluations, the most commonly seen pattern is breakdown with (甬 + 力),
 because its members get more apperances as kanji.
-
-
-# Kanji keywords
-
-Each kanji needs a keyword. 
-- it should NOT be one of 10000 most common english words.
-- it should NOT be one of the onyomi keywords.
-- it should be unique for each kanji.
-- it should reflect meaning of the kanji. 
-
-Most common english words can be taken from 1/3 million of google english corpus (https://norvig.com/ngrams/count_1w.txt)
-
-
-To find names for kanji that are just made up junk consider using a drawing-to-keyword mapping software:
-- Draw and get accociated words: https://github.com/engelsjk/web-demo-quickdraw-visualizer
-- Using QuickDraw and AutoDraw API together: https://github.com/engelsjk/python-test-googledraw-api
-- Angular app that words against google quick draw API: https://github.com/Jdruwe/drawing-recognition/blob/1d7f57a5ca5fa63b4f53ed50bae03c289ffb563a/src/app/guess/guess.component.ts#L42
-- The dataset behind quick draw: https://github.com/googlecreativelab/quickdraw-dataset#the-raw-moderated-dataset
