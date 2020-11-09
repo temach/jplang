@@ -41,10 +41,10 @@
  chun  =  チュン  =  ちゅん  =  CHOON / CHUNk / TUNning = 1171 
  chuu  =  チュウ  =  ちゅう  =  CHUbaka / CHOOsing / CHEW = 28315 
  da  =  ダ  =  だ  =  DAzzle = 14974 
- dai  =  ダイ  =  だい  =  DIving = 29111 
+ dai  =  ダイ  =  だい  =  DAIkon = 29111 
  daku  =  ダク  =  だく  =  DRACUla = 2627 
  dan  =  ダン  =  だん  =  glenn DANzing = 22897 
- dasu  =  ダス  =  だす  =  DAZZle = 2761 
+ dasu  =  ダス  =  だす  =  andrew DASUburg = 2761 
  datsu  =  ダツ  =  だつ  =  DARTS = 4244 
  de  =  デ  =  で  =  DEmolish = 3250 
  dei  =  デイ  =  でい  =  DEja vu = 1411 
