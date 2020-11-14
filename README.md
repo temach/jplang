@@ -5,7 +5,7 @@ The files related to onyomi-keywords reside inside "onyomi-keywords/" directory.
 The onyomi keywords in plain text format are in file:
 - onyomi-keywords.txt
 
-The results are also packaged as Anki deck in "results/" directory.
+The results are also packaged as Anki decks (.txt and .apkg)
 
 
 ### Useful resources
