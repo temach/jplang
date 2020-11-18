@@ -99,7 +99,20 @@ update msg model =
         PostedKeyword result ->
             case result of
                 Ok body ->
-                    update NextWorkElement { model | userMessage = body }
+                    let
+                        newElement =
+                            { kanji = model.kanji
+                            , keyword = model.keyword
+                            , notes = model.notes
+                            }
+
+                        newWork =
+                            updateWorkElement model.currentWork newElement model.work
+
+                        newModel =
+                            { model | work = newWork }
+                    in
+                    update NextWorkElement { newModel | userMessage = body }
 
                 Err _ ->
                     ( { model | userMessage = "Error submitting keyword. Details unknown." }, Cmd.none )
@@ -169,6 +182,19 @@ chooseWorkElement index model =
         , keyword = selected.keyword
         , notes = selected.notes
     }
+
+
+updateWorkElement : Int -> WorkElement -> List WorkElement -> List WorkElement
+updateWorkElement index newElement list =
+    let
+        updator i elem =
+            if i == index then
+                newElement
+
+            else
+                elem
+    in
+    List.indexedMap updator list
 
 
 keywordFrequencyRender : Model -> String

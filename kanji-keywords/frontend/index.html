@@ -6276,6 +6276,14 @@ var $author$project$Main$submitKeyword = function (model) {
 			url: 'http://localhost:9000/api/submit'
 		});
 };
+var $author$project$Main$updateWorkElement = F3(
+	function (index, newElement, list) {
+		var updator = F2(
+			function (i, elem) {
+				return _Utils_eq(i, index) ? newElement : elem;
+			});
+		return A2($elm$core$List$indexedMap, updator, list);
+	});
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		update:
@@ -6289,9 +6297,14 @@ var $author$project$Main$update = F2(
 					var result = msg.a;
 					if (result.$ === 'Ok') {
 						var body = result.a;
+						var newElement = {kanji: model.kanji, keyword: model.keyword, notes: model.notes};
+						var newWork = A3($author$project$Main$updateWorkElement, model.currentWork, newElement, model.work);
+						var newModel = _Utils_update(
+							model,
+							{work: newWork});
 						var $temp$msg = $author$project$Main$NextWorkElement,
 							$temp$model = _Utils_update(
-							model,
+							newModel,
 							{userMessage: body});
 						msg = $temp$msg;
 						model = $temp$model;
