@@ -6156,6 +6156,9 @@ var $author$project$Main$subscriptions = function (_v0) {
 	return $elm$core$Platform$Sub$none;
 };
 var $author$project$Main$NextWorkElement = {$: 'NextWorkElement'};
+var $author$project$Main$SelectWorkElement = function (a) {
+	return {$: 'SelectWorkElement', a: a};
+};
 var $elm$core$List$drop = F2(
 	function (n, list) {
 		drop:
@@ -6290,9 +6293,13 @@ var $author$project$Main$update = F2(
 		while (true) {
 			switch (msg.$) {
 				case 'SubmitKeywordClick':
-					return _Utils_Tuple2(
+					return ($elm$core$String$length(model.keyword) > 0) ? _Utils_Tuple2(
 						model,
-						$author$project$Main$submitKeyword(model));
+						$author$project$Main$submitKeyword(model)) : _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{userMessage: 'Error: keyword length must be non-zero'}),
+						$elm$core$Platform$Cmd$none);
 				case 'PostedKeyword':
 					var result = msg.a;
 					if (result.$ === 'Ok') {
@@ -6302,13 +6309,19 @@ var $author$project$Main$update = F2(
 						var newModel = _Utils_update(
 							model,
 							{work: newWork});
-						var $temp$msg = $author$project$Main$NextWorkElement,
-							$temp$model = _Utils_update(
-							newModel,
-							{userMessage: body});
-						msg = $temp$msg;
-						model = $temp$model;
-						continue update;
+						if ($elm$core$String$length(body) > 0) {
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{userMessage: 'Error submitting keyword. Details:' + body}),
+								$elm$core$Platform$Cmd$none);
+						} else {
+							var $temp$msg = $author$project$Main$NextWorkElement,
+								$temp$model = newModel;
+							msg = $temp$msg;
+							model = $temp$model;
+							continue update;
+						}
 					} else {
 						return _Utils_Tuple2(
 							_Utils_update(
@@ -6317,10 +6330,11 @@ var $author$project$Main$update = F2(
 							$elm$core$Platform$Cmd$none);
 					}
 				case 'NextWorkElement':
-					var newModel = A2($author$project$Main$chooseWorkElement, model.currentWork + 1, model);
-					return ($elm$core$String$length(newModel.keyword) > 1) ? _Utils_Tuple2(
-						newModel,
-						$author$project$Main$getKeywordFrequency(newModel.keyword)) : _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
+					var $temp$msg = $author$project$Main$SelectWorkElement(model.currentWork + 1),
+						$temp$model = model;
+					msg = $temp$msg;
+					model = $temp$model;
+					continue update;
 				case 'SelectWorkElement':
 					var index = msg.a;
 					var newModel = A2($author$project$Main$chooseWorkElement, index, model);
@@ -6467,14 +6481,14 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 			$elm$json$Json$Encode$string(string));
 	});
 var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
-var $author$project$Main$SelectWorkElement = function (a) {
-	return {$: 'SelectWorkElement', a: a};
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Main$renderKeywordSuggestions = function (model) {
+	return $elm$html$Html$text('test word');
 };
 var $elm$html$Html$span = _VirtualDom_node('span');
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$renderSingleWorkElement = F2(
 	function (index, elem) {
@@ -6594,7 +6608,7 @@ var $author$project$Main$render = function (model) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
-						A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(230, 230, 230)')
+						A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(250, 250, 250)')
 					]),
 				_List_fromArray(
 					[
@@ -6665,6 +6679,64 @@ var $author$project$Main$render = function (model) {
 										$elm$html$Html$Events$onInput($author$project$Main$NotesInput)
 									]),
 								_List_Nil)
+							]))
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(230, 230, 230)'),
+						A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
+						A2($elm$html$Html$Attributes$style, 'vertical-align', 'top')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
+								A2($elm$html$Html$Attributes$style, 'width', '500px')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$span,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'padding', '0 50px')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Keyword suggestion')
+									])),
+								A2(
+								$elm$html$Html$span,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'padding', '0 10px')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Corpus')
+									])),
+								A2(
+								$elm$html$Html$span,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'padding', '0 10px')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Subs')
+									]))
+							])),
+						A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$author$project$Main$renderKeywordSuggestions(model)
 							]))
 					])),
 				A2(

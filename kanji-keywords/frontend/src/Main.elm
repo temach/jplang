@@ -94,7 +94,11 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SubmitKeywordClick ->
-            ( model, submitKeyword model )
+            if String.length model.keyword > 0 then
+                ( model, submitKeyword model )
+
+            else
+                ( { model | userMessage = "Error: keyword length must be non-zero" }, Cmd.none )
 
         PostedKeyword result ->
             case result of
@@ -112,21 +116,17 @@ update msg model =
                         newModel =
                             { model | work = newWork }
                     in
-                    update NextWorkElement { newModel | userMessage = body }
+                    if String.length body > 0 then
+                        ( { model | userMessage = "Error submitting keyword. Details:" ++ body }, Cmd.none )
+
+                    else
+                        update NextWorkElement newModel
 
                 Err _ ->
                     ( { model | userMessage = "Error submitting keyword. Details unknown." }, Cmd.none )
 
         NextWorkElement ->
-            let
-                newModel =
-                    chooseWorkElement (model.currentWork + 1) model
-            in
-            if String.length newModel.keyword > 1 then
-                ( newModel, getKeywordFrequency newModel.keyword )
-
-            else
-                ( newModel, Cmd.none )
+            update (SelectWorkElement (model.currentWork + 1)) model
 
         SelectWorkElement index ->
             let
@@ -328,11 +328,16 @@ renderWorkElements model =
         (List.indexedMap renderSingleWorkElement model.work)
 
 
+renderKeywordSuggestions : Model -> Html Msg
+renderKeywordSuggestions model =
+    text "test word"
+
+
 render : Model -> Html Msg
 render model =
     div []
         [ div
-            [ style "background-color" "rgb(230, 230, 230)"
+            [ style "background-color" "rgb(250, 250, 250)"
             ]
             [ div [] [ text model.userMessage ]
             , span [] [ text (" " ++ model.kanji ++ " ") ]
@@ -340,6 +345,21 @@ render model =
             , span [] [ text (" " ++ keywordFrequencyRender model ++ " ") ]
             , span [] [ button [ onClick SubmitKeywordClick ] [ text "Submit" ] ]
             , span [] [ input [ placeholder "Notes", value model.notes, onInput NotesInput ] [] ]
+            ]
+        , div
+            [ style "background-color" "rgb(230, 230, 230)"
+            , style "display" "inline-block"
+            , style "vertical-align" "top"
+            ]
+            [ div
+                [ style "display" "inline-block"
+                , style "width" "500px"
+                ]
+                [ span [ style "padding" "0 50px" ] [ text "Keyword suggestion" ]
+                , span [ style "padding" "0 10px" ] [ text "Corpus" ]
+                , span [ style "padding" "0 10px" ] [ text "Subs" ]
+                ]
+            , div [] [ renderKeywordSuggestions model ]
             ]
         , div
             [ style "background-color" "rgb(210, 210, 210)"

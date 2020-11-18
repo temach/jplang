@@ -66,7 +66,7 @@ def submit():
         DB.commit()
     except Exception as e:
         # return 2xx responce because too lazy to unwrap errors in Elm
-        return HTTPResponse(status=202, body="Error submitting keyword. Details: {}".format(e))
+        return HTTPResponse(status=202, body="{}".format(e))
 
     # return a fake body because too lazy to unwrap properly in Elm
     return HTTPResponse(status=200, body="")
