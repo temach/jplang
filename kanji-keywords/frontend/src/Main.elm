@@ -1,20 +1,12 @@
 module Main exposing (..)
 
--- Press buttons to increment and decrement a counter.
---
--- Read how it works:
---   https://guide.elm-lang.org/architecture/buttons.html
---
--- import Html.Styled as HTML exposing (Html, button, div, input, span, styled, text, toUnstyled)
--- import Html.Styled.Attributes exposing (css, placeholder, value)
--- import Html.Styled.Events exposing (onClick, onInput)
-
 import Browser exposing (Document)
 import Css
 import Debug exposing (log)
-import Html exposing (Html, button, div, input, span, text)
-import Html.Attributes exposing (placeholder, style, value)
-import Html.Events exposing (onClick, onInput)
+import Html exposing (Attribute, Html, button, div, input, li, ol, span, text)
+import Html.Attributes exposing (attribute, placeholder, style, value)
+import Html.Events exposing (on, onClick, onInput)
+import Html.Events.Extra exposing (targetValueIntParse)
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -128,7 +120,11 @@ update msg model =
                 newModel =
                     chooseWorkElement index model
             in
-            ( newModel, Cmd.none )
+            if String.length newModel.keyword > 1 then
+                ( newModel, getKeywordFrequency newModel.keyword )
+
+            else
+                ( newModel, Cmd.none )
 
         KeywordInput word ->
             if String.length word >= 2 then
@@ -264,18 +260,46 @@ view model =
     Document "Kanji" [ render model ]
 
 
-
--- let
---     doc =
---         { title = "Kanji"
---         , body = [ render model ]
---         }
--- in
+renderSingleWorkElement : Int -> WorkElement -> Html Msg
+renderSingleWorkElement index elem =
+    div
+        [ style "padding" "2px 0"
+        ]
+        [ span
+            [ style "display" "inline-block"
+            , style "width" "45px"
+            , value (String.fromInt index)
+            ]
+            [ text (String.fromInt index ++ ".") ]
+        , span
+            [ style "padding" "0 10px 0 0"
+            , style "background-color" "rgb(210, 200, 200)"
+            ]
+            [ text elem.kanji ]
+        , span
+            [ style "display" "inline-block"
+            , style "width" "120px"
+            , style "background-color" "rgb(200, 210, 200)"
+            ]
+            [ text elem.keyword ]
+        , span
+            [ style "display" "inline-block"
+            , style "min-width" "150px"
+            , style "background-color" "rgb(200, 200, 210)"
+            ]
+            [ text elem.notes ]
+        ]
 
 
 renderWorkElements : Model -> Html Msg
 renderWorkElements model =
-    text "hellow world"
+    div
+        [ style "display" "inline-block"
+        , style "height" "500px"
+        , style "overflow" "scroll"
+        , on "click" (Decode.map SelectWorkElement targetValueIntParse)
+        ]
+        (List.indexedMap renderSingleWorkElement model.work)
 
 
 render : Model -> Html Msg
@@ -293,6 +317,7 @@ render model =
             ]
         , div
             [ style "background-color" "rgb(210, 210, 210)"
+            , style "display" "inline-block"
             ]
             [ div [] [ text "Work Elements Progress" ]
             , div [] [ renderWorkElements model ]
