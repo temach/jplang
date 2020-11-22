@@ -36,13 +36,25 @@ type alias WorkElement =
     }
 
 
+type alias KeyCandidate =
+    { word : String
+    , freq : List Int
+    }
+
+
+type alias Frequency =
+    List Int
+
+
 type alias Model =
-    { kanji : String
+    { currentWork : WorkElement
+    , kanji : String
     , keyword : String
     , notes : String
     , freq : List Int
     , work : List WorkElement
-    , currentWork : Int
+    , suggestions : List KeyCandidate
+    , currentWorkIndex : Int
     , userMessage : String
     }
 
@@ -51,14 +63,16 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     let
         model =
-            { kanji = ""
+            { curwork = { kanji = "", keyword = "", notes = "" }
+            , kanji = ""
             , keyword = "loading..."
             , notes = ""
             , freq = []
+            , suggestions = []
 
             -- , work = [ WorkElement "a" "first" "", WorkElement "b" "second" "asd", WorkElement "c" "third" "" ]
             , work = []
-            , currentWork = -1
+            , currentWorkIndex = -1
             , userMessage = ""
             }
     in
@@ -81,26 +95,26 @@ subscriptions _ =
 
 type Msg
     = NextWorkElement
-    | SubmitKeywordClick
     | SelectWorkElement Int
     | KeywordInput String
     | NotesInput String
-    | GotWorkElements (Result Http.Error (List WorkElement))
-    | GotKeywordFrequency (Result Http.Error (List Int))
-    | PostedKeyword (Result Http.Error String)
+    | KeywordSubmitClick
+    | KeywordSubmitReady (Result Http.Error String)
+    | WorkElementsReady (Result Http.Error (List WorkElement))
+    | KeywordFrequencyReady (Result Http.Error (List Int))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SubmitKeywordClick ->
+        KeywordSubmitClick ->
             if String.length model.keyword > 0 then
                 ( model, submitKeyword model )
 
             else
                 ( { model | userMessage = "Error: keyword length must be non-zero" }, Cmd.none )
 
-        PostedKeyword result ->
+        KeywordSubmitReady result ->
             case result of
                 Ok body ->
                     let
@@ -111,7 +125,7 @@ update msg model =
                             }
 
                         newWork =
-                            updateWorkElement model.currentWork newElement model.work
+                            updateWorkElement model.currentWorkIndex newElement model.work
 
                         newModel =
                             { model | work = newWork }
@@ -126,7 +140,7 @@ update msg model =
                     ( { model | userMessage = "Error submitting keyword. Details unknown." }, Cmd.none )
 
         NextWorkElement ->
-            update (SelectWorkElement (model.currentWork + 1)) model
+            update (SelectWorkElement (model.currentWorkIndex + 1)) model
 
         SelectWorkElement index ->
             let
@@ -149,7 +163,7 @@ update msg model =
         NotesInput word ->
             ( { model | notes = word }, Cmd.none )
 
-        GotWorkElements result ->
+        WorkElementsReady result ->
             case result of
                 Ok elements ->
                     let
@@ -161,7 +175,7 @@ update msg model =
                 Err _ ->
                     ( { model | userMessage = "Error getting work items" }, Cmd.none )
 
-        GotKeywordFrequency result ->
+        KeywordFrequencyReady result ->
             case result of
                 Ok freq ->
                     ( { model | freq = freq, userMessage = "" }, Cmd.none )
@@ -177,7 +191,7 @@ chooseWorkElement index model =
             get index model.work
     in
     { model
-        | currentWork = index
+        | currentWorkIndex = index
         , kanji = selected.kanji
         , keyword = selected.keyword
         , notes = selected.notes
@@ -232,7 +246,7 @@ getWorkElements : Cmd Msg
 getWorkElements =
     Http.get
         { url = "http://localhost:9000/api/work"
-        , expect = Http.expectJson GotWorkElements workElementsDecoder
+        , expect = Http.expectJson WorkElementsReady workElementsDecoder
         }
 
 
@@ -248,9 +262,17 @@ workElementsDecoder =
 
 getKeywordFrequency : String -> Cmd Msg
 getKeywordFrequency keyword =
-    Http.get
+        Http.get
         { url = "http://localhost:9000/api/frequency/" ++ keyword
-        , expect = Http.expectJson GotKeywordFrequency keywordFrequencyDecoder
+        , expect = Http.expectJson KeywordFrequencyReady 
+        }
+
+
+getKeywordSuggestions : String -> Cmd Msg
+getKeywordSuggestions kanji =
+    Http.get
+        { url = "http://localhost:9000/api/suggestions/" ++ kanji
+        , expect = Http.expectJson KeywordFrequencyReady keywordFrequencyDecoder
         }
 
 
@@ -273,7 +295,7 @@ submitKeyword model =
     Http.post
         { url = "http://localhost:9000/api/submit"
         , body = Http.jsonBody (submitKeywordEncoder model)
-        , expect = Http.expectString PostedKeyword
+        , expect = Http.expectString KeywordSubmitReady
         }
 
 
@@ -343,7 +365,7 @@ render model =
             , span [] [ text (" " ++ model.kanji ++ " ") ]
             , span [] [ input [ placeholder "Keyword", value model.keyword, onInput KeywordInput ] [] ]
             , span [] [ text (" " ++ keywordFrequencyRender model ++ " ") ]
-            , span [] [ button [ onClick SubmitKeywordClick ] [ text "Submit" ] ]
+            , span [] [ button [ onClick KeywordSubmitClick ] [ text "Submit" ] ]
             , span [] [ input [ placeholder "Notes", value model.notes, onInput NotesInput ] [] ]
             ]
         , div
