@@ -7,6 +7,7 @@ import json
 import sqlite3
 import os.path
 import pdb
+import re
 
 
 @get("/")
@@ -20,17 +21,66 @@ def version():
     return json.dumps(data)
 
 
-@get("/api/frequency/<keyword>")
+def get_en_freq(word):
+    r = re.compile("^{}$".format(word), re.IGNORECASE)
+    for icorpus, e in enumerate(CORPUS):
+        if r.match(e):
+            break
+
+    for isubs, e in enumerate(SUBS):
+        if r.match(e):
+            break
+
+    if icorpus == len(CORPUS)-1:
+        icorpus = -1
+
+    if isubs == len(SUBS)-1:
+        isubs = -1
+
+    return (icorpus, isubs)
+    # try:
+    #     return (CORPUS.index(word), SUBS.index(word))
+    # except ValueError:
+    #     return (-1, -1)
+
+
+@get("/api/suggestions/<kanji>")
+def suggestions(kanji):
+    result = []
+
+    u = SCRIPTIN[kanji]["uniq"]
+    item = {"word": u,
+            "freq": get_en_freq(u),
+            "origin": "scriptin-uniq"
+            }
+    result.append(item)
+
+    for k in SCRIPTIN[kanji]["keys"]:
+        item = {"word": k,
+                "freq": get_en_freq(k),
+                "origin": "scriptin-keys"
+                }
+        result.append(item)
+
+    for m in KANJIDIC[kanji]:
+        item = {"word": m,
+                "freq": get_en_freq(m),
+                "origin": "kanjidic"
+                }
+        result.append(item)
+
+    pprint(result)
+
+    return json.dumps(result)
+
+
+@ get("/api/frequency/<keyword>")
 def keyword_frequency(keyword):
-    try:
-        freq = (CORPUS.index(keyword), SUBS.index(keyword))
-    except ValueError:
-        freq = (-1, -1)
     # return HTTPResponse(status=200, body=json.dumps(freq))
-    return json.dumps(freq)
+    return json.dumps(get_en_freq(keyword))
 
 
-@get("/api/work")
+@ get("/api/work")
 def work():
     c = DB.cursor()
     c.execute("SELECT * FROM kanjikeywords ORDER BY kanji;")
@@ -96,6 +146,8 @@ if __name__ == "__main__":
     SUBS = []
     ONYOMI = []
     WORK = []
+    KANJIDIC = []
+    SCRIPTIN = []
     with open("../resources/english-from-gogle-corpus-by-freq.txt") as google:
         for line in google:
             CORPUS.append(line.split()[0].strip())
@@ -113,10 +165,18 @@ if __name__ == "__main__":
     with open("../resources/kanji-by-freq.json") as kanji:
         WORK = list(json.load(kanji).keys())
 
+    with open("../resources/keywords-kanjidic2-meanings.json") as kanjidic:
+        KANJIDIC = json.load(kanjidic)
+
+    with open("../resources/keywords-scriptin-kanji-keys.json") as scriptin:
+        SCRIPTIN = json.load(scriptin)
+
     pprint(ONYOMI[:50])
     pprint(CORPUS[:50])
     pprint(SUBS[:50])
     pprint(WORK[:50])
+    pprint(list(KANJIDIC.items())[:50])
+    pprint(list(SCRIPTIN.items())[:50])
 
     port = 9000
     print("Running bottle server on port {}".format(port))
