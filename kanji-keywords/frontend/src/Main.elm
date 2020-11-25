@@ -59,7 +59,9 @@ type alias Model =
     , currentWorkIndex : Int
     , currentHighlightWorkElementIndex : Int
     , currentHighlightSuggestionIndex : Int
+    , currentHighlightHistoryIndex : Int
     , userMessage : String
+    , history : List String
     }
 
 
@@ -79,7 +81,9 @@ init _ =
             , currentWorkIndex = -1
             , currentHighlightWorkElementIndex = -1
             , currentHighlightSuggestionIndex = -1
+            , currentHighlightHistoryIndex = -1
             , userMessage = ""
+            , history = []
             }
     in
     -- update NextWorkElement model
@@ -112,6 +116,10 @@ type
     | UnHighlightSuggestion Int
     | SortSuggestionsByFreq
     | SortSuggestionsByOrigin
+      -- history
+    | SelectHistory Int
+    | HighlightHistory Int
+    | UnHighlightHistory Int
       -- inputs
     | KeywordInput String
     | NotesInput String
@@ -187,8 +195,14 @@ update msg model =
                 newSuggestion =
                     Maybe.withDefault (KeyCandidate "Error" "Error" [ 0 ]) (get index model.suggestions)
 
+                newCandidateHistory =
+                    model.history ++ [ model.keyword ]
+
                 newModel =
-                    { model | keyword = newSuggestion.word }
+                    { model
+                        | keyword = newSuggestion.word
+                        , history = historyFilter newCandidateHistory
+                    }
             in
             ( newModel, getKeywordFrequency newModel.keyword )
 
@@ -202,6 +216,32 @@ update msg model =
             else
                 ( model, Cmd.none )
 
+        SelectHistory index ->
+            let
+                newKeyword =
+                    Maybe.withDefault "Error!" (get index model.history)
+
+                newCandidateHistory =
+                    model.history ++ [ model.keyword ]
+
+                newModel =
+                    { model
+                        | keyword = newKeyword
+                        , history = historyFilter newCandidateHistory
+                    }
+            in
+            ( newModel, getKeywordFrequency newModel.keyword )
+
+        HighlightHistory index ->
+            ( { model | currentHighlightHistoryIndex = index }, Cmd.none )
+
+        UnHighlightHistory index ->
+            if model.currentHighlightHistoryIndex == index then
+                ( { model | currentHighlightHistoryIndex = -1 }, Cmd.none )
+
+            else
+                ( model, Cmd.none )
+
         SortSuggestionsByFreq ->
             ( { model | suggestions = List.reverse (List.sortWith compareSuggestions model.suggestions) }, Cmd.none )
 
@@ -209,11 +249,21 @@ update msg model =
             ( { model | suggestions = List.sortBy .origin model.suggestions }, Cmd.none )
 
         KeywordInput word ->
+            let
+                newCandidateHistory =
+                    model.history ++ [ model.keyword ]
+
+                newModel =
+                    { model
+                        | keyword = word
+                        , history = historyFilter newCandidateHistory
+                    }
+            in
             if String.length word >= 2 then
-                ( { model | keyword = word }, getKeywordFrequency word )
+                ( newModel, getKeywordFrequency word )
 
             else
-                ( { model | keyword = word }, Cmd.none )
+                ( newModel, Cmd.none )
 
         NotesInput word ->
             ( { model | notes = word }, Cmd.none )
@@ -251,17 +301,43 @@ update msg model =
                     ( { model | userMessage = "Error getting keyword suggections" }, Cmd.none )
 
 
+historyFilter : List String -> List String
+historyFilter list =
+    uniq (List.filter (\x -> String.length x > 2) list)
+
+
+uniq : List a -> List a
+uniq list =
+    case list of
+        [] ->
+            []
+
+        [ a ] ->
+            [ a ]
+
+        a :: b :: more ->
+            if a == b then
+                uniq (a :: more)
+
+            else
+                a :: uniq (b :: more)
+
+
 chooseWorkElement : Int -> Model -> Model
 chooseWorkElement index model =
     let
         selected =
             Maybe.withDefault (WorkElement "X" "Error" "An error occurred") (get index model.workElements)
+
+        newCandidateHistory =
+            model.history ++ [ model.keyword ]
     in
     { model
         | currentWorkIndex = index
         , kanji = selected.kanji
         , keyword = selected.keyword
         , notes = selected.notes
+        , history = historyFilter newCandidateHistory
     }
 
 
@@ -385,10 +461,10 @@ renderSingleWorkElement : Model -> Int -> WorkElement -> Html Msg
 renderSingleWorkElement model index elem =
     div
         [ style "padding" "2px 0"
+        , style "display" "flex"
         ]
         [ span
-            [ style "display" "inline-block"
-            , style "width" "50px"
+            [ style "flex" "0 0 50px"
             , value (String.fromInt index)
             , on "mouseenter" (Decode.map HighlightWorkElement targetValueIntParse)
             , on "mouseleave" (Decode.map UnHighlightWorkElement targetValueIntParse)
@@ -400,19 +476,17 @@ renderSingleWorkElement model index elem =
             ]
             [ text (String.fromInt index ++ ".") ]
         , span
-            [ style "padding" "0 10px 0 0"
+            [ style "flex" "0 0 30px"
             , style "background-color" "rgb(210, 200, 200)"
             ]
             [ text elem.kanji ]
         , span
-            [ style "display" "inline-block"
-            , style "width" "120px"
+            [ style "flex" "1 0 120px"
             , style "background-color" "rgb(200, 210, 200)"
             ]
             [ text elem.keyword ]
         , span
-            [ style "display" "inline-block"
-            , style "min-width" "150px"
+            [ style "flex" "0 1 150px"
             , style "background-color" "rgb(200, 200, 210)"
             ]
             [ text elem.notes ]
@@ -426,10 +500,7 @@ renderWorkElements model =
             renderSingleWorkElement model
     in
     div
-        [ style "display" "inline-block"
-        , style "height" "500px"
-        , style "overflow" "scroll"
-        , on "click" (Decode.map SelectWorkElement targetValueIntParse)
+        [ on "click" (Decode.map SelectWorkElement targetValueIntParse)
         ]
         (List.indexedMap partial model.workElements)
 
@@ -472,10 +543,10 @@ renderSingleSuggestion : Model -> Int -> KeyCandidate -> Html Msg
 renderSingleSuggestion model index suggest =
     div
         [ style "padding" "2px 0"
+        , style "display" "flex"
         ]
         [ span
-            [ style "display" "inline-block"
-            , style "width" "50px"
+            [ style "flex" "0 0 50px"
             , value (String.fromInt index)
             , on "mouseover" (Decode.map HighlightSuggestion targetValueIntParse)
             , on "mouseleave" (Decode.map UnHighlightSuggestion targetValueIntParse)
@@ -487,24 +558,16 @@ renderSingleSuggestion model index suggest =
             ]
             [ text (String.fromInt index ++ ".") ]
         , span
-            [ style "display" "inline-block"
-            , style "width" "100px"
-            ]
+            [ style "flex" "0 0 100px" ]
             [ text (suggest.origin ++ ": ") ]
         , span
-            [ style "display" "inline-block"
-            , style "width" "200px"
-            ]
+            [ style "flex" "1 0 200px" ]
             [ text suggest.word ]
         , span
-            [ style "display" "inline-block"
-            , style "width" "70px"
-            ]
+            [ style "flex" "0 0 70px" ]
             [ text (String.fromInt <| Maybe.withDefault 0 <| get 0 suggest.freq) ]
         , span
-            [ style "display" "inline-block"
-            , style "width" "70px"
-            ]
+            [ style "flex" "0 0 70px" ]
             [ text (String.fromInt <| Maybe.withDefault 0 <| get 1 suggest.freq) ]
         ]
 
@@ -516,12 +579,45 @@ renderKeywordSuggestions model =
             renderSingleSuggestion model
     in
     div
-        [ style "display" "inline-block"
-        , style "height" "300px"
-        , style "overflow" "scroll"
-        , on "click" (Decode.map SelectSuggestion targetValueIntParse)
+        [ on "click" (Decode.map SelectSuggestion targetValueIntParse)
         ]
         (List.indexedMap partial model.suggestions)
+
+
+renderSingleHistory : Model -> Int -> String -> Html Msg
+renderSingleHistory model index history =
+    div
+        [ style "padding" "2px 0"
+        , style "display" "flex"
+        ]
+        [ span
+            [ style "flex" "0 0 50px"
+            , value (String.fromInt index)
+            , on "mouseover" (Decode.map HighlightHistory targetValueIntParse)
+            , on "mouseleave" (Decode.map UnHighlightHistory targetValueIntParse)
+            , if model.currentHighlightHistoryIndex == index then
+                style "background-color" "rgb(250, 250, 250)"
+
+              else
+                style "background-color" ""
+            ]
+            [ text (String.fromInt index ++ ".") ]
+        , span
+            [ style "flex" "1 0 200px" ]
+            [ text history ]
+        ]
+
+
+renderHistory : Model -> Html Msg
+renderHistory model =
+    let
+        partial =
+            renderSingleHistory model
+    in
+    div
+        [ on "click" (Decode.map SelectHistory targetValueIntParse)
+        ]
+        (List.take 100 (List.reverse (List.indexedMap partial model.history)))
 
 
 render : Model -> Html Msg
@@ -540,44 +636,60 @@ render model =
             , span [] [ input [ placeholder "Notes", value model.notes, onInput NotesInput ] [] ]
             ]
 
-        -- Suggestions
+        -- central css grid container
         , div
-            [ style "background-color" "rgb(230, 230, 230)"
-            , style "display" "inline-block"
-            , style "vertical-align" "top"
+            [ style "display" "grid"
+            , style "grid-template-columns" "400px 250px 400px"
+            , style "grid-template-rows" "200px 300px"
             ]
-            [ div
-                [ style "display" "inline-block"
+            [ -- Suggestions
+              div
+                [ style "background-color" "rgb(230, 230, 230)"
+                , style "grid-column" "1 / 3"
+                , style "grid-row" "1 / 2"
+                , style "overflow" "auto"
                 ]
-                [ span
-                    [ style "display" "inline-block"
-                    , style "width" "350px"
-                    , onClick SortSuggestionsByOrigin
+                [ div
+                    [ style "display" "flex" ]
+                    [ span
+                        [ style "flex" "1 0 350px"
+                        , onClick SortSuggestionsByOrigin
+                        ]
+                        [ text "Keyword suggestion" ]
+                    , span
+                        [ style "flex" "0 0 70px"
+                        , onClick SortSuggestionsByFreq
+                        ]
+                        [ text "Corpus" ]
+                    , span
+                        [ style "flex" "0 0 70px"
+                        , onClick SortSuggestionsByFreq
+                        ]
+                        [ text "Subs" ]
                     ]
-                    [ text "Keyword suggestion" ]
-                , span
-                    [ style "display" "inline-block"
-                    , style "width" "70px"
-                    , onClick SortSuggestionsByFreq
-                    ]
-                    [ text "Corpus" ]
-                , span
-                    [ style "display" "inline-block"
-                    , style "width" "70px"
-                    , onClick SortSuggestionsByFreq
-                    ]
-                    [ text "Subs" ]
+                , renderKeywordSuggestions model
                 ]
-            , div [] [ renderKeywordSuggestions model ]
-            ]
 
-        -- WorkElement select
-        , div
-            [ style "background-color" "rgb(210, 210, 210)"
-            , style "display" "inline-block"
-            , style "vertical-align" "top"
-            ]
-            [ div [] [ text "Work Elements Progress" ]
-            , div [] [ renderWorkElements model ]
+            -- WorkElement select
+            , div
+                [ style "background-color" "rgb(210, 210, 210)"
+                , style "grid-column" "3 / 4"
+                , style "grid-row" "1 / 3"
+                , style "overflow" "auto"
+                ]
+                [ div [] [ text "Work Elements Progress" ]
+                , renderWorkElements model
+                ]
+
+            -- Candidate History
+            , div
+                [ style "background-color" "rgb(200, 200, 200)"
+                , style "grid-column" "2 / 3"
+                , style "grid-row" "2 / 3"
+                , style "overflow" "auto"
+                ]
+                [ div [] [ text "Keyword History" ]
+                , div [] [ renderHistory model ]
+                ]
             ]
         ]
