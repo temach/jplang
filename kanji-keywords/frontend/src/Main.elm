@@ -11,6 +11,7 @@ import Html.Events.Extra exposing (targetValueIntParse)
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Platform.Cmd as Cmd
 
 
 
@@ -174,11 +175,11 @@ update msg model =
                 newModel =
                     chooseWorkElement index model
             in
-            if String.length newModel.keyword > 1 then
+            if String.length newModel.keyword >= 2 then
                 ( newModel, Cmd.batch [ getKeywordSuggestions newModel.kanji, getKeywordFrequency newModel.keyword ] )
 
             else
-                ( newModel, Cmd.batch [ getKeywordSuggestions newModel.kanji ] )
+                ( { newModel | freq = [] }, Cmd.batch [ getKeywordSuggestions newModel.kanji ] )
 
         HighlightWorkElement index ->
             ( { model | currentHighlightWorkElementIndex = index }, Cmd.none )
@@ -230,7 +231,11 @@ update msg model =
                         , history = historyFilter newCandidateHistory
                     }
             in
-            ( newModel, getKeywordFrequency newModel.keyword )
+            if String.length newModel.keyword >= 2 then
+                ( newModel, getKeywordFrequency newModel.keyword )
+
+            else
+                ( { newModel | freq = [] }, Cmd.none )
 
         HighlightHistory index ->
             ( { model | currentHighlightHistoryIndex = index }, Cmd.none )
@@ -263,7 +268,7 @@ update msg model =
                 ( newModel, getKeywordFrequency word )
 
             else
-                ( newModel, Cmd.none )
+                ( { newModel | freq = [] }, Cmd.none )
 
         NotesInput word ->
             ( { model | notes = word }, Cmd.none )
@@ -286,7 +291,7 @@ update msg model =
                     ( { model | freq = freq, userMessage = "" }, Cmd.none )
 
                 Err _ ->
-                    ( { model | userMessage = "Error getting keyword frequency" }, Cmd.none )
+                    ( { model | freq = [], userMessage = "Error getting keyword frequency" }, Cmd.none )
 
         SuggestionsReady result ->
             case result of
@@ -303,7 +308,7 @@ update msg model =
 
 historyFilter : List String -> List String
 historyFilter list =
-    uniq (List.filter (\x -> String.length x > 2) list)
+    uniq (List.filter (\x -> String.length x >= 2) list)
 
 
 uniq : List a -> List a
@@ -464,7 +469,7 @@ renderSingleWorkElement model index elem =
         , style "display" "flex"
         ]
         [ span
-            [ style "flex" "0 0 50px"
+            [ style "flex" "0 0 1.5rem"
             , value (String.fromInt index)
             , on "mouseenter" (Decode.map HighlightWorkElement targetValueIntParse)
             , on "mouseleave" (Decode.map UnHighlightWorkElement targetValueIntParse)
@@ -476,18 +481,28 @@ renderSingleWorkElement model index elem =
             ]
             [ text (String.fromInt index ++ ".") ]
         , span
-            [ style "flex" "0 0 30px"
+            [ style "flex" "0 0 auto"
+            , style "margin" "0 0.5rem"
             , style "background-color" "rgb(210, 200, 200)"
             ]
             [ text elem.kanji ]
         , span
-            [ style "flex" "1 0 120px"
-            , style "background-color" "rgb(200, 210, 200)"
+            [ style "flex" "1 0 4rem"
+            , style "margin" "0 0.5rem"
+            , if String.length elem.keyword > 0 then
+                style "background-color" "rgb(200, 210, 200)"
+
+              else
+                style "background-color" ""
             ]
             [ text elem.keyword ]
         , span
-            [ style "flex" "0 1 150px"
-            , style "background-color" "rgb(200, 200, 210)"
+            [ style "flex" "10 1 auto"
+            , if String.length elem.notes > 0 then
+                style "background-color" "rgb(200, 200, 210)"
+
+              else
+                style "background-color" ""
             ]
             [ text elem.notes ]
         ]
@@ -546,7 +561,7 @@ renderSingleSuggestion model index suggest =
         , style "display" "flex"
         ]
         [ span
-            [ style "flex" "0 0 50px"
+            [ style "flex" "0 0 1.5rem"
             , value (String.fromInt index)
             , on "mouseover" (Decode.map HighlightSuggestion targetValueIntParse)
             , on "mouseleave" (Decode.map UnHighlightSuggestion targetValueIntParse)
@@ -558,16 +573,16 @@ renderSingleSuggestion model index suggest =
             ]
             [ text (String.fromInt index ++ ".") ]
         , span
-            [ style "flex" "0 0 100px" ]
+            [ style "flex" "0 0 6rem" ]
             [ text (suggest.origin ++ ": ") ]
         , span
-            [ style "flex" "1 0 200px" ]
+            [ style "flex" "10 0 6rem" ]
             [ text suggest.word ]
         , span
-            [ style "flex" "0 0 70px" ]
+            [ style "flex" "1 0 3rem" ]
             [ text (String.fromInt <| Maybe.withDefault 0 <| get 0 suggest.freq) ]
         , span
-            [ style "flex" "0 0 70px" ]
+            [ style "flex" "1 0 3rem" ]
             [ text (String.fromInt <| Maybe.withDefault 0 <| get 1 suggest.freq) ]
         ]
 
@@ -579,9 +594,48 @@ renderKeywordSuggestions model =
             renderSingleSuggestion model
     in
     div
-        [ on "click" (Decode.map SelectSuggestion targetValueIntParse)
-        ]
+        [ on "click" (Decode.map SelectSuggestion targetValueIntParse) ]
         (List.indexedMap partial model.suggestions)
+
+
+renderSubmitBar : Model -> Html Msg
+renderSubmitBar model =
+    div [ style "display" "flex" ]
+        [ span
+            [ style "flex" "1 0 auto" ]
+            [ text model.kanji ]
+        , span
+            [ style "flex" "10 0 70px" ]
+            [ input
+                [ placeholder "Keyword"
+                , value model.keyword
+                , onInput KeywordInput
+                , style "width" "100%"
+                , style "box-sizing" "border-box"
+                ]
+                []
+            ]
+        , span
+            [ style "flex" "1 0 auto" ]
+            [ text ("Corpus: " ++ (String.fromInt <| Maybe.withDefault 0 <| get 0 model.freq)) ]
+        , span
+            [ style "flex" "1 0 auto" ]
+            [ text ("Subs: " ++ (String.fromInt <| Maybe.withDefault 0 <| get 1 model.freq)) ]
+        , span
+            [ style "flex" "1 0 auto" ]
+            [ button [ onClick KeywordSubmitClick ] [ text "Submit" ] ]
+        , span
+            [ style "flex" "10 0 70px" ]
+            [ input
+                [ placeholder "Notes"
+                , value model.notes
+                , onInput NotesInput
+                , style "width" "100%"
+                , style "box-sizing" "border-box"
+                ]
+                []
+            ]
+        ]
 
 
 renderSingleHistory : Model -> Int -> String -> Html Msg
@@ -591,7 +645,7 @@ renderSingleHistory model index history =
         , style "display" "flex"
         ]
         [ span
-            [ style "flex" "0 0 50px"
+            [ style "flex" "0 0 1.5rem"
             , value (String.fromInt index)
             , on "mouseover" (Decode.map HighlightHistory targetValueIntParse)
             , on "mouseleave" (Decode.map UnHighlightHistory targetValueIntParse)
@@ -603,7 +657,7 @@ renderSingleHistory model index history =
             ]
             [ text (String.fromInt index ++ ".") ]
         , span
-            [ style "flex" "1 0 200px" ]
+            [ style "flex" "1 0 6rem" ]
             [ text history ]
         ]
 
@@ -615,81 +669,78 @@ renderHistory model =
             renderSingleHistory model
     in
     div
-        [ on "click" (Decode.map SelectHistory targetValueIntParse)
-        ]
+        [ on "click" (Decode.map SelectHistory targetValueIntParse) ]
         (List.take 100 (List.reverse (List.indexedMap partial model.history)))
 
 
 render : Model -> Html Msg
 render model =
-    div []
+    -- central css grid container
+    div
+        [ style "display" "grid"
+        , style "grid-template-columns" "1px 2fr 1fr 2fr 1px"
+        , style "grid-template-rows" "12vh 35vh 52vh"
+
+        -- , style "grid-template-rows" "70px 200px 300px"
+        ]
         [ -- Keyword submit
           div
             [ style "background-color" "rgb(250, 250, 250)"
+            , style "grid-column" "2 / 5"
+            , style "grid-row" "1 / 2"
+            , style "overflow" "auto"
             ]
             [ div [] [ text model.userMessage ]
-            , span [ style "padding" "0 10px" ] [ text model.kanji ]
-            , span [] [ input [ placeholder "Keyword", value model.keyword, onInput KeywordInput ] [] ]
-            , span [ style "padding" "0 10px" ] [ text ("Corpus: " ++ (String.fromInt <| Maybe.withDefault 0 <| get 0 model.freq)) ]
-            , span [ style "padding" "0 10px" ] [ text ("Subs: " ++ (String.fromInt <| Maybe.withDefault 0 <| get 1 model.freq)) ]
-            , span [] [ button [ onClick KeywordSubmitClick ] [ text "Submit" ] ]
-            , span [] [ input [ placeholder "Notes", value model.notes, onInput NotesInput ] [] ]
+            , renderSubmitBar model
             ]
 
-        -- central css grid container
+        -- Suggestions
         , div
-            [ style "display" "grid"
-            , style "grid-template-columns" "400px 250px 400px"
-            , style "grid-template-rows" "200px 300px"
+            [ style "background-color" "rgb(230, 230, 230)"
+            , style "grid-column" "2 / 4"
+            , style "grid-row" "2 / 3"
+            , style "overflow" "auto"
             ]
-            [ -- Suggestions
-              div
-                [ style "background-color" "rgb(230, 230, 230)"
-                , style "grid-column" "1 / 3"
-                , style "grid-row" "1 / 2"
-                , style "overflow" "auto"
-                ]
-                [ div
-                    [ style "display" "flex" ]
-                    [ span
-                        [ style "flex" "1 0 350px"
-                        , onClick SortSuggestionsByOrigin
-                        ]
-                        [ text "Keyword suggestion" ]
-                    , span
-                        [ style "flex" "0 0 70px"
-                        , onClick SortSuggestionsByFreq
-                        ]
-                        [ text "Corpus" ]
-                    , span
-                        [ style "flex" "0 0 70px"
-                        , onClick SortSuggestionsByFreq
-                        ]
-                        [ text "Subs" ]
+            [ div
+                [ style "display" "flex" ]
+                [ span
+                    [ style "flex" "10 0 calc(1.5rem + 6rem + 6rem)"
+                    , onClick SortSuggestionsByOrigin
                     ]
-                , renderKeywordSuggestions model
+                    [ text "Keyword suggestion" ]
+                , span
+                    [ style "flex" "1 0 3rem"
+                    , onClick SortSuggestionsByFreq
+                    ]
+                    [ text "Corpus" ]
+                , span
+                    [ style "flex" "1 0 3rem"
+                    , onClick SortSuggestionsByFreq
+                    ]
+                    [ text "Subs" ]
                 ]
+            , renderKeywordSuggestions model
+            ]
 
-            -- WorkElement select
-            , div
-                [ style "background-color" "rgb(210, 210, 210)"
-                , style "grid-column" "3 / 4"
-                , style "grid-row" "1 / 3"
-                , style "overflow" "auto"
-                ]
-                [ div [] [ text "Work Elements Progress" ]
-                , renderWorkElements model
-                ]
+        -- WorkElement select
+        , div
+            [ style "background-color" "rgb(210, 210, 210)"
+            , style "grid-column" "4 / 5"
+            , style "grid-row" "2 / 4"
+            , style "overflow" "auto"
+            ]
+            [ div [] [ text "Work Elements Progress" ]
+            , renderWorkElements model
+            ]
 
-            -- Candidate History
-            , div
-                [ style "background-color" "rgb(200, 200, 200)"
-                , style "grid-column" "2 / 3"
-                , style "grid-row" "2 / 3"
-                , style "overflow" "auto"
-                ]
-                [ div [] [ text "Keyword History" ]
-                , div [] [ renderHistory model ]
-                ]
+        -- Candidate History
+        , div
+            [ style "background-color" "rgb(200, 200, 200)"
+            , style "grid-column" "3 / 4"
+            , style "grid-row" "3 / 4"
+            , style "overflow" "auto"
+            ]
+            [ div [] [ text "Keyword History" ]
+            , div [] [ renderHistory model ]
             ]
         ]
