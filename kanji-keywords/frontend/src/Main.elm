@@ -61,8 +61,10 @@ type alias Model =
     , currentHighlightWorkElementIndex : Int
     , currentHighlightSuggestionIndex : Int
     , currentHighlightHistoryIndex : Int
-    , userMessage : String
+    , currentHighlightSynonymIndex : Int
+    , userMessage : Dict String String
     , history : List String
+    , synonyms : List String
     }
 
 
@@ -83,8 +85,10 @@ init _ =
             , currentHighlightWorkElementIndex = -1
             , currentHighlightSuggestionIndex = -1
             , currentHighlightHistoryIndex = -1
-            , userMessage = ""
+            , currentHighlightSynonymIndex = -1
+            , userMessage = Dict.empty
             , history = []
+            , synonyms = []
             }
     in
     -- update NextWorkElement model
@@ -117,6 +121,10 @@ type
     | UnHighlightSuggestion Int
     | SortSuggestionsByFreq
     | SortSuggestionsByOrigin
+      -- synonyms
+    | SelectSynonym Int
+    | HighlightSynonym Int
+    | UnHighlightSynonym Int
       -- history
     | SelectHistory Int
     | HighlightHistory Int
@@ -130,6 +138,7 @@ type
     | WorkElementsReady (Result Http.Error (List WorkElement))
     | KeywordFrequencyReady (Result Http.Error (List Int))
     | SuggestionsReady (Result Http.Error (List KeyCandidate))
+    | SynonymsReady (Result Http.Error (List String))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -140,7 +149,7 @@ update msg model =
                 ( model, submitKeyword model )
 
             else
-                ( { model | userMessage = "Error: keyword length must be non-zero" }, Cmd.none )
+                ( { model | userMessage = Dict.insert "KeywordSubmitClick" "Error: keyword length must be non-zero" model.userMessage }, Cmd.none )
 
         KeywordSubmitReady result ->
             case result of
@@ -159,13 +168,13 @@ update msg model =
                             { model | workElements = newWork }
                     in
                     if String.length body > 0 then
-                        ( { model | userMessage = "Error submitting keyword. Details:" ++ body }, Cmd.none )
+                        ( { model | userMessage = Dict.insert "KeywordSubmitReady" ("Error submitting keyword. Details:" ++ body) model.userMessage }, Cmd.none )
 
                     else
                         update NextWorkElement newModel
 
                 Err _ ->
-                    ( { model | userMessage = "Error submitting keyword. Details unknown." }, Cmd.none )
+                    ( { model | userMessage = Dict.insert "KeywordSubmitReady" "Error submitting keyword. Details unknown." model.userMessage }, Cmd.none )
 
         NextWorkElement ->
             update (SelectWorkElement (model.currentWorkIndex + 1)) model
@@ -176,7 +185,7 @@ update msg model =
                     chooseWorkElement index model
             in
             if String.length newModel.keyword >= 2 then
-                ( newModel, Cmd.batch [ getKeywordSuggestions newModel.kanji, getKeywordFrequency newModel.keyword ] )
+                ( newModel, Cmd.batch [ getKeywordSuggestions newModel.kanji, getKeywordFrequency newModel.keyword, getSynonyms newModel.keyword ] )
 
             else
                 ( { newModel | freq = [] }, Cmd.batch [ getKeywordSuggestions newModel.kanji ] )
@@ -205,7 +214,7 @@ update msg model =
                         , history = historyFilter newCandidateHistory
                     }
             in
-            ( newModel, getKeywordFrequency newModel.keyword )
+            ( newModel, Cmd.batch [ getKeywordFrequency newModel.keyword, getSynonyms newModel.keyword ] )
 
         HighlightSuggestion index ->
             ( { model | currentHighlightSuggestionIndex = index }, Cmd.none )
@@ -232,7 +241,7 @@ update msg model =
                     }
             in
             if String.length newModel.keyword >= 2 then
-                ( newModel, getKeywordFrequency newModel.keyword )
+                ( newModel, Cmd.batch [ getKeywordFrequency newModel.keyword, getSynonyms newModel.keyword ] )
 
             else
                 ( { newModel | freq = [] }, Cmd.none )
@@ -265,7 +274,7 @@ update msg model =
                     }
             in
             if String.length word >= 2 then
-                ( newModel, getKeywordFrequency word )
+                ( newModel, Cmd.batch [ getKeywordFrequency word, getSynonyms newModel.keyword ] )
 
             else
                 ( { newModel | freq = [] }, Cmd.none )
@@ -278,20 +287,20 @@ update msg model =
                 Ok elements ->
                     let
                         newModel =
-                            { model | workElements = elements, userMessage = "" }
+                            { model | workElements = elements, userMessage = Dict.remove "WorkElementsReady" model.userMessage }
                     in
                     update NextWorkElement newModel
 
                 Err _ ->
-                    ( { model | userMessage = "Error getting workElements" }, Cmd.none )
+                    ( { model | userMessage = Dict.insert "WorkElementsReady" "Error getting workElements" model.userMessage }, Cmd.none )
 
         KeywordFrequencyReady result ->
             case result of
                 Ok freq ->
-                    ( { model | freq = freq, userMessage = "" }, Cmd.none )
+                    ( { model | freq = freq, userMessage = Dict.remove "KeywordFrequencyReady" model.userMessage }, Cmd.none )
 
                 Err _ ->
-                    ( { model | freq = [], userMessage = "Error getting keyword frequency" }, Cmd.none )
+                    ( { model | freq = [], userMessage = Dict.insert "KeywordFrequencyReady" "Error getting keyword frequency" model.userMessage }, Cmd.none )
 
         SuggestionsReady result ->
             case result of
@@ -303,7 +312,45 @@ update msg model =
                     update SortSuggestionsByFreq newModel
 
                 Err _ ->
-                    ( { model | userMessage = "Error getting keyword suggections" }, Cmd.none )
+                    ( { model | userMessage = Dict.insert "SuggestionsReady" "Error getting keyword suggections" model.userMessage }, Cmd.none )
+
+        SynonymsReady result ->
+            case result of
+                Ok syns ->
+                    ( { model | synonyms = syns, userMessage = Dict.remove "SynonymsReady" model.userMessage }, Cmd.none )
+
+                Err _ ->
+                    ( { model | synonyms = [], userMessage = Dict.insert "SynonymsReady" "Error getting synonyms from thesaurus" model.userMessage }, Cmd.none )
+
+        SelectSynonym index ->
+            let
+                newKeyword =
+                    Maybe.withDefault "Error!" (get index model.synonyms)
+
+                newCandidateSynonym =
+                    model.history ++ [ model.keyword ]
+
+                newModel =
+                    { model
+                        | keyword = newKeyword
+                        , history = historyFilter newCandidateSynonym
+                    }
+            in
+            if String.length newModel.keyword >= 2 then
+                ( newModel, Cmd.batch [ getKeywordFrequency newModel.keyword, getSynonyms newModel.keyword ] )
+
+            else
+                ( { newModel | freq = [] }, Cmd.none )
+
+        HighlightSynonym index ->
+            ( { model | currentHighlightSynonymIndex = index }, Cmd.none )
+
+        UnHighlightSynonym index ->
+            if model.currentHighlightSynonymIndex == index then
+                ( { model | currentHighlightSynonymIndex = -1 }, Cmd.none )
+
+            else
+                ( model, Cmd.none )
 
 
 historyFilter : List String -> List String
@@ -433,6 +480,19 @@ keywordSuggestionsDecoder =
             (Decode.field "origin" Decode.string)
             (Decode.field "freq" (Decode.list Decode.int))
         )
+
+
+getSynonyms : String -> Cmd Msg
+getSynonyms keyword =
+    Http.get
+        { url = "http://localhost:9000/api/synonyms/" ++ keyword
+        , expect = Http.expectJson SynonymsReady synonymsDecoder
+        }
+
+
+synonymsDecoder : Decode.Decoder (List String)
+synonymsDecoder =
+    Decode.list Decode.string
 
 
 submitKeyword : Model -> Cmd Msg
@@ -598,6 +658,11 @@ renderKeywordSuggestions model =
         (List.indexedMap partial model.suggestions)
 
 
+renderUserMessages : Model -> Html Msg
+renderUserMessages model =
+    div [] [ text (String.join "!" (Dict.values model.userMessage)) ]
+
+
 renderSubmitBar : Model -> Html Msg
 renderSubmitBar model =
     div [ style "display" "flex" ]
@@ -673,13 +738,48 @@ renderHistory model =
         (List.take 100 (List.reverse (List.indexedMap partial model.history)))
 
 
+renderSingleSynonym : Model -> Int -> String -> Html Msg
+renderSingleSynonym model index history =
+    div
+        [ style "padding" "2px 0"
+        , style "display" "flex"
+        ]
+        [ span
+            [ style "flex" "0 0 1.5rem"
+            , value (String.fromInt index)
+            , on "mouseover" (Decode.map HighlightHistory targetValueIntParse)
+            , on "mouseleave" (Decode.map UnHighlightHistory targetValueIntParse)
+            , if model.currentHighlightSynonymIndex == index then
+                style "background-color" "rgb(250, 250, 250)"
+
+              else
+                style "background-color" ""
+            ]
+            [ text (String.fromInt index ++ ".") ]
+        , span
+            [ style "flex" "1 0 6rem" ]
+            [ text history ]
+        ]
+
+
+renderSynonyms : Model -> Html Msg
+renderSynonyms model =
+    let
+        partial =
+            renderSingleSynonym model
+    in
+    div
+        [ on "click" (Decode.map SelectHistory targetValueIntParse) ]
+        (List.take 100 (List.reverse (List.indexedMap partial model.synonyms)))
+
+
 render : Model -> Html Msg
 render model =
     -- central css grid container
     div
         [ style "display" "grid"
         , style "grid-template-columns" "1px 2fr 1fr 2fr 1px"
-        , style "grid-template-rows" "12vh 35vh 52vh"
+        , style "grid-template-rows" "10vh 35vh 55vh"
 
         -- , style "grid-template-rows" "70px 200px 300px"
         ]
@@ -690,7 +790,7 @@ render model =
             , style "grid-row" "1 / 2"
             , style "overflow" "auto"
             ]
-            [ div [] [ text model.userMessage ]
+            [ renderUserMessages model
             , renderSubmitBar model
             ]
 
@@ -742,5 +842,16 @@ render model =
             ]
             [ div [] [ text "Keyword History" ]
             , div [] [ renderHistory model ]
+            ]
+
+        -- Synonyms
+        , div
+            [ style "background-color" "rgb(190, 190, 190)"
+            , style "grid-column" "1 / 3"
+            , style "grid-row" "3 / 4"
+            , style "overflow" "auto"
+            ]
+            [ div [] [ text "Keyword Synonyms" ]
+            , div [] [ renderSynonyms model ]
             ]
         ]
