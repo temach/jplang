@@ -6,9 +6,11 @@ import os
 from bottle import request, post, get, route, run, template, HTTPResponse, static_file
 import json
 import sqlite3
-import os.path
 import pdb
 import re
+import nltk
+from nltk.stem.porter import PorterStemmer
+from nltk.stem import WordNetLemmatizer
 
 
 @get("/")
@@ -132,14 +134,87 @@ def suggestions(kanji):
     return json.dumps(result)
 
 
-@ get("/api/keywordcheck/<keyword>")
-def keyword_frequency(keyword):
+# def check_word_conflict_re(needle, haystack):
+#     result = {}
+#     stem = STEMMER.stem(needle)
+#
+#     r = re.compile("^{}$".format(word), re.IGNORECASE)
+#     for icorpus, e in enumerate(CORPUS.keys()):
+#         if r.match(e):
+#             break
+#
+#     if stem in haystack:
+#         result["stem"] = haystack[stem]
+#
+#     stem_conflict = haystack.get(stem, "")
+#
+#     lemma = LEMMATIZER.lemmatize(needle)
+#     lemma_conflict = haystack.get(lemma, "")
+
+
+@ get("/api/keywordcheck/<kanji>/<keyword>")
+def keyword_frequency(kanji, keyword):
+    stem = STEMMER.stem(keyword)
+    lemma = LEMMATIZER.lemmatize(keyword)
+    conflict = ""
+
+    # check for conflict with onyomi
+    stem_onyomi_conflict = ONYOMI.get(stem, None)
+    lemma_onyomi_conflict = ONYOMI.get(lemma, None)
+
+    if stem_onyomi_conflict:
+        conflict += "{} is an onyomi key. ".format(
+            stem_onyomi_conflict)
+
+    if lemma_onyomi_conflict and stem != lemma:
+        conflict += "{} is an onyomi key. ".format(
+            lemma_onyomi_conflict)
+
+    # check for conflict with keywords
+    # better checking than just a UNIQUE constraints in database
+    stem_kanji, stem_keywords_conflict = KEYWORDS.get(stem, (None, None))
+    lemma_kanji, lemma_keywords_conflict = KEYWORDS.get(lemma, (None, None))
+
+    # assert that kanji is the same
+    # there is an edge case: when building keywords from database
+    # the stem for child is child, so it gets inserted, but stem for
+    # children is children, but lemma for children is child, so lemma is found
+    # but stem is not
+    if stem_kanji and lemma_kanji:
+        assert stem_kanji == lemma_kanji
+
+    if stem_keywords_conflict and stem_kanji != kanji:
+        conflict += "{} is key for {}. ".format(
+            stem_keywords_conflict, stem_kanji)
+
+    if lemma_keywords_conflict and lemma_kanji != kanji and stem != lemma:
+        conflict += "{} is key for {}. ".format(
+            lemma_keywords_conflict, lemma_kanji)
+
     response = {
         "word": "",
         "freq": get_en_freq_regex(keyword),
-        "metadata": "",
+        "metadata": conflict,
     }
     return json.dumps(response)
+
+
+def update_in_memory_kanji_keywords(old, new):
+    old_stem = STEMMER.stem(old)
+    old_lemma = LEMMATIZER.lemmatize(old)
+
+    # assert that stem and lemma point to the same kanji
+    assert KEYWORDS[old_stem][0] == KEYWORDS[old_lemma][0]
+
+    kanji = KEYWORDS[old_stem][0]
+
+    del KEYWORDS[old_stem]
+    del KEYWORDS[old_lemma]
+
+    new_stem = STEMMER.stem(new)
+    new_lemma = LEMMATIZER.lemmatize(new)
+    KEYWORDS[new_stem] = (kanji, new)
+    KEYWORDS[new_lemma] = (kanji, new)
 
 
 @ get("/api/work")
@@ -150,6 +225,13 @@ def work():
     data = {k: (k, "", "") for k in WORK}
     for r in rows:
         kanji = r[0]
+
+        keyword = r[1]
+        new_stem = STEMMER.stem(keyword)
+        new_lemma = LEMMATIZER.lemmatize(keyword)
+        KEYWORDS[new_stem] = (kanji, keyword)
+        KEYWORDS[new_lemma] = (kanji, keyword)
+
         data[kanji] = r
 
     payload = [e for e in data.values()]
@@ -205,10 +287,15 @@ if __name__ == "__main__":
     MOBY = {}
     OPENOFFICE = {}
     # other
+    KEYWORDS = {}
     ONYOMI = {}
     WORK = []
     KANJIDIC = {}
     SCRIPTIN = {}
+
+    STEMMER = PorterStemmer()
+    LEMMATIZER = WordNetLemmatizer()
+
     with open("../resources/english-from-gogle-corpus-by-freq.txt") as f:
         for number, line in enumerate(f, start=1):
             word = line.split()[0].strip()
@@ -223,8 +310,10 @@ if __name__ == "__main__":
         for line in onyomi:
             _, _, _, keywords, _ = line.split("=")
             key = keywords.split("/")[0].lower().strip()
-            # this can be a Set, but using a dictionary with only keys is fine too
-            ONYOMI[key] = True
+            stem = STEMMER.stem(key)
+            lemma = LEMMATIZER.lemmatize(key)
+            ONYOMI[stem] = key
+            ONYOMI[lemma] = key
 
     with open("../resources/kanji-by-freq.json") as kanji:
         WORK = list(json.load(kanji).keys())

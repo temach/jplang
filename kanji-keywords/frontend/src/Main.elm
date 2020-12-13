@@ -187,10 +187,10 @@ update msg model =
                     chooseWorkElement index model
             in
             if String.length newModel.keyword >= 2 then
-                ( newModel, Cmd.batch [ getKeywordSuggestions newModel.kanji, getKeywordCheck newModel.keyword, getSynonyms newModel.keyword ] )
+                ( newModel, Cmd.batch [ getKeywordSuggestions newModel.kanji, getKeywordCheck newModel.kanji newModel.keyword, getSynonyms newModel.keyword ] )
 
             else
-                ( { newModel | freq = [], synonyms = [] }, Cmd.batch [ getKeywordSuggestions newModel.kanji ] )
+                ( { newModel | freq = [], synonyms = [], userMessage = Dict.empty }, Cmd.batch [ getKeywordSuggestions newModel.kanji ] )
 
         HighlightWorkElement index ->
             ( { model | currentHighlightWorkElementIndex = index }, Cmd.none )
@@ -216,7 +216,7 @@ update msg model =
                         , history = historyFilter newCandidateHistory
                     }
             in
-            ( newModel, Cmd.batch [ getKeywordCheck newModel.keyword, getSynonyms newModel.keyword ] )
+            ( newModel, Cmd.batch [ getKeywordCheck newModel.kanji newModel.keyword, getSynonyms newModel.keyword ] )
 
         HighlightSuggestion index ->
             ( { model | currentHighlightSuggestionIndex = index }, Cmd.none )
@@ -243,7 +243,7 @@ update msg model =
                     }
             in
             if String.length newModel.keyword >= 2 then
-                ( newModel, Cmd.batch [ getKeywordCheck newModel.keyword, getSynonyms newModel.keyword ] )
+                ( newModel, Cmd.batch [ getKeywordCheck newModel.kanji newModel.keyword, getSynonyms newModel.keyword ] )
 
             else
                 ( { newModel | freq = [], synonyms = [] }, Cmd.none )
@@ -282,10 +282,10 @@ update msg model =
                     }
             in
             if String.length word >= 2 then
-                ( newModel, Cmd.batch [ getKeywordCheck word, getSynonyms newModel.keyword ] )
+                ( newModel, Cmd.batch [ getKeywordCheck newModel.kanji word, getSynonyms newModel.keyword ] )
 
             else
-                ( { newModel | freq = [], synonyms = [] }, Cmd.none )
+                ( { newModel | freq = [], synonyms = [], userMessage = Dict.empty }, Cmd.none )
 
         NotesInput word ->
             ( { model | notes = word }, Cmd.none )
@@ -305,7 +305,7 @@ update msg model =
         KeywordCheckReady result ->
             case result of
                 Ok elem ->
-                    ( { model | freq = elem.freq, userMessage = Dict.remove "KeywordCheckReady" model.userMessage }, Cmd.none )
+                    ( { model | freq = elem.freq, userMessage = Dict.insert "KeywordCheckReady" elem.metadata model.userMessage }, Cmd.none )
 
                 Err _ ->
                     ( { model | freq = [], userMessage = Dict.insert "KeywordCheckReady" "Error getting keyword frequency" model.userMessage }, Cmd.none )
@@ -345,7 +345,7 @@ update msg model =
                     }
             in
             if String.length newModel.keyword >= 2 then
-                ( newModel, Cmd.batch [ getKeywordCheck newModel.keyword, getSynonyms newModel.keyword ] )
+                ( newModel, Cmd.batch [ getKeywordCheck newModel.kanji newModel.keyword, getSynonyms newModel.keyword ] )
 
             else
                 ( { newModel | freq = [], synonyms = [] }, Cmd.none )
@@ -459,10 +459,10 @@ workElementsDecoder =
         )
 
 
-getKeywordCheck : String -> Cmd Msg
-getKeywordCheck keyword =
+getKeywordCheck : String -> String -> Cmd Msg
+getKeywordCheck kanji keyword =
     Http.get
-        { url = "http://localhost:9000/api/keywordcheck/" ++ keyword
+        { url = "http://localhost:9000/api/keywordcheck/" ++ kanji ++ "/" ++ keyword
         , expect = Http.expectJson KeywordCheckReady keywordCandidateDecoder
         }
 

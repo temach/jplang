@@ -6336,13 +6336,14 @@ var $author$project$Main$keywordCandidateDecoder = A4(
 		$elm$json$Json$Decode$field,
 		'freq',
 		$elm$json$Json$Decode$list($elm$json$Json$Decode$int)));
-var $author$project$Main$getKeywordCheck = function (keyword) {
-	return $elm$http$Http$get(
-		{
-			expect: A2($elm$http$Http$expectJson, $author$project$Main$KeywordCheckReady, $author$project$Main$keywordCandidateDecoder),
-			url: 'http://localhost:9000/api/keywordcheck/' + keyword
-		});
-};
+var $author$project$Main$getKeywordCheck = F2(
+	function (kanji, keyword) {
+		return $elm$http$Http$get(
+			{
+				expect: A2($elm$http$Http$expectJson, $author$project$Main$KeywordCheckReady, $author$project$Main$keywordCandidateDecoder),
+				url: 'http://localhost:9000/api/keywordcheck/' + (kanji + ('/' + keyword))
+			});
+	});
 var $author$project$Main$SuggestionsReady = function (a) {
 	return {$: 'SuggestionsReady', a: a};
 };
@@ -6497,12 +6498,12 @@ var $author$project$Main$update = F2(
 							_List_fromArray(
 								[
 									$author$project$Main$getKeywordSuggestions(newModel.kanji),
-									$author$project$Main$getKeywordCheck(newModel.keyword),
+									A2($author$project$Main$getKeywordCheck, newModel.kanji, newModel.keyword),
 									$author$project$Main$getSynonyms(newModel.keyword)
 								]))) : _Utils_Tuple2(
 						_Utils_update(
 							newModel,
-							{freq: _List_Nil, synonyms: _List_Nil}),
+							{freq: _List_Nil, synonyms: _List_Nil, userMessage: $elm$core$Dict$empty}),
 						$elm$core$Platform$Cmd$batch(
 							_List_fromArray(
 								[
@@ -6548,7 +6549,7 @@ var $author$project$Main$update = F2(
 						$elm$core$Platform$Cmd$batch(
 							_List_fromArray(
 								[
-									$author$project$Main$getKeywordCheck(newModel.keyword),
+									A2($author$project$Main$getKeywordCheck, newModel.kanji, newModel.keyword),
 									$author$project$Main$getSynonyms(newModel.keyword)
 								])));
 				case 'HighlightSuggestion':
@@ -6586,7 +6587,7 @@ var $author$project$Main$update = F2(
 						$elm$core$Platform$Cmd$batch(
 							_List_fromArray(
 								[
-									$author$project$Main$getKeywordCheck(newModel.keyword),
+									A2($author$project$Main$getKeywordCheck, newModel.kanji, newModel.keyword),
 									$author$project$Main$getSynonyms(newModel.keyword)
 								]))) : _Utils_Tuple2(
 						_Utils_update(
@@ -6669,12 +6670,12 @@ var $author$project$Main$update = F2(
 						$elm$core$Platform$Cmd$batch(
 							_List_fromArray(
 								[
-									$author$project$Main$getKeywordCheck(word),
+									A2($author$project$Main$getKeywordCheck, newModel.kanji, word),
 									$author$project$Main$getSynonyms(newModel.keyword)
 								]))) : _Utils_Tuple2(
 						_Utils_update(
 							newModel,
-							{freq: _List_Nil, synonyms: _List_Nil}),
+							{freq: _List_Nil, synonyms: _List_Nil, userMessage: $elm$core$Dict$empty}),
 						$elm$core$Platform$Cmd$none);
 				case 'NotesInput':
 					var word = msg.a;
@@ -6716,7 +6717,7 @@ var $author$project$Main$update = F2(
 								model,
 								{
 									freq: elem.freq,
-									userMessage: A2($elm$core$Dict$remove, 'KeywordCheckReady', model.userMessage)
+									userMessage: A3($elm$core$Dict$insert, 'KeywordCheckReady', elem.metadata, model.userMessage)
 								}),
 							$elm$core$Platform$Cmd$none);
 					} else {
@@ -6798,7 +6799,7 @@ var $author$project$Main$update = F2(
 						$elm$core$Platform$Cmd$batch(
 							_List_fromArray(
 								[
-									$author$project$Main$getKeywordCheck(newModel.keyword),
+									A2($author$project$Main$getKeywordCheck, newModel.kanji, newModel.keyword),
 									$author$project$Main$getSynonyms(newModel.keyword)
 								]))) : _Utils_Tuple2(
 						_Utils_update(
