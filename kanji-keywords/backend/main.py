@@ -67,6 +67,7 @@ def synonyms(word):
 
     # return json.dumps([{"word": "artem", "metadata": "artem", "freq": (10, 10)}])
 
+    word = word.lower()
     result = {}
     popularity = defaultdict(int)
 
@@ -96,8 +97,6 @@ def synonyms(word):
         key=lambda item: int(item["metadata"]),
         reverse=True
     )
-
-    pprint(ordered)
 
     return json.dumps(ordered)
 
@@ -130,14 +129,11 @@ def suggestions(kanji):
         }
         result.append(item)
 
-    # pprint(result)
-
     return json.dumps(result)
 
 
 @ get("/api/keywordcheck/<keyword>")
 def keyword_frequency(keyword):
-    # return HTTPResponse(status=200, body=json.dumps(freq))
     response = {
         "word": "",
         "freq": get_en_freq_regex(keyword),
@@ -157,19 +153,12 @@ def work():
         data[kanji] = r
 
     payload = [e for e in data.values()]
-    # tmppayload = [("a", "first", ""),
-    #               ("b", "second", "asd"),
-    #               ("c", "third", "")
-    #               ]
-
     return json.dumps(payload, ensure_ascii=False)
-    # return json.dumps(tmppayload, ensure_ascii=False)
 
 
 @ post("/api/submit")
 def submit():
     payload = request.json
-    # pprint(payload)
 
     try:
         c = DB.cursor()
@@ -248,6 +237,7 @@ if __name__ == "__main__":
 
     with open("../resources/english-thesaurus-moby-mthesaur.txt") as f:
         for line in f:
+            line = line.lower()
             key = line.split(',')[0]
             synonyms = line.split(',')[1:]
             MOBY[key] = synonyms
@@ -256,10 +246,12 @@ if __name__ == "__main__":
         lines = f.readlines()
         i = 1
         while i < len(lines):
-            key, n_meanings = lines[i].split('|')
+            line = lines[i].lower()
+            key, n_meanings = line.split('|')
             meanings = set()
             for k in range(int(n_meanings)):
-                meaning_line = lines[i + k].split('|')[1:]
+                l = lines[i + k].lower()
+                meaning_line = l.split('|')[1:]
                 meanings.update(meaning_line)
             OPENOFFICE[key] = list(meanings)
             i += 1 + int(n_meanings)
@@ -267,22 +259,22 @@ if __name__ == "__main__":
     with open("../resources/english-thesaurus-wordnet.jsonl") as f:
         for line in f:
             data = json.loads(line)
-            key = data["word"]
+            key = data["word"].lower()
             synonyms = data["synonyms"]
             if key in WORDNET:
                 WORDNET[key].extend(synonyms)
             else:
                 WORDNET[key] = synonyms
 
-    pprint(list(ONYOMI.items())[:50])
-    pprint(list(CORPUS.items())[:50])
-    pprint(list(SUBS.items())[:50])
-    pprint(WORK[:50])
-    pprint(list(KANJIDIC.items())[:50])
-    pprint(list(SCRIPTIN.items())[:50])
-    pprint(list(MOBY.items())[:50])
-    pprint(list(OPENOFFICE.items())[:50])
-    pprint(list(WORDNET.items())[:50])
+    pprint(list(ONYOMI.items())[:25])
+    pprint(list(CORPUS.items())[:25])
+    pprint(list(SUBS.items())[:25])
+    pprint(WORK[:25])
+    pprint(list(KANJIDIC.items())[:25])
+    pprint(list(SCRIPTIN.items())[:25])
+    pprint(list(MOBY.items())[:25])
+    pprint(list(OPENOFFICE.items())[:25])
+    pprint(list(WORDNET.items())[:25])
 
     port = 9000
     print("Running bottle server on port {}".format(port))
