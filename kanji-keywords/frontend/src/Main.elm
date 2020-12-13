@@ -789,7 +789,7 @@ render model =
     div
         [ style "display" "grid"
         , style "grid-template-columns" "1px 2fr 1fr 2fr 1px"
-        , style "grid-template-rows" "10vh 35vh 55vh"
+        , style "grid-template-rows" "8vh 35vh 30vh 27vh"
         ]
         [ -- Keyword submit
           div
@@ -878,5 +878,15 @@ render model =
                     [ text "Subs" ]
                 ]
             , div [] [ renderSynonyms model ]
+            ]
+
+        -- Expressions
+        , div
+            [ style "background-color" "rgb(230, 230, 230)"
+            , style "grid-column" "2 / 5"
+            , style "grid-row" "4 / 5"
+            , style "overflow" "auto"
+            ]
+            [ div [] [ text "Expressions" ]
             ]
         ]

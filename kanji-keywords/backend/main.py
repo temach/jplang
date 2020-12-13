@@ -202,7 +202,7 @@ def keyword_frequency(kanji, keyword):
 @ get("/api/work")
 def work():
     c = DB.cursor()
-    c.execute("SELECT * FROM kanjikeywords ORDER BY kanji;")
+    c.execute("SELECT * FROM kanjikeywords;")
     rows = c.fetchall()
     data = {k: (k, "", "") for k in WORK}
     for r in rows:
