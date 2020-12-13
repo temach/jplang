@@ -199,24 +199,6 @@ def keyword_frequency(kanji, keyword):
     return json.dumps(response)
 
 
-def update_in_memory_kanji_keywords(old, new):
-    old_stem = STEMMER.stem(old)
-    old_lemma = LEMMATIZER.lemmatize(old)
-
-    # assert that stem and lemma point to the same kanji
-    assert KEYWORDS[old_stem][0] == KEYWORDS[old_lemma][0]
-
-    kanji = KEYWORDS[old_stem][0]
-
-    del KEYWORDS[old_stem]
-    del KEYWORDS[old_lemma]
-
-    new_stem = STEMMER.stem(new)
-    new_lemma = LEMMATIZER.lemmatize(new)
-    KEYWORDS[new_stem] = (kanji, new)
-    KEYWORDS[new_lemma] = (kanji, new)
-
-
 @ get("/api/work")
 def work():
     c = DB.cursor()
@@ -254,6 +236,15 @@ def submit():
     except Exception as e:
         # return 2xx response because too lazy to unwrap errors in Elm
         return HTTPResponse(status=202, body="{}".format(e))
+
+    # update in memory keyword dictionary
+    # step 1: drop old stem/lemma keyword that matches this kanji
+    global KEYWORDS
+    kanji = payload["kanji"]
+    keyword = payload["keyword"]
+    KEYWORDS = {k: v for k, v in KEYWORDS.items() if v[0] != kanji}
+    KEYWORDS[STEMMER.stem(keyword)] = (kanji, keyword)
+    KEYWORDS[LEMMATIZER.lemmatize(keyword)] = (kanji, keyword)
 
     # return a fake body because too lazy to unwrap properly in Elm
     return HTTPResponse(status=200, body="")
@@ -309,7 +300,7 @@ if __name__ == "__main__":
     with open("../resources/english-onyomi-keywords.txt") as onyomi:
         for line in onyomi:
             _, _, _, keywords, _ = line.split("=")
-            key = keywords.split("/")[0].lower().strip()
+            key = keywords.split("/")[0].lower().strip().split()[0]
             stem = STEMMER.stem(key)
             lemma = LEMMATIZER.lemmatize(key)
             ONYOMI[stem] = key
