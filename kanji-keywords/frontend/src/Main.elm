@@ -746,7 +746,7 @@ renderSingleSynonym model index synonym =
         , style "display" "flex"
         ]
         [ span
-            [ style "flex" "0 0 1.5rem"
+            [ style "flex" "0 0 2rem"
             , value (String.fromInt index)
             , on "mouseover" (Decode.map HighlightSynonym targetValueIntParse)
             , on "mouseleave" (Decode.map UnHighlightSynonym targetValueIntParse)
@@ -758,16 +758,16 @@ renderSingleSynonym model index synonym =
             ]
             [ text (String.fromInt index ++ ".") ]
         , span
-            [ style "flex" "0 0 6rem" ]
+            [ style "flex" "0 0 2rem" ]
             [ text (synonym.metadata ++ ": ") ]
         , span
-            [ style "flex" "10 0 6rem" ]
+            [ style "flex" "10 1 6rem" ]
             [ text synonym.word ]
         , span
-            [ style "flex" "1 0 3rem" ]
+            [ style "flex" "1 0 4rem" ]
             [ text (String.fromInt <| Maybe.withDefault 0 <| get 0 synonym.freq) ]
         , span
-            [ style "flex" "1 0 3rem" ]
+            [ style "flex" "1 0 4rem" ]
             [ text (String.fromInt <| Maybe.withDefault 0 <| get 1 synonym.freq) ]
         ]
 
@@ -862,17 +862,17 @@ render model =
             [ div
                 [ style "display" "flex" ]
                 [ span
-                    [ style "flex" "10 0 calc(1.5rem + 6rem + 6rem)"
+                    [ style "flex" "10 1 calc(2rem + 2rem + 6rem)"
                     , onClick SortSynonymsByOrigin
                     ]
                     [ text "Keyword synonyms" ]
                 , span
-                    [ style "flex" "1 0 3rem"
+                    [ style "flex" "1 0 4rem"
                     , onClick SortSynonymsByFreq
                     ]
                     [ text "Corpus" ]
                 , span
-                    [ style "flex" "1 0 3rem"
+                    [ style "flex" "1 0 4rem"
                     , onClick SortSynonymsByFreq
                     ]
                     [ text "Subs" ]
