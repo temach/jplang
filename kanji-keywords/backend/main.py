@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from datetime import datetime
 from pprint import pprint
+from collections import defaultdict
 import os
 from bottle import request, post, get, route, run, template, HTTPResponse, static_file
 import json
@@ -21,63 +22,128 @@ def version():
     return json.dumps(data)
 
 
-def get_en_freq(word):
+def get_en_freq_regex(word):
     r = re.compile("^{}$".format(word), re.IGNORECASE)
-    for icorpus, e in enumerate(CORPUS):
+    for icorpus, e in enumerate(CORPUS.keys()):
         if r.match(e):
             break
 
-    for isubs, e in enumerate(SUBS):
+    for isubs, e in enumerate(SUBS.keys()):
         if r.match(e):
             break
 
-    if icorpus == len(CORPUS)-1:
+    if icorpus == len(CORPUS.keys())-1:
         icorpus = -1
 
-    if isubs == len(SUBS)-1:
+    if isubs == len(SUBS.keys())-1:
         isubs = -1
 
     return (icorpus, isubs)
-    # try:
-    #     return (CORPUS.index(word), SUBS.index(word))
-    # except ValueError:
-    #     return (-1, -1)
 
 
-@get("/api/suggestions/<kanji>")
+def get_en_freq(word):
+    return (
+        CORPUS.get(word, -1),
+        SUBS.get(word, -1)
+    )
+
+
+@get("/api/synonyms/<word>")
+def synonyms(word):
+    # usefull thesaurus sources: https://github.com/Ron89/thesaurus_query.vim
+
+    # Big Huge Thesaurus:
+    # https://github.com/tttthomasssss/PyHugeThesaurusConnector
+    # Key:
+    # 56d5758eb85511ea73b9ab65436761c2
+    # e.g: https://words.bighugelabs.com/api/2/56d5758eb85511ea73b9ab65436761c2/word/json
+
+    # Maryam webster keys:
+    # https://github.com/PederHA/mwthesaurus
+    # Key (Thesaurus):
+    # fb5b269d-867b-4401-85a0-777436d9c033
+    # Key (Intermediate Thesaurus):
+    # 72e1d7bf-09a3-43ef-9dae-17989dc6d355
+
+    # return json.dumps([{"word": "artem", "metadata": "artem", "freq": (10, 10)}])
+
+    result = {}
+    popularity = defaultdict(int)
+
+    for thesaurus in [MOBY, OPENOFFICE, WORDNET]:
+        for w in thesaurus.get(word, []):
+            # check that word is not obscure
+            freq = get_en_freq(w)
+            if (freq[0] < 0 and freq[1] < 0):
+                continue
+            # build the item
+            item = {
+                "word": w,
+                "freq": freq,
+                "metadata": ""
+            }
+            # save the item
+            result[w] = item
+            # everytime the word appears in a different thesaurus, increase its popularity
+            popularity[w] += 1
+
+    for w in result.keys():
+        result[w]["metadata"] = str(popularity[w])
+
+    # sort according to popularity
+    ordered = sorted(
+        result.values(),
+        key=lambda item: int(item["metadata"]),
+        reverse=True
+    )
+
+    pprint(ordered)
+
+    return json.dumps(ordered)
+
+
+@ get("/api/suggestions/<kanji>")
 def suggestions(kanji):
     result = []
 
     u = SCRIPTIN[kanji]["uniq"]
-    item = {"word": u,
-            "freq": get_en_freq(u),
-            "origin": "scriptin-uniq"
-            }
+    item = {
+        "word": u,
+        "freq": get_en_freq(u),
+        "metadata": "scriptin-uniq"
+    }
     result.append(item)
 
     for k in SCRIPTIN[kanji]["keys"]:
-        item = {"word": k,
-                "freq": get_en_freq(k),
-                "origin": "scriptin-keys"
-                }
+        item = {
+            "word": k,
+            "freq": get_en_freq(k),
+            "metadata": "scriptin-keys"
+        }
         result.append(item)
 
     for m in KANJIDIC[kanji]:
-        item = {"word": m,
-                "freq": get_en_freq(m),
-                "origin": "kanjidic"
-                }
+        item = {
+            "word": m,
+            "freq": get_en_freq(m),
+            "metadata": "kanjidic"
+        }
         result.append(item)
 
-    pprint(result)
+    # pprint(result)
 
     return json.dumps(result)
 
 
-@ get("/api/frequency/<keyword>")
+@ get("/api/keywordcheck/<keyword>")
 def keyword_frequency(keyword):
     # return HTTPResponse(status=200, body=json.dumps(freq))
-    return json.dumps(get_en_freq(keyword))
+    response = {
+        "word": "",
+        "freq": get_en_freq_regex(keyword),
+        "metadata": "",
+    }
+    return json.dumps(response)
 
 
 @ get("/api/work")
@@ -103,7 +169,7 @@ def work():
 @ post("/api/submit")
 def submit():
     payload = request.json
-    pprint(payload)
+    # pprint(payload)
 
     try:
         c = DB.cursor()
@@ -115,7 +181,7 @@ def submit():
                   (payload["kanji"], payload["keyword"], payload["notes"]))
         DB.commit()
     except Exception as e:
-        # return 2xx responce because too lazy to unwrap errors in Elm
+        # return 2xx response because too lazy to unwrap errors in Elm
         return HTTPResponse(status=202, body="{}".format(e))
 
     # return a fake body because too lazy to unwrap properly in Elm
@@ -142,25 +208,34 @@ if __name__ == "__main__":
     if db_needs_init:
         db_init()
 
-    CORPUS = []
-    SUBS = []
-    ONYOMI = []
+    # english frequency
+    CORPUS = {}
+    SUBS = {}
+    # thesaurus
+    WORDNET = {}
+    MOBY = {}
+    OPENOFFICE = {}
+    # other
+    ONYOMI = {}
     WORK = []
-    KANJIDIC = []
-    SCRIPTIN = []
-    with open("../resources/english-from-gogle-corpus-by-freq.txt") as google:
-        for line in google:
-            CORPUS.append(line.split()[0].strip())
+    KANJIDIC = {}
+    SCRIPTIN = {}
+    with open("../resources/english-from-gogle-corpus-by-freq.txt") as f:
+        for number, line in enumerate(f, start=1):
+            word = line.split()[0].strip()
+            CORPUS[word] = number
 
-    with open("../resources/english-from-subtitles-by-freq.txt") as subs:
-        for line in subs:
-            SUBS.append(line.split()[0].strip())
+    with open("../resources/english-from-subtitles-by-freq.txt") as f:
+        for number, line in enumerate(f, start=1):
+            word = line.split()[0].strip()
+            SUBS[word] = number
 
     with open("../resources/english-onyomi-keywords.txt") as onyomi:
         for line in onyomi:
             _, _, _, keywords, _ = line.split("=")
             key = keywords.split("/")[0].lower().strip()
-            ONYOMI.append(key)
+            # this can be a Set, but using a dictionary with only keys is fine too
+            ONYOMI[key] = True
 
     with open("../resources/kanji-by-freq.json") as kanji:
         WORK = list(json.load(kanji).keys())
@@ -171,12 +246,43 @@ if __name__ == "__main__":
     with open("../resources/keywords-scriptin-kanji-keys.json") as scriptin:
         SCRIPTIN = json.load(scriptin)
 
-    pprint(ONYOMI[:50])
-    pprint(CORPUS[:50])
-    pprint(SUBS[:50])
+    with open("../resources/english-thesaurus-moby-mthesaur.txt") as f:
+        for line in f:
+            key = line.split(',')[0]
+            synonyms = line.split(',')[1:]
+            MOBY[key] = synonyms
+
+    with open("../resources/english-thesaurus-openoffice.txt") as f:
+        lines = f.readlines()
+        i = 1
+        while i < len(lines):
+            key, n_meanings = lines[i].split('|')
+            meanings = set()
+            for k in range(int(n_meanings)):
+                meaning_line = lines[i + k].split('|')[1:]
+                meanings.update(meaning_line)
+            OPENOFFICE[key] = list(meanings)
+            i += 1 + int(n_meanings)
+
+    with open("../resources/english-thesaurus-wordnet.jsonl") as f:
+        for line in f:
+            data = json.loads(line)
+            key = data["word"]
+            synonyms = data["synonyms"]
+            if key in WORDNET:
+                WORDNET[key].extend(synonyms)
+            else:
+                WORDNET[key] = synonyms
+
+    pprint(list(ONYOMI.items())[:50])
+    pprint(list(CORPUS.items())[:50])
+    pprint(list(SUBS.items())[:50])
     pprint(WORK[:50])
     pprint(list(KANJIDIC.items())[:50])
     pprint(list(SCRIPTIN.items())[:50])
+    pprint(list(MOBY.items())[:50])
+    pprint(list(OPENOFFICE.items())[:50])
+    pprint(list(WORDNET.items())[:50])
 
     port = 9000
     print("Running bottle server on port {}".format(port))

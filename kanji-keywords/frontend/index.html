@@ -6172,8 +6172,8 @@ var $author$project$Main$subscriptions = function (_v0) {
 	return $elm$core$Platform$Sub$none;
 };
 var $author$project$Main$KeyCandidate = F3(
-	function (word, origin, freq) {
-		return {freq: freq, origin: origin, word: word};
+	function (word, metadata, freq) {
+		return {freq: freq, metadata: metadata, word: word};
 	});
 var $author$project$Main$NextWorkElement = {$: 'NextWorkElement'};
 var $author$project$Main$SelectWorkElement = function (a) {
@@ -6296,7 +6296,7 @@ var $author$project$Main$chooseWorkElement = F2(
 				notes: selected.notes
 			});
 	});
-var $author$project$Main$compareSuggestions = F2(
+var $author$project$Main$compareKeyCandidates = F2(
 	function (a, b) {
 		var bfreq = A2(
 			$elm$core$Maybe$withDefault,
@@ -6322,32 +6322,31 @@ var $author$project$Main$compareSuggestions = F2(
 				return $elm$core$Basics$GT;
 		}
 	});
-var $author$project$Main$KeywordFrequencyReady = function (a) {
-	return {$: 'KeywordFrequencyReady', a: a};
+var $author$project$Main$KeywordCheckReady = function (a) {
+	return {$: 'KeywordCheckReady', a: a};
 };
+var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$int = _Json_decodeInt;
-var $author$project$Main$keywordFrequencyDecoder = $elm$json$Json$Decode$list($elm$json$Json$Decode$int);
-var $author$project$Main$getKeywordFrequency = function (keyword) {
+var $author$project$Main$keywordCandidateDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$KeyCandidate,
+	A2($elm$json$Json$Decode$field, 'word', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'metadata', $elm$json$Json$Decode$string),
+	A2(
+		$elm$json$Json$Decode$field,
+		'freq',
+		$elm$json$Json$Decode$list($elm$json$Json$Decode$int)));
+var $author$project$Main$getKeywordCheck = function (keyword) {
 	return $elm$http$Http$get(
 		{
-			expect: A2($elm$http$Http$expectJson, $author$project$Main$KeywordFrequencyReady, $author$project$Main$keywordFrequencyDecoder),
-			url: 'http://localhost:9000/api/frequency/' + keyword
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$KeywordCheckReady, $author$project$Main$keywordCandidateDecoder),
+			url: 'http://localhost:9000/api/keywordcheck/' + keyword
 		});
 };
 var $author$project$Main$SuggestionsReady = function (a) {
 	return {$: 'SuggestionsReady', a: a};
 };
-var $elm$json$Json$Decode$field = _Json_decodeField;
-var $author$project$Main$keywordSuggestionsDecoder = $elm$json$Json$Decode$list(
-	A4(
-		$elm$json$Json$Decode$map3,
-		$author$project$Main$KeyCandidate,
-		A2($elm$json$Json$Decode$field, 'word', $elm$json$Json$Decode$string),
-		A2($elm$json$Json$Decode$field, 'origin', $elm$json$Json$Decode$string),
-		A2(
-			$elm$json$Json$Decode$field,
-			'freq',
-			$elm$json$Json$Decode$list($elm$json$Json$Decode$int))));
+var $author$project$Main$keywordSuggestionsDecoder = $elm$json$Json$Decode$list($author$project$Main$keywordCandidateDecoder);
 var $author$project$Main$getKeywordSuggestions = function (kanji) {
 	return $elm$http$Http$get(
 		{
@@ -6358,11 +6357,10 @@ var $author$project$Main$getKeywordSuggestions = function (kanji) {
 var $author$project$Main$SynonymsReady = function (a) {
 	return {$: 'SynonymsReady', a: a};
 };
-var $author$project$Main$synonymsDecoder = $elm$json$Json$Decode$list($elm$json$Json$Decode$string);
 var $author$project$Main$getSynonyms = function (keyword) {
 	return $elm$http$Http$get(
 		{
-			expect: A2($elm$http$Http$expectJson, $author$project$Main$SynonymsReady, $author$project$Main$synonymsDecoder),
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$SynonymsReady, $author$project$Main$keywordSuggestionsDecoder),
 			url: 'http://localhost:9000/api/synonyms/' + keyword
 		});
 };
@@ -6468,7 +6466,9 @@ var $author$project$Main$update = F2(
 								$elm$core$Platform$Cmd$none);
 						} else {
 							var $temp$msg = $author$project$Main$NextWorkElement,
-								$temp$model = newModel;
+								$temp$model = _Utils_update(
+								newModel,
+								{userMessage: $elm$core$Dict$empty});
 							msg = $temp$msg;
 							model = $temp$model;
 							continue update;
@@ -6497,12 +6497,12 @@ var $author$project$Main$update = F2(
 							_List_fromArray(
 								[
 									$author$project$Main$getKeywordSuggestions(newModel.kanji),
-									$author$project$Main$getKeywordFrequency(newModel.keyword),
+									$author$project$Main$getKeywordCheck(newModel.keyword),
 									$author$project$Main$getSynonyms(newModel.keyword)
 								]))) : _Utils_Tuple2(
 						_Utils_update(
 							newModel,
-							{freq: _List_Nil}),
+							{freq: _List_Nil, synonyms: _List_Nil}),
 						$elm$core$Platform$Cmd$batch(
 							_List_fromArray(
 								[
@@ -6548,7 +6548,7 @@ var $author$project$Main$update = F2(
 						$elm$core$Platform$Cmd$batch(
 							_List_fromArray(
 								[
-									$author$project$Main$getKeywordFrequency(newModel.keyword),
+									$author$project$Main$getKeywordCheck(newModel.keyword),
 									$author$project$Main$getSynonyms(newModel.keyword)
 								])));
 				case 'HighlightSuggestion':
@@ -6586,12 +6586,12 @@ var $author$project$Main$update = F2(
 						$elm$core$Platform$Cmd$batch(
 							_List_fromArray(
 								[
-									$author$project$Main$getKeywordFrequency(newModel.keyword),
+									$author$project$Main$getKeywordCheck(newModel.keyword),
 									$author$project$Main$getSynonyms(newModel.keyword)
 								]))) : _Utils_Tuple2(
 						_Utils_update(
 							newModel,
-							{freq: _List_Nil}),
+							{freq: _List_Nil, synonyms: _List_Nil}),
 						$elm$core$Platform$Cmd$none);
 				case 'HighlightHistory':
 					var index = msg.a;
@@ -6613,7 +6613,7 @@ var $author$project$Main$update = F2(
 							model,
 							{
 								suggestions: $elm$core$List$reverse(
-									A2($elm$core$List$sortWith, $author$project$Main$compareSuggestions, model.suggestions))
+									A2($elm$core$List$sortWith, $author$project$Main$compareKeyCandidates, model.suggestions))
 							}),
 						$elm$core$Platform$Cmd$none);
 				case 'SortSuggestionsByOrigin':
@@ -6624,9 +6624,32 @@ var $author$project$Main$update = F2(
 								suggestions: A2(
 									$elm$core$List$sortBy,
 									function ($) {
-										return $.origin;
+										return $.metadata;
 									},
 									model.suggestions)
+							}),
+						$elm$core$Platform$Cmd$none);
+				case 'SortSynonymsByFreq':
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								synonyms: $elm$core$List$reverse(
+									A2($elm$core$List$sortWith, $author$project$Main$compareKeyCandidates, model.synonyms))
+							}),
+						$elm$core$Platform$Cmd$none);
+				case 'SortSynonymsByOrigin':
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								synonyms: $elm$core$List$reverse(
+									A2(
+										$elm$core$List$sortBy,
+										function ($) {
+											return $.metadata;
+										},
+										model.synonyms))
 							}),
 						$elm$core$Platform$Cmd$none);
 				case 'KeywordInput':
@@ -6646,12 +6669,12 @@ var $author$project$Main$update = F2(
 						$elm$core$Platform$Cmd$batch(
 							_List_fromArray(
 								[
-									$author$project$Main$getKeywordFrequency(word),
+									$author$project$Main$getKeywordCheck(word),
 									$author$project$Main$getSynonyms(newModel.keyword)
 								]))) : _Utils_Tuple2(
 						_Utils_update(
 							newModel,
-							{freq: _List_Nil}),
+							{freq: _List_Nil, synonyms: _List_Nil}),
 						$elm$core$Platform$Cmd$none);
 				case 'NotesInput':
 					var word = msg.a;
@@ -6684,16 +6707,16 @@ var $author$project$Main$update = F2(
 								}),
 							$elm$core$Platform$Cmd$none);
 					}
-				case 'KeywordFrequencyReady':
+				case 'KeywordCheckReady':
 					var result = msg.a;
 					if (result.$ === 'Ok') {
-						var freq = result.a;
+						var elem = result.a;
 						return _Utils_Tuple2(
 							_Utils_update(
 								model,
 								{
-									freq: freq,
-									userMessage: A2($elm$core$Dict$remove, 'KeywordFrequencyReady', model.userMessage)
+									freq: elem.freq,
+									userMessage: A2($elm$core$Dict$remove, 'KeywordCheckReady', model.userMessage)
 								}),
 							$elm$core$Platform$Cmd$none);
 					} else {
@@ -6702,7 +6725,7 @@ var $author$project$Main$update = F2(
 								model,
 								{
 									freq: _List_Nil,
-									userMessage: A3($elm$core$Dict$insert, 'KeywordFrequencyReady', 'Error getting keyword frequency', model.userMessage)
+									userMessage: A3($elm$core$Dict$insert, 'KeywordCheckReady', 'Error getting keyword frequency', model.userMessage)
 								}),
 							$elm$core$Platform$Cmd$none);
 					}
@@ -6753,7 +6776,12 @@ var $author$project$Main$update = F2(
 					var index = msg.a;
 					var newKeyword = A2(
 						$elm$core$Maybe$withDefault,
-						'Error!',
+						{
+							freq: _List_fromArray(
+								[0, 0]),
+							metadata: 'Error!',
+							word: 'Error!'
+						},
 						A2($author$project$Main$get, index, model.synonyms));
 					var newCandidateSynonym = _Utils_ap(
 						model.history,
@@ -6763,19 +6791,19 @@ var $author$project$Main$update = F2(
 						model,
 						{
 							history: $author$project$Main$historyFilter(newCandidateSynonym),
-							keyword: newKeyword
+							keyword: newKeyword.word
 						});
 					return ($elm$core$String$length(newModel.keyword) >= 2) ? _Utils_Tuple2(
 						newModel,
 						$elm$core$Platform$Cmd$batch(
 							_List_fromArray(
 								[
-									$author$project$Main$getKeywordFrequency(newModel.keyword),
+									$author$project$Main$getKeywordCheck(newModel.keyword),
 									$author$project$Main$getSynonyms(newModel.keyword)
 								]))) : _Utils_Tuple2(
 						_Utils_update(
 							newModel,
-							{freq: _List_Nil}),
+							{freq: _List_Nil, synonyms: _List_Nil}),
 						$elm$core$Platform$Cmd$none);
 				case 'HighlightSynonym':
 					var index = msg.a;
@@ -6799,6 +6827,8 @@ var $elm$browser$Browser$Document = F2(
 		return {body: body, title: title};
 	});
 var $author$project$Main$SortSuggestionsByOrigin = {$: 'SortSuggestionsByOrigin'};
+var $author$project$Main$SortSynonymsByFreq = {$: 'SortSynonymsByFreq'};
+var $author$project$Main$SortSynonymsByOrigin = {$: 'SortSynonymsByOrigin'};
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
@@ -7118,7 +7148,7 @@ var $author$project$Main$renderSingleSuggestion = F3(
 						]),
 					_List_fromArray(
 						[
-							$elm$html$Html$text(suggest.origin + ': ')
+							$elm$html$Html$text(suggest.metadata + ': ')
 						])),
 					A2(
 					$elm$html$Html$span,
@@ -7317,8 +7347,17 @@ var $author$project$Main$renderSubmitBar = function (model) {
 					]))
 			]));
 };
+var $author$project$Main$SelectSynonym = function (a) {
+	return {$: 'SelectSynonym', a: a};
+};
+var $author$project$Main$HighlightSynonym = function (a) {
+	return {$: 'HighlightSynonym', a: a};
+};
+var $author$project$Main$UnHighlightSynonym = function (a) {
+	return {$: 'UnHighlightSynonym', a: a};
+};
 var $author$project$Main$renderSingleSynonym = F3(
-	function (model, index, history) {
+	function (model, index, synonym) {
 		return A2(
 			$elm$html$Html$div,
 			_List_fromArray(
@@ -7338,11 +7377,11 @@ var $author$project$Main$renderSingleSynonym = F3(
 							A2(
 							$elm$html$Html$Events$on,
 							'mouseover',
-							A2($elm$json$Json$Decode$map, $author$project$Main$HighlightHistory, $elm_community$html_extra$Html$Events$Extra$targetValueIntParse)),
+							A2($elm$json$Json$Decode$map, $author$project$Main$HighlightSynonym, $elm_community$html_extra$Html$Events$Extra$targetValueIntParse)),
 							A2(
 							$elm$html$Html$Events$on,
 							'mouseleave',
-							A2($elm$json$Json$Decode$map, $author$project$Main$UnHighlightHistory, $elm_community$html_extra$Html$Events$Extra$targetValueIntParse)),
+							A2($elm$json$Json$Decode$map, $author$project$Main$UnHighlightSynonym, $elm_community$html_extra$Html$Events$Extra$targetValueIntParse)),
 							_Utils_eq(model.currentHighlightSynonymIndex, index) ? A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(250, 250, 250)') : A2($elm$html$Html$Attributes$style, 'background-color', '')
 						]),
 					_List_fromArray(
@@ -7354,11 +7393,51 @@ var $author$project$Main$renderSingleSynonym = F3(
 					$elm$html$Html$span,
 					_List_fromArray(
 						[
-							A2($elm$html$Html$Attributes$style, 'flex', '1 0 6rem')
+							A2($elm$html$Html$Attributes$style, 'flex', '0 0 6rem')
 						]),
 					_List_fromArray(
 						[
-							$elm$html$Html$text(history)
+							$elm$html$Html$text(synonym.metadata + ': ')
+						])),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'flex', '10 0 6rem')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(synonym.word)
+						])),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'flex', '1 0 3rem')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							$elm$core$String$fromInt(
+								A2(
+									$elm$core$Maybe$withDefault,
+									0,
+									A2($author$project$Main$get, 0, synonym.freq))))
+						])),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'flex', '1 0 3rem')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							$elm$core$String$fromInt(
+								A2(
+									$elm$core$Maybe$withDefault,
+									0,
+									A2($author$project$Main$get, 1, synonym.freq))))
 						]))
 				]));
 	});
@@ -7371,13 +7450,9 @@ var $author$project$Main$renderSynonyms = function (model) {
 				A2(
 				$elm$html$Html$Events$on,
 				'click',
-				A2($elm$json$Json$Decode$map, $author$project$Main$SelectHistory, $elm_community$html_extra$Html$Events$Extra$targetValueIntParse))
+				A2($elm$json$Json$Decode$map, $author$project$Main$SelectSynonym, $elm_community$html_extra$Html$Events$Extra$targetValueIntParse))
 			]),
-		A2(
-			$elm$core$List$take,
-			100,
-			$elm$core$List$reverse(
-				A2($elm$core$List$indexedMap, partial, model.synonyms))));
+		A2($elm$core$List$indexedMap, partial, model.synonyms));
 };
 var $elm$core$Dict$values = function (dict) {
 	return A3(
@@ -7630,10 +7705,45 @@ var $author$project$Main$render = function (model) {
 					[
 						A2(
 						$elm$html$Html$div,
-						_List_Nil,
 						_List_fromArray(
 							[
-								$elm$html$Html$text('Keyword Synonyms')
+								A2($elm$html$Html$Attributes$style, 'display', 'flex')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$span,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'flex', '10 0 calc(1.5rem + 6rem + 6rem)'),
+										$elm$html$Html$Events$onClick($author$project$Main$SortSynonymsByOrigin)
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Keyword synonyms')
+									])),
+								A2(
+								$elm$html$Html$span,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'flex', '1 0 3rem'),
+										$elm$html$Html$Events$onClick($author$project$Main$SortSynonymsByFreq)
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Corpus')
+									])),
+								A2(
+								$elm$html$Html$span,
+								_List_fromArray(
+									[
+										A2($elm$html$Html$Attributes$style, 'flex', '1 0 3rem'),
+										$elm$html$Html$Events$onClick($author$project$Main$SortSynonymsByFreq)
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Subs')
+									]))
 							])),
 						A2(
 						$elm$html$Html$div,

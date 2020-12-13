@@ -40,7 +40,7 @@ type alias WorkElement =
 
 type alias KeyCandidate =
     { word : String
-    , origin : String
+    , metadata : String
     , freq : List Int
     }
 
@@ -64,7 +64,7 @@ type alias Model =
     , currentHighlightSynonymIndex : Int
     , userMessage : Dict String String
     , history : List String
-    , synonyms : List String
+    , synonyms : List KeyCandidate
     }
 
 
@@ -125,6 +125,8 @@ type
     | SelectSynonym Int
     | HighlightSynonym Int
     | UnHighlightSynonym Int
+    | SortSynonymsByFreq
+    | SortSynonymsByOrigin
       -- history
     | SelectHistory Int
     | HighlightHistory Int
@@ -136,9 +138,9 @@ type
       -- Http responses
     | KeywordSubmitReady (Result Http.Error String)
     | WorkElementsReady (Result Http.Error (List WorkElement))
-    | KeywordFrequencyReady (Result Http.Error (List Int))
+    | KeywordCheckReady (Result Http.Error KeyCandidate)
     | SuggestionsReady (Result Http.Error (List KeyCandidate))
-    | SynonymsReady (Result Http.Error (List String))
+    | SynonymsReady (Result Http.Error (List KeyCandidate))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -171,7 +173,7 @@ update msg model =
                         ( { model | userMessage = Dict.insert "KeywordSubmitReady" ("Error submitting keyword. Details:" ++ body) model.userMessage }, Cmd.none )
 
                     else
-                        update NextWorkElement newModel
+                        update NextWorkElement { newModel | userMessage = Dict.empty }
 
                 Err _ ->
                     ( { model | userMessage = Dict.insert "KeywordSubmitReady" "Error submitting keyword. Details unknown." model.userMessage }, Cmd.none )
@@ -185,10 +187,10 @@ update msg model =
                     chooseWorkElement index model
             in
             if String.length newModel.keyword >= 2 then
-                ( newModel, Cmd.batch [ getKeywordSuggestions newModel.kanji, getKeywordFrequency newModel.keyword, getSynonyms newModel.keyword ] )
+                ( newModel, Cmd.batch [ getKeywordSuggestions newModel.kanji, getKeywordCheck newModel.keyword, getSynonyms newModel.keyword ] )
 
             else
-                ( { newModel | freq = [] }, Cmd.batch [ getKeywordSuggestions newModel.kanji ] )
+                ( { newModel | freq = [], synonyms = [] }, Cmd.batch [ getKeywordSuggestions newModel.kanji ] )
 
         HighlightWorkElement index ->
             ( { model | currentHighlightWorkElementIndex = index }, Cmd.none )
@@ -214,7 +216,7 @@ update msg model =
                         , history = historyFilter newCandidateHistory
                     }
             in
-            ( newModel, Cmd.batch [ getKeywordFrequency newModel.keyword, getSynonyms newModel.keyword ] )
+            ( newModel, Cmd.batch [ getKeywordCheck newModel.keyword, getSynonyms newModel.keyword ] )
 
         HighlightSuggestion index ->
             ( { model | currentHighlightSuggestionIndex = index }, Cmd.none )
@@ -241,10 +243,10 @@ update msg model =
                     }
             in
             if String.length newModel.keyword >= 2 then
-                ( newModel, Cmd.batch [ getKeywordFrequency newModel.keyword, getSynonyms newModel.keyword ] )
+                ( newModel, Cmd.batch [ getKeywordCheck newModel.keyword, getSynonyms newModel.keyword ] )
 
             else
-                ( { newModel | freq = [] }, Cmd.none )
+                ( { newModel | freq = [], synonyms = [] }, Cmd.none )
 
         HighlightHistory index ->
             ( { model | currentHighlightHistoryIndex = index }, Cmd.none )
@@ -257,10 +259,16 @@ update msg model =
                 ( model, Cmd.none )
 
         SortSuggestionsByFreq ->
-            ( { model | suggestions = List.reverse (List.sortWith compareSuggestions model.suggestions) }, Cmd.none )
+            ( { model | suggestions = List.reverse (List.sortWith compareKeyCandidates model.suggestions) }, Cmd.none )
 
         SortSuggestionsByOrigin ->
-            ( { model | suggestions = List.sortBy .origin model.suggestions }, Cmd.none )
+            ( { model | suggestions = List.sortBy .metadata model.suggestions }, Cmd.none )
+
+        SortSynonymsByFreq ->
+            ( { model | synonyms = List.reverse (List.sortWith compareKeyCandidates model.synonyms) }, Cmd.none )
+
+        SortSynonymsByOrigin ->
+            ( { model | synonyms = List.reverse (List.sortBy .metadata model.synonyms) }, Cmd.none )
 
         KeywordInput word ->
             let
@@ -274,10 +282,10 @@ update msg model =
                     }
             in
             if String.length word >= 2 then
-                ( newModel, Cmd.batch [ getKeywordFrequency word, getSynonyms newModel.keyword ] )
+                ( newModel, Cmd.batch [ getKeywordCheck word, getSynonyms newModel.keyword ] )
 
             else
-                ( { newModel | freq = [] }, Cmd.none )
+                ( { newModel | freq = [], synonyms = [] }, Cmd.none )
 
         NotesInput word ->
             ( { model | notes = word }, Cmd.none )
@@ -294,13 +302,13 @@ update msg model =
                 Err _ ->
                     ( { model | userMessage = Dict.insert "WorkElementsReady" "Error getting workElements" model.userMessage }, Cmd.none )
 
-        KeywordFrequencyReady result ->
+        KeywordCheckReady result ->
             case result of
-                Ok freq ->
-                    ( { model | freq = freq, userMessage = Dict.remove "KeywordFrequencyReady" model.userMessage }, Cmd.none )
+                Ok elem ->
+                    ( { model | freq = elem.freq, userMessage = Dict.remove "KeywordCheckReady" model.userMessage }, Cmd.none )
 
                 Err _ ->
-                    ( { model | freq = [], userMessage = Dict.insert "KeywordFrequencyReady" "Error getting keyword frequency" model.userMessage }, Cmd.none )
+                    ( { model | freq = [], userMessage = Dict.insert "KeywordCheckReady" "Error getting keyword frequency" model.userMessage }, Cmd.none )
 
         SuggestionsReady result ->
             case result of
@@ -325,22 +333,22 @@ update msg model =
         SelectSynonym index ->
             let
                 newKeyword =
-                    Maybe.withDefault "Error!" (get index model.synonyms)
+                    Maybe.withDefault { metadata = "Error!", word = "Error!", freq = [ 0, 0 ] } (get index model.synonyms)
 
                 newCandidateSynonym =
                     model.history ++ [ model.keyword ]
 
                 newModel =
                     { model
-                        | keyword = newKeyword
+                        | keyword = newKeyword.word
                         , history = historyFilter newCandidateSynonym
                     }
             in
             if String.length newModel.keyword >= 2 then
-                ( newModel, Cmd.batch [ getKeywordFrequency newModel.keyword, getSynonyms newModel.keyword ] )
+                ( newModel, Cmd.batch [ getKeywordCheck newModel.keyword, getSynonyms newModel.keyword ] )
 
             else
-                ( { newModel | freq = [] }, Cmd.none )
+                ( { newModel | freq = [], synonyms = [] }, Cmd.none )
 
         HighlightSynonym index ->
             ( { model | currentHighlightSynonymIndex = index }, Cmd.none )
@@ -406,8 +414,8 @@ updateWorkElement index newElement list =
     List.indexedMap updator list
 
 
-compareSuggestions : KeyCandidate -> KeyCandidate -> Order
-compareSuggestions a b =
+compareKeyCandidates : KeyCandidate -> KeyCandidate -> Order
+compareKeyCandidates a b =
     let
         afreq =
             Maybe.withDefault 0 (get 0 a.freq)
@@ -451,17 +459,20 @@ workElementsDecoder =
         )
 
 
-getKeywordFrequency : String -> Cmd Msg
-getKeywordFrequency keyword =
+getKeywordCheck : String -> Cmd Msg
+getKeywordCheck keyword =
     Http.get
-        { url = "http://localhost:9000/api/frequency/" ++ keyword
-        , expect = Http.expectJson KeywordFrequencyReady keywordFrequencyDecoder
+        { url = "http://localhost:9000/api/keywordcheck/" ++ keyword
+        , expect = Http.expectJson KeywordCheckReady keywordCandidateDecoder
         }
 
 
-keywordFrequencyDecoder : Decode.Decoder (List Int)
-keywordFrequencyDecoder =
-    Decode.list Decode.int
+keywordCandidateDecoder : Decode.Decoder KeyCandidate
+keywordCandidateDecoder =
+    Decode.map3 KeyCandidate
+        (Decode.field "word" Decode.string)
+        (Decode.field "metadata" Decode.string)
+        (Decode.field "freq" (Decode.list Decode.int))
 
 
 getKeywordSuggestions : String -> Cmd Msg
@@ -474,25 +485,15 @@ getKeywordSuggestions kanji =
 
 keywordSuggestionsDecoder : Decode.Decoder (List KeyCandidate)
 keywordSuggestionsDecoder =
-    Decode.list
-        (Decode.map3 KeyCandidate
-            (Decode.field "word" Decode.string)
-            (Decode.field "origin" Decode.string)
-            (Decode.field "freq" (Decode.list Decode.int))
-        )
+    Decode.list keywordCandidateDecoder
 
 
 getSynonyms : String -> Cmd Msg
 getSynonyms keyword =
     Http.get
         { url = "http://localhost:9000/api/synonyms/" ++ keyword
-        , expect = Http.expectJson SynonymsReady synonymsDecoder
+        , expect = Http.expectJson SynonymsReady keywordSuggestionsDecoder
         }
-
-
-synonymsDecoder : Decode.Decoder (List String)
-synonymsDecoder =
-    Decode.list Decode.string
 
 
 submitKeyword : Model -> Cmd Msg
@@ -634,7 +635,7 @@ renderSingleSuggestion model index suggest =
             [ text (String.fromInt index ++ ".") ]
         , span
             [ style "flex" "0 0 6rem" ]
-            [ text (suggest.origin ++ ": ") ]
+            [ text (suggest.metadata ++ ": ") ]
         , span
             [ style "flex" "10 0 6rem" ]
             [ text suggest.word ]
@@ -738,8 +739,8 @@ renderHistory model =
         (List.take 100 (List.reverse (List.indexedMap partial model.history)))
 
 
-renderSingleSynonym : Model -> Int -> String -> Html Msg
-renderSingleSynonym model index history =
+renderSingleSynonym : Model -> Int -> KeyCandidate -> Html Msg
+renderSingleSynonym model index synonym =
     div
         [ style "padding" "2px 0"
         , style "display" "flex"
@@ -747,8 +748,8 @@ renderSingleSynonym model index history =
         [ span
             [ style "flex" "0 0 1.5rem"
             , value (String.fromInt index)
-            , on "mouseover" (Decode.map HighlightHistory targetValueIntParse)
-            , on "mouseleave" (Decode.map UnHighlightHistory targetValueIntParse)
+            , on "mouseover" (Decode.map HighlightSynonym targetValueIntParse)
+            , on "mouseleave" (Decode.map UnHighlightSynonym targetValueIntParse)
             , if model.currentHighlightSynonymIndex == index then
                 style "background-color" "rgb(250, 250, 250)"
 
@@ -757,8 +758,17 @@ renderSingleSynonym model index history =
             ]
             [ text (String.fromInt index ++ ".") ]
         , span
-            [ style "flex" "1 0 6rem" ]
-            [ text history ]
+            [ style "flex" "0 0 6rem" ]
+            [ text (synonym.metadata ++ ": ") ]
+        , span
+            [ style "flex" "10 0 6rem" ]
+            [ text synonym.word ]
+        , span
+            [ style "flex" "1 0 3rem" ]
+            [ text (String.fromInt <| Maybe.withDefault 0 <| get 0 synonym.freq) ]
+        , span
+            [ style "flex" "1 0 3rem" ]
+            [ text (String.fromInt <| Maybe.withDefault 0 <| get 1 synonym.freq) ]
         ]
 
 
@@ -769,8 +779,8 @@ renderSynonyms model =
             renderSingleSynonym model
     in
     div
-        [ on "click" (Decode.map SelectHistory targetValueIntParse) ]
-        (List.take 100 (List.reverse (List.indexedMap partial model.synonyms)))
+        [ on "click" (Decode.map SelectSynonym targetValueIntParse) ]
+        (List.indexedMap partial model.synonyms)
 
 
 render : Model -> Html Msg
@@ -780,8 +790,6 @@ render model =
         [ style "display" "grid"
         , style "grid-template-columns" "1px 2fr 1fr 2fr 1px"
         , style "grid-template-rows" "10vh 35vh 55vh"
-
-        -- , style "grid-template-rows" "70px 200px 300px"
         ]
         [ -- Keyword submit
           div
@@ -851,7 +859,24 @@ render model =
             , style "grid-row" "3 / 4"
             , style "overflow" "auto"
             ]
-            [ div [] [ text "Keyword Synonyms" ]
+            [ div
+                [ style "display" "flex" ]
+                [ span
+                    [ style "flex" "10 0 calc(1.5rem + 6rem + 6rem)"
+                    , onClick SortSynonymsByOrigin
+                    ]
+                    [ text "Keyword synonyms" ]
+                , span
+                    [ style "flex" "1 0 3rem"
+                    , onClick SortSynonymsByFreq
+                    ]
+                    [ text "Corpus" ]
+                , span
+                    [ style "flex" "1 0 3rem"
+                    , onClick SortSynonymsByFreq
+                    ]
+                    [ text "Subs" ]
+                ]
             , div [] [ renderSynonyms model ]
             ]
         ]
