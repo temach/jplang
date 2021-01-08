@@ -65,6 +65,7 @@ type alias Model =
     , userMessage : Dict String String
     , history : List String
     , synonyms : List KeyCandidate
+    , expressions : List KeyCandidate
     }
 
 
@@ -89,6 +90,7 @@ init _ =
             , userMessage = Dict.empty
             , history = []
             , synonyms = []
+            , expressions = []
             }
     in
     -- update NextWorkElement model
@@ -135,12 +137,15 @@ type
     | KeywordInput String
     | NotesInput String
     | KeywordSubmitClick
+      -- expressions
+    | SortExpressionsByFreq
       -- Http responses
     | KeywordSubmitReady (Result Http.Error String)
     | WorkElementsReady (Result Http.Error (List WorkElement))
     | KeywordCheckReady (Result Http.Error KeyCandidate)
     | SuggestionsReady (Result Http.Error (List KeyCandidate))
     | SynonymsReady (Result Http.Error (List KeyCandidate))
+    | ExpressionsReady (Result Http.Error (List KeyCandidate))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -183,14 +188,31 @@ update msg model =
 
         SelectWorkElement index ->
             let
-                newModel =
+                fixWorkModel =
                     chooseWorkElement index model
+
+                newModel =
+                    { fixWorkModel | freq = [], synonyms = [], userMessage = Dict.empty }
+
+                keywordPresentCommands =
+                    Cmd.batch
+                        [ getSuggestions newModel.kanji
+                        , getExpressions newModel.kanji
+                        , getKeywordCheck newModel.kanji newModel.keyword
+                        , getSynonyms newModel.keyword
+                        ]
+
+                keywordAbsentCommands =
+                    Cmd.batch
+                        [ getSuggestions newModel.kanji
+                        , getExpressions newModel.kanji
+                        ]
             in
             if String.length newModel.keyword >= 2 then
-                ( newModel, Cmd.batch [ getKeywordSuggestions newModel.kanji, getKeywordCheck newModel.kanji newModel.keyword, getSynonyms newModel.keyword ] )
+                ( newModel, keywordPresentCommands )
 
             else
-                ( { newModel | freq = [], synonyms = [], userMessage = Dict.empty }, Cmd.batch [ getKeywordSuggestions newModel.kanji ] )
+                ( newModel, keywordAbsentCommands )
 
         HighlightWorkElement index ->
             ( { model | currentHighlightWorkElementIndex = index }, Cmd.none )
@@ -320,7 +342,7 @@ update msg model =
                     update SortSuggestionsByFreq newModel
 
                 Err _ ->
-                    ( { model | userMessage = Dict.insert "SuggestionsReady" "Error getting keyword suggections" model.userMessage }, Cmd.none )
+                    ( { model | userMessage = Dict.insert "SuggestionsReady" "Error getting keyword suggestions" model.userMessage }, Cmd.none )
 
         SynonymsReady result ->
             case result of
@@ -359,6 +381,21 @@ update msg model =
 
             else
                 ( model, Cmd.none )
+
+        ExpressionsReady result ->
+            case result of
+                Ok expressions ->
+                    let
+                        newModel =
+                            { model | expressions = expressions }
+                    in
+                    update SortExpressionsByFreq newModel
+
+                Err _ ->
+                    ( { model | userMessage = Dict.insert "ExpressionsReady" "Error getting japanese expressions" model.userMessage }, Cmd.none )
+
+        SortExpressionsByFreq ->
+            ( { model | expressions = List.sortWith compareKeyCandidates model.expressions }, Cmd.none )
 
 
 historyFilter : List String -> List String
@@ -420,10 +457,14 @@ compareKeyCandidates a b =
         afreq =
             Maybe.withDefault 0 (get 0 a.freq)
                 + Maybe.withDefault 0 (get 1 a.freq)
+                + Maybe.withDefault 0 (get 2 a.freq)
+                + Maybe.withDefault 0 (get 3 a.freq)
 
         bfreq =
             Maybe.withDefault 0 (get 0 b.freq)
                 + Maybe.withDefault 0 (get 1 b.freq)
+                + Maybe.withDefault 0 (get 2 b.freq)
+                + Maybe.withDefault 0 (get 3 a.freq)
     in
     case compare afreq bfreq of
         LT ->
@@ -463,36 +504,44 @@ getKeywordCheck : String -> String -> Cmd Msg
 getKeywordCheck kanji keyword =
     Http.get
         { url = "http://localhost:9000/api/keywordcheck/" ++ kanji ++ "/" ++ keyword
-        , expect = Http.expectJson KeywordCheckReady keywordCandidateDecoder
+        , expect = Http.expectJson KeywordCheckReady keyCandidateDecoder
         }
 
 
-keywordCandidateDecoder : Decode.Decoder KeyCandidate
-keywordCandidateDecoder =
+keyCandidateDecoder : Decode.Decoder KeyCandidate
+keyCandidateDecoder =
     Decode.map3 KeyCandidate
         (Decode.field "word" Decode.string)
         (Decode.field "metadata" Decode.string)
         (Decode.field "freq" (Decode.list Decode.int))
 
 
-getKeywordSuggestions : String -> Cmd Msg
-getKeywordSuggestions kanji =
+getSuggestions : String -> Cmd Msg
+getSuggestions kanji =
     Http.get
         { url = "http://localhost:9000/api/suggestions/" ++ kanji
-        , expect = Http.expectJson SuggestionsReady keywordSuggestionsDecoder
+        , expect = Http.expectJson SuggestionsReady suggestionsDecoder
         }
 
 
-keywordSuggestionsDecoder : Decode.Decoder (List KeyCandidate)
-keywordSuggestionsDecoder =
-    Decode.list keywordCandidateDecoder
+suggestionsDecoder : Decode.Decoder (List KeyCandidate)
+suggestionsDecoder =
+    Decode.list keyCandidateDecoder
 
 
 getSynonyms : String -> Cmd Msg
 getSynonyms keyword =
     Http.get
         { url = "http://localhost:9000/api/synonyms/" ++ keyword
-        , expect = Http.expectJson SynonymsReady keywordSuggestionsDecoder
+        , expect = Http.expectJson SynonymsReady suggestionsDecoder
+        }
+
+
+getExpressions : String -> Cmd Msg
+getExpressions kanji =
+    Http.get
+        { url = "http://localhost:9000/api/expressions/" ++ kanji
+        , expect = Http.expectJson ExpressionsReady suggestionsDecoder
         }
 
 
@@ -648,8 +697,8 @@ renderSingleSuggestion model index suggest =
         ]
 
 
-renderKeywordSuggestions : Model -> Html Msg
-renderKeywordSuggestions model =
+renderSuggestions : Model -> Html Msg
+renderSuggestions model =
     let
         partial =
             renderSingleSuggestion model
@@ -783,13 +832,51 @@ renderSynonyms model =
         (List.indexedMap partial model.synonyms)
 
 
+renderSingleExpression : Model -> Int -> KeyCandidate -> Html Msg
+renderSingleExpression model index expression =
+    div
+        [ style "padding" "2px 0"
+        , style "display" "flex"
+        ]
+        [ span
+            [ style "flex" "1 0 3rem" ]
+            [ text (String.fromInt <| Maybe.withDefault 0 <| get 0 expression.freq) ]
+        , span
+            [ style "flex" "1 0 3rem" ]
+            [ text (String.fromInt <| Maybe.withDefault 0 <| get 1 expression.freq) ]
+        , span
+            [ style "flex" "1 0 3rem" ]
+            [ text (String.fromInt <| Maybe.withDefault 0 <| get 2 expression.freq) ]
+        , span
+            [ style "flex" "1 0 5rem" ]
+            [ text (String.fromInt <| Maybe.withDefault 0 <| get 3 expression.freq) ]
+        , span
+            [ style "flex" "1 0 8rem" ]
+            [ text expression.word ]
+        , span
+            [ style "flex" "10 0 8rem" ]
+            [ text expression.metadata ]
+        ]
+
+
+renderExpressions : Model -> Html Msg
+renderExpressions model =
+    let
+        partial =
+            renderSingleExpression model
+    in
+    div
+        []
+        (List.indexedMap partial model.expressions)
+
+
 render : Model -> Html Msg
 render model =
     -- central css grid container
     div
         [ style "display" "grid"
         , style "grid-template-columns" "1px 2fr 1fr 2fr 1px"
-        , style "grid-template-rows" "8vh 35vh 30vh 27vh"
+        , style "grid-template-rows" "8vh 30vh 30vh 32vh"
         ]
         [ -- Keyword submit
           div
@@ -827,7 +914,7 @@ render model =
                     ]
                     [ text "Subs" ]
                 ]
-            , renderKeywordSuggestions model
+            , renderSuggestions model
             ]
 
         -- WorkElement select
@@ -887,6 +974,33 @@ render model =
             , style "grid-row" "4 / 5"
             , style "overflow" "auto"
             ]
-            [ div [] [ text "Expressions" ]
+            [ div
+                [ style "display" "flex" ]
+                [ span
+                    [ style "flex" "1 0 3rem"
+                    ]
+                    [ text "Routledge" ]
+                , span
+                    [ style "flex" "1 0 3rem"
+                    ]
+                    [ text "LeedsUni" ]
+                , span
+                    [ style "flex" "1 0 3rem"
+                    ]
+                    [ text "Wiktionary" ]
+                , span
+                    [ style "flex" "1 0 5rem"
+                    ]
+                    [ text "ChriskempsonSubs" ]
+                , span
+                    [ style "flex" "1 1 8rem"
+                    ]
+                    [ text "Expressions" ]
+                , span
+                    [ style "flex" "10 0 8rem"
+                    ]
+                    [ text "Translation" ]
+                ]
+            , renderExpressions model
             ]
         ]

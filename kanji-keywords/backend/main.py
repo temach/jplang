@@ -3,14 +3,26 @@ from datetime import datetime
 from pprint import pprint
 from collections import defaultdict
 import os
-from bottle import request, post, get, route, run, template, HTTPResponse, static_file
+from bottle import request, post, get, route, run, template, HTTPResponse, static_file  # type: ignore
 import json
 import sqlite3
 import pdb
 import re
-import nltk
-from nltk.stem.porter import PorterStemmer
-from nltk.stem import WordNetLemmatizer
+from nltk.stem.porter import PorterStemmer  # type: ignore
+from nltk.stem import WordNetLemmatizer  # type: ignore
+from typing import TypedDict, Any
+from typeguard import typechecked
+import re
+
+
+class KeyCandidate(TypedDict):
+    word: str
+    metadata: str
+    freq: list[int]
+
+
+ListKeyCandidate = list[KeyCandidate]
+Thesaurus = dict[str, list[str]]
 
 
 @get("/")
@@ -44,14 +56,19 @@ def get_en_freq_regex(word):
 
 
 def get_en_freq(word):
-    return (
+    return [
         CORPUS.get(word, -1),
         SUBS.get(word, -1)
-    )
+    ]
 
 
 @get("/api/synonyms/<word>")
 def synonyms(word):
+    res = inner_synonyms(word)
+    return json.dumps(res)
+
+
+def inner_synonyms(word) -> ListKeyCandidate:
     # usefull thesaurus sources: https://github.com/Ron89/thesaurus_query.vim
 
     # Big Huge Thesaurus:
@@ -71,7 +88,7 @@ def synonyms(word):
 
     word = word.lower()
     result = {}
-    popularity = defaultdict(int)
+    popularity: dict[str, int] = defaultdict(int)
 
     for thesaurus in [MOBY, OPENOFFICE, WORDNET]:
         for w in thesaurus.get(word, []):
@@ -80,7 +97,7 @@ def synonyms(word):
             if (freq[0] < 0 and freq[1] < 0):
                 continue
             # build the item
-            item = {
+            item: KeyCandidate = {
                 "word": w,
                 "freq": freq,
                 "metadata": ""
@@ -100,15 +117,21 @@ def synonyms(word):
         reverse=True
     )
 
-    return json.dumps(ordered)
+    return ordered
 
 
-@ get("/api/suggestions/<kanji>")
+@get("/api/suggestions/<kanji>")
 def suggestions(kanji):
+    res = inner_suggestions(kanji)
+    return json.dumps(res)
+
+
+@typechecked
+def inner_suggestions(kanji) -> ListKeyCandidate:
     result = []
 
     u = SCRIPTIN[kanji]["uniq"]
-    item = {
+    item: KeyCandidate = {
         "word": u,
         "freq": get_en_freq(u),
         "metadata": "scriptin-uniq"
@@ -131,25 +154,79 @@ def suggestions(kanji):
         }
         result.append(item)
 
-    return json.dumps(result)
+    return result
 
 
-# def check_word_conflict_re(needle, haystack):
-#     result = {}
-#     stem = STEMMER.stem(needle)
-#
-#     r = re.compile("^{}$".format(word), re.IGNORECASE)
-#     for icorpus, e in enumerate(CORPUS.keys()):
-#         if r.match(e):
-#             break
-#
-#     if stem in haystack:
-#         result["stem"] = haystack[stem]
-#
-#     stem_conflict = haystack.get(stem, "")
-#
-#     lemma = LEMMATIZER.lemmatize(needle)
-#     lemma_conflict = haystack.get(lemma, "")
+@get("/api/expressions/<kanji>")
+def expressions(kanji):
+    res = inner_expressions(kanji)
+    return json.dumps(res)
+
+
+@typechecked
+def inner_expressions(kanji) -> ListKeyCandidate:
+    expressions: dict[str, Any] = defaultdict(
+        lambda: {"metadata": "", "freq": [0, 0, 0, 0]}
+    )
+
+    max_samples = 10
+    samples = 0
+
+    for expr, extra_info in ROUTLEDGE.items():
+        if kanji in expr:
+            expressions[expr]["metadata"] += extra_info["meaning"]
+            expressions[expr]["freq"][0] = extra_info["num"]
+            samples += 1
+            if samples > max_samples:
+                samples = 0
+                break
+
+    for index, expr in enumerate(LEEDS):
+        if kanji in expr:
+            if not expr in expressions and expr in ROUTLEDGE:
+                # check if we need definition
+                expressions[expr]["metadata"] = ROUTLEDGE[expr]["meaning"]
+            expressions[expr]["freq"][1] = index
+            samples += 1
+            if samples > max_samples:
+                samples = 0
+                break
+
+    for index, expr in enumerate(WIKTIONARY):
+        if kanji in expr:
+            if not expr in expressions and expr in ROUTLEDGE:
+                # check if we need definition
+                expressions[expr]["metadata"] = ROUTLEDGE[expr]["meaning"]
+            expressions[expr]["freq"][2] = index
+            samples += 1
+            if samples > max_samples:
+                samples = 0
+                break
+
+    for index, expr in enumerate(CHRISKEMPSON):
+        if kanji in expr:
+            if not expr in expressions and expr in ROUTLEDGE:
+                # check if we need definition
+                expressions[expr]["metadata"] = ROUTLEDGE[expr]["meaning"]
+            expressions[expr]["freq"][3] = index
+            samples += 1
+            if samples > max_samples:
+                samples = 0
+                break
+
+    pprint(expressions)
+
+    payload: ListKeyCandidate = []
+    for k, v in expressions.items():
+        payload.append({
+            "word": k,
+            "metadata": v["metadata"],
+            "freq": v["freq"]
+        })
+
+    pprint(payload)
+
+    return payload
 
 
 @ get("/api/keywordcheck/<kanji>/<keyword>")
@@ -204,7 +281,7 @@ def work():
     c = DB.cursor()
     c.execute("SELECT * FROM kanjikeywords;")
     rows = c.fetchall()
-    data = {k: (k, "", "") for k in WORK}
+    data = {k: (k, "", "") for k in WORK.keys()}
     for r in rows:
         kanji = r[0]
 
@@ -238,11 +315,12 @@ def submit():
         return HTTPResponse(status=202, body="{}".format(e))
 
     # update in memory keyword dictionary
-    # step 1: drop old stem/lemma keyword that matches this kanji
     global KEYWORDS
     kanji = payload["kanji"]
     keyword = payload["keyword"]
+    # step 1: drop old stem/lemma keyword that matches this kanji
     KEYWORDS = {k: v for k, v in KEYWORDS.items() if v[0] != kanji}
+    # step 2: assign new kanji-keyword pair
     KEYWORDS[STEMMER.stem(keyword)] = (kanji, keyword)
     KEYWORDS[LEMMATIZER.lemmatize(keyword)] = (kanji, keyword)
 
@@ -262,6 +340,13 @@ def db_init():
     DB.commit()
 
 
+def expression_filter(expression: str, ALLOWED_CHARS: dict) -> bool:
+    for ch in expression:
+        if not ch in ALLOWED_CHARS:
+            return False
+    return True
+
+
 if __name__ == "__main__":
     KANJI_DB_PATH = "../kanji-keywords.db"
     db_needs_init = not os.path.isfile(KANJI_DB_PATH)
@@ -274,15 +359,21 @@ if __name__ == "__main__":
     CORPUS = {}
     SUBS = {}
     # thesaurus
-    WORDNET = {}
-    MOBY = {}
-    OPENOFFICE = {}
+    WORDNET: Thesaurus = {}
+    MOBY: Thesaurus = {}
+    OPENOFFICE: Thesaurus = {}
     # other
-    KEYWORDS = {}
+    KEYWORDS: dict[str, tuple[str, str]] = {}
     ONYOMI = {}
-    WORK = []
+    WORK = {}
     KANJIDIC = {}
     SCRIPTIN = {}
+
+    # jp expressions
+    LEEDS: list[str] = []
+    ROUTLEDGE: dict[str, Any] = {}
+    CHRISKEMPSON: list[str] = []
+    WIKTIONARY: list[str] = []
 
     STEMMER = PorterStemmer()
     LEMMATIZER = WordNetLemmatizer()
@@ -307,7 +398,7 @@ if __name__ == "__main__":
             ONYOMI[lemma] = key
 
     with open("../resources/kanji-by-freq.json") as kanji:
-        WORK = list(json.load(kanji).keys())
+        WORK = json.load(kanji)
 
     with open("../resources/keywords-kanjidic2-meanings.json") as kanjidic:
         KANJIDIC = json.load(kanjidic)
@@ -346,15 +437,28 @@ if __name__ == "__main__":
             else:
                 WORDNET[key] = synonyms
 
-    pprint(list(ONYOMI.items())[:25])
-    pprint(list(CORPUS.items())[:25])
+    with open("../resources/japanese-wordfreq-leeds-uni.json") as f:
+        freq_list = json.load(f)
+        # some japanese expressions use unusual kanji or is plain kana
+        # its not interesting, so drop it
+        LEEDS = [v for v in freq_list]  # if expression_filter(v, WORK)]
+
+    with open("../resources/japanese-wordfreq-routledge.json") as f:
+        data = json.load(f)
+        for elem in data:
+            for entry in elem["kanjis"]:
+                entry = re.sub("\[", "", entry)
+                entry = re.sub(";.*\]", "", entry)
+                ROUTLEDGE[entry] = elem
+
+    with open("../resources/japanese-wordfreq-wiktionary.json") as f:
+        WIKTIONARY = json.load(f)
+
+    with open("../resources/japanese-wordfreq-chriskempson-subs.json") as f:
+        CHRISKEMPSON = json.load(f)
+
     pprint(list(SUBS.items())[:25])
-    pprint(WORK[:25])
-    pprint(list(KANJIDIC.items())[:25])
-    pprint(list(SCRIPTIN.items())[:25])
-    pprint(list(MOBY.items())[:25])
-    pprint(list(OPENOFFICE.items())[:25])
-    pprint(list(WORDNET.items())[:25])
+    pprint(list(CORPUS.items())[:25])
 
     port = 9000
     print("Running bottle server on port {}".format(port))
