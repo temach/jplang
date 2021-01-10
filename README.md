@@ -1,6 +1,24 @@
 # Onyomi keywords
 
 The files related to onyomi-keywords reside inside "onyomi-keywords/" directory.
+There is also a more detailed README in that directory.
+
+Each onyomi needs a keyword.
+- it should NOT be one of 10000 most common english words.
+- it should be unique for each onyomi.
+- it should be written like the onyomi transcription.
+
+Sample keywords for "な..." onyomi are below:
+```
+na  =  ナ  =  な  =  NApoleon
+nai  =  ナイ  =  ない  =  NAIve
+nan  =  ナン  =  なん  =  NANny
+nei  =  ネイ  =  ねい  =  NEIghbourhood
+nen  =  ネン  =  ねん  =  NEN (hunter x hunter)
+netsu  =  ネツ  =  ねつ  =  NETScape
+```
+
+### Results
 
 The onyomi keywords in plain text format are in file:
 - onyomi-keywords.txt
@@ -8,127 +26,81 @@ The onyomi keywords in plain text format are in file:
 The results are also packaged as Anki decks (.txt and .apkg)
 
 
-### Useful resources
+### Resources
 
-Sources used to decide the most appropriate ONYOMI keywords are in `resources/` directory:
+Sources used to decide the most appropriate ONYOMI keywords are in "resources/" directory:
 - cmudict.dict contains English phonetical transcriptions (http://www.speech.cs.cmu.edu/cgi-bin/cmudict)
 - english-long-frequency.txt contains English words ordered by frequency of use, taken from subtitles (https://github.com/nachocab/words-by-frequency):
 - google-english-corpus.txt contains 1/3 of a million words from google english corpus ordered by frequency of use (https://norvig.com/ngrams/count_1w.txt) 
 - kanjidic2.xml is a kanji dictionary with frequency counts and all onyomi for each kanji (http://www.edrdg.org/wiki/index.php/KANJIDIC_Project)
 
 
-### Guidelines for choosing onyomi keywords
-
-- Try to use english words that are not in 10000 most common words (so normal words would not be mistaken for onyomi keywords)
-- The combination of english letters OW in the onyomi keyword represent "ou" japanese sound. For example HOWling = hou
-- The cobination of english letters UCK represent "yaku" japanese sound. For example BUCKweed = byaku and RUCKsack = ryaku
-- Prolonged sounds are distinguished by longer words: KUmar = KU and KUbic-rubik = KUU
-
-Some english letters remain unused, so they are repurposed as below:
-- c -> K
-- l -> R
-- p -> unused
-- q -> K
-- v -> I
-- x -> Z
-
-For example onyomi keyword for KYO begins with letter "C" instead of "K".
-
-
-### Additional notes
-
-Vowels are not good to use at onyomi keyword's end.
-Letters that can be part of a onyomi keyword can not be used to end a onyomi keyword.
-For example using word "kits" for sound KI is bad, because it sounds like its for KITSU.
-
-The sounds below can appear as second/third/fourth letters in ON yomi:
-- チ or chi appears 14 times
-- ク or ku appears 51 times
-- キ or ki appears 13 times
-- ウ or u appears 39 times
-- ツ or tsu appears 41 times
-- ン or n appears 63 times
-- イ or i appears 31 times
-
-Therefore these sounds should be avoided when they fall on the end of the onyomi keyword.
-
-CMU dict sounds that are good to use at keyword's end (to mark that mnemonic part is finished):
-```
-B, D, DH, F, HH, L, M, OW, OY, P, R, S, SH, TH, V, W, Z, ZH 
-```
-
-
-Sounds that should NOT be used:
-```
-AA, AE, AH, AO, AW, AY, CH, EH, ER, EY, G, IH, IY, JH, K, N, NG, T, UH, UW, Y ,
-```
-
-
-Mapping of english pronunciation to ascii in the cmudict.dict file (also see http://www.speech.cs.cmu.edu/cgi-bin/cmudict):
-```
-AA	odd     	AA D
-AE	at		AE T
-AH	hut		HH AH T
-AO	ought		AO T
-AW	cow		K AW
-AY	hide		HH AY D
-B 	be		B IY
-CH	cheese		CH IY Z
-D 	dee		D IY
-DH	thee		DH IY
-EH	Ed		EH D
-ER	hurt		HH ER T
-EY	ate		EY T
-F 	fee		F IY
-G 	green		G R IY N
-HH	he		HH IY
-IH	it		IH T
-IY	eat		IY T
-JH	gee		JH IY
-K 	key		K IY
-L 	lee		L IY
-M 	me		M IY
-N 	knee		N IY
-NG	ping		P IH NG
-OW	oat		OW T
-OY	toy		T OY
-P 	pee		P IY
-R 	read		R IY D
-S 	sea		S IY
-SH	she		SH IY
-T 	tea		T IY
-TH	theta		TH EY T AH
-UH	hood		HH UH D
-UW	two		T UW
-V 	vee		V IY
-W 	we		W IY
-Y 	yield		Y IY L D
-Z 	zee		Z IY
-ZH	seizure		S IY ZH ER
-```
-
-
-### Tools 
-
-- Python script to extract and rank onyomi of the common kanji (kanji that are marked as "frequent" in kanjidic2.xml)
-- Markdown file with snippets showing how to grep dictionary files looking for good keywords keeping in mind spelling, pronunciation and frequency of use.
-- Python scripts to help build the anki deck.
-
-
 # Kanji keywords
 
-Each kanji needs a keyword. 
+The files related to kanji-keywords reside inside "kanji-keywords/" directory.
+There is also a more detailed README in that directory.
+
+Each kanji needs a keyword.
 - it should NOT be one of 10000 most common english words.
 - it should NOT be one of the onyomi keywords.
 - it should be unique for each kanji.
-- it should reflect meaning of the kanji. 
+- it should reflect meaning of the kanji.
 
 Most common english words can be taken from 1/3 million of google english corpus (https://norvig.com/ngrams/count_1w.txt)
 
-Previous works:
-- kanji keywords scriptin github (https://github.com/scriptin/kanji-keys)
+### Previous works:
+- unique kanji keywords by scriptin on github (https://github.com/scriptin/kanji-keys)
+- kanjidic2.xml has keywords for each kanji, but they might not be unique.
+
+### Results
+
+A web tool (backend in Python, frontend in Elm) to decide on the most fitting kanji keyword. To run the tool (needs python 3.9 due to type annotations):
+```
+cd kanji-keywords/backend
+python main.py
+```
+And navigate to http://localhost:9000 in a browser.
+
+The tool works with the sqlite database file "kanji-keywords/kanji-keywords.db".
+It has a single table "kanjikeywords" to contain the results of using the tool.
+The table has three columns: kanji, keyword, additional text notes
+
 
 ### Useful resources
+
+Resources to compile a list of 1700 most commonly seen kanji:
+- frequency-kanjidict2-freq.json extract from kanjidic2.xml according to "freq" xml tag
+- frequency-kanjidict2-jlpt.json extract from kanjidic2.xml according to "jlpt" xml tag
+- frequency-kanjidict2-joyo.json extract from kanjidic2.xml according to "grade" xml tag
+- frequency-nozaki-lab.json slightly old kanji frequency list from (http://nozaki-lab.ics.aichi-edu.ac.jp/nozaki/asahi/kanji.html or InternetArchive: http://web.archive.org/web/20080212134350/http://nozaki-lab.ics.aichi-edu.ac.jp/nozaki/asahi/kanji.html)
+- frequency-scriptin-news.json compiled by scriptin from news articles (https://github.com/scriptin/kanji-frequency)
+- frequency-scriptin-twitter.json compiled by scriptin from japanese twitter posts (https://github.com/scriptin/kanji-frequency)
+
+Japanese expressions ordered by frequency (to find common expressions with a particular kanji):
+- japanese-wordfreq-routledge.json excellent resource with 5000 most common japanese lemmas and their translations from routledge (https://www.amazon.com/Frequency-Dictionary-Japanese-Routledge-Dictionaries/dp/0415610133)
+- japanese-wordfreq-chriskempson-subs.json huge list of frequency count from subtitles for shows/anime (https://github.com/chriskempson/japanese-subtitles-word-frequency-list)
+- japanese-wordfreq-leeds-uni.json huge list of processed lemmas by the University of Leeds (http://corpus.leeds.ac.uk/list.html)
+- japanese-wordfreq-wiktionary.json 10000 most common japanese phrases from dump of Japanese Wikipedia (https://en.wiktionary.org/wiki/Wiktionary:Frequency_lists/Japanese)
+- japanese-wordfreq-gfahl-go-news.xml resource was not used as I am too lazy, frequency from news about Go board game (https://github.com/gfahl/japanese-word-frequency)
+- japanese-wordfreq-manythings.json resource was not used as its very similar to leeds-uni corpus (https://www.manythings.org/japanese/words/)
+
+English words ordered by frequency (to find less common words):
+- english-from-subtitles-by-freq.txt contains English words ordered by frequency of use, taken from subtitles (https://github.com/nachocab/words-by-frequency)
+- english-from-gogle-corpus-by-freq.txt contains 1/3 of a million words from google english corpus ordered by frequency of use (https://norvig.com/ngrams/count_1w.txt)
+
+English thesaurus to find synonyms to keywords:
+- english-thesaurus-moby-mthesaur.txt giant thesaurus with free license (https://github.com/words/moby)
+- english-thesaurus-openoffice.txt the MyThes-1 thesaurus used in OpenOffice 1.x and 2.x (https://wiki.openoffice.org/wiki/Dictionaries or https://www.openoffice.org/lingucomponent/thesaurus.html)
+- english-thesaurus-wordnet.jsonl from the WordNet project (https://wordnet.princeton.edu/download)
+
+Existing lists of kanji keywords, they are used as suggestions for keywords:
+- keywords-kanjidic2-meanings.json list of kanji and possible meaning extracted from kanjidic2.xml by a custom script for this project.
+- keywords-scriptin-kanji-keys.json list of unique (!) kanji keywords assigned by scriptin (https://github.com/scriptin/kanji-keys)
+
+Other:
+- kanji-by-freq.json list of 1700 most common kanji created for this project ordered by frequency.
+- english-onyomi-keywords.txt contains results of onyomi-keywords project (these words can not be used as kanji keywords) (https://github.com/temach/jplang/blob/master/onyomi-keywords/onyomi-keywords.txt)
+- kanjidic2.xml is a kanji dictionary with frequency counts and all onyomi for each kanji (http://www.edrdg.org/wiki/index.php/KANJIDIC_Project)
 
 To find names for kanji that are just made up junk consider using a drawing-to-keyword mapping software:
 - Draw and get accociated words: https://github.com/engelsjk/web-demo-quickdraw-visualizer
