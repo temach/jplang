@@ -59,7 +59,10 @@ A web tool (backend in Python, frontend in Elm) to decide on the most fitting ka
 cd kanji-keywords/backend
 python main.py
 ```
-And navigate to http://localhost:9000 in a browser.
+And navigate to http://localhost:9000 in a browser, you should see the bellow screenshot:
+
+![](README.assets/kanji-keywords-screenshot.png)
+
 
 The tool works with the sqlite database file "kanji-keywords/kanji-keywords.db".
 It has a single table "kanjikeywords" to contain the results of using the tool.
