@@ -1,5 +1,7 @@
 # Kanji Keywords
 
+For overview and results see the readme in the rood project directory.
+
 Assign unique keyword to each kanji. The results are in kanji-keywords.db (sqlite database).
 
 
