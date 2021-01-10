@@ -165,66 +165,65 @@ def expressions(kanji):
 
 @typechecked
 def inner_expressions(kanji) -> ListKeyCandidate:
-    expressions: dict[str, Any] = defaultdict(
-        lambda: {"metadata": "", "freq": [0, 0, 0, 0]}
-    )
+    expressions = set()
 
-    max_samples = 10
+    max_samples = 7
     samples = 0
 
-    for expr, extra_info in ROUTLEDGE.items():
+    for expr in ROUTLEDGE.keys():
         if kanji in expr:
-            expressions[expr]["metadata"] += extra_info["meaning"]
-            expressions[expr]["freq"][0] = extra_info["num"]
+            expressions.add(expr)
             samples += 1
             if samples > max_samples:
                 samples = 0
                 break
 
-    for index, expr in enumerate(LEEDS):
+    for expr in LEEDS:
         if kanji in expr:
-            if not expr in expressions and expr in ROUTLEDGE:
-                # check if we need definition
-                expressions[expr]["metadata"] = ROUTLEDGE[expr]["meaning"]
-            expressions[expr]["freq"][1] = index
+            expressions.add(expr)
             samples += 1
             if samples > max_samples:
                 samples = 0
                 break
 
-    for index, expr in enumerate(WIKTIONARY):
+    for expr in WIKTIONARY:
         if kanji in expr:
-            if not expr in expressions and expr in ROUTLEDGE:
-                # check if we need definition
-                expressions[expr]["metadata"] = ROUTLEDGE[expr]["meaning"]
-            expressions[expr]["freq"][2] = index
+            expressions.add(expr)
             samples += 1
             if samples > max_samples:
                 samples = 0
                 break
 
-    for index, expr in enumerate(CHRISKEMPSON):
+    for expr in CHRISKEMPSON:
         if kanji in expr:
-            if not expr in expressions and expr in ROUTLEDGE:
-                # check if we need definition
-                expressions[expr]["metadata"] = ROUTLEDGE[expr]["meaning"]
-            expressions[expr]["freq"][3] = index
+            expressions.add(expr)
             samples += 1
             if samples > max_samples:
                 samples = 0
                 break
-
-    pprint(expressions)
 
     payload: ListKeyCandidate = []
-    for k, v in expressions.items():
-        payload.append({
-            "word": k,
-            "metadata": v["metadata"],
-            "freq": v["freq"]
-        })
 
-    pprint(payload)
+    for expr in expressions:
+        freq = []
+        for source in (list(ROUTLEDGE.keys()), LEEDS, WIKTIONARY, CHRISKEMPSON):
+            try:
+                index = source.index(expr)
+            except ValueError:
+                index = -1
+            freq.append(index)
+
+        if freq.count(-1) >= 3:
+            # ignore words that are present in only one dictionary
+            # becasue they are obscure words
+            continue
+
+        meaning = ROUTLEDGE.get(expr, {"meaning": ""})["meaning"]
+        payload.append({
+            "word": expr,
+            "metadata": meaning,
+            "freq": freq
+        })
 
     return payload
 

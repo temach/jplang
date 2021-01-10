@@ -464,7 +464,7 @@ compareKeyCandidates a b =
             Maybe.withDefault 0 (get 0 b.freq)
                 + Maybe.withDefault 0 (get 1 b.freq)
                 + Maybe.withDefault 0 (get 2 b.freq)
-                + Maybe.withDefault 0 (get 3 a.freq)
+                + Maybe.withDefault 0 (get 3 b.freq)
     in
     case compare afreq bfreq of
         LT ->
