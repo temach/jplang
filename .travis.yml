@@ -19,32 +19,6 @@ jobs:
         - mypy ./kanji-keywords/backend/main.py
         - cd kanji-keywords/backend/ && python -m unittest
 
-    # run smoke test
-    - stage: test
-      language: python
-      python:
-        - "3.9"
-      install:
-        - pip install -r ./kanji-keywords/backend/requirements.txt
-        - find .
-        - cd kanji-keywords/backend && python main.py &
-      script: 
-        - curl 127.0.0.1:9000
-
-    # build docker image and smoke test it
-    - stage: test
-      language: elm
-      python:
-        - "3.9"
-      services:
-        - docker
-      install:
-        - cd kanji-keywords/frontend/ && elm make src/Main.elm
-        - docker build -f kanji-keywords/Dockerfile --no-cache --tag ${TRAVIS_REPO_SLUG}:${TRAVIS_COMMIT} kanji-keywords
-        - docker run -d -p 127.0.0.1:9000:9000 ${TRAVIS_REPO_SLUG}:${TRAVIS_COMMIT}
-      script: 
-        - curl 127.0.0.1:9000
-
     # push docker image
     - stage: deploy
       language: elm
