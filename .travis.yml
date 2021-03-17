@@ -1,0 +1,47 @@
+# see: https://itnext.io/go-continuous-integration-with-travis-ci-and-docker-4b26379e54b7
+#
+stages:
+  - test
+  - deploy
+
+language: python
+python:
+  - "3.9"
+services:
+  - docker
+
+jobs:
+  include:
+    # run linters
+    - stage: test
+      install:
+        - pip install -r ./kanji-keywords/backend/requirements.txt
+      script: 
+        - curl 127.0.0.1:9000
+        - mypy ./kanji-keywords/backend/main.py
+        - python -m unittest ./kanji-keywords/backend/main.py
+
+    # run smoke test
+    - stage: test
+      install:
+        - pip install -r ./kanji-keywords/backend/requirements.txt
+        - python ./kanji-keywords/backend/main.py &
+      script: 
+        - curl 127.0.0.1:9000
+
+    # build docker image and smoke test it
+    - stage: test
+      install:
+        - docker build --no-cache --tag ${TRAVIS_REPO_SLUG}:${TRAVIS_COMMIT} .
+        - docker run -d -p 127.0.0.1:9000:9000 ${TRAVIS_REPO_SLUG}:${TRAVIS_COMMIT}
+      script: 
+        - curl 127.0.0.1:9000
+
+    # push docker image
+    - stage: deploy
+      install:
+        - docker build --no-cache --tag ${TRAVIS_REPO_SLUG}:${TRAVIS_COMMIT} .
+      script: 
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - docker push ${TRAVIS_REPO_SLUG}:${TRAVIS_COMMIT}
+        - docker logout
