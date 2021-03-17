@@ -17,14 +17,14 @@ jobs:
       install:
         - pip install -r ./kanji-keywords/backend/requirements.txt
       script: 
-        - curl 127.0.0.1:9000
         - mypy ./kanji-keywords/backend/main.py
-        - python -m unittest ./kanji-keywords/backend/main.py
+        - cd kanji-keywords/backend/ && python -m unittest
 
     # run smoke test
     - stage: test
       install:
         - pip install -r ./kanji-keywords/backend/requirements.txt
+        - find .
         - python ./kanji-keywords/backend/main.py &
       script: 
         - curl 127.0.0.1:9000
@@ -32,7 +32,7 @@ jobs:
     # build docker image and smoke test it
     - stage: test
       install:
-        - docker build --no-cache --tag ${TRAVIS_REPO_SLUG}:${TRAVIS_COMMIT} .
+        - docker build -f kanji-keywords/Dockerfile --no-cache --tag ${TRAVIS_REPO_SLUG}:${TRAVIS_COMMIT} .
         - docker run -d -p 127.0.0.1:9000:9000 ${TRAVIS_REPO_SLUG}:${TRAVIS_COMMIT}
       script: 
         - curl 127.0.0.1:9000
@@ -40,7 +40,7 @@ jobs:
     # push docker image
     - stage: deploy
       install:
-        - docker build --no-cache --tag ${TRAVIS_REPO_SLUG}:${TRAVIS_COMMIT} .
+        - docker build -f kanji-keywords/Dockerfile --no-cache --tag ${TRAVIS_REPO_SLUG}:${TRAVIS_COMMIT} .
       script: 
         - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
         - docker push ${TRAVIS_REPO_SLUG}:${TRAVIS_COMMIT}
