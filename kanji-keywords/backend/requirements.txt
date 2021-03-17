@@ -1,0 +1,8 @@
+mypy @ file:///home/artem/Downloads/mypy-0.800%2Bdev.5f5d90eee23b809185145f6da7b18a3ca41b4879-py3-none-any.whl
+mypy-extensions==0.4.3
+nltk==3.5
+typed-ast==1.4.2
+typeguard==2.10.0
+typing==3.7.4.3
+typing-extensions==3.7.4.3
+bottle==0.12.19
