@@ -17,7 +17,7 @@ jobs:
         - pip install -r ./kanji-keywords/backend/requirements.txt
       script: 
         - mypy ./kanji-keywords/backend/main.py
-        - cd kanji-keywords/backend/ && python -m unittest
+        - (cd kanji-keywords/backend/ && python -m unittest)
 
     # push docker image
     - stage: deploy
@@ -28,9 +28,8 @@ jobs:
         - docker
       install:
         - (cd kanji-keywords/frontend/ && elm make src/Main.elm)
-        - pwd
         - docker build -f kanji-keywords/Dockerfile --no-cache --tag temach/kanji-keywords:${TRAVIS_COMMIT} ./kanji-keywords/
       script: 
-        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        - docker push ${TRAVIS_REPO_SLUG}:${TRAVIS_COMMIT}
+        - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+        - docker push temach/kanji-keywords:${TRAVIS_COMMIT}
         - docker logout
