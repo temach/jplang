@@ -27,8 +27,9 @@ jobs:
       services:
         - docker
       install:
-        - cd kanji-keywords/frontend/ && elm make src/Main.elm
-        - docker build -f kanji-keywords/Dockerfile --no-cache --tag ${TRAVIS_REPO_SLUG}:${TRAVIS_COMMIT} ./kanji-keywords/
+        - (cd kanji-keywords/frontend/ && elm make src/Main.elm)
+        - pwd
+        - docker build -f kanji-keywords/Dockerfile --no-cache --tag temach/kanji-keywords:${TRAVIS_COMMIT} ./kanji-keywords/
       script: 
         - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
         - docker push ${TRAVIS_REPO_SLUG}:${TRAVIS_COMMIT}
