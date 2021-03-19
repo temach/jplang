@@ -31,5 +31,5 @@ jobs:
         - docker build -f kanji-keywords/Dockerfile --no-cache --tag temachpool/kanji-keywords:${TRAVIS_COMMIT} ./kanji-keywords/
       script: 
         - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
-        - docker push temach/kanji-keywords:${TRAVIS_COMMIT}
+        - docker push temachpool/kanji-keywords:${TRAVIS_COMMIT}
         - docker logout
