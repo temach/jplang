@@ -32,4 +32,5 @@ jobs:
       script: 
         - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
         - docker push temachpool/kanji-keywords:${TRAVIS_COMMIT}
+        - docker push temachpool/kanji-keywords:latest
         - docker logout
