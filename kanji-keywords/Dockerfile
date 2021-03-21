@@ -13,4 +13,5 @@ COPY frontend/index.html        ./frontend
 COPY backend/main.py            ./backend/  
 
 # command
-CMD ["python", "backend/main.py"]
+WORKDIR /root/backend/
+CMD ["python", "main.py"]
