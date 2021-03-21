@@ -29,6 +29,7 @@ jobs:
       install:
         - (cd kanji-keywords/frontend/ && elm make src/Main.elm)
         - docker build -f kanji-keywords/Dockerfile --no-cache --tag temachpool/kanji-keywords:${TRAVIS_COMMIT} ./kanji-keywords/
+        - docker tag temachpool/kanji-keywords:${TRAVIS_COMMIT} temachpool/kanji-keywords:latest
       script: 
         - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
         - docker push temachpool/kanji-keywords:${TRAVIS_COMMIT}
