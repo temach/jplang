@@ -461,4 +461,4 @@ if __name__ == "__main__":
 
     port = 9000
     print("Running bottle server on port {}".format(port))
-    run(host="localhost", port=port, debug=True)
+    run(host="0.0.0.0", port=port, debug=True)
