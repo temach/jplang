@@ -12,6 +12,7 @@ import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Platform.Cmd as Cmd
+import Url.Builder exposing (absolute)
 
 
 
@@ -485,7 +486,7 @@ get index list =
 getWorkElements : Cmd Msg
 getWorkElements =
     Http.get
-        { url = "http://localhost:9000/api/work"
+        { url = absolute [ "api", "work" ] []
         , expect = Http.expectJson WorkElementsReady workElementsDecoder
         }
 
@@ -503,7 +504,7 @@ workElementsDecoder =
 getKeywordCheck : String -> String -> Cmd Msg
 getKeywordCheck kanji keyword =
     Http.get
-        { url = "http://localhost:9000/api/keywordcheck/" ++ kanji ++ "/" ++ keyword
+        { url = absolute [ "api", "keywordcheck/" ++ kanji ++ "/" ++ keyword ] []
         , expect = Http.expectJson KeywordCheckReady keyCandidateDecoder
         }
 
@@ -519,7 +520,7 @@ keyCandidateDecoder =
 getSuggestions : String -> Cmd Msg
 getSuggestions kanji =
     Http.get
-        { url = "http://localhost:9000/api/suggestions/" ++ kanji
+        { url = absolute [ "api", "suggestions/" ++ kanji ] []
         , expect = Http.expectJson SuggestionsReady suggestionsDecoder
         }
 
@@ -532,7 +533,7 @@ suggestionsDecoder =
 getSynonyms : String -> Cmd Msg
 getSynonyms keyword =
     Http.get
-        { url = "http://localhost:9000/api/synonyms/" ++ keyword
+        { url = absolute [ "api", "synonyms/" ++ keyword ] []
         , expect = Http.expectJson SynonymsReady suggestionsDecoder
         }
 
@@ -540,7 +541,7 @@ getSynonyms keyword =
 getExpressions : String -> Cmd Msg
 getExpressions kanji =
     Http.get
-        { url = "http://localhost:9000/api/expressions/" ++ kanji
+        { url = absolute [ "api", "expressions/" ++ kanji ] []
         , expect = Http.expectJson ExpressionsReady suggestionsDecoder
         }
 
@@ -548,7 +549,7 @@ getExpressions kanji =
 submitKeyword : Model -> Cmd Msg
 submitKeyword model =
     Http.post
-        { url = "http://localhost:9000/api/submit"
+        { url = absolute [ "api", "submit" ] []
         , body = Http.jsonBody (submitKeywordEncoder model)
         , expect = Http.expectString KeywordSubmitReady
         }
