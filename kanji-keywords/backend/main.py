@@ -348,7 +348,7 @@ def expression_filter(expression: str, ALLOWED_CHARS: dict) -> bool:
 
 if __name__ == "__main__":
     KANJI_DB_PATH = "../kanji-keywords.db"
-    db_needs_init = not os.path.isfile(KANJI_DB_PATH)
+    db_needs_init = (not os.path.isfile(KANJI_DB_PATH)) or (os.path.getsize(KANJI_DB_PATH) == 0)
     DB = sqlite3.connect(KANJI_DB_PATH)
 
     if db_needs_init:
