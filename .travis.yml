@@ -27,7 +27,7 @@ jobs:
       services:
         - docker
       install:
-        - (cd kanji-keywords/frontend/ && elm make src/Main.elm)
+        - (cd kanji-keywords/frontend/ && elm make src/Main.elm --optimize)
         - docker build -f kanji-keywords/Dockerfile --no-cache --tag temachpool/kanji-keywords:${TRAVIS_COMMIT} ./kanji-keywords/
         - docker tag temachpool/kanji-keywords:${TRAVIS_COMMIT} temachpool/kanji-keywords:latest
       script: 
