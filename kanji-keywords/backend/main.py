@@ -24,6 +24,8 @@ class KeyCandidate(TypedDict):
 ListKeyCandidate = list[KeyCandidate]
 Thesaurus = dict[str, list[str]]
 
+INDEX_NOT_FOUND_MARKER = 99999
+
 
 @get("/")
 def index():
@@ -210,10 +212,10 @@ def inner_expressions(kanji) -> ListKeyCandidate:
             try:
                 index = source.index(expr)
             except ValueError:
-                index = -1
+                index = INDEX_NOT_FOUND_MARKER
             freq.append(index)
 
-        if freq.count(-1) >= 3:
+        if freq.count(INDEX_NOT_FOUND_MARKER) >= 3:
             # ignore words that are present in only one dictionary
             # becasue they are obscure words
             continue
@@ -348,7 +350,8 @@ def expression_filter(expression: str, ALLOWED_CHARS: dict) -> bool:
 
 if __name__ == "__main__":
     KANJI_DB_PATH = "../kanji-keywords.db"
-    db_needs_init = (not os.path.isfile(KANJI_DB_PATH)) or (os.path.getsize(KANJI_DB_PATH) == 0)
+    db_needs_init = (not os.path.isfile(KANJI_DB_PATH)) or (
+        os.path.getsize(KANJI_DB_PATH) == 0)
     DB = sqlite3.connect(KANJI_DB_PATH)
 
     if db_needs_init:
