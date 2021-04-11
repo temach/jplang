@@ -29,3 +29,16 @@ Some kanji from twitter are not worth learning, i.e. obscure kanji used just for
 - unicode code point 56e7 http://www.unicode.org/cgi-bin/GetUnihanData.pl?codepoint=56e7
 
 The joyo and jlpt lists are taken from kanjidict2 project.
+
+
+Another issue is how to keep the onyomi in sync. The keywords rely on onyomi data and that might keep changing.
+Currently onyomi are read from a text file on startup. How to update this file with latest version from anki-web?
+
+Install anki (just to use its library)
+connect to anki-web
+sync your collection (maybe just the deck "onyomi" from your collection)
+export the deck into text file
+restart kanji-keywords to re-read the onyomi text file
+
+
+

@@ -99,3 +99,32 @@ ZH	seizure		S IY ZH ER
 - Markdown file with snippets showing how to grep dictionary files looking for good keywords keeping in mind spelling, pronunciation and frequency of use.
 - Python scripts to help build the anki deck.
 
+
+
+### Anki integration
+The onyomi should be integrated with anki. I.e. cards exported into anki and if changes happened in anki, there is a need for an import button.
+For this password protection is a must.
+Also data from anki should be exportable from anki web into text file.
+
+To work with anki:
+- Use "import anki" module
+- Some slightly outdated docs: https://rs.luminousspice.com/ankiaddons21/
+- File locations in anki: https://docs.ankiweb.net/#/files?id=file-locations
+
+
+
+Example exporting collection to text file:
+
+```
+>>> import anki
+>>> import anki.exporting
+>>> c = anki.Collection("path/to/.local/share/Anki2/User 1/collection.anki2")
+>>> e = anki.exporting.TextNoteExporter(c)
+>>> e.exportInto("path/to/file.txt")
+>>> d = c.decks
+>>> d.all()
+>>> did = d.byName("onyomi")["id"]
+>>> e = anki.exporting.TextNoteExporter(c)
+>>> e.did = did
+>>> e.exportInto("path/to/file.txt")
+```
