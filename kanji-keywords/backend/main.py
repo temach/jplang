@@ -13,6 +13,7 @@ from nltk.stem import WordNetLemmatizer  # type: ignore
 from typing import TypedDict, Any
 from typeguard import typechecked
 import re
+from itertools import dropwhile
 
 
 class KeyCandidate(TypedDict):
@@ -94,7 +95,7 @@ def inner_synonyms(word) -> ListKeyCandidate:
 
     for thesaurus in [MOBY, OPENOFFICE, WORDNET]:
         for w in thesaurus.get(word, []):
-            # check that word is not obscure
+            # check that word is not obscure, it should be present in both google and subs corpus
             freq = get_en_freq(w)
             if (freq[0] < 0 and freq[1] < 0):
                 continue
@@ -153,6 +154,17 @@ def inner_suggestions(kanji) -> ListKeyCandidate:
             "word": m,
             "freq": get_en_freq(m),
             "metadata": "kanjidic"
+        }
+        result.append(item)
+
+    # regex test value: "understand/divide or minute / equal /etc./plural"
+    # should be: ['understand', 'divide', 'minute ', 'equal ', 'etc', 'plural']
+    kanjidamage_keywords = re.split(r"[,./]| or ", KANJIDAMAGE[kanji])
+    for d in (m.strip() for m in kanjidamage_keywords if len(m) > 0):
+        item = {
+            "word": d,
+            "freq": get_en_freq(d),
+            "metadata": "kanjidamage"
         }
         result.append(item)
 
@@ -220,11 +232,15 @@ def inner_expressions(kanji) -> ListKeyCandidate:
             # becasue they are obscure words
             continue
 
-        meaning = ROUTLEDGE.get(expr, {"meaning": ""})["meaning"]
+        meaning = ""
+        if expr in ROUTLEDGE:
+            meaning += ROUTLEDGE[expr]["meaning"]
+        if expr in EDICT:
+            meaning += "/{}".format(EDICT[expr])
         payload.append({
             "word": expr,
+            "freq": freq,
             "metadata": meaning,
-            "freq": freq
         })
 
     return payload
@@ -255,8 +271,8 @@ def keyword_frequency(kanji, keyword):
 
     # assert that kanji is the same
     # there is an edge case: when building keywords from database
-    # the stem for child is child, so it gets inserted, but stem for
-    # children is children, but lemma for children is child, so lemma is found
+    # the stem for "child" is "child", so it gets inserted, but stem for
+    # "children" is "children", but lemma for "children" is "child", so lemma is found
     # but stem is not
     if stem_kanji and lemma_kanji:
         assert stem_kanji == lemma_kanji
@@ -315,7 +331,7 @@ def submit():
         # return 2xx response because too lazy to unwrap errors in Elm
         return HTTPResponse(status=202, body="{}".format(e))
 
-    # update in memory keyword dictionary
+    # update in-memory keyword dictionary
     global KEYWORDS
     kanji = payload["kanji"]
     keyword = payload["keyword"]
@@ -368,14 +384,19 @@ if __name__ == "__main__":
     KEYWORDS: dict[str, tuple[str, str]] = {}
     ONYOMI = {}
     WORK = {}
+    # kanji keyword suggestions
     KANJIDIC = {}
     SCRIPTIN = {}
+    KANJIDAMAGE = {}
 
     # jp expressions
     LEEDS: list[str] = []
     ROUTLEDGE: dict[str, Any] = {}
     CHRISKEMPSON: list[str] = []
     WIKTIONARY: list[str] = []
+
+    # jp expression translations
+    EDICT = {}
 
     STEMMER = PorterStemmer()
     LEMMATIZER = WordNetLemmatizer()
@@ -407,6 +428,9 @@ if __name__ == "__main__":
 
     with open("../resources/keywords-scriptin-kanji-keys.json") as scriptin:
         SCRIPTIN = json.load(scriptin)
+
+    with open("../resources/keywords-kanjidamage-anki-cards.json") as kanjidamage:
+        KANJIDAMAGE = json.load(kanjidamage)
 
     with open("../resources/english-thesaurus-moby-mthesaur.txt") as f:
         for line in f:
@@ -443,7 +467,7 @@ if __name__ == "__main__":
         freq_list = json.load(f)
         # some japanese expressions use unusual kanji or is plain kana
         # its not interesting, so drop it
-        LEEDS = [v for v in freq_list]  # if expression_filter(v, WORK)]
+        LEEDS = [v for v in freq_list]
 
     with open("../resources/japanese-wordfreq-routledge.json") as f:
         data = json.load(f)
@@ -459,8 +483,20 @@ if __name__ == "__main__":
     with open("../resources/japanese-wordfreq-chriskempson-subs.json") as f:
         CHRISKEMPSON = json.load(f)
 
-    pprint(list(SUBS.items())[:25])
-    pprint(list(CORPUS.items())[:25])
+    with open("../resources/japanese-wordfreq-edict-sub.txt") as f:
+        work_kanji_set = set(WORK.keys())
+        for line in f:
+            entry, separator, meaning = line.partition("/")
+            # entry is just the plain kanji word
+            first_word = entry.partition(" ")[0].strip()
+            if set(first_word).isdisjoint(work_kanji_set):
+                # no elements in common with work_kanji_set, therefore skip this entry
+                continue
+            EDICT[first_word] = meaning
+
+    # pprint(list(SUBS.items())[:25])
+    # pprint(list(CORPUS.items())[:25])
+    pprint(list(EDICT.items())[:50])
 
     port = 9000
     print("Running bottle server on port {}".format(port))
