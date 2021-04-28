@@ -4,7 +4,7 @@ import os
 import re
 import sqlite3
 import json
-from bottle import route, get, run, template
+from bottle import route, get, run, template, request
 
 CMUDICT = None
 
@@ -18,6 +18,11 @@ def candidate(en):
             result_list.append(line)
     return json.dumps(result_list)
 
+
+@post('/submit/')
+def submit():
+    # https://bottlepy.org/docs/dev/api.html#bottle.BaseRequest.query_string
+    pass
 
 @get('/')
 def index():
