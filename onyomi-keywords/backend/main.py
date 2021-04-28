@@ -1,14 +1,22 @@
 #!/usr/bin/env python
 
 import os
-
+import re
 import sqlite3
+import json
 from bottle import route, get, run, template
+
+CMUDICT = None
 
 @get('/search/<en>')
 def candidate(en):
     """ Look up words that start with "^en" prefix in cmudict dictonary"""
-    return ""
+    result_list = []
+    for line in CMUDICT:
+        m = re.match(en, line)
+        if m:
+            result_list.append(line)
+    return json.dumps(result_list)
 
 
 @get('/')
@@ -38,7 +46,7 @@ def init_database(sqlite_connection, onyomi_path):
         );
     """)
 
-    with open(onyomi_path, "r") as f:
+    with open(onyomi_path, "r", encoding="utf-8") as f:
         sql = """INSERT INTO onyomi VALUES(?,?,?,?);"""
 
         for line in f.readlines():
@@ -56,6 +64,9 @@ if __name__=="__main__":
     skip_init = os.path.isfile(SQLITE_FILE)
 
     connection = sqlite3.connect(SQLITE_FILE)
+
+    with open("../resources/cmudict.dict", "r", encoding="utf-8") as sne:
+        CMUDICT = sne.readlines()
 
     if not skip_init:
         init_database(connection, ONYOMI_FILE)
