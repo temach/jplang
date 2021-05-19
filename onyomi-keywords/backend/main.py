@@ -4,11 +4,11 @@ import os
 import re
 import sqlite3
 import json
-from bottle import route, get, run, template, request
+from bottle import route, get, run, template, request, post
 
 CMUDICT = None
 
-@get('/search/<en>')
+@get("/api/search/<en>")
 def candidate(en):
     """ Look up words that start with "^en" prefix in cmudict dictonary"""
     result_list = []
@@ -19,14 +19,23 @@ def candidate(en):
     return json.dumps(result_list)
 
 
-@post('/submit/')
+@post("/api/submit")
 def submit():
     # https://bottlepy.org/docs/dev/api.html#bottle.BaseRequest.query_string
-    pass
+    cursor = connection.cursor()
+    payload = request.json
+    print(payload)
+    print(cursor)
+    try:
+        cursor.execute("""UPDATE OR ABORT onyomi SET (english, keyword) = (?, ?) WHERE english=?""",
+            (payload["onyomi"], payload["keyword"], payload["onyomi"]))
+        connection.commit()
+    except Exception as e:
+        return HTTPResponse(status=500, body="{}".format(e))
+    return HTTPResponse(status=200)
 
 @get('/')
 def index():
-    connection = sqlite3.connect(SQLITE_FILE)
     c = connection.cursor()
 
     c.execute('''SELECT * FROM onyomi;''')
