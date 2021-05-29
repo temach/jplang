@@ -19,6 +19,7 @@ def candidate(en):
     return json.dumps(result_list)
 
 
+
 @post("/api/submit")
 def submit():
     # https://bottlepy.org/docs/dev/api.html#bottle.BaseRequest.query_string
@@ -34,16 +35,29 @@ def submit():
         return HTTPResponse(status=500, body="{}".format(e))
     return HTTPResponse(status=200)
 
-@get('/')
-def index():
+
+@get("/api/work")
+def work_elements():
+    connection = sqlite3.connect(SQLITE_FILE)
     c = connection.cursor()
 
     c.execute('''SELECT * FROM onyomi;''')
     rows = c.fetchall()
-    string_rows = (str(r) for r in rows)
-    single_string = "</br>".join(string_rows)
 
-    return f"<html><body><p>{single_string}</p></body></html>"
+    enriched = []
+    for r in rows:
+        item = {
+            "onyomi": r[0],
+            "keyword": r[1],
+            "metadata": {
+                "katakana": r[2],
+                "hiragana": r[3],
+                "notes": r[4],
+            }
+        }
+        enriched.append(item)
+
+    return json.dumps(enriched)
 
 
 def init_database(sqlite_connection, onyomi_path):
@@ -54,18 +68,19 @@ def init_database(sqlite_connection, onyomi_path):
         CREATE TABLE onyomi
         (
             [english] text PRIMARY KEY,
+            [keyword] text NOT NULL,
             [katakana] text NOT NULL,
             [hiragana] text NOT NULL,
-            [keyword] text NOT NULL
+            [notes] text
         );
     """)
 
     with open(onyomi_path, "r", encoding="utf-8") as f:
-        sql = """INSERT INTO onyomi VALUES(?,?,?,?);"""
+        sql = """INSERT INTO onyomi VALUES(?,?,?,?,NULL);"""
 
         for line in f.readlines():
             english, katakana, hiragana, keyword, freq = line.split("=")
-            data = (english.strip(), katakana.strip(), hiragana.strip(), keyword.strip())
+            data = (english.strip(), keyword.strip(), katakana.strip(), hiragana.strip())
             c.execute(sql, data)
 
         sqlite_connection.commit()
