@@ -13,16 +13,36 @@ def get_en_freq(word):
         SUBS.get(word, -1)
     ]
 
+
+def search(needle, haystack):
+    result_list = []
+    for line in haystack:
+        m = re.match(needle, line)
+        if m:
+            result_list.append(line)
+    return result_list
+
+
+def str_to_len(s):
+    word, separator, transcription = s.partition(" ")
+    word = word.removesuffix("(2)")
+    return len(word)
+
 @get("/api/search/<en>")
 def candidate(en):
     """ Look up words that start with "^en" prefix in cmudict dictonary"""
-    result_list = []
-    for line in CMUDICT:
-        m = re.match(en, line)
-        if m:
-            result_list.append(line)
-    return json.dumps(result_list)
-
+    eng_vowels = ["a", "e", "i", "u", "y", "o"]
+    if en[-1] in eng_vowels:
+        if len(en) >= 2 and en[-2] == en[-1]:
+            en_without_last = en[:-1]
+            result = search(en_without_last, CMUDICT)
+            result = sorted(result, key=str_to_len, reverse=True)
+            return json.dumps(result)
+        result = search(en, CMUDICT)
+        result = sorted(result, key=str_to_len)
+        return json.dumps(result)
+    result = search(en, CMUDICT)
+    return json.dumps(result)
 
 
 @post("/api/submit")
@@ -102,6 +122,7 @@ if __name__=="__main__":
     CMUDICT = []
     with open("../resources/cmudict.dict", "r", encoding="utf-8") as sne:
         CMUDICT = sne.readlines()
+        CMUDICT = [line for line in CMUDICT if "'s" not in line]
 
     # english frequency
     CORPUS = {}
