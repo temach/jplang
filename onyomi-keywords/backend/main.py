@@ -6,7 +6,12 @@ import sqlite3
 import json
 from bottle import route, get, run, template, request, post
 
-CMUDICT = None
+
+def get_en_freq(word):
+    return [
+        CORPUS.get(word, -1),
+        SUBS.get(word, -1)
+    ]
 
 @get("/api/search/<en>")
 def candidate(en):
@@ -94,8 +99,23 @@ if __name__=="__main__":
 
     connection = sqlite3.connect(SQLITE_FILE)
 
+    CMUDICT = []
     with open("../resources/cmudict.dict", "r", encoding="utf-8") as sne:
         CMUDICT = sne.readlines()
+
+    # english frequency
+    CORPUS = {}
+    SUBS = {}
+
+    with open("../resources/english-from-gogle-corpus-by-freq.txt") as f:
+        for number, line in enumerate(f, start=1):
+            word = line.split()[0].strip()
+            CORPUS[word] = number
+
+    with open("../resources/english-from-subtitles-by-freq.txt") as f:
+        for number, line in enumerate(f, start=1):
+            word = line.split()[0].strip()
+            SUBS[word] = number
 
     if not skip_init:
         init_database(connection, ONYOMI_FILE)
