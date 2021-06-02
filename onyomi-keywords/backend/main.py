@@ -7,42 +7,135 @@ import json
 from bottle import route, get, run, template, request, post
 
 
+FREQ_NOT_FOUND_MARKER=999999
+
+
 def get_en_freq(word):
     return [
-        CORPUS.get(word, -1),
-        SUBS.get(word, -1)
+        CORPUS.get(word, FREQ_NOT_FOUND_MARKER),
+        SUBS.get(word, FREQ_NOT_FOUND_MARKER)
     ]
 
 
 def search(needle, haystack):
+    regex = re.compile(needle)
     result_list = []
     for line in haystack:
-        m = re.match(needle, line)
+        m = regex.match(line)
         if m:
             result_list.append(line)
     return result_list
 
 
-def str_to_len(s):
-    word, separator, transcription = s.partition(" ")
+def shape_word_search_results(words):
+    ret = []
+    for w in words:
+        icorpus, isubs = get_en_freq(w)
+        ret.append({
+            "keyword": w,
+            "metadata": {
+                "corpus": icorpus,
+                "subs": isubs,
+                "phonetics" : CMUDICT[w],
+            },
+        })
+    return ret
+
+
+
+def str_to_len(word):
     word = word.removesuffix("(2)")
     return len(word)
+
+
+def search_res_to_freq(res):
+    return res["metadata"]["corpus"] + res["metadata"]["subs"]
+
+
+def return_search_results(data):
+    # only return top N words
+    return json.dumps(data[:400])
+
 
 @get("/api/search/<en>")
 def candidate(en):
     """ Look up words that start with "^en" prefix in cmudict dictonary"""
+    en = en.lower()
     eng_vowels = ["a", "e", "i", "u", "y", "o"]
+
     if en[-1] in eng_vowels:
+
         if len(en) >= 2 and en[-2] == en[-1]:
             en_without_last = en[:-1]
-            result = search(en_without_last, CMUDICT)
+            result = search(en_without_last, CMUDICT.keys())
             result = sorted(result, key=str_to_len, reverse=True)
-            return json.dumps(result)
-        result = search(en, CMUDICT)
+            return return_search_results( shape_word_search_results(result) )
+
+        result = search(en, CMUDICT.keys())
         result = sorted(result, key=str_to_len)
-        return json.dumps(result)
-    result = search(en, CMUDICT)
-    return json.dumps(result)
+        return return_search_results( shape_word_search_results(result) )
+
+    result = search(en, CMUDICT.keys())
+    shaped_unsorted = shape_word_search_results(result) 
+    shaped_sorted = sorted(shaped_unsorted, key=search_res_to_freq, reverse=True)
+    return return_search_results(shaped_sorted)
+
+
+@get("/api/search/phonetic/<phonetics>")
+def candidate(phonetics):
+    """ Look up words that start with "^en" prefix in cmudict dictonary"""
+    en = en.lower()
+    return []
+# 
+#     regex = re.compile(phonetics)
+#     result_list = []
+#     for line in CMUDICT.values():
+#         m = regex.match(line)
+#         if m:
+#             result_list.append(line)
+#     return result_list
+# 
+# 
+# def shape_word_search_results(words):
+#     ret = []
+#     for w in words:
+#         icorpus, isubs = get_en_freq(w)
+#         ret.append({
+#             "keyword": w,
+#             "metadata": {
+#                 "corpus": icorpus,
+#                 "subs": isubs,
+#                 "phonetics" : CMUDICT[w],
+#             },
+#         })
+#     return ret
+# 
+#     result = search(en, CMUDICT.values())
+#     shaped_unsorted = shape_word_search_results(result) 
+#     shaped_sorted = sorted(shaped_unsorted, key=search_res_to_freq, reverse=True)
+#     return return_search_results(shaped_sorted)
+# 
+
+@get("/api/search/verbatim/<en>")
+def candidate(en):
+    """ Look up words that start with "^en" prefix in cmudict dictonary"""
+    en = en.lower()
+    result = search(en, CMUDICT.keys())
+    shaped_unsorted = shape_word_search_results(result) 
+    shaped_sorted = sorted(shaped_unsorted, key=search_res_to_freq, reverse=True)
+    return return_search_results(shaped_sorted)
+
+
+@get("/api/check_keyword/<keyword>")
+def check_keyword(keyword):
+    icorpus, isubs = get_en_freq(keyword.lower())
+    ret = {
+        "freq": {
+            "corpus": icorpus,
+            "subs": isubs,
+        }
+    }
+    return ret
 
 
 @post("/api/submit")
@@ -119,10 +212,14 @@ if __name__=="__main__":
 
     connection = sqlite3.connect(SQLITE_FILE)
 
-    CMUDICT = []
+    # mapping {word : transcription}
+    CMUDICT = {}
     with open("../resources/cmudict.dict", "r", encoding="utf-8") as sne:
-        CMUDICT = sne.readlines()
-        CMUDICT = [line for line in CMUDICT if "'s" not in line]
+        for line in sne.readlines():
+            if "'s" in line:
+                continue
+            word, separator, transcription = line.partition(" ")
+            CMUDICT[word.strip()] = transcription.strip()
 
     # english frequency
     CORPUS = {}
