@@ -1,12 +1,8 @@
 import {createSlice} from '@reduxjs/toolkit';
 
-const initialState = {
-    currentOnyomi: "",
-};
-
 const suggestionsSlice = createSlice({
     name: 'suggestions',
-    initialState,
+    initialState: {},
     reducers: {
         selectSuggestion: (state, action) => {
         },

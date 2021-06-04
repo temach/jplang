@@ -1,28 +1,16 @@
 import {createSlice} from '@reduxjs/toolkit';
 
-const cur_element = {
-    "onyomi": "None",
-    "keyword": "",
-    "metadata": {
-        "katakana": "None",
-        "hiragana": "None",
-        "notes": "",
-    }
-};
-
-const initialState = {
-    current: cur_element,
-};
-
 const submitBarSlice = createSlice({
     name: 'submitbar',
-    initialState,
+    initialState: {},
     reducers: {
         keywordInput: (state, action) => {
             state.current.keyword = action.payload;
         },
         notesInput: (state, action) => {
             state.current.metadata.notes = action.payload;
+        },
+        submitKeywordReady: (state, action) => {
         },
     },
     extraReducers: {
@@ -35,7 +23,7 @@ const submitBarSlice = createSlice({
     },
 });
 
-export const {keywordInput, notesInput} = submitBarSlice.actions;
+export const {keywordInput, notesInput, submitKeywordReady} = submitBarSlice.actions;
 
 export const getCurrentElement = (state) => {
     return state.submitbar.current;

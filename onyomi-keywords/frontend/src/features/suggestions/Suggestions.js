@@ -63,7 +63,7 @@ export function Suggestions() {
                 console.log(error);
             }
         );
-    
+
     useEffect(() => {
         updateSuggestions();
         updateSuggestionsPhonetics();
@@ -74,7 +74,7 @@ export function Suggestions() {
         <Fragment>
             <div className={styles.sugggestions_spelling}>
                 <div className={styles.header_row}>
-                    <span style={{flex: "1 0"}}>Suggestions (spelling)</span>
+                    <span style={{flex: "1 0"}}>Suggestions</span>
                     <span style={{flex: "0 0 4rem"}}>Corpus</span>
                     <span style={{flex: "0 0 4rem"}}>Subs</span>
                 </div>

@@ -60,7 +60,6 @@ const test_elems = [
         }
     },
 ];
-
 const test_suggestions = [
   {
     "keyword": "AKUpuncture",
@@ -84,15 +83,31 @@ const test_suggestions = [
     }
   },
 ];
-/*
+
+const empty_element = {
+    onyomi: 'a',
+    keyword: 'Avatar',
+    metadata: {
+        katakana: 'ア',
+        hiragana: 'あ',
+        notes: null
+    }
+}
+
 const initialState = {
-  suggestions: test_suggestions,
-  elements: test_elems,
-  selectedIndex: 0,
-  current: this.elements[0],
-}*/
+    submitbar: {
+        current: empty_element,
+    },
+    suggestions: {
+        currentOnyomi: empty_element.onyomi,
+    },
+    workelements: {
+        elements: [],
+    },
+}
 
 export const store = configureStore({
+    preloadedState: initialState,
     reducer: {
         workelements: workElementsReducer,
         submitbar: submitBarReducer,

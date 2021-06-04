@@ -1,6 +1,6 @@
 // An async request for data
 export function fetchSuggestions(english_onyomi) {
-    return fetch("/api/search/" + english_onyomi)
+    return fetch("/api/search/" + encodeURIComponent(english_onyomi))
         .then(res => {
             console.log(res);
             return res.json();
@@ -8,7 +8,7 @@ export function fetchSuggestions(english_onyomi) {
 }
 
 export function fetchSuggestionsPhonetics(english_onyomi) {
-    return fetch("/api/search/phonetics/" + english_onyomi)
+    return fetch("/api/search/phonetics/" + encodeURIComponent(english_onyomi))
         .then(res => {
             console.log(res);
             return res.json();
@@ -16,7 +16,7 @@ export function fetchSuggestionsPhonetics(english_onyomi) {
 }
 
 export function fetchSuggestionsVerbatim(english_onyomi) {
-    return fetch("/api/search/verbatim/" + english_onyomi)
+    return fetch("/api/search/verbatim/" + encodeURIComponent(english_onyomi))
         .then(res => {
             console.log(res);
             return res.json();

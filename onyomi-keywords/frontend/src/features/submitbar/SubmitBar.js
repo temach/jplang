@@ -5,10 +5,11 @@ import {
     getCurrentElement,
     keywordInput,
     notesInput,
+    submitKeywordReady,
 } from './submitBarSlice';
 
 import styles from './SubmitBar.module.css';
-import {fetchKeywordFreq} from "./submitBarAPI";
+import {fetchKeywordFreq, submitKeyword} from "./submitBarAPI";
 
 export function SubmitBar() {
     const element = useSelector(getCurrentElement);
@@ -22,6 +23,19 @@ export function SubmitBar() {
             (result) => {
                 setFreqCorpus(result.freq.corpus);
                 setFreqSubs(result.freq.subs);
+            },
+            // Note: it's important to handle errors here
+            // instead of a catch() block so that we don't swallow
+            // exceptions from actual bugs in components.
+            (error) => {
+                console.log(error);
+            }
+        );
+
+    const postKeyword =
+        () => submitKeyword(element).then(
+            (result) => {
+                dispatch(submitKeywordReady());
             },
             // Note: it's important to handle errors here
             // instead of a catch() block so that we don't swallow
@@ -66,6 +80,7 @@ export function SubmitBar() {
                 <input style={{flex: "0 0"}}
                        type={"button"}
                        value={"Submit"}
+                       onClick={postKeyword}
                 />
 
                 <input style={{flex: "0 0"}}
