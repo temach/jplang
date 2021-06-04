@@ -81,40 +81,29 @@ def candidate(en):
     return return_search_results(shaped_sorted)
 
 
-@get("/api/search/phonetic/<phonetics>")
+@get("/api/search/phonetics/<phonetics>")
 def candidate(phonetics):
-    """ Look up words that start with "^en" prefix in cmudict dictonary"""
-    en = en.lower()
-    return []
-# 
-#     regex = re.compile(phonetics)
-#     result_list = []
-#     for line in CMUDICT.values():
-#         m = regex.match(line)
-#         if m:
-#             result_list.append(line)
-#     return result_list
-# 
-# 
-# def shape_word_search_results(words):
-#     ret = []
-#     for w in words:
-#         icorpus, isubs = get_en_freq(w)
-#         ret.append({
-#             "keyword": w,
-#             "metadata": {
-#                 "corpus": icorpus,
-#                 "subs": isubs,
-#                 "phonetics" : CMUDICT[w],
-#             },
-#         })
-#     return ret
-# 
-#     result = search(en, CMUDICT.values())
-#     shaped_unsorted = shape_word_search_results(result) 
-#     shaped_sorted = sorted(shaped_unsorted, key=search_res_to_freq, reverse=True)
-#     return return_search_results(shaped_sorted)
-# 
+    # phonetics should contain only upper case letters
+    # and at least one space (i.e. have two sounds) to perform search
+    # should be patterns like 'M A.?.?'
+    # TODO:
+    # to search for "M A.?.? T"
+    # give this function "M A T"
+    sounds = phonetics.split()
+    if any(c.islower() for c in phonetics) and len(sounds) >= 2:
+        return []
+
+    regex = re.compile(phonetics)
+    result_list = []
+    for word, transcription in CMUDICT.items():
+        m = regex.match(transcription)
+        if m:
+            result_list.append(word)
+
+    shaped_alphabetical = shape_word_search_results(result_list) 
+    # shaped_sorted = sorted(shaped_unsorted, key=search_res_to_freq, reverse=True)
+    return return_search_results(shaped_alphabetical)
+
 
 @get("/api/search/verbatim/<en>")
 def candidate(en):
@@ -143,11 +132,16 @@ def submit():
     # https://bottlepy.org/docs/dev/api.html#bottle.BaseRequest.query_string
     cursor = connection.cursor()
     payload = request.json
-    print(payload)
-    print(cursor)
+
+    english = payload["onyomi"]
+    keyword = payload["keyword"]
+    notes = payload["notes"]
+
     try:
-        cursor.execute("""UPDATE OR ABORT onyomi SET (english, keyword) = (?, ?) WHERE english=?""",
-            (payload["onyomi"], payload["keyword"], payload["onyomi"]))
+        cursor.execute(
+            """UPDATE OR ABORT onyomi SET (english, keyword, notes) = (?, ?, ?) WHERE english=? """,
+            (english, keyword, notes, english)
+        )
         connection.commit()
     except Exception as e:
         return HTTPResponse(status=500, body="{}".format(e))
