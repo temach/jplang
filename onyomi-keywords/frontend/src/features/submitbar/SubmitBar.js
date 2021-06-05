@@ -15,6 +15,7 @@ export function SubmitBar() {
     const element = useSelector(getCurrentElement);
     const dispatch = useDispatch();
 
+    const [message, setMessage] = useState(null);
     const [freqCorpus, setFreqCorpus] = useState(99999);
     const [freqSubs, setFreqSubs] = useState(99999)
 
@@ -35,7 +36,11 @@ export function SubmitBar() {
     const postKeyword =
         () => submitKeyword(element).then(
             (result) => {
-                dispatch(submitKeywordReady());
+                if (result.ok) {
+                    dispatch(submitKeywordReady(element));
+                } else {
+                    result.text().then((msg) => setMessage(msg));
+                }
             },
             // Note: it's important to handle errors here
             // instead of a catch() block so that we don't swallow
@@ -49,6 +54,12 @@ export function SubmitBar() {
 
     return (
         <div className={styles.submitbar}>
+            {message && (
+                <div className={styles.row}>
+                    {message}
+                </div>
+            )}
+
             <div className={styles.row}>
                 <span style={{flex: "0 0 3rem"}}>
                     {element.onyomi}

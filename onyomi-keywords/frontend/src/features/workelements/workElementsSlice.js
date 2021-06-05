@@ -13,7 +13,8 @@ const workElementsSlice = createSlice({
     extraReducers: {
         "submitbar/submitKeywordReady": (state, action) => {
             // empty the elements, this will trigger repaint and will request elements from backend again
-            state.elements = [];
+            const index = state.elements.findIndex(e => e.onyomi === action.payload.onyomi);
+            state.elements[index] = action.payload;
         },
     }
 });

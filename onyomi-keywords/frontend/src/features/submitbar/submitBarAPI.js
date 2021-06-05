@@ -16,18 +16,13 @@ export function submitKeyword(data) {
         body: JSON.stringify(data) // body data type must match "Content-Type" header
     }
 
-    return fetch("/api/submit", params)
-        .then(res => {
-            console.log(res);
-            return res.json();
-        });
+    return fetch("/api/submit", params);
 }
 
 // An async request for data
 export function fetchKeywordFreq(keyword) {
     return fetch("/api/check_keyword/" + keyword)
         .then(res => {
-            console.log(res);
             return res.json();
         });
 }

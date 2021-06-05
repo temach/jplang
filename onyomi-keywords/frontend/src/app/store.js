@@ -90,7 +90,7 @@ const empty_element = {
     metadata: {
         katakana: 'ア',
         hiragana: 'あ',
-        notes: null
+        notes: "",
     }
 }
 

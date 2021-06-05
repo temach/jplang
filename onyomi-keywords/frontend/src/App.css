@@ -1,5 +1,5 @@
 .App {
   display: grid;
   grid-template-columns: 1px 1fr 1fr 2fr 1px;
-  grid-template-rows: 1.7rem 50vh calc(50vh - 1.7rem);
+  grid-template-rows: 3rem 50vh calc(50vh - 3rem);
 }
