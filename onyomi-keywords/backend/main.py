@@ -58,7 +58,7 @@ def return_search_results(data):
 
 
 @get("/api/search/<en>")
-def candidate(en):
+def candidate_smart(en):
     """ Look up words that start with "^en" prefix in cmudict dictonary"""
     en = en.lower()
     eng_vowels = ["a", "e", "i", "u", "y", "o"]
@@ -81,33 +81,31 @@ def candidate(en):
     return return_search_results(shaped_sorted)
 
 
+def is_letters_match_transcription(letters, transcription):
+    zipped = zip(letters.upper(), transcription.split())
+    for letter, phoneme in zipped:
+        if letter not in phoneme:
+            return False
+    return True
+
+
 @get("/api/search/phonetics/<phonetics>")
-def candidate(phonetics):
-    # phonetics should contain only upper case letters
-    # and at least one space (i.e. have two sounds) to perform search
-    # should be patterns like 'M A.?.?'
-    # TODO:
+def candidate_phonetics(phonetics):
     # to search for "M A.?.? T"
     # give this function "M A T"
     # see also: http://www.speech.cs.cmu.edu/tools/lextool.html
-    sounds = phonetics.split()
-    if any(c.islower() for c in phonetics) and len(sounds) >= 2:
-        return []
-
-    regex = re.compile(phonetics)
     result_list = []
     for word, transcription in CMUDICT.items():
-        m = regex.match(transcription)
-        if m:
+        if is_letters_match_transcription(phonetics, transcription):
+            # all letters were in transcription
             result_list.append(word)
 
     shaped_alphabetical = shape_word_search_results(result_list) 
-    # shaped_sorted = sorted(shaped_unsorted, key=search_res_to_freq, reverse=True)
     return return_search_results(shaped_alphabetical)
 
 
 @get("/api/search/verbatim/<en>")
-def candidate(en):
+def candidate_verbatim(en):
     """ Look up words that start with "^en" prefix in cmudict dictonary"""
     en = en.lower()
     result = search(en, CMUDICT.keys())
