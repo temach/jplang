@@ -4,7 +4,7 @@ import os
 import re
 import sqlite3
 import json
-from bottle import route, get, run, template, request, post
+from bottle import route, get, run, template, request, post, HTTPResponse
 
 
 FREQ_NOT_FOUND_MARKER=999999
@@ -89,6 +89,7 @@ def candidate(phonetics):
     # TODO:
     # to search for "M A.?.? T"
     # give this function "M A T"
+    # see also: http://www.speech.cs.cmu.edu/tools/lextool.html
     sounds = phonetics.split()
     if any(c.islower() for c in phonetics) and len(sounds) >= 2:
         return []
@@ -135,7 +136,7 @@ def submit():
 
     english = payload["onyomi"]
     keyword = payload["keyword"]
-    notes = payload["notes"]
+    notes = payload["metadata"]["notes"]
 
     try:
         cursor.execute(
@@ -183,12 +184,12 @@ def init_database(sqlite_connection, onyomi_path):
             [keyword] text NOT NULL,
             [katakana] text NOT NULL,
             [hiragana] text NOT NULL,
-            [notes] text
+            [notes] text NOT NULL
         );
     """)
 
     with open(onyomi_path, "r", encoding="utf-8") as f:
-        sql = """INSERT INTO onyomi VALUES(?,?,?,?,NULL);"""
+        sql = """INSERT INTO onyomi VALUES(?,?,?,?,"");"""
 
         for line in f.readlines():
             english, katakana, hiragana, keyword, freq = line.split("=")
