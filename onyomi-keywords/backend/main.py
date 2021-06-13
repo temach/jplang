@@ -4,11 +4,21 @@ import os
 import re
 import sqlite3
 import json
-from bottle import route, get, run, template, request, post, HTTPResponse
+from bottle import route, get, run, template, request, post, HTTPResponse, static_file
 
 
 FREQ_NOT_FOUND_MARKER = 999999
 RESULTS_LIMIT = 1200
+
+
+# Static Routes
+@get("/")
+def root():
+    return static_file("index.html", root="../frontend/build/")
+
+@get("/static/<filepath:path>")
+def static(filepath):
+    return static_file(filepath, root="../frontend/build/static")
 
 
 def get_en_freq(word):
