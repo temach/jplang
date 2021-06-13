@@ -6,6 +6,8 @@ const suggestionsSlice = createSlice({
     reducers: {
         selectSuggestion: (state, action) => {
         },
+        searchDone: (state, action) => {
+        }
     },
     extraReducers: {
         "workelements/selectWorkElement" : (state, action) => {
@@ -14,10 +16,13 @@ const suggestionsSlice = createSlice({
         "submitbar/keywordInput" : (state, action) => {
             state.currentOnyomi = action.payload;
         },
+        "history/selectHistorySearch": (state, action) => {
+            state.currentOnyomi = action.payload;
+        },
     },
 });
 
-export const {selectSuggestion} = suggestionsSlice.actions;
+export const {selectSuggestion, searchDone} = suggestionsSlice.actions;
 
 export const getCurrentOnyomi = (state) => {
     return state.suggestions.currentOnyomi;

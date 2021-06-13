@@ -7,7 +7,7 @@ import json
 from bottle import route, get, run, template, request, post, HTTPResponse
 
 
-FREQ_NOT_FOUND_MARKER=999999
+FREQ_NOT_FOUND_MARKER = 999999
 RESULTS_LIMIT = 1200
 
 
@@ -37,11 +37,10 @@ def shape_word_search_results(words):
             "metadata": {
                 "corpus": icorpus,
                 "subs": isubs,
-                "phonetics" : CMUDICT[w],
+                "phonetics": CMUDICT[w],
             },
         })
     return ret
-
 
 
 def str_to_len(word):
@@ -86,14 +85,14 @@ def candidate_smart(en):
         en_without_last = en[:-1]
         result = search(en_without_last, CMUDICT.keys())
         result = sorted(result, key=str_to_len, reverse=True)
-        return return_search_results( shape_word_search_results(result) )
+        return return_search_results(shape_word_search_results(result))
 
     if len(en) >= 2 and en[-1] in eng_vowels:
         # find the shortest word possible for words with vowel at the end
         # e.g. KU or FU
         result = search(en, CMUDICT.keys())
         result = sorted(result, key=str_to_len)
-        return return_search_results( shape_word_search_results(result) )
+        return return_search_results(shape_word_search_results(result))
 
     if len(en) == 1:
         result = search(en, CMUDICT.keys())
@@ -112,15 +111,38 @@ def candidate_smart(en):
 
             filtered.append(w)
 
-        shaped_alphabetical = shape_word_search_results(filtered) 
+        shaped_alphabetical = shape_word_search_results(filtered)
         # shaped_sorted = sorted(shaped_alphabetical, key=search_res_to_freq)
         return return_search_results(shaped_alphabetical)
 
     # just return results in alphabetical order
     result = search(en, CMUDICT.keys())
-    shaped_alphabetical = shape_word_search_results(result) 
+    shaped_alphabetical = shape_word_search_results(result)
     # shaped_sorted = sorted(shaped_alphabetical, key=search_res_to_freq)
     return return_search_results(shaped_alphabetical)
+
+
+@get("/api/search/regex/<regex>")
+def candidate_regex(regex):
+    if any(c.islower() for c in regex):
+        # this is word regex
+        haystack = CMUDICT.keys()
+    else:
+        # this is phonetics regex
+        haystack = CMUDICT.values()
+
+    needle = re.compile(regex)
+    keys_of_matched_staws = []
+    # find needle in haystack by examining each straw
+    for straw_key, straw in zip(CMUDICT.keys(), haystack):
+        m = needle.match(straw)
+        if m:
+            # this straw matches, remember the key of this straw
+            keys_of_matched_staws.append(straw_key)
+
+    # using the straw keys create array of rich and informative return values
+    alphabetical = shape_word_search_results(keys_of_matched_staws)
+    return return_search_results(alphabetical)
 
 
 def is_letters_match_transcription(letters, transcription):
@@ -143,7 +165,7 @@ def candidate_phonetics(phonetics):
             # all letters were in transcription
             result_list.append(word)
 
-    shaped_alphabetical = shape_word_search_results(result_list) 
+    shaped_alphabetical = shape_word_search_results(result_list)
     return return_search_results(shaped_alphabetical)
 
 
@@ -152,7 +174,7 @@ def candidate_verbatim(en):
     """ Look up words that start with "^en" prefix in cmudict dictonary"""
     en = en.lower()
     result = search(en, CMUDICT.keys())
-    shaped_alphabetical = shape_word_search_results(result) 
+    shaped_alphabetical = shape_word_search_results(result)
     # shaped_sorted = sorted(shaped_alphabetical, key=search_res_to_freq)
     return return_search_results(shaped_alphabetical)
 
@@ -234,13 +256,14 @@ def init_database(sqlite_connection, onyomi_path):
 
         for line in f.readlines():
             english, katakana, hiragana, keyword, freq = line.split("=")
-            data = (english.strip(), keyword.strip(), katakana.strip(), hiragana.strip())
+            data = (english.strip(), keyword.strip(),
+                    katakana.strip(), hiragana.strip())
             c.execute(sql, data)
 
         sqlite_connection.commit()
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     SQLITE_FILE = "../onyomi-database.sqlite"
     ONYOMI_FILE = "../onyomi-keywords.txt"
 

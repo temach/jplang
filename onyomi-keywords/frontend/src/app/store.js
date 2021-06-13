@@ -2,6 +2,7 @@ import {configureStore} from '@reduxjs/toolkit';
 import workElementsReducer from '../features/workelements/workElementsSlice';
 import submitBarReducer from "../features/submitbar/submitBarSlice";
 import suggestionsReducer from "../features/suggestions/suggestionsSlice";
+import historyReducer from "../features/history/historySlice";
 
 
 const test_elems = [
@@ -60,6 +61,7 @@ const test_elems = [
         }
     },
 ];
+
 const test_suggestions = [
   {
     "keyword": "AKUpuncture",
@@ -104,6 +106,9 @@ const initialState = {
     workelements: {
         elements: [],
     },
+    history: {
+        searches: [],
+    },
 }
 
 export const store = configureStore({
@@ -112,5 +117,6 @@ export const store = configureStore({
         workelements: workElementsReducer,
         submitbar: submitBarReducer,
         suggestions: suggestionsReducer,
+        history: historyReducer,
     },
 });

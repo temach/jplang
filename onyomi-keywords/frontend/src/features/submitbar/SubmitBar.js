@@ -73,18 +73,18 @@ export function SubmitBar() {
                     {element.metadata.hiragana}
                 </span>
 
-                <input style={{flex: "3 0"}}
+                <input style={{flex: "1 0"}}
                        type={"text"}
                        value={element.keyword}
                        onChange={event => dispatch(keywordInput(event.target.value))}
                        placeholder={"Keyword"}
                 />
 
-                <span style={{flex: "0 0 7rem"}}>
+                <span style={{flex: "0 0 9rem"}}>
                     {"Corpus:" + freqCorpus}
                 </span>
 
-                <span style={{flex: "0 0 6rem"}}>
+                <span style={{flex: "0 0 9rem"}}>
                     {"Subs:" + freqSubs}
                 </span>
 
@@ -104,7 +104,7 @@ export function SubmitBar() {
                        value={"Downsync Anki"}
                 />
 
-                <input style={{flex: "2 1"}}
+                <input style={{flex: "1 1"}}
                        type={"text"}
                        value={element.metadata.notes}
                        onChange={event => dispatch(notesInput(event.target.value))}
