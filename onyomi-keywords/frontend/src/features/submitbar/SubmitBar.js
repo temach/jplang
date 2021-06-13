@@ -17,7 +17,7 @@ export function SubmitBar() {
 
     const [message, setMessage] = useState(null);
     const [freqCorpus, setFreqCorpus] = useState(99999);
-    const [freqSubs, setFreqSubs] = useState(99999)
+    const [freqSubs, setFreqSubs] = useState(99999);
 
     const getKeywordFreq =
         () => fetchKeywordFreq(element.keyword).then(
@@ -73,7 +73,7 @@ export function SubmitBar() {
                     {element.metadata.hiragana}
                 </span>
 
-                <input style={{flex: "2 0"}}
+                <input style={{flex: "3 0"}}
                        type={"text"}
                        value={element.keyword}
                        onChange={event => dispatch(keywordInput(event.target.value))}
@@ -104,7 +104,7 @@ export function SubmitBar() {
                        value={"Downsync Anki"}
                 />
 
-                <input style={{flex: "3 1"}}
+                <input style={{flex: "2 1"}}
                        type={"text"}
                        value={element.metadata.notes}
                        onChange={event => dispatch(notesInput(event.target.value))}

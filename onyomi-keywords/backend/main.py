@@ -8,6 +8,7 @@ from bottle import route, get, run, template, request, post, HTTPResponse
 
 
 FREQ_NOT_FOUND_MARKER=999999
+RESULTS_LIMIT = 1200
 
 
 def get_en_freq(word):
@@ -54,35 +55,76 @@ def search_res_to_freq(res):
 
 def return_search_results(data):
     # only return top N words
-    return json.dumps(data[:400])
+    return json.dumps(data[:RESULTS_LIMIT])
 
 
 @get("/api/search/<en>")
 def candidate_smart(en):
     """ Look up words that start with "^en" prefix in cmudict dictonary"""
     en = en.lower()
-    eng_vowels = ["a", "e", "i", "u", "y", "o"]
 
-    if en[-1] in eng_vowels:
+    eng_vowels = ["i", "u"]
 
-        if len(en) >= 2 and en[-2] == en[-1]:
-            en_without_last = en[:-1]
-            result = search(en_without_last, CMUDICT.keys())
-            result = sorted(result, key=str_to_len, reverse=True)
-            return return_search_results( shape_word_search_results(result) )
+    bad_ending_sounds = [
+        "AA", "AE", "AH", "AO", "AW", "AY",
+        "CH",
+        "EH", "ER", "EY",
+        "G",
+        "IH", "IY",
+        "JH",
+        "K",
+        "N",
+        "NG",
+        "T",
+        "UH", "UW",
+        "Y",
+    ]
 
+    if len(en) >= 2 and en[-1] in eng_vowels and en[-2] == en[-1]:
+        # find the longest word possible for words with double vowel at the end
+        # e.g. KUU or FUU
+        en_without_last = en[:-1]
+        result = search(en_without_last, CMUDICT.keys())
+        result = sorted(result, key=str_to_len, reverse=True)
+        return return_search_results( shape_word_search_results(result) )
+
+    if len(en) >= 2 and en[-1] in eng_vowels:
+        # find the shortest word possible for words with vowel at the end
+        # e.g. KU or FU
         result = search(en, CMUDICT.keys())
         result = sorted(result, key=str_to_len)
         return return_search_results( shape_word_search_results(result) )
 
+    if len(en) == 1:
+        result = search(en, CMUDICT.keys())
+
+        filtered = []
+        for w in result:
+            if len(w) <= 2:
+                continue
+
+            transcription = CMUDICT[w].split()
+            if len(transcription) <= 1:
+                continue
+
+            if transcription[1] in bad_ending_sounds:
+                continue
+
+            filtered.append(w)
+
+        shaped_alphabetical = shape_word_search_results(filtered) 
+        # shaped_sorted = sorted(shaped_alphabetical, key=search_res_to_freq)
+        return return_search_results(shaped_alphabetical)
+
+    # just return results in alphabetical order
     result = search(en, CMUDICT.keys())
-    shaped_unsorted = shape_word_search_results(result) 
-    shaped_sorted = sorted(shaped_unsorted, key=search_res_to_freq, reverse=True)
-    return return_search_results(shaped_sorted)
+    shaped_alphabetical = shape_word_search_results(result) 
+    # shaped_sorted = sorted(shaped_alphabetical, key=search_res_to_freq)
+    return return_search_results(shaped_alphabetical)
 
 
 def is_letters_match_transcription(letters, transcription):
-    zipped = zip(letters.upper(), transcription.split())
+    zipped = zip(letters, transcription)
     for letter, phoneme in zipped:
         if letter not in phoneme:
             return False
@@ -94,9 +136,10 @@ def candidate_phonetics(phonetics):
     # to search for "M A.?.? T"
     # give this function "M A T"
     # see also: http://www.speech.cs.cmu.edu/tools/lextool.html
+    phonetics = phonetics.upper().split()
     result_list = []
     for word, transcription in CMUDICT.items():
-        if is_letters_match_transcription(phonetics, transcription):
+        if is_letters_match_transcription(phonetics, transcription.split()):
             # all letters were in transcription
             result_list.append(word)
 
@@ -109,9 +152,9 @@ def candidate_verbatim(en):
     """ Look up words that start with "^en" prefix in cmudict dictonary"""
     en = en.lower()
     result = search(en, CMUDICT.keys())
-    shaped_unsorted = shape_word_search_results(result) 
-    shaped_sorted = sorted(shaped_unsorted, key=search_res_to_freq, reverse=True)
-    return return_search_results(shaped_sorted)
+    shaped_alphabetical = shape_word_search_results(result) 
+    # shaped_sorted = sorted(shaped_alphabetical, key=search_res_to_freq)
+    return return_search_results(shaped_alphabetical)
 
 
 @get("/api/check_keyword/<keyword>")

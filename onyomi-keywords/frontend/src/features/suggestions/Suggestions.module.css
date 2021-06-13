@@ -1,21 +1,21 @@
 .sugggestions_spelling {
   background-color: #dafad8;
   grid-column: 1 / 3;
-  grid-row: 2 / 3;
+  grid-row: 2 / 4;
   overflow: auto;
 }
 
 .suggestions_phonetic {
   background-color: #cfffcd;
   grid-column: 3 / 4;
-  grid-row: 2 / 3;
+  grid-row: 3 / 4;
   overflow: auto;
 }
 
 .suggestions_verbatim {
   background-color: #b1faad;
-  grid-column: 1 / 3;
-  grid-row: 3 / 4;
+  grid-column: 3 / 4;
+  grid-row: 2 / 3;
   overflow: auto;
 }
 
