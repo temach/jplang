@@ -1,3 +1,7 @@
+# Anki
+
+To sync changes with anki, see https://github.com/FooSoft/anki-connect
+
 # Onyomi keywords
 
 The files related to onyomi-keywords reside inside "onyomi-keywords/" directory.
