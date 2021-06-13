@@ -43,83 +43,9 @@ def shape_word_search_results(words):
     return ret
 
 
-def str_to_len(word):
-    word = word.removesuffix("(2)")
-    return len(word)
-
-
-def search_res_to_freq(res):
-    return res["metadata"]["corpus"] + res["metadata"]["subs"]
-
-
 def return_search_results(data):
     # only return top N words
     return json.dumps(data[:RESULTS_LIMIT])
-
-
-@get("/api/search/<en>")
-def candidate_smart(en):
-    """ Look up words that start with "^en" prefix in cmudict dictonary"""
-    en = en.lower()
-
-    eng_vowels = ["i", "u"]
-
-    bad_ending_sounds = [
-        "AA", "AE", "AH", "AO", "AW", "AY",
-        "CH",
-        "EH", "ER", "EY",
-        "G",
-        "IH", "IY",
-        "JH",
-        "K",
-        "N",
-        "NG",
-        "T",
-        "UH", "UW",
-        "Y",
-    ]
-
-    if len(en) >= 2 and en[-1] in eng_vowels and en[-2] == en[-1]:
-        # find the longest word possible for words with double vowel at the end
-        # e.g. KUU or FUU
-        en_without_last = en[:-1]
-        result = search(en_without_last, CMUDICT.keys())
-        result = sorted(result, key=str_to_len, reverse=True)
-        return return_search_results(shape_word_search_results(result))
-
-    if len(en) >= 2 and en[-1] in eng_vowels:
-        # find the shortest word possible for words with vowel at the end
-        # e.g. KU or FU
-        result = search(en, CMUDICT.keys())
-        result = sorted(result, key=str_to_len)
-        return return_search_results(shape_word_search_results(result))
-
-    if len(en) == 1:
-        result = search(en, CMUDICT.keys())
-
-        filtered = []
-        for w in result:
-            if len(w) <= 2:
-                continue
-
-            transcription = CMUDICT[w].split()
-            if len(transcription) <= 1:
-                continue
-
-            if transcription[1] in bad_ending_sounds:
-                continue
-
-            filtered.append(w)
-
-        shaped_alphabetical = shape_word_search_results(filtered)
-        # shaped_sorted = sorted(shaped_alphabetical, key=search_res_to_freq)
-        return return_search_results(shaped_alphabetical)
-
-    # just return results in alphabetical order
-    result = search(en, CMUDICT.keys())
-    shaped_alphabetical = shape_word_search_results(result)
-    # shaped_sorted = sorted(shaped_alphabetical, key=search_res_to_freq)
-    return return_search_results(shaped_alphabetical)
 
 
 @get("/api/search/regex/<regex>")
@@ -143,40 +69,6 @@ def candidate_regex(regex):
     # using the straw keys create array of rich and informative return values
     alphabetical = shape_word_search_results(keys_of_matched_staws)
     return return_search_results(alphabetical)
-
-
-def is_letters_match_transcription(letters, transcription):
-    zipped = zip(letters, transcription)
-    for letter, phoneme in zipped:
-        if letter not in phoneme:
-            return False
-    return True
-
-
-@get("/api/search/phonetics/<phonetics>")
-def candidate_phonetics(phonetics):
-    # to search for "M A.?.? T"
-    # give this function "M A T"
-    # see also: http://www.speech.cs.cmu.edu/tools/lextool.html
-    phonetics = phonetics.upper().split()
-    result_list = []
-    for word, transcription in CMUDICT.items():
-        if is_letters_match_transcription(phonetics, transcription.split()):
-            # all letters were in transcription
-            result_list.append(word)
-
-    shaped_alphabetical = shape_word_search_results(result_list)
-    return return_search_results(shaped_alphabetical)
-
-
-@get("/api/search/verbatim/<en>")
-def candidate_verbatim(en):
-    """ Look up words that start with "^en" prefix in cmudict dictonary"""
-    en = en.lower()
-    result = search(en, CMUDICT.keys())
-    shaped_alphabetical = shape_word_search_results(result)
-    # shaped_sorted = sorted(shaped_alphabetical, key=search_res_to_freq)
-    return return_search_results(shaped_alphabetical)
 
 
 @get("/api/check_keyword/<keyword>")
