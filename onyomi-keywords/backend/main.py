@@ -4,11 +4,38 @@ import os
 import re
 import sqlite3
 import json
+import urllib.request
+
 from bottle import route, get, run, template, request, post, HTTPResponse, static_file
 
 
 FREQ_NOT_FOUND_MARKER = 999999
-RESULTS_LIMIT = 1200
+RESULTS_LIMIT = 10000
+ANKI_DECK_NAME = "OnyomiKeywords"
+ANKI_MODEL_NAME = "OnyomiKeywordsModel"
+ANKI_MODEL_CSS = """
+.card {
+ font-family: arial;
+ font-size: 20px;
+ text-align: center;
+ color: black;
+ background-color: white;
+}
+
+k {
+ color: #aa0000;
+}
+"""
+ANKI_MODEL_FRONT = """
+{{Front}}
+"""
+ANKI_MODEL_BACK = """
+{{FrontSide}}
+
+<hr id=answer>
+
+{{Back}}
+"""
 
 
 # Static Routes
@@ -136,6 +163,138 @@ def work_elements():
         enriched.append(item)
 
     return json.dumps(enriched)
+
+
+def anki_request(action, **params):
+    return {'action': action, 'params': params, 'version': 6}
+
+
+def invoke(action, **params):
+    requestJson = json.dumps(anki_request(action, **params)).encode('utf-8')
+    from pprint import pprint
+    pprint(requestJson)
+    response = json.load(urllib.request.urlopen(urllib.request.Request('http://localhost:8765', requestJson)))
+    if len(response) != 2:
+        raise Exception('response to {} has an unexpected number of fields'.format(action))
+    if 'error' not in response:
+        raise Exception('response to {} is missing required error field'.format(action))
+    if 'result' not in response:
+        raise Exception('response to {} is missing required result field'.format(action))
+    if response['error'] is not None:
+        raise Exception('response to {} returned error: {}'.format(action, response['error']))
+    return response['result']
+
+
+def make_front(keyword):
+    # make front of note
+    front = []
+    marked = False
+
+    for c in keyword:
+        if c.isupper() and not marked:
+            # start of mark
+            marked = True
+            front.append("<k>")
+            front.append(c)
+
+        elif (not c.isupper()) and marked:
+            # end of mark
+            front.append("</k>")
+            front.append(c)
+            marked = False
+
+        else:
+            front.append(c)
+
+    return "".join(front)
+
+
+@post("/api/anki_upsync_one")
+def anki_upsync():
+    # https://bottlepy.org/docs/dev/api.html#bottle.BaseRequest.query_string
+    cursor = connection.cursor()
+    payload = request.json
+
+    english = payload["onyomi"]
+    keyword = payload["keyword"]
+    notes = payload["metadata"]["notes"]
+    katakana = payload["metadata"]["katakana"]
+    hiragana = payload["metadata"]["hiragana"]
+
+    try:
+        cursor.execute(
+            """UPDATE OR ABORT onyomi SET (english, keyword, notes) = (?, ?, ?) WHERE english=? """,
+            (english, keyword, notes, english)
+        )
+        connection.commit()
+
+        # check connection and permission
+        invoke('requestPermission')
+
+        # check that special deck exists, if not create it
+        if not ANKI_DECK_NAME in invoke('deckNames'):
+            result = invoke('createDeck', deck=ANKI_DECK_NAME)
+
+        if not ANKI_MODEL_NAME in invoke('modelNames'):
+            model = {
+                "modelName": ANKI_MODEL_NAME,
+                "inOrderFields": ["{{Front}}", "{{Back}}"],
+                "css": ANKI_MODEL_CSS,
+                "isCloze": False,
+                "cardTemplates": [
+                    {
+                        "Name": "Card 1",
+                        "Front": ANKI_MODEL_FRONT,
+                        "Back": ANKI_MODEL_BACK
+                    }
+                ]
+            }
+            result = invoke('createModel', **model)
+
+        # check if note is already present by looking for
+        # onyomi pattern "= xxx =" in the back of notes
+        result = invoke('findNotes', query='deck:{} back:"*= {} =*"'.format(ANKI_DECK_NAME, english))
+
+        if result:
+            # found note, update it
+            pass
+
+        else:
+            # nothing found, create it
+
+            # first make front and back of card
+            front = make_front(keyword)
+            back = "{} = {} = {} = {}".format(katakana, hiragana, english, keyword)
+
+            # second make note
+            note = {
+                "deckName": ANKI_DECK_NAME,
+                "modelName": ANKI_MODEL_NAME,
+                "fields": {
+                    "Front": front,
+                    "Back": back,
+                },
+                "options": {
+                    "allowDuplicate": False,
+                    "duplicateScope": "deck",
+                },
+                "tags": [
+                    "onyomi_keywords_app"
+                ],
+            }
+            result = invoke('addNote', note=note)
+    except Exception as e:
+        return HTTPResponse(status=500, body="{}".format(e))
+
+    # if last result was ok, then everything was ok
+    if result:
+        return HTTPResponse(status=200)
+
+
+
+@get("/api/anki_downsync_all")
+def anki_upsynk():
+    pass
 
 
 def init_database(sqlite_connection, onyomi_path):
