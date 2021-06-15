@@ -12,9 +12,12 @@ const workElementsSlice = createSlice({
     },
     extraReducers: {
         "submitbar/submitKeywordReady": (state, action) => {
-            // empty the elements, this will trigger repaint and will request elements from backend again
             const index = state.elements.findIndex(e => e.onyomi === action.payload.onyomi);
             state.elements[index] = action.payload;
+        },
+        "submitbar/downsyncFromAnkiReady": (state, action) => {
+            // empty elements and trigger re-paint
+            state.elements = [];
         },
     }
 });

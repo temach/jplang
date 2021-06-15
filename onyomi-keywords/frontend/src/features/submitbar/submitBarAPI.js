@@ -39,6 +39,10 @@ export function submitKeywordToAnki(data) {
     return fetch("/api/anki_upsync_one", params);
 }
 
+export function downsyncAllKeywordsFromAnki() {
+    return fetch("/api/anki_downsync_all");
+}
+
 // An async request for data
 export function fetchKeywordFreq(keyword) {
     return fetch("/api/check_keyword/" + keyword)

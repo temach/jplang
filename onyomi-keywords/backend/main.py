@@ -210,16 +210,16 @@ def make_front(keyword):
 
 
 @post("/api/anki_upsync_one")
-def anki_upsync():
+def anki_upsync_one():
     # https://bottlepy.org/docs/dev/api.html#bottle.BaseRequest.query_string
     cursor = connection.cursor()
     payload = request.json
 
     english = payload["onyomi"]
     keyword = payload["keyword"]
-    notes = payload["metadata"]["notes"]
     katakana = payload["metadata"]["katakana"]
     hiragana = payload["metadata"]["hiragana"]
+    notes = payload["metadata"]["notes"]
 
     try:
         cursor.execute(
@@ -252,19 +252,34 @@ def anki_upsync():
             result = invoke('createModel', **model)
 
         # check if note is already present by looking for
-        # onyomi pattern "= xxx =" in the back of notes
-        result = invoke('findNotes', query='deck:{} back:"*= {} =*"'.format(ANKI_DECK_NAME, english))
+        # onyomi pattern "xxx =" in the back of notes
+        query = 'deck:{} back:"{} =*"'.format(ANKI_DECK_NAME, english)
+        result = invoke('findNotes', query=query)
 
         if result:
+            if len(result) != 1:
+                raise Exception("""expected at most one note id for anki onyomi search '{}' but instead got {}""".format(query, result))
+
             # found note, update it
-            pass
+            front = make_front(keyword)
+            back = "{} = {} = {} = {} = {}".format(english, keyword, katakana, hiragana, notes)
+
+            # second make note
+            note = {
+                "id": result[0],
+                "fields": {
+                    "Front": front,
+                    "Back": back,
+                },
+            }
+            result = invoke('updateNoteFields', note=note)
 
         else:
             # nothing found, create it
 
             # first make front and back of card
             front = make_front(keyword)
-            back = "{} = {} = {} = {}".format(katakana, hiragana, english, keyword)
+            back = "{} = {} = {} = {} = {}".format(english, keyword, katakana, hiragana, notes)
 
             # second make note
             note = {
@@ -291,10 +306,65 @@ def anki_upsync():
         return HTTPResponse(status=200)
 
 
-
 @get("/api/anki_downsync_all")
-def anki_upsynk():
-    pass
+def anki_downsync_all():
+    # check connection and permission
+    invoke('requestPermission')
+
+    if not ANKI_DECK_NAME in invoke('deckNames'):
+        # nothing to pull
+        return HTTPResponse(status=200)
+
+    if not ANKI_MODEL_NAME in invoke('modelNames'):
+        # nothing to pull
+        return HTTPResponse(status=200)
+
+    # find all note ids from our anki deck
+    query = 'deck:{}'.format(ANKI_DECK_NAME)
+    result = invoke('findNotes', query=query)
+
+    # get detailed info
+    result = invoke('notesInfo', notes=result)
+
+    try:
+        # clear database
+        c = connection.cursor()
+        c.execute("DROP TABLE onyomi;")
+
+        # create new table
+        c.execute("""
+            CREATE TABLE onyomi
+            (
+                [english] text PRIMARY KEY,
+                [keyword] text NOT NULL,
+                [katakana] text NOT NULL,
+                [hiragana] text NOT NULL,
+                [notes] text NOT NULL
+            );
+        """)
+
+        sql = """INSERT INTO onyomi VALUES(?,?,?,?,?);"""
+
+        # fill table with data
+        for note in result:
+            data = note["fields"]["Back"]["value"].split("=")
+
+            if len(data) == 4:
+                english, keyword, katakana, hiragana = data
+                notes = ""
+            else:
+                english, keyword, katakana, hiragana, notes = data
+
+            data = (english.strip(), keyword.strip(), katakana.strip(), hiragana.strip(), notes.strip())
+            c.execute(sql, data)
+
+        connection.commit()
+
+    except Exception as e:
+        return HTTPResponse(status=500, body="{}".format(e))
+
+    return HTTPResponse(status=200)
+
 
 
 def init_database(sqlite_connection, onyomi_path):

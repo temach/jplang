@@ -6,10 +6,11 @@ import {
     keywordInput,
     notesInput,
     submitKeywordReady,
+    downsyncFromAnkiReady,
 } from './submitBarSlice';
 
 import styles from './SubmitBar.module.css';
-import {fetchKeywordFreq, submitKeyword, submitKeywordToAnki} from "./submitBarAPI";
+import {fetchKeywordFreq, submitKeyword, submitKeywordToAnki, downsyncAllKeywordsFromAnki} from "./submitBarAPI";
 
 export function SubmitBar() {
     const element = useSelector(getCurrentElement);
@@ -55,6 +56,23 @@ export function SubmitBar() {
             (result) => {
                 if (result.ok) {
                     dispatch(submitKeywordReady(element));
+                } else {
+                    result.text().then((msg) => setMessage(msg));
+                }
+            },
+            // Note: it's important to handle errors here
+            // instead of a catch() block so that we don't swallow
+            // exceptions from actual bugs in components.
+            (error) => {
+                console.log(error);
+            }
+        );
+
+    const downsyncAllKeywords =
+        () => downsyncAllKeywordsFromAnki().then(
+            (result) => {
+                if (result.ok) {
+                    dispatch(downsyncFromAnkiReady);
                 } else {
                     result.text().then((msg) => setMessage(msg));
                 }
@@ -120,6 +138,7 @@ export function SubmitBar() {
                 <input style={{flex: "0 0"}}
                        type={"button"}
                        value={"Downsync Anki"}
+                       onClick={downsyncAllKeywords}
                 />
 
                 <input style={{flex: "1 1"}}

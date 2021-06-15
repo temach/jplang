@@ -12,6 +12,8 @@ const submitBarSlice = createSlice({
         },
         submitKeywordReady: (state, action) => {
         },
+        downsyncFromAnkiReady: (state, action) => {
+        }
     },
     extraReducers: {
         "workelements/selectWorkElement" : (state, action) => {
@@ -23,7 +25,7 @@ const submitBarSlice = createSlice({
     },
 });
 
-export const {keywordInput, notesInput, submitKeywordReady} = submitBarSlice.actions;
+export const {keywordInput, notesInput, submitKeywordReady, downsyncFromAnkiReady} = submitBarSlice.actions;
 
 export const getCurrentElement = (state) => {
     return state.submitbar.current;

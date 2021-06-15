@@ -36,7 +36,7 @@ export function WorkElements() {
             {workElements.map(
                 (elem, index) =>
                     <Fragment key={index}>
-                        {(index > 1)
+                        {(index > 0)
                         && (
                             workElements[index-1].metadata.hiragana.charAt(0)
                             !== workElements[index].metadata.hiragana.charAt(0)
