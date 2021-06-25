@@ -43,6 +43,7 @@ ANKI_MODEL_BACK = """
 def root():
     return static_file("index.html", root="../frontend/build/")
 
+
 @get("/static/<filepath:path>")
 def static(filepath):
     return static_file(filepath, root="../frontend/build/static")
@@ -173,15 +174,20 @@ def invoke(action, **params):
     requestJson = json.dumps(anki_request(action, **params)).encode('utf-8')
     from pprint import pprint
     pprint(requestJson)
-    response = json.load(urllib.request.urlopen(urllib.request.Request('http://localhost:8765', requestJson)))
+    response = json.load(urllib.request.urlopen(
+        urllib.request.Request('http://localhost:8765', requestJson)))
     if len(response) != 2:
-        raise Exception('response to {} has an unexpected number of fields'.format(action))
+        raise Exception(
+            'response to {} has an unexpected number of fields'.format(action))
     if 'error' not in response:
-        raise Exception('response to {} is missing required error field'.format(action))
+        raise Exception(
+            'response to {} is missing required error field'.format(action))
     if 'result' not in response:
-        raise Exception('response to {} is missing required result field'.format(action))
+        raise Exception(
+            'response to {} is missing required result field'.format(action))
     if response['error'] is not None:
-        raise Exception('response to {} returned error: {}'.format(action, response['error']))
+        raise Exception('response to {} returned error: {}'.format(
+            action, response['error']))
     return response['result']
 
 
@@ -258,11 +264,13 @@ def anki_upsync_one():
 
         if result:
             if len(result) != 1:
-                raise Exception("""expected at most one note id for anki onyomi search '{}' but instead got {}""".format(query, result))
+                raise Exception(
+                    """expected at most one note id for anki onyomi search '{}' but instead got {}""".format(query, result))
 
             # found note, update it
             front = make_front(keyword)
-            back = "{} = {} = {} = {} = {}".format(english, keyword, katakana, hiragana, notes)
+            back = "{} = {} = {} = {} = {}".format(
+                english, keyword, katakana, hiragana, notes)
 
             # second make note
             note = {
@@ -279,7 +287,8 @@ def anki_upsync_one():
 
             # first make front and back of card
             front = make_front(keyword)
-            back = "{} = {} = {} = {} = {}".format(english, keyword, katakana, hiragana, notes)
+            back = "{} = {} = {} = {} = {}".format(
+                english, keyword, katakana, hiragana, notes)
 
             # second make note
             note = {
@@ -358,7 +367,8 @@ def anki_downsync_all():
             else:
                 english, keyword, katakana, hiragana, notes = data
 
-            data = (english.strip(), keyword.strip(), katakana.strip(), hiragana.strip(), notes.strip())
+            data = (english.strip(), keyword.strip(),
+                    katakana.strip(), hiragana.strip(), notes.strip())
             c.execute(sql, data)
 
         connection.commit()
@@ -369,7 +379,6 @@ def anki_downsync_all():
         return HTTPResponse(status=500, body="{}".format(e))
 
     return HTTPResponse(status=200)
-
 
 
 def init_database(sqlite_connection, onyomi_path):
