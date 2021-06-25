@@ -1,6 +1,10 @@
-# Anki
+# Overview
 
 To sync changes with anki, see https://github.com/FooSoft/anki-connect
+For venv:
+python -m venv .venv
+source ./.venv/bin/activate
+pip install -r requirements.txt
 
 # Onyomi keywords
 
