@@ -146,7 +146,7 @@ def work_elements():
     connection = sqlite3.connect(SQLITE_FILE)
     c = connection.cursor()
 
-    c.execute('''SELECT * FROM onyomi;''')
+    c.execute('''SELECT * FROM onyomi ORDER BY english;''')
     rows = c.fetchall()
 
     enriched = []
@@ -324,7 +324,10 @@ def anki_downsync_all():
     result = invoke('findNotes', query=query)
 
     # get detailed info
-    result = invoke('notesInfo', notes=result)
+    info = []
+    for n in result:
+        r = invoke('notesInfo', notes=[n])
+        info.extend(r)
 
     try:
         # clear database
@@ -346,7 +349,7 @@ def anki_downsync_all():
         sql = """INSERT INTO onyomi VALUES(?,?,?,?,?);"""
 
         # fill table with data
-        for note in result:
+        for note in info:
             data = note["fields"]["Back"]["value"].split("=")
 
             if len(data) == 4:
@@ -361,6 +364,8 @@ def anki_downsync_all():
         connection.commit()
 
     except Exception as e:
+        print(data)
+        print(e)
         return HTTPResponse(status=500, body="{}".format(e))
 
     return HTTPResponse(status=200)
