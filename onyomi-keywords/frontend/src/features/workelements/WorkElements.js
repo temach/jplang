@@ -54,9 +54,9 @@ export function WorkElements() {
                         <div className={styles.row}
                              onClick={() => dispatch(selectWorkElement(elem))}
                         >
-                            <span style={{flex: "0 0 2rem"}}>{index + "."}</span>
-                            <span style={{flex: "0 0 3rem"}}>{elem.onyomi}</span>
-                            <span style={{flex: "1 0 10rem"}}>{elem.keyword}</span>
+                            <span style={{flex: "0 0 3rem"}}>{index + "."}</span>
+                            <span style={{flex: "0 0 4rem"}}>{elem.onyomi}</span>
+                            <span style={{flex: "1 0 6rem"}}>{elem.keyword}</span>
                             <span style={{flex: "3 0 5rem"}}>{elem.metadata.notes}</span>
                         </div>
                     </Fragment>

@@ -16,7 +16,7 @@ ANKI_DECK_NAME = "OnyomiKeywords"
 ANKI_MODEL_NAME = "OnyomiKeywordsModel"
 ANKI_MODEL_CSS = """
 .card {
- font-family: arial;
+ font-family: monospace, monospace;
  font-size: 20px;
  text-align: center;
  color: black;
