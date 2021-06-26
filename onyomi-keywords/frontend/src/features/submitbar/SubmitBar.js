@@ -34,23 +34,6 @@ export function SubmitBar() {
             }
         );
 
-    const postKeyword =
-        () => submitKeyword(element).then(
-            (result) => {
-                if (result.ok) {
-                    dispatch(submitKeywordReady(element));
-                } else {
-                    result.text().then((msg) => setMessage(msg));
-                }
-            },
-            // Note: it's important to handle errors here
-            // instead of a catch() block so that we don't swallow
-            // exceptions from actual bugs in components.
-            (error) => {
-                console.log(error);
-            }
-        );
-
     const upsyncKeywordToAnki =
         () => submitKeywordToAnki(element).then(
             (result) => {
@@ -122,12 +105,6 @@ export function SubmitBar() {
                 <span style={{flex: "0 0 9rem"}}>
                     {"Subs:" + freqSubs}
                 </span>
-
-                <input style={{flex: "0 0"}}
-                       type={"button"}
-                       value={"Submit"}
-                       onClick={postKeyword}
-                />
 
                 <input style={{flex: "0 0"}}
                        type={"button"}

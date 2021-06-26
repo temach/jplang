@@ -60,7 +60,7 @@ export function Suggestions() {
                            type={"text"}
                            value={search}
                            onChange={event => setSearch(event.target.value)}
-                           placeholder={"avatar or G.?.? A.?.? [^TKN]"}
+                           placeholder={"avatar or G.?.? A.?.? [^TKN] or ai.*  AY.? K (note the double space before AY.?)"}
                     />
                 </div>
                 {suggestions.map(

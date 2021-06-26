@@ -4,7 +4,8 @@ import {useSelector, useDispatch} from 'react-redux';
 import {
     setWorkElements,
     getCurrentWorkElements,
-    selectWorkElement
+    selectWorkElement,
+    forceSelectElement
 } from './workElementsSlice';
 
 import styles from './WorkElements.module.css';
@@ -12,7 +13,8 @@ import styles from './WorkElements.module.css';
 import {fetchWorkElements} from "./workElementsAPI";
 
 export function WorkElements() {
-    const workElements = useSelector(getCurrentWorkElements)
+    const force = useSelector(forceSelectElement);
+    const workElements = useSelector(getCurrentWorkElements);
     const dispatch = useDispatch();
 
     const updateWorkElements =
@@ -30,6 +32,12 @@ export function WorkElements() {
 
     // Note: the empty deps array [] means this useEffect will run once
     useEffect(() => {updateWorkElements()},[]);
+
+    useEffect(() => {
+            if (workElements.length > 0) {
+                dispatch(selectWorkElement(workElements[force]));
+            }
+        }, [force]);
 
     return (
         <div className={styles.workelements}>

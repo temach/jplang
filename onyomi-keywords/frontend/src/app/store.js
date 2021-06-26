@@ -106,6 +106,7 @@ const initialState = {
     },
     workelements: {
         elements: [],
+        force: 0,
     },
     history: {
         searches: [],
