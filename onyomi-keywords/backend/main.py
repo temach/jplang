@@ -92,6 +92,12 @@ def return_search_results(data):
 
 @get("/api/search/regex/<regex>")
 def candidate_regex(regex):
+    # prepend multimatch to regex in case user clearly wants to search the transcription
+    if regex.startswith(WORD_AND_TRANSCRIPTION_SEPARATOR):
+        regex = ".*" + regex
+    elif regex and regex[0].isupper():
+        regex = ".*" + WORD_AND_TRANSCRIPTION_SEPARATOR + regex
+
     matched = []
 
     regex_comp = re.compile(regex)
@@ -206,6 +212,10 @@ def make_front(keyword):
 
         else:
             front.append(c)
+
+    # if the keyword is all CAPS then append closing </k> after last letter
+    if marked == True and keyword[-1].isupper():
+        front.append("</k>")
 
     return "".join(front)
 

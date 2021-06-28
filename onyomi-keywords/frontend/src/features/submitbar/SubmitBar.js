@@ -34,10 +34,28 @@ export function SubmitBar() {
             }
         );
 
+    const postKeyword =
+        () => submitKeyword(element).then(
+            (result) => {
+                if (! result.ok) {
+                    result.text().then((msg) => setMessage(msg));
+                }
+                // if result is ok then do nothing, we already submitted to anki
+            },
+            // Note: it's important to handle errors here
+            // instead of a catch() block so that we don't swallow
+            // exceptions from actual bugs in components.
+            (error) => {
+                console.log(error);
+            }
+        );
+
     const upsyncKeywordToAnki =
         () => submitKeywordToAnki(element).then(
             (result) => {
                 if (result.ok) {
+                    // also submit to local database
+                    postKeyword();
                     dispatch(submitKeywordReady(element));
                 } else {
                     result.text().then((msg) => setMessage(msg));
