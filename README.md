@@ -42,9 +42,7 @@ python main.py
 ```
 And navigate to http://localhost:8080 in a browser, you should see the bellow screenshot:
 
-![](README.assets/2021-06-28_at_060315_screenshot.png)
-
-
+![](README.assets/2021-06-28_at_061137_screenshot.png)
 
 ### Resources
 
