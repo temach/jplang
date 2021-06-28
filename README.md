@@ -1,10 +1,14 @@
 # Overview
 
 To sync changes with anki, see https://github.com/FooSoft/anki-connect
+
 For venv:
+```
 python -m venv .venv
 source ./.venv/bin/activate
 pip install -r requirements.txt
+```
+
 
 # Onyomi keywords
 
@@ -27,11 +31,19 @@ netsu  =  ネツ  =  ねつ  =  NETScape
 ```
 
 ### Results
-
 The onyomi keywords in plain text format are in file:
 - onyomi-keywords.txt
-
 The results are also packaged as Anki decks (.txt and .apkg)
+
+A web tool (backend in Python, frontend in React+Redux) to decide on the most fitting onyomi keyword. To run the tool (needs python 3.9 due to type annotations, and AnkiConnect plugin to sync with anki):
+```
+cd onyomi-keywords/backend
+python main.py
+```
+And navigate to http://localhost:8080 in a browser, you should see the bellow screenshot:
+
+![](README.assets/2021-06-28_at_060315_screenshot.png)
+
 
 
 ### Resources
