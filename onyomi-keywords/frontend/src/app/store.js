@@ -3,6 +3,7 @@ import workElementsReducer from '../features/workelements/workElementsSlice';
 import submitBarReducer from "../features/submitbar/submitBarSlice";
 import suggestionsReducer from "../features/suggestions/suggestionsSlice";
 import historyReducer from "../features/history/historySlice";
+import searchrulesReducer from "../features/searchrules/searchrulesSlice";
 
 
 const test_elems = [
@@ -105,9 +106,12 @@ const initialState = {
     },
     workelements: {
         elements: [],
+        force: 0,
     },
     history: {
         searches: [],
+    },
+    searchrules: {
     },
 }
 
@@ -118,5 +122,6 @@ export const store = configureStore({
         submitbar: submitBarReducer,
         suggestions: suggestionsReducer,
         history: historyReducer,
+        searchrules: searchrulesReducer,
     },
 });

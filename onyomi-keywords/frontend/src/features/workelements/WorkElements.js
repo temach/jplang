@@ -4,7 +4,8 @@ import {useSelector, useDispatch} from 'react-redux';
 import {
     setWorkElements,
     getCurrentWorkElements,
-    selectWorkElement
+    selectWorkElement,
+    forceSelectElement
 } from './workElementsSlice';
 
 import styles from './WorkElements.module.css';
@@ -12,7 +13,8 @@ import styles from './WorkElements.module.css';
 import {fetchWorkElements} from "./workElementsAPI";
 
 export function WorkElements() {
-    const workElements = useSelector(getCurrentWorkElements)
+    const force = useSelector(forceSelectElement);
+    const workElements = useSelector(getCurrentWorkElements);
     const dispatch = useDispatch();
 
     const updateWorkElements =
@@ -31,6 +33,12 @@ export function WorkElements() {
     // Note: the empty deps array [] means this useEffect will run once
     useEffect(() => {updateWorkElements()},[]);
 
+    useEffect(() => {
+            if (workElements.length > 0) {
+                dispatch(selectWorkElement(workElements[force]));
+            }
+        }, [force]);
+
     return (
         <div className={styles.workelements}>
             {workElements.map(
@@ -46,9 +54,9 @@ export function WorkElements() {
                         <div className={styles.row}
                              onClick={() => dispatch(selectWorkElement(elem))}
                         >
-                            <span style={{flex: "0 0 2rem"}}>{index + "."}</span>
-                            <span style={{flex: "0 0 3rem"}}>{elem.onyomi}</span>
-                            <span style={{flex: "1 0 10rem"}}>{elem.keyword}</span>
+                            <span style={{flex: "0 0 3rem"}}>{index + "."}</span>
+                            <span style={{flex: "0 0 4rem"}}>{elem.onyomi}</span>
+                            <span style={{flex: "1 0 6rem"}}>{elem.keyword}</span>
                             <span style={{flex: "3 0 5rem"}}>{elem.metadata.notes}</span>
                         </div>
                     </Fragment>

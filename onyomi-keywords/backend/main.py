@@ -9,13 +9,14 @@ import urllib.request
 from bottle import route, get, run, template, request, post, HTTPResponse, static_file
 
 
+WORD_AND_TRANSCRIPTION_SEPARATOR = "  "
 FREQ_NOT_FOUND_MARKER = 999999
 RESULTS_LIMIT = 10000
 ANKI_DECK_NAME = "onyomi"
 ANKI_MODEL_NAME = "OnyomiKeywordsModel"
 ANKI_MODEL_CSS = """
 .card {
- font-family: arial;
+ font-family: monospace, monospace;
  font-size: 20px;
  text-align: center;
  color: black;
@@ -66,16 +67,19 @@ def search(needle, haystack):
     return result_list
 
 
-def shape_word_search_results(words):
+def shape_word_search_results(entries):
     ret = []
-    for w in words:
-        icorpus, isubs = get_en_freq(w)
+    for entry in entries:
+        word, separator, transcription = entry.partition(
+            WORD_AND_TRANSCRIPTION_SEPARATOR
+        )
+        # icorpus, isubs = get_en_freq(word)
         ret.append({
-            "keyword": w,
+            "keyword": word,
             "metadata": {
-                "corpus": icorpus,
-                "subs": isubs,
-                "phonetics": CMUDICT[w],
+                "corpus": -1,
+                "subs": -1,
+                "phonetics": transcription,
             },
         })
     return ret
@@ -88,24 +92,21 @@ def return_search_results(data):
 
 @get("/api/search/regex/<regex>")
 def candidate_regex(regex):
-    if any(c.islower() for c in regex):
-        # this is word regex
-        haystack = CMUDICT.keys()
-    else:
-        # this is phonetics regex
-        haystack = CMUDICT.values()
+    # prepend multimatch to regex in case user clearly wants to search the transcription
+    if regex.startswith(WORD_AND_TRANSCRIPTION_SEPARATOR):
+        regex = ".*" + regex
+    elif regex and regex[0].isupper():
+        regex = ".*" + WORD_AND_TRANSCRIPTION_SEPARATOR + regex
 
-    needle = re.compile(regex)
-    keys_of_matched_staws = []
-    # find needle in haystack by examining each straw
-    for straw_key, straw in zip(CMUDICT.keys(), haystack):
-        m = needle.match(straw)
-        if m:
-            # this straw matches, remember the key of this straw
-            keys_of_matched_staws.append(straw_key)
+    matched = []
+
+    regex_comp = re.compile(regex)
+    for entry in CMUDICT:
+        if regex_comp.match(entry):
+            matched.append(entry)
 
     # using the straw keys create array of rich and informative return values
-    alphabetical = shape_word_search_results(keys_of_matched_staws)
+    alphabetical = shape_word_search_results(matched)
     return return_search_results(alphabetical)
 
 
@@ -147,7 +148,7 @@ def work_elements():
     connection = sqlite3.connect(SQLITE_FILE)
     c = connection.cursor()
 
-    c.execute('''SELECT * FROM onyomi;''')
+    c.execute('''SELECT * FROM onyomi ORDER BY english;''')
     rows = c.fetchall()
 
     enriched = []
@@ -211,6 +212,10 @@ def make_front(keyword):
 
         else:
             front.append(c)
+
+    # if the keyword is all CAPS then append closing </k> after last letter
+    if marked == True and keyword[-1].isupper():
+        front.append("</k>")
 
     return "".join(front)
 
@@ -335,7 +340,10 @@ def anki_downsync_all():
     result = invoke('findNotes', query=query)
 
     # get detailed info
-    result = invoke('notesInfo', notes=result)
+    info = []
+    for n in result:
+        r = invoke('notesInfo', notes=[n])
+        info.extend(r)
 
     try:
         # clear database
@@ -357,7 +365,7 @@ def anki_downsync_all():
         sql = """INSERT INTO onyomi VALUES(?,?,?,?,?);"""
 
         # fill table with data
-        for note in result:
+        for note in info:
             data = note["fields"]["Back"]["value"].split("=")
 
             if len(data) == 4:
@@ -373,6 +381,8 @@ def anki_downsync_all():
         connection.commit()
 
     except Exception as e:
+        print(data)
+        print(e)
         return HTTPResponse(status=500, body="{}".format(e))
 
     return HTTPResponse(status=200)
@@ -413,14 +423,17 @@ if __name__ == "__main__":
 
     connection = sqlite3.connect(SQLITE_FILE)
 
-    # mapping {word : transcription}
-    CMUDICT = {}
+    # list of entries "word @ transcription"
+    CMUDICT = []
     with open("../resources/cmudict.dict", "r", encoding="utf-8") as sne:
         for line in sne.readlines():
             if "'s" in line:
                 continue
             word, separator, transcription = line.partition(" ")
-            CMUDICT[word.strip()] = transcription.strip()
+            entry = "{}{}{}".format(
+                word.strip(), WORD_AND_TRANSCRIPTION_SEPARATOR, transcription.strip()
+            )
+            CMUDICT.append(entry)
 
     # english frequency
     CORPUS = {}

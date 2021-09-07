@@ -37,11 +37,10 @@ export function SubmitBar() {
     const postKeyword =
         () => submitKeyword(element).then(
             (result) => {
-                if (result.ok) {
-                    dispatch(submitKeywordReady(element));
-                } else {
+                if (! result.ok) {
                     result.text().then((msg) => setMessage(msg));
                 }
+                // if result is ok then do nothing, we already submitted to anki
             },
             // Note: it's important to handle errors here
             // instead of a catch() block so that we don't swallow
@@ -55,6 +54,8 @@ export function SubmitBar() {
         () => submitKeywordToAnki(element).then(
             (result) => {
                 if (result.ok) {
+                    // also submit to local database
+                    postKeyword();
                     dispatch(submitKeywordReady(element));
                 } else {
                     result.text().then((msg) => setMessage(msg));
@@ -122,12 +123,6 @@ export function SubmitBar() {
                 <span style={{flex: "0 0 9rem"}}>
                     {"Subs:" + freqSubs}
                 </span>
-
-                <input style={{flex: "0 0"}}
-                       type={"button"}
-                       value={"Submit"}
-                       onClick={postKeyword}
-                />
 
                 <input style={{flex: "0 0"}}
                        type={"button"}

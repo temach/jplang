@@ -4,6 +4,7 @@ import {WorkElements} from "./features/workelements/WorkElements";
 import {SubmitBar} from "./features/submitbar/SubmitBar";
 import {Suggestions} from "./features/suggestions/Suggestions";
 import {History} from "./features/history/History";
+import {SearchRules} from "./features/searchrules/SearchRules";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Suggestions />
         <WorkElements />
         <History />
+        <SearchRules />
     </div>
   );
 }

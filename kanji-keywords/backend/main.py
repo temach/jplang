@@ -285,6 +285,13 @@ def keyword_frequency(kanji, keyword):
         conflict += "{} is key for {}. ".format(
             lemma_keywords_conflict, lemma_kanji)
 
+    # check for conflict as substring, e.g. "fullfill" and "full" are too similar
+    for substr_kanji, substr_key in KEYWORDS.values():
+        if substr_key.startswith(keyword) and substr_kanji != kanji:
+            # "and" condition to prevent matching itself
+            conflict += "{} is key for {}. ".format(
+                substr_key, substr_kanji)
+
     response = {
         "word": "",
         "freq": get_en_freq_regex(keyword),
