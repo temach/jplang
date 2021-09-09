@@ -8,6 +8,7 @@
 /httpRequests/
 .idea/
 index.html
+kanji-parts.db
 .mypy_cache
 /node_modules
 npm-debug.log*
