@@ -11,7 +11,13 @@ import Html.Events.Extra exposing (targetValueIntParse)
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
+import List.Extra
 import Platform.Cmd as Cmd
+import Svg exposing (Svg)
+import Svg.Attributes exposing (fill, stroke)
+import Svg.Events
+import SvgParser exposing (Element, SvgAttribute, SvgNode(..))
+import Tuple exposing (second)
 import Url.Builder exposing (absolute)
 
 
@@ -26,6 +32,13 @@ main =
         , update = update
         , view = view
         }
+
+
+dummy =
+    [ WorkElement "a" "first" "note1" "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"109\" height=\"109\" viewBox=\"0 0 109 109\"><g xmlns:kvg=\"http://kanjivg.tagaini.net\" id=\"kvg:StrokePaths_04eba\" style=\"fill:none;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;\"><g id=\"kvg:04eba\" kvg:element=\"&#20154;\" kvg:radical=\"general\"><path id=\"kvg:04eba-s1\" kvg:type=\"&#12754;\" d=\"M54.5,20c0.37,2.12,0.23,4.03-0.22,6.27C51.68,39.48,38.25,72.25,16.5,87.25\"/><path id=\"kvg:04eba-s2\" kvg:type=\"&#12751;\" d=\"M46,54.25c6.12,6,25.51,22.24,35.52,29.72c3.66,2.73,6.94,4.64,11.48,5.53\"/></g></g></svg>" []
+    , WorkElement "b" "second" "note2" "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"109\" height=\"109\" viewBox=\"0 0 109 109\"><g xmlns:kvg=\"http://kanjivg.tagaini.net\" id=\"kvg:StrokePaths_065e5\" style=\"fill:none;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;\"><g id=\"kvg:065e5\" kvg:element=\"&#26085;\" kvg:radical=\"general\"><path id=\"kvg:065e5-s1\" kvg:type=\"&#12753;\" d=\"M31.5,24.5c1.12,1.12,1.74,2.75,1.74,4.75c0,1.6-0.16,38.11-0.09,53.5c0.02,3.82,0.05,6.35,0.09,6.75\"/><path id=\"kvg:065e5-s2\" kvg:type=\"&#12757;a\" d=\"M33.48,26c0.8-0.05,37.67-3.01,40.77-3.25c3.19-0.25,5,1.75,5,4.25c0,4-0.22,40.84-0.23,56c0,3.48,0,5.72,0,6\"/><path id=\"kvg:065e5-s3\" kvg:type=\"&#12752;a\" d=\"M34.22,55.25c7.78-0.5,35.9-2.5,44.06-2.75\"/><path id=\"kvg:065e5-s4\" kvg:type=\"&#12752;a\" d=\"M34.23,86.5c10.52-0.75,34.15-2.12,43.81-2.25\"/></g></g></svg>" [ "first" ]
+    , WorkElement "c" "third" "" "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"109\" height=\"109\" viewBox=\"0 0 109 109\"><g xmlns:kvg=\"http://kanjivg.tagaini.net\" id=\"kvg:StrokePaths_04e00\" style=\"fill:none;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;\"><g id=\"kvg:04e00\" kvg:element=\"&#19968;\" kvg:radical=\"general\"><path id=\"kvg:04e00-s1\" kvg:type=\"&#12752;\" d=\"M11,54.25c3.19,0.62,6.25,0.75,9.73,0.5c20.64-1.5,50.39-5.12,68.58-5.24c3.6-0.02,5.77,0.24,7.57,0.49\"/></g></g></svg>" [ "first", "second" ]
+    ]
 
 
 
@@ -53,9 +66,10 @@ type alias Model =
     , kanji : String
     , keyword : String
     , notes : String
-    , freq : List Int
+    , svg : String
+    , svgSelectedId : String
+    , parts : List String
     , workElements : List WorkElement
-    , suggestions : List KeyCandidate
     , currentWorkIndex : Int
     , currentHighlightWorkElementIndex : Int
     , userMessage : Dict String String
@@ -71,10 +85,11 @@ init _ =
             , keyword = "loading..."
             , notes = ""
             , svg = ""
+            , svgSelectedId = ""
             , parts = []
+            , workElements = dummy
 
-            , workElements = [ WorkElement "a" "first" "" "" [], WorkElement "b" "second" "asd" "" "" [], WorkElement "c" "third" "" "" "" [] ]
-            , workElements = []
+            -- , workElements = []
             , currentWorkIndex = -1
             , currentHighlightWorkElementIndex = -1
             , userMessage = Dict.empty
@@ -82,7 +97,7 @@ init _ =
     in
     -- update NextWorkElement model
     -- ( model, getWorkElements )
-    ( model )
+    ( model, Cmd.none )
 
 
 
@@ -113,6 +128,8 @@ type
     | KeywordSubmitReady (Result Http.Error String)
     | WorkElementsReady (Result Http.Error (List WorkElement))
     | KeywordCheckReady (Result Http.Error KeyCandidate)
+      -- Svg debug stuff
+    | SvgClicked String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -133,6 +150,8 @@ update msg model =
                             { kanji = model.kanji
                             , keyword = model.keyword
                             , notes = model.notes
+                            , svg = model.svg
+                            , parts = model.parts
                             }
 
                         newWork =
@@ -159,21 +178,15 @@ update msg model =
                     chooseWorkElement index model
 
                 newModel =
-                    { fixWorkModel | freq = [], userMessage = Dict.empty }
+                    { fixWorkModel | userMessage = Dict.empty }
 
                 keywordPresentCommands =
                     Cmd.batch
-                        [ getSuggestions newModel.kanji
-                        , getExpressions newModel.kanji
-                        , getKeywordCheck newModel.kanji newModel.keyword
-                        , getSynonyms newModel.keyword
-                        ]
+                        [ getKeywordCheck newModel.kanji newModel.keyword ]
 
                 keywordAbsentCommands =
                     Cmd.batch
-                        [ getSuggestions newModel.kanji
-                        , getExpressions newModel.kanji
-                        ]
+                        []
             in
             if String.length newModel.keyword >= 2 then
                 ( newModel, keywordPresentCommands )
@@ -199,10 +212,10 @@ update msg model =
                     }
             in
             if String.length word >= 2 then
-                ( newModel, Cmd.batch [ getKeywordCheck newModel.kanji word, getSynonyms newModel.keyword ] )
+                ( newModel, Cmd.batch [ getKeywordCheck newModel.kanji word ] )
 
             else
-                ( { newModel | freq = [], userMessage = Dict.empty }, Cmd.none )
+                ( { newModel | userMessage = Dict.empty }, Cmd.none )
 
         NotesInput word ->
             ( { model | notes = word }, Cmd.none )
@@ -222,23 +235,31 @@ update msg model =
         KeywordCheckReady result ->
             case result of
                 Ok elem ->
-                    ( { model | freq = elem.freq, userMessage = Dict.insert "KeywordCheckReady" elem.metadata model.userMessage }, Cmd.none )
+                    ( { model | userMessage = Dict.insert "KeywordCheckReady" elem.metadata model.userMessage }, Cmd.none )
 
                 Err _ ->
-                    ( { model | freq = [], userMessage = Dict.insert "KeywordCheckReady" "Error getting keyword frequency" model.userMessage }, Cmd.none )
+                    ( { model | userMessage = Dict.insert "KeywordCheckReady" "Error getting keyword frequency" model.userMessage }, Cmd.none )
+
+        SvgClicked idAttr ->
+            ( { model | svgSelectedId = idAttr }, Cmd.none )
 
 
 chooseWorkElement : Int -> Model -> Model
 chooseWorkElement index model =
     let
         selected =
-            Maybe.withDefault (WorkElement "X" "Error" "An error occurred") (get index model.workElements)
+            Maybe.withDefault (WorkElement "X" "Error" "An error occurred" "" []) (get index model.workElements)
+
+        _ =
+            Debug.log "Selecting element: " selected
     in
     { model
         | currentWorkIndex = index
         , kanji = selected.kanji
         , keyword = selected.keyword
         , notes = selected.notes
+        , svg = selected.svg
+        , parts = selected.parts
     }
 
 
@@ -271,11 +292,12 @@ getWorkElements =
 workElementsDecoder : Decode.Decoder (List WorkElement)
 workElementsDecoder =
     Decode.list
-        (Decode.map4 WorkElement
+        (Decode.map5 WorkElement
             (Decode.index 0 Decode.string)
             (Decode.index 1 Decode.string)
             (Decode.index 2 Decode.string)
-            (Decode.index 3 Decode.list)
+            (Decode.index 3 Decode.string)
+            (Decode.index 4 (Decode.list Decode.string))
         )
 
 
@@ -320,6 +342,107 @@ submitKeywordEncoder model =
 view : Model -> Document Msg
 view model =
     Document "Kanji" [ render model ]
+
+
+
+-- DRAW SVG
+-- see: https://discourse.elm-lang.org/t/load-svg-externally-and-wire-to-elm-model/6842
+-- see: https://ellie-app.com/ckpfYCRq7k7a1
+
+
+renderSvg : String -> String -> Html Msg
+renderSvg highlightId svgString =
+    stringToSvg highlightId svgString
+
+
+stringToSvg : String -> String -> Svg Msg
+stringToSvg highlightId svgString =
+    let
+        _ =
+            Debug.log "SVG string: " svgString
+    in
+    case SvgParser.parseToNode svgString of
+        Ok svgNode ->
+            nodeToClickableSvg highlightId svgNode
+
+        Err e ->
+            Svg.text ("Error svg: " ++ e)
+
+
+
+-- Copied from the source code of SvgParser repo
+
+
+nodeToClickableSvg : String -> SvgNode -> Svg Msg
+nodeToClickableSvg highlightId svgNode =
+    case svgNode of
+        SvgElement element ->
+            elementToClickableSvg highlightId element
+
+        SvgText content ->
+            Svg.text content
+
+        SvgComment content ->
+            Svg.text ""
+
+
+
+-- Also copied from the source code of SvgParser repo
+-- But adding a twist, which is the clickableAttribute function
+
+
+elementToClickableSvg : String -> Element -> Svg Msg
+elementToClickableSvg highlightId element =
+    let
+        base =
+            List.map SvgParser.toAttribute element.attributes
+
+        finalAttributes =
+            if List.length element.children == 0 then
+                let
+                    idAttr =
+                        idAttributeValue element
+
+                    colorAttributes =
+                        if highlightId == idAttr then
+                            [ stroke "#ff0000" ]
+
+                        else
+                            []
+
+                    clickAttributes =
+                        [ Svg.Events.onMouseOver (SvgClicked idAttr) ]
+                in
+                base ++ colorAttributes ++ clickAttributes
+
+            else
+                base
+
+        partial =
+            nodeToClickableSvg highlightId
+    in
+    Svg.node element.name
+        finalAttributes
+        (List.map partial element.children)
+
+
+isIdAttribute : SvgAttribute -> Bool
+isIdAttribute ( name, value ) =
+    name == "id"
+
+
+idAttributeValue : Element -> String
+idAttributeValue element =
+    case List.Extra.find isIdAttribute element.attributes of
+        Nothing ->
+            let
+                _ =
+                    Debug.log "PANIC" element.attributes
+            in
+            ""
+
+        Just idAttr ->
+            second idAttr
 
 
 renderSingleWorkElement : Model -> Int -> WorkElement -> Html Msg
@@ -390,7 +513,12 @@ renderSubmitBar model =
     div [ style "display" "flex" ]
         [ span
             [ style "flex" "1 0 auto" ]
-            [ text model.kanji ]
+            [ if String.length model.svg > 0 then
+                renderSvg model.svgSelectedId model.svg
+
+              else
+                text ""
+            ]
         , span
             [ style "flex" "10 0 70px" ]
             [ input
@@ -425,7 +553,7 @@ render model =
     div
         [ style "display" "grid"
         , style "grid-template-columns" "1px 2fr 1fr 2fr 1px"
-        , style "grid-template-rows" "8vh 30vh 30vh 32vh"
+        , style "grid-template-rows" "33vh 33vh 33vh"
         ]
         [ -- Keyword submit
           div
