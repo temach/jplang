@@ -48,7 +48,7 @@ dummy =
 type alias WorkElement =
     { kanji : String
     , keyword : String
-    , notes : String
+    , note : String
     , svg : String
     , parts : List String
     }
@@ -65,13 +65,15 @@ type alias Model =
     { currentWork : WorkElement
     , kanji : String
     , keyword : String
-    , notes : String
+    , note : String
     , svg : String
     , svgSelectedId : String
-    , parts : List String
+    , parts : List WorkElement
+    , currentParts : List String
     , workElements : List WorkElement
     , currentWorkIndex : Int
     , currentHighlightWorkElementIndex : Int
+    , currentHighlightPartIndex : Int
     , userMessage : Dict String String
     }
 
@@ -80,24 +82,28 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     let
         model =
-            { currentWork = { kanji = "", keyword = "", notes = "", svg = "", parts = [] }
+            { currentWork = { kanji = "", keyword = "", note = "", svg = "", parts = [] }
             , kanji = ""
             , keyword = "loading..."
-            , notes = ""
+            , note = ""
             , svg = ""
             , svgSelectedId = ""
+            , currentParts = []
             , parts = []
             , workElements = dummy
 
             -- , workElements = []
             , currentWorkIndex = -1
             , currentHighlightWorkElementIndex = -1
+            , currentHighlightPartIndex = -1
             , userMessage = Dict.empty
             }
+
+        commands =
+            Cmd.batch [ getWorkElements, getParts ]
     in
     -- update NextWorkElement model
-    -- ( model, getWorkElements )
-    ( model, Cmd.none )
+    ( model, commands )
 
 
 
@@ -120,6 +126,10 @@ type
     | SelectWorkElement Int
     | HighlightWorkElement Int
     | UnHighlightWorkElement Int
+      -- Parts
+    | SelectPart Int
+    | HighlightPart Int
+    | UnHighlightPart Int
       -- inputs
     | KeywordInput String
     | NotesInput String
@@ -127,6 +137,7 @@ type
       -- Http responses
     | KeywordSubmitReady (Result Http.Error String)
     | WorkElementsReady (Result Http.Error (List WorkElement))
+    | PartsReady (Result Http.Error (List WorkElement))
     | KeywordCheckReady (Result Http.Error KeyCandidate)
       -- Svg debug stuff
     | SvgClicked String
@@ -149,9 +160,9 @@ update msg model =
                         newElement =
                             { kanji = model.kanji
                             , keyword = model.keyword
-                            , notes = model.notes
+                            , note = model.note
                             , svg = model.svg
-                            , parts = model.parts
+                            , parts = model.currentParts
                             }
 
                         newWork =
@@ -204,6 +215,19 @@ update msg model =
             else
                 ( model, Cmd.none )
 
+        SelectPart index ->
+            ( choosePart index model, Cmd.none )
+
+        HighlightPart index ->
+            ( { model | currentHighlightPartIndex = index }, Cmd.none )
+
+        UnHighlightPart index ->
+            if model.currentHighlightPartIndex == index then
+                ( { model | currentHighlightPartIndex = -1 }, Cmd.none )
+
+            else
+                ( model, Cmd.none )
+
         KeywordInput word ->
             let
                 newModel =
@@ -218,7 +242,7 @@ update msg model =
                 ( { newModel | userMessage = Dict.empty }, Cmd.none )
 
         NotesInput word ->
-            ( { model | notes = word }, Cmd.none )
+            ( { model | note = word }, Cmd.none )
 
         WorkElementsReady result ->
             case result of
@@ -231,6 +255,14 @@ update msg model =
 
                 Err _ ->
                     ( { model | userMessage = Dict.insert "WorkElementsReady" "Error getting workElements" model.userMessage }, Cmd.none )
+
+        PartsReady result ->
+            case result of
+                Ok newParts ->
+                    ( { model | parts = newParts, userMessage = Dict.remove "PartsReady" model.userMessage }, Cmd.none )
+
+                Err _ ->
+                    ( { model | userMessage = Dict.insert "PartsReady" "Error getting parts" model.userMessage }, Cmd.none )
 
         KeywordCheckReady result ->
             case result of
@@ -257,10 +289,29 @@ chooseWorkElement index model =
         | currentWorkIndex = index
         , kanji = selected.kanji
         , keyword = selected.keyword
-        , notes = selected.notes
+        , note = selected.note
         , svg = selected.svg
-        , parts = selected.parts
+        , currentParts = selected.parts
     }
+
+
+choosePart : Int -> Model -> Model
+choosePart index model =
+    let
+        selected =
+            Maybe.withDefault (WorkElement "X" "Error" "An error occurred" "" []) (get index model.parts)
+
+        _ =
+            Debug.log "Selecting part: " selected
+
+        newParts =
+            if List.member selected.keyword model.currentParts then
+                List.Extra.remove selected.keyword model.currentParts
+
+            else
+                selected.keyword :: model.currentParts
+    in
+    { model | currentParts = newParts }
 
 
 updateWorkElement : Int -> WorkElement -> List WorkElement -> List WorkElement
@@ -286,6 +337,14 @@ getWorkElements =
     Http.get
         { url = absolute [ "api", "work" ] []
         , expect = Http.expectJson WorkElementsReady workElementsDecoder
+        }
+
+
+getParts : Cmd Msg
+getParts =
+    Http.get
+        { url = absolute [ "api", "parts" ] []
+        , expect = Http.expectJson PartsReady workElementsDecoder
         }
 
 
@@ -331,7 +390,7 @@ submitKeywordEncoder model =
     Encode.object
         [ ( "kanji", Encode.string model.kanji )
         , ( "keyword", Encode.string model.keyword )
-        , ( "notes", Encode.string model.notes )
+        , ( "note", Encode.string model.note )
         ]
 
 
@@ -345,25 +404,17 @@ view model =
 
 
 
--- DRAW SVG
+-- Render SVG
 -- see: https://discourse.elm-lang.org/t/load-svg-externally-and-wire-to-elm-model/6842
 -- see: https://ellie-app.com/ckpfYCRq7k7a1
+-- note that Html and Svg types are aliases for VirtualDom type
 
 
-renderSvg : String -> String -> Html Msg
-renderSvg highlightId svgString =
-    stringToSvg highlightId svgString
-
-
-stringToSvg : String -> String -> Svg Msg
-stringToSvg highlightId svgString =
-    let
-        _ =
-            Debug.log "SVG string: " svgString
-    in
+stringToSvgHtml : (Element -> List (Svg.Attribute Msg)) -> String -> Html Msg
+stringToSvgHtml customiser svgString =
     case SvgParser.parseToNode svgString of
         Ok svgNode ->
-            nodeToClickableSvg highlightId svgNode
+            cleanupSvg customiser svgNode
 
         Err e ->
             Svg.text ("Error svg: " ++ e)
@@ -373,11 +424,20 @@ stringToSvg highlightId svgString =
 -- Copied from the source code of SvgParser repo
 
 
-nodeToClickableSvg : String -> SvgNode -> Svg Msg
-nodeToClickableSvg highlightId svgNode =
+cleanupSvg : (Element -> List (Svg.Attribute Msg)) -> SvgNode -> Svg Msg
+cleanupSvg customiser svgNode =
     case svgNode of
         SvgElement element ->
-            elementToClickableSvg highlightId element
+            let
+                cleanupSvgWithCustomiser =
+                    cleanupSvg customiser
+
+                customisedAttributes =
+                    customiser element
+            in
+            Svg.node element.name
+                customisedAttributes
+                (List.map cleanupSvgWithCustomiser element.children)
 
         SvgText content ->
             Svg.text content
@@ -386,13 +446,13 @@ nodeToClickableSvg highlightId svgNode =
             Svg.text ""
 
 
+svgCustomiseNone : Element -> List (Svg.Attribute Msg)
+svgCustomiseNone element =
+    List.map SvgParser.toAttribute element.attributes
 
--- Also copied from the source code of SvgParser repo
--- But adding a twist, which is the clickableAttribute function
 
-
-elementToClickableSvg : String -> Element -> Svg Msg
-elementToClickableSvg highlightId element =
+svgCustomiseHighlight : String -> Element -> List (Svg.Attribute Msg)
+svgCustomiseHighlight highlightId element =
     let
         base =
             List.map SvgParser.toAttribute element.attributes
@@ -401,7 +461,7 @@ elementToClickableSvg highlightId element =
             if List.length element.children == 0 then
                 let
                     idAttr =
-                        idAttributeValue element
+                        getIdAttributeValue element
 
                     colorAttributes =
                         if highlightId == idAttr then
@@ -417,22 +477,16 @@ elementToClickableSvg highlightId element =
 
             else
                 base
-
-        partial =
-            nodeToClickableSvg highlightId
     in
-    Svg.node element.name
-        finalAttributes
-        (List.map partial element.children)
+    finalAttributes
 
 
-isIdAttribute : SvgAttribute -> Bool
-isIdAttribute ( name, value ) =
-    name == "id"
-
-
-idAttributeValue : Element -> String
-idAttributeValue element =
+getIdAttributeValue : Element -> String
+getIdAttributeValue element =
+    let
+        isIdAttribute =
+            \( name, value ) -> name == "id"
+    in
     case List.Extra.find isIdAttribute element.attributes of
         Nothing ->
             let
@@ -443,6 +497,60 @@ idAttributeValue element =
 
         Just idAttr ->
             second idAttr
+
+
+renderSinglePart : Model -> Int -> WorkElement -> Html Msg
+renderSinglePart model index elem =
+    div
+        [ style "padding" "2px 0"
+        , style "display" "flex"
+        ]
+        [ span
+            [ style "flex" "0 0 1.5rem"
+            , value (String.fromInt index)
+            , on "mouseenter" (Decode.map HighlightPart targetValueIntParse)
+            , on "mouseleave" (Decode.map UnHighlightPart targetValueIntParse)
+            , if model.currentHighlightPartIndex == index then
+                style "background-color" "rgb(250, 250, 250)"
+
+              else
+                style "background-color" ""
+            ]
+            [ text (String.fromInt index ++ ".") ]
+        , span
+            [ style "flex" "0 0 auto"
+            , style "margin" "0 0.5rem"
+            , style "background-color" "rgb(210, 200, 200)"
+            ]
+            [ if String.length elem.svg > 0 then
+                stringToSvgHtml svgCustomiseNone elem.svg
+
+              else
+                text ""
+            ]
+        , span
+            [ style "flex" "1 0 4rem"
+            , style "margin" "0 0.5rem"
+            , if String.length elem.keyword > 0 then
+                style "background-color" "rgb(200, 210, 200)"
+
+              else
+                style "background-color" ""
+            ]
+            [ text elem.keyword ]
+        ]
+
+
+renderParts : Model -> Html Msg
+renderParts model =
+    let
+        partial =
+            renderSinglePart model
+    in
+    div
+        [ on "click" (Decode.map SelectPart targetValueIntParse)
+        ]
+        (List.indexedMap partial model.parts)
 
 
 renderSingleWorkElement : Model -> Int -> WorkElement -> Html Msg
@@ -481,13 +589,13 @@ renderSingleWorkElement model index elem =
             [ text elem.keyword ]
         , span
             [ style "flex" "10 1 auto"
-            , if String.length elem.notes > 0 then
+            , if String.length elem.note > 0 then
                 style "background-color" "rgb(200, 200, 210)"
 
               else
                 style "background-color" ""
             ]
-            [ text elem.notes ]
+            [ text elem.note ]
         ]
 
 
@@ -510,20 +618,33 @@ renderUserMessages model =
 
 renderSubmitBar : Model -> Html Msg
 renderSubmitBar model =
+    let
+        join =
+            \s1 s2 -> s1 ++ ", " ++ s2
+
+        txt =
+            List.foldl join "" model.currentParts
+    in
     div [ style "display" "flex" ]
         [ span
             [ style "flex" "1 0 auto" ]
             [ if String.length model.svg > 0 then
-                renderSvg model.svgSelectedId model.svg
+                let
+                    renderCentralKanji =
+                        stringToSvgHtml (svgCustomiseHighlight model.svgSelectedId)
+                in
+                renderCentralKanji model.svg
 
               else
                 text ""
             ]
         , span
-            [ style "flex" "10 0 70px" ]
+            [ style "flex" "10 0 70px"
+            , style "background-color" "rgb(250, 210, 210)"
+            ]
             [ input
                 [ placeholder "Keyword"
-                , value model.keyword
+                , value ("Parts: " ++ txt)
                 , onInput KeywordInput
                 , style "width" "100%"
                 , style "box-sizing" "border-box"
@@ -537,7 +658,7 @@ renderSubmitBar model =
             [ style "flex" "10 0 70px" ]
             [ input
                 [ placeholder "Notes"
-                , value model.notes
+                , value model.note
                 , onInput NotesInput
                 , style "width" "100%"
                 , style "box-sizing" "border-box"
@@ -557,9 +678,9 @@ render model =
         ]
         [ -- Keyword submit
           div
-            [ style "background-color" "rgb(250, 250, 250)"
-            , style "grid-column" "2 / 5"
-            , style "grid-row" "1 / 2"
+            [ style "background-color" "rgb(220, 250, 250)"
+            , style "grid-column" "2 / 3"
+            , style "grid-row" "2 / 3"
             , style "overflow" "auto"
             ]
             [ renderUserMessages model
@@ -575,5 +696,16 @@ render model =
             ]
             [ div [] [ text "Work Elements Progress" ]
             , renderWorkElements model
+            ]
+
+        -- Parts select
+        , div
+            [ style "background-color" "rgb(250, 210, 250)"
+            , style "grid-column" "3 / 4"
+            , style "grid-row" "2 / 4"
+            , style "overflow" "auto"
+            ]
+            [ div [] [ text "Parts" ]
+            , renderParts model
             ]
         ]
