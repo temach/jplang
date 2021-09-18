@@ -23,12 +23,6 @@ class KeyCandidate(TypedDict):
     freq: list[int]
 
 
-ListKeyCandidate = list[KeyCandidate]
-Thesaurus = dict[str, list[str]]
-
-INDEX_NOT_FOUND_MARKER = 99999
-
-
 @get("/")
 def index():
     return static_file("index.html", root="../frontend/")
@@ -40,21 +34,38 @@ def version():
     return json.dumps(data)
 
 
+@get("/api/parts")
+def work():
+    c = DB.cursor()
+    c.execute("SELECT * FROM parts;")
+    data_current = c.fetchall()
+
+    radicals = {}
+    for data in WORK.values():
+        if "radical" in data["note"]:
+            radicals[data["keyword"]] = (data["kanji"], data["keyword"], data["note"], data["svg"], [])
+
+    payload = [e for e in radicals.values()]
+    response.content_type = "application/json"
+    return json.dumps(payload, ensure_ascii=False)
+
+
+
 @get("/api/work")
 def work():
     c = DB.cursor()
     c.execute("SELECT * FROM parts;")
     data_current = c.fetchall()
 
-    data_template = {data["keyword"]: (data["keyword"], data["kanji"], data["svg"], []) for data in WORK.values()}
+    data_template = {data["keyword"]: (data["kanji"], data["keyword"], data["note"], data["svg"], []) for data in WORK.values()}
 
     for e in data_current:
         kanjikey = e[0]
         partkey = e[1]
-        data_template[kanjikey][3].append(partkey)
+        data_template[kanjikey][-1].append(partkey)
 
     payload = [e for e in data_template.values()]
-    response.content_type = "application/javascript"
+    response.content_type = "application/json"
     return json.dumps(payload, ensure_ascii=False)
 
 
