@@ -25,8 +25,11 @@ class KeyCandidate(TypedDict):
 
 @get("/")
 def index():
-    return static_file("index.html", root="../frontend/")
+    return static("index.html")
 
+@route("/static/<path:path>")
+def static(path):
+    return static_file(os.path.join("static", path), root="../frontend/")
 
 @get("/version")
 def version():
@@ -47,7 +50,7 @@ def work():
 
     payload = [e for e in radicals.values()]
     response.content_type = "application/json"
-    return json.dumps(payload, ensure_ascii=False)
+    return json.dumps(payload[:50], ensure_ascii=False)
 
 
 
@@ -66,7 +69,7 @@ def work():
 
     payload = [e for e in data_template.values()]
     response.content_type = "application/json"
-    return json.dumps(payload, ensure_ascii=False)
+    return json.dumps(payload[:100], ensure_ascii=False)
 
 
 @post("/api/submit")
