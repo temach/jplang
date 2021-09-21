@@ -5,16 +5,17 @@ import Css
 import Debug exposing (log)
 import Dict exposing (Dict)
 import Html exposing (Attribute, Html, button, div, input, li, ol, span, text)
-import Html.Attributes exposing (attribute, placeholder, style, value)
+import Html.Attributes exposing (attribute, height, placeholder, style, value, width)
 import Html.Events exposing (on, onClick, onInput)
 import Html.Events.Extra exposing (targetValueIntParse)
+import Html.Lazy exposing (lazy, lazy2, lazy3, lazy4, lazy5, lazy6, lazy7, lazy8)
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
 import List.Extra
 import Platform.Cmd as Cmd
 import Svg exposing (Svg)
-import Svg.Attributes exposing (fill, stroke)
+import Svg.Attributes exposing (stroke)
 import Svg.Events
 import SvgParser exposing (Element, SvgAttribute, SvgNode(..))
 import Tuple exposing (second)
@@ -140,7 +141,7 @@ type
     | PartsReady (Result Http.Error (List WorkElement))
     | KeywordCheckReady (Result Http.Error KeyCandidate)
       -- Svg debug stuff
-    | SvgClicked String
+    | SvgClick String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -272,7 +273,7 @@ update msg model =
                 Err _ ->
                     ( { model | userMessage = Dict.insert "KeywordCheckReady" "Error getting keyword frequency" model.userMessage }, Cmd.none )
 
-        SvgClicked idAttr ->
+        SvgClick idAttr ->
             ( { model | svgSelectedId = idAttr }, Cmd.none )
 
 
@@ -446,48 +447,99 @@ cleanupSvg customiser svgNode =
             Svg.text ""
 
 
-svgCustomiseNone : Element -> List (Svg.Attribute Msg)
-svgCustomiseNone element =
-    List.map SvgParser.toAttribute element.attributes
-
-
-svgCustomiseHighlight : String -> Element -> List (Svg.Attribute Msg)
-svgCustomiseHighlight highlightId element =
+svgCustomiseForPart : Element -> List (Svg.Attribute Msg)
+svgCustomiseForPart element =
     let
-        base =
-            List.map SvgParser.toAttribute element.attributes
-
         finalAttributes =
-            if List.length element.children == 0 then
+            if element.name == "svg" then
+                -- Change default with and height of SVG
                 let
-                    idAttr =
-                        getIdAttributeValue element
+                    isWidthHeight =
+                        \( name, value ) -> name == "width" || name == "height"
 
-                    colorAttributes =
-                        if highlightId == idAttr then
-                            [ stroke "#ff0000" ]
+                    noWidthHeight =
+                        List.Extra.filterNot isWidthHeight element.attributes
 
-                        else
-                            []
+                    base =
+                        List.map SvgParser.toAttribute noWidthHeight
 
-                    clickAttributes =
-                        [ Svg.Events.onMouseOver (SvgClicked idAttr) ]
+                    newWidthHeight =
+                        [ width 30, height 30 ]
                 in
-                base ++ colorAttributes ++ clickAttributes
+                base ++ newWidthHeight
+
+            else if element.name == "g" && String.length (getAttributeValue "style" element) > 0 then
+                -- Change defaut stroke-width of SVG
+                let
+                    isStyle =
+                        \( name, value ) -> name == "style"
+
+                    noStyle =
+                        List.Extra.filterNot isStyle element.attributes
+
+                    base =
+                        List.map SvgParser.toAttribute noStyle
+
+                    newStyle =
+                        -- Note! Svg.Attributes.class and Html.Attributes.class are incompatiable
+                        [ Svg.Attributes.class "svgpart" ]
+                in
+                base ++ newStyle
 
             else
+                let
+                    base =
+                        List.map SvgParser.toAttribute element.attributes
+                in
                 base
     in
     finalAttributes
 
 
-getIdAttributeValue : Element -> String
-getIdAttributeValue element =
+svgCustomiseHighlight : Element -> List (Svg.Attribute Msg)
+svgCustomiseHighlight element =
     let
-        isIdAttribute =
-            \( name, value ) -> name == "id"
+        finalAttributes =
+            if List.length element.children == 0 then
+                let
+                    isStyle =
+                        \( name, value ) -> name == "style"
+
+                    noStyle =
+                        List.Extra.filterNot isStyle element.attributes
+
+                    base =
+                        List.map SvgParser.toAttribute noStyle
+
+                    newStyle =
+                        -- Note! Svg.Attributes.class and Html.Attributes.class are incompatiable
+                        [ Svg.Attributes.class "svgCentralHighlight" ]
+
+                    idAttr =
+                        getAttributeValue "id" element
+
+                    clickAttributes =
+                        [ Html.Events.onClick (SvgClick idAttr) ]
+                in
+                base ++ newStyle ++ clickAttributes
+
+            else
+                let
+                    base =
+                        List.map SvgParser.toAttribute element.attributes
+                in
+                base
     in
-    case List.Extra.find isIdAttribute element.attributes of
+    finalAttributes
+
+
+getAttributeValue : String -> Element -> String
+getAttributeValue attributeName element =
+    let
+        searchAttribute =
+            \( name, value ) -> name == attributeName
+    in
+    case List.Extra.find searchAttribute element.attributes of
         Nothing ->
             let
                 _ =
@@ -522,11 +574,11 @@ renderSinglePart model index elem =
             , style "margin" "0 0.5rem"
             , style "background-color" "rgb(210, 200, 200)"
             ]
-            [ if String.length elem.svg > 0 then
-                stringToSvgHtml svgCustomiseNone elem.svg
-
-              else
-                text ""
+            [ let
+                partial =
+                    stringToSvgHtml svgCustomiseForPart
+              in
+              lazy partial elem.svg
             ]
         , span
             [ style "flex" "1 0 4rem"
@@ -631,7 +683,7 @@ renderSubmitBar model =
             [ if String.length model.svg > 0 then
                 let
                     renderCentralKanji =
-                        stringToSvgHtml (svgCustomiseHighlight model.svgSelectedId)
+                        stringToSvgHtml svgCustomiseHighlight
                 in
                 renderCentralKanji model.svg
 
@@ -642,14 +694,7 @@ renderSubmitBar model =
             [ style "flex" "10 0 70px"
             , style "background-color" "rgb(250, 210, 210)"
             ]
-            [ input
-                [ placeholder "Keyword"
-                , value ("Parts: " ++ txt)
-                , onInput KeywordInput
-                , style "width" "100%"
-                , style "box-sizing" "border-box"
-                ]
-                []
+            [ text <| "Parts: " ++ txt
             ]
         , span
             [ style "flex" "1 0 auto" ]

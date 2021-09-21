@@ -1,0 +1,19 @@
+.svgpart {
+    fill: none;
+    stroke: #000000;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.svgCentralHighlight {
+    fill: none;
+    stroke: #000000;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.svgCentralHighlight:hover {
+    stroke: #ff0000;
+}
