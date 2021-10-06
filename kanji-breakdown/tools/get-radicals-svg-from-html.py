@@ -17,7 +17,6 @@ with open(html_path, "r") as f:
     svgs = soup.find_all('svg')
     for svg in svgs:
         del svg.attrs["class"]
-        count += 1
         text = str(svg).strip().replace("\n", "")
         item = {
             "keyword": "radical{}".format(count),
@@ -27,6 +26,7 @@ with open(html_path, "r") as f:
             "svg": text,
         }
         radicals[item["keyword"]] = item
+        count += 1
 
 
 with open(json_path, "w") as outf:
