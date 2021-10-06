@@ -39,19 +39,15 @@ def version():
 
 @get("/api/parts")
 def work():
-    c = DB.cursor()
-    c.execute("SELECT * FROM parts;")
-    data_current = c.fetchall()
-
     radicals = {}
-    for data in WORK.values():
-        if "radical" in data["note"]:
-            radicals[data["keyword"]] = (data["kanji"], data["keyword"], data["note"], data["svg"], [])
+    for data in RADICALS.values():
+        svg = data["svg"]
+        svg = svg.replace("<svg ", '<svg class="svgpart" ')
+        radicals[data["keyword"]] = (data["kanji"], data["keyword"], data["note"], svg, [])
 
     payload = [e for e in radicals.values()]
     response.content_type = "application/json"
     return json.dumps(payload[:50], ensure_ascii=False)
-
 
 
 @get("/api/work")
@@ -68,6 +64,23 @@ def work():
         data_template[kanjikey][-1].append(partkey)
 
     payload = [e for e in data_template.values()]
+    response.content_type = "application/json"
+    return json.dumps(payload[:100], ensure_ascii=False)
+
+@post("/api/keywordcheck")
+def keywordcheck():
+    payload = request.json
+
+    similar_kanji = {}
+
+    for new_part in payload["parts"]:
+        kanjikeys = PARTS.get(new_part)
+        if kanjikeys:
+            for key in kanjikeys:
+                kanji_data = WORK[key]
+                similar_kanji[key] = kanji_data
+
+    payload = [e for e in similar_kanji.values()]
     response.content_type = "application/json"
     return json.dumps(payload[:100], ensure_ascii=False)
 
@@ -116,11 +129,23 @@ if __name__ == "__main__":
         db_init()
 
     WORK = {}
+    RADICALS = {}
+    PARTS = defaultdict(list)
 
     with open("../resources/kanji.json") as kanji:
         WORK = json.load(kanji)
 
-    pprint(list(WORK.items())[:20])
+    with open("../resources/radicals.json") as radicals:
+        RADICALS = json.load(radicals)
+
+    c = DB.cursor()
+    c.execute("SELECT * FROM parts;")
+    for pair in c:
+        kanjikey, partkey = pair
+        PARTS[partkey].append(kanjikey)
+
+    pprint(list(WORK.items())[:10])
+    pprint(list(RADICALS.items())[:10])
 
     port = 9000
     print("Running bottle server on port {}".format(port))
