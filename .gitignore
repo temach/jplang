@@ -7,7 +7,6 @@
 .env.test.local
 /httpRequests/
 .idea/
-index.html
 kanji-parts.db
 .mypy_cache
 /node_modules

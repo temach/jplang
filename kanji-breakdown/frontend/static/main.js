@@ -11142,8 +11142,6 @@ var $author$project$Main$getWorkElements = $elm$http$Http$get(
 	});
 var $author$project$Main$init = function (_v0) {
 	var model = {
-		currentHighlightPartIndex: -1,
-		currentHighlightWorkElementIndex: -1,
 		currentParts: _List_Nil,
 		currentWork: {kanji: '', keyword: '', note: '', parts: _List_Nil, svg: ''},
 		currentWorkIndex: -1,
@@ -11151,6 +11149,7 @@ var $author$project$Main$init = function (_v0) {
 		keyword: 'loading...',
 		note: '',
 		parts: _List_Nil,
+		similarKanji: _List_Nil,
 		svg: '',
 		svgSelectedId: '',
 		userMessage: $elm$core$Dict$empty,
@@ -11254,39 +11253,14 @@ var $author$project$Main$chooseWorkElement = F2(
 var $author$project$Main$KeywordCheckReady = function (a) {
 	return {$: 'KeywordCheckReady', a: a};
 };
-var $author$project$Main$KeyCandidate = F3(
-	function (word, metadata, freq) {
-		return {freq: freq, metadata: metadata, word: word};
-	});
-var $author$project$Main$keyCandidateDecoder = A4(
-	$elm$json$Json$Decode$map3,
-	$author$project$Main$KeyCandidate,
-	A2($elm$json$Json$Decode$field, 'word', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'metadata', $elm$json$Json$Decode$string),
-	A2(
-		$elm$json$Json$Decode$field,
-		'freq',
-		$elm$json$Json$Decode$list($elm$json$Json$Decode$int)));
-var $author$project$Main$getKeywordCheck = F2(
-	function (kanji, keyword) {
-		return $elm$http$Http$get(
-			{
-				expect: A2($elm$http$Http$expectJson, $author$project$Main$KeywordCheckReady, $author$project$Main$keyCandidateDecoder),
-				url: A2(
-					$elm$url$Url$Builder$absolute,
-					_List_fromArray(
-						['api', 'keywordcheck/' + (kanji + ('/' + keyword))]),
-					_List_Nil)
-			});
-	});
-var $author$project$Main$KeywordSubmitReady = function (a) {
-	return {$: 'KeywordSubmitReady', a: a};
-};
-var $elm$http$Http$expectString = function (toMsg) {
-	return A2(
-		$elm$http$Http$expectStringResponse,
-		toMsg,
-		$elm$http$Http$resolve($elm$core$Result$Ok));
+var $author$project$Main$getKeywordCheckEncoder = function (parts) {
+	return $elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'parts',
+				A2($elm$json$Json$Encode$list, $elm$json$Json$Encode$string, parts))
+			]));
 };
 var $elm$http$Http$jsonBody = function (value) {
 	return A2(
@@ -11297,6 +11271,28 @@ var $elm$http$Http$jsonBody = function (value) {
 var $elm$http$Http$post = function (r) {
 	return $elm$http$Http$request(
 		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
+};
+var $author$project$Main$getKeywordCheck = function (parts) {
+	return $elm$http$Http$post(
+		{
+			body: $elm$http$Http$jsonBody(
+				$author$project$Main$getKeywordCheckEncoder(parts)),
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$KeywordCheckReady, $author$project$Main$workElementsDecoder),
+			url: A2(
+				$elm$url$Url$Builder$absolute,
+				_List_fromArray(
+					['api', 'keywordcheck']),
+				_List_Nil)
+		});
+};
+var $author$project$Main$KeywordSubmitReady = function (a) {
+	return {$: 'KeywordSubmitReady', a: a};
+};
+var $elm$http$Http$expectString = function (toMsg) {
+	return A2(
+		$elm$http$Http$expectStringResponse,
+		toMsg,
+		$elm$http$Http$resolve($elm$core$Result$Ok));
 };
 var $author$project$Main$submitKeywordEncoder = function (model) {
 	return $elm$json$Json$Encode$object(
@@ -11400,53 +11396,18 @@ var $author$project$Main$update = F2(
 					var keywordPresentCommands = $elm$core$Platform$Cmd$batch(
 						_List_fromArray(
 							[
-								A2($author$project$Main$getKeywordCheck, newModel.kanji, newModel.keyword)
+								$author$project$Main$getKeywordCheck(newModel.currentParts)
 							]));
 					return ($elm$core$String$length(newModel.keyword) >= 2) ? _Utils_Tuple2(newModel, keywordPresentCommands) : _Utils_Tuple2(newModel, keywordAbsentCommands);
-				case 'HighlightWorkElement':
-					var index = msg.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{currentHighlightWorkElementIndex: index}),
-						$elm$core$Platform$Cmd$none);
-				case 'UnHighlightWorkElement':
-					var index = msg.a;
-					return _Utils_eq(model.currentHighlightWorkElementIndex, index) ? _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{currentHighlightWorkElementIndex: -1}),
-						$elm$core$Platform$Cmd$none) : _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				case 'SelectPart':
 					var index = msg.a;
-					return _Utils_Tuple2(
-						A2($author$project$Main$choosePart, index, model),
-						$elm$core$Platform$Cmd$none);
-				case 'HighlightPart':
-					var index = msg.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{currentHighlightPartIndex: index}),
-						$elm$core$Platform$Cmd$none);
-				case 'UnHighlightPart':
-					var index = msg.a;
-					return _Utils_eq(model.currentHighlightPartIndex, index) ? _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{currentHighlightPartIndex: -1}),
-						$elm$core$Platform$Cmd$none) : _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-				case 'KeywordInput':
-					var word = msg.a;
-					var newModel = _Utils_update(
-						model,
-						{keyword: word});
-					return ($elm$core$String$length(word) >= 2) ? _Utils_Tuple2(
+					var newModel = A2($author$project$Main$choosePart, index, model);
+					return ($elm$core$List$length(newModel.currentParts) >= 1) ? _Utils_Tuple2(
 						newModel,
 						$elm$core$Platform$Cmd$batch(
 							_List_fromArray(
 								[
-									A2($author$project$Main$getKeywordCheck, newModel.kanji, word)
+									$author$project$Main$getKeywordCheck(newModel.currentParts)
 								]))) : _Utils_Tuple2(
 						_Utils_update(
 							newModel,
@@ -11507,12 +11468,13 @@ var $author$project$Main$update = F2(
 				case 'KeywordCheckReady':
 					var result = msg.a;
 					if (result.$ === 'Ok') {
-						var elem = result.a;
+						var elements = result.a;
 						return _Utils_Tuple2(
 							_Utils_update(
 								model,
 								{
-									userMessage: A3($elm$core$Dict$insert, 'KeywordCheckReady', elem.metadata, model.userMessage)
+									similarKanji: elements,
+									userMessage: A2($elm$core$Dict$remove, 'KeywordCheckReady', model.userMessage)
 								}),
 							$elm$core$Platform$Cmd$none);
 					} else {
@@ -11520,7 +11482,7 @@ var $author$project$Main$update = F2(
 							_Utils_update(
 								model,
 								{
-									userMessage: A3($elm$core$Dict$insert, 'KeywordCheckReady', 'Error getting keyword frequency', model.userMessage)
+									userMessage: A3($elm$core$Dict$insert, 'KeywordCheckReady', 'Error getting similar kanji', model.userMessage)
 								}),
 							$elm$core$Platform$Cmd$none);
 					}
@@ -11541,12 +11503,149 @@ var $elm$browser$Browser$Document = F2(
 var $author$project$Main$SelectPart = function (a) {
 	return {$: 'SelectPart', a: a};
 };
-var $author$project$Main$HighlightPart = function (a) {
-	return {$: 'HighlightPart', a: a};
+var $elm$html$Html$Attributes$attribute = $elm$virtual_dom$VirtualDom$attribute;
+var $author$project$Main$rawsvg = $elm$virtual_dom$VirtualDom$node('raw-svg');
+var $author$project$Main$renderSinglePart = F2(
+	function (index, elem) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('row'),
+					$elm$html$Html$Events$onClick(
+					$author$project$Main$SelectPart(index))
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'flex', '0 0 1.5rem'),
+							$elm$html$Html$Attributes$value(
+							$elm$core$String$fromInt(index))
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							$elm$core$String$fromInt(index) + '.')
+						])),
+					A2(
+					$author$project$Main$rawsvg,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'flex', '0 0 auto'),
+							A2($elm$html$Html$Attributes$style, 'margin', '0 0.5rem'),
+							A2($elm$html$Html$Attributes$attribute, 'src', elem.svg)
+						]),
+					_List_Nil),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'flex', '1 0 4rem'),
+							A2($elm$html$Html$Attributes$style, 'margin', '0 0.5rem'),
+							($elm$core$String$length(elem.keyword) > 0) ? A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(200, 210, 200)') : A2($elm$html$Html$Attributes$style, 'background-color', '')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(elem.keyword)
+						]))
+				]));
+	});
+var $author$project$Main$renderParts = function (parts) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		A2($elm$core$List$indexedMap, $author$project$Main$renderSinglePart, parts));
 };
-var $author$project$Main$UnHighlightPart = function (a) {
-	return {$: 'UnHighlightPart', a: a};
+var $author$project$Main$KeywordSubmitClick = {$: 'KeywordSubmitClick'};
+var $author$project$Main$NotesInput = function (a) {
+	return {$: 'NotesInput', a: a};
 };
+var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var $elm$core$Tuple$pair = F2(
+	function (a, b) {
+		return _Utils_Tuple2(a, b);
+	});
+var $author$project$Main$presense = F2(
+	function (currentParts, pair) {
+		var index = pair.a;
+		var elem = pair.b;
+		var keyword = elem.keyword;
+		return A2($elm$core$List$member, keyword, currentParts);
+	});
+var $author$project$Main$renderSingleCurrentPart = function (pair) {
+	var index = pair.a;
+	var elem = pair.b;
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('row'),
+				$elm$html$Html$Events$onClick(
+				$author$project$Main$SelectPart(index))
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'flex', '0 0 1.5rem'),
+						$elm$html$Html$Attributes$value(
+						$elm$core$String$fromInt(index))
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text(
+						$elm$core$String$fromInt(index) + '.')
+					])),
+				A2(
+				$author$project$Main$rawsvg,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'flex', '0 0 auto'),
+						A2($elm$html$Html$Attributes$style, 'margin', '0 0.5rem'),
+						A2($elm$html$Html$Attributes$attribute, 'src', elem.svg)
+					]),
+				_List_Nil),
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'flex', '1 0 4rem'),
+						A2($elm$html$Html$Attributes$style, 'margin', '0 0.5rem'),
+						($elm$core$String$length(elem.keyword) > 0) ? A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(200, 210, 200)') : A2($elm$html$Html$Attributes$style, 'background-color', '')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text(elem.keyword)
+					]))
+			]));
+};
+var $author$project$Main$renderCurrentParts = F2(
+	function (parts, currentParts) {
+		var indexedParts = A2($elm$core$List$indexedMap, $elm$core$Tuple$pair, parts);
+		var filter = $author$project$Main$presense(currentParts);
+		var filteredParts = A2($elm$core$List$filter, filter, indexedParts);
+		var _v0 = A2($elm$core$Debug$log, 'ARTEM: filteredParts', filteredParts);
+		return A2(
+			$elm$html$Html$div,
+			_List_Nil,
+			A2($elm$core$List$map, $author$project$Main$renderSingleCurrentPart, filteredParts));
+	});
 var $elm$svg$Svg$node = $elm$virtual_dom$VirtualDom$nodeNS('http://www.w3.org/2000/svg');
 var $elm$svg$Svg$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$Main$cleanupSvg = F2(
@@ -11969,10 +12068,6 @@ var $andre_dietrich$parser_combinators$Combine$optional = F2(
 			p,
 			$andre_dietrich$parser_combinators$Combine$succeed(res));
 	});
-var $elm$core$Tuple$pair = F2(
-	function (a, b) {
-		return _Utils_Tuple2(a, b);
-	});
 var $Garados007$elm_svg_parser$SvgParser$attributeParser = A2(
 	$andre_dietrich$parser_combinators$Combine$andMap,
 	A2(
@@ -12199,18 +12294,10 @@ var $author$project$Main$stringToSvgHtml = F2(
 			return $elm$svg$Svg$text('Error svg: ' + e);
 		}
 	});
+var $author$project$Main$SvgClick = function (a) {
+	return {$: 'SvgClick', a: a};
+};
 var $elm$svg$Svg$Attributes$class = _VirtualDom_attribute('class');
-var $elm$core$List$filter = F2(
-	function (isGood, list) {
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (x, xs) {
-					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
-				}),
-			_List_Nil,
-			list);
-	});
 var $elm_community$list_extra$List$Extra$filterNot = F2(
 	function (pred, list) {
 		return A2(
@@ -12255,176 +12342,10 @@ var $author$project$Main$getAttributeValue = F2(
 			return idAttr.b;
 		}
 	});
-var $elm$html$Html$Attributes$height = function (n) {
-	return A2(
-		_VirtualDom_attribute,
-		'height',
-		$elm$core$String$fromInt(n));
-};
 var $Garados007$elm_svg_parser$SvgParser$toAttribute = function (_v0) {
 	var name = _v0.a;
 	var value = _v0.b;
 	return A2($elm$virtual_dom$VirtualDom$attribute, name, value);
-};
-var $elm$html$Html$Attributes$width = function (n) {
-	return A2(
-		_VirtualDom_attribute,
-		'width',
-		$elm$core$String$fromInt(n));
-};
-var $author$project$Main$svgCustomiseForPart = function (element) {
-	var finalAttributes = function () {
-		if (element.name === 'svg') {
-			var newWidthHeight = _List_fromArray(
-				[
-					$elm$html$Html$Attributes$width(30),
-					$elm$html$Html$Attributes$height(30)
-				]);
-			var isWidthHeight = function (_v0) {
-				var name = _v0.a;
-				var value = _v0.b;
-				return (name === 'width') || (name === 'height');
-			};
-			var noWidthHeight = A2($elm_community$list_extra$List$Extra$filterNot, isWidthHeight, element.attributes);
-			var base = A2($elm$core$List$map, $Garados007$elm_svg_parser$SvgParser$toAttribute, noWidthHeight);
-			return _Utils_ap(base, newWidthHeight);
-		} else {
-			if ((element.name === 'g') && ($elm$core$String$length(
-				A2($author$project$Main$getAttributeValue, 'style', element)) > 0)) {
-				var newStyle = _List_fromArray(
-					[
-						$elm$svg$Svg$Attributes$class('svgpart')
-					]);
-				var isStyle = function (_v1) {
-					var name = _v1.a;
-					var value = _v1.b;
-					return name === 'style';
-				};
-				var noStyle = A2($elm_community$list_extra$List$Extra$filterNot, isStyle, element.attributes);
-				var base = A2($elm$core$List$map, $Garados007$elm_svg_parser$SvgParser$toAttribute, noStyle);
-				return _Utils_ap(base, newStyle);
-			} else {
-				var base = A2($elm$core$List$map, $Garados007$elm_svg_parser$SvgParser$toAttribute, element.attributes);
-				return base;
-			}
-		}
-	}();
-	return finalAttributes;
-};
-var $elm$json$Json$Decode$andThen = _Json_andThen;
-var $elm$json$Json$Decode$fail = _Json_fail;
-var $elm_community$html_extra$Html$Events$Extra$customDecoder = F2(
-	function (d, f) {
-		var resultDecoder = function (x) {
-			if (x.$ === 'Ok') {
-				var a = x.a;
-				return $elm$json$Json$Decode$succeed(a);
-			} else {
-				var e = x.a;
-				return $elm$json$Json$Decode$fail(e);
-			}
-		};
-		return A2(
-			$elm$json$Json$Decode$andThen,
-			resultDecoder,
-			A2($elm$json$Json$Decode$map, f, d));
-	});
-var $elm$core$Result$fromMaybe = F2(
-	function (err, maybe) {
-		if (maybe.$ === 'Just') {
-			var v = maybe.a;
-			return $elm$core$Result$Ok(v);
-		} else {
-			return $elm$core$Result$Err(err);
-		}
-	});
-var $elm_community$html_extra$Html$Events$Extra$maybeStringToResult = $elm$core$Result$fromMaybe('could not convert string');
-var $elm_community$html_extra$Html$Events$Extra$targetValueIntParse = A2(
-	$elm_community$html_extra$Html$Events$Extra$customDecoder,
-	$elm$html$Html$Events$targetValue,
-	A2($elm$core$Basics$composeR, $elm$core$String$toInt, $elm_community$html_extra$Html$Events$Extra$maybeStringToResult));
-var $author$project$Main$renderSinglePart = F3(
-	function (model, index, elem) {
-		return A2(
-			$elm$html$Html$div,
-			_List_fromArray(
-				[
-					A2($elm$html$Html$Attributes$style, 'padding', '2px 0'),
-					A2($elm$html$Html$Attributes$style, 'display', 'flex')
-				]),
-			_List_fromArray(
-				[
-					A2(
-					$elm$html$Html$span,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'flex', '0 0 1.5rem'),
-							$elm$html$Html$Attributes$value(
-							$elm$core$String$fromInt(index)),
-							A2(
-							$elm$html$Html$Events$on,
-							'mouseenter',
-							A2($elm$json$Json$Decode$map, $author$project$Main$HighlightPart, $elm_community$html_extra$Html$Events$Extra$targetValueIntParse)),
-							A2(
-							$elm$html$Html$Events$on,
-							'mouseleave',
-							A2($elm$json$Json$Decode$map, $author$project$Main$UnHighlightPart, $elm_community$html_extra$Html$Events$Extra$targetValueIntParse)),
-							_Utils_eq(model.currentHighlightPartIndex, index) ? A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(250, 250, 250)') : A2($elm$html$Html$Attributes$style, 'background-color', '')
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text(
-							$elm$core$String$fromInt(index) + '.')
-						])),
-					A2(
-					$elm$html$Html$span,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'flex', '0 0 auto'),
-							A2($elm$html$Html$Attributes$style, 'margin', '0 0.5rem'),
-							A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(210, 200, 200)')
-						]),
-					_List_fromArray(
-						[
-							function () {
-							var partial = $author$project$Main$stringToSvgHtml($author$project$Main$svgCustomiseForPart);
-							return A2($elm$html$Html$Lazy$lazy, partial, elem.svg);
-						}()
-						])),
-					A2(
-					$elm$html$Html$span,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'flex', '1 0 4rem'),
-							A2($elm$html$Html$Attributes$style, 'margin', '0 0.5rem'),
-							($elm$core$String$length(elem.keyword) > 0) ? A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(200, 210, 200)') : A2($elm$html$Html$Attributes$style, 'background-color', '')
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text(elem.keyword)
-						]))
-				]));
-	});
-var $author$project$Main$renderParts = function (model) {
-	var partial = $author$project$Main$renderSinglePart(model);
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$Events$on,
-				'click',
-				A2($elm$json$Json$Decode$map, $author$project$Main$SelectPart, $elm_community$html_extra$Html$Events$Extra$targetValueIntParse))
-			]),
-		A2($elm$core$List$indexedMap, partial, model.parts));
-};
-var $author$project$Main$KeywordSubmitClick = {$: 'KeywordSubmitClick'};
-var $author$project$Main$NotesInput = function (a) {
-	return {$: 'NotesInput', a: a};
-};
-var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
-var $author$project$Main$SvgClick = function (a) {
-	return {$: 'SvgClick', a: a};
 };
 var $author$project$Main$svgCustomiseHighlight = function (element) {
 	var finalAttributes = function () {
@@ -12496,7 +12417,7 @@ var $author$project$Main$renderSubmitBar = function (model) {
 					]),
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Parts: ' + txt)
+						A2($author$project$Main$renderCurrentParts, model.parts, model.currentParts)
 					])),
 				A2(
 				$elm$html$Html$span,
@@ -12552,20 +12473,15 @@ var $author$project$Main$renderUserMessages = function (model) {
 					$elm$core$Dict$values(model.userMessage)))
 			]));
 };
-var $author$project$Main$HighlightWorkElement = function (a) {
-	return {$: 'HighlightWorkElement', a: a};
-};
-var $author$project$Main$UnHighlightWorkElement = function (a) {
-	return {$: 'UnHighlightWorkElement', a: a};
-};
-var $author$project$Main$renderSingleWorkElement = F3(
-	function (model, index, elem) {
+var $author$project$Main$renderSingleWorkElement = F2(
+	function (index, elem) {
 		return A2(
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					A2($elm$html$Html$Attributes$style, 'padding', '2px 0'),
-					A2($elm$html$Html$Attributes$style, 'display', 'flex')
+					$elm$html$Html$Attributes$class('row'),
+					$elm$html$Html$Events$onClick(
+					$author$project$Main$SelectWorkElement(index))
 				]),
 			_List_fromArray(
 				[
@@ -12575,16 +12491,7 @@ var $author$project$Main$renderSingleWorkElement = F3(
 						[
 							A2($elm$html$Html$Attributes$style, 'flex', '0 0 1.5rem'),
 							$elm$html$Html$Attributes$value(
-							$elm$core$String$fromInt(index)),
-							A2(
-							$elm$html$Html$Events$on,
-							'mouseenter',
-							A2($elm$json$Json$Decode$map, $author$project$Main$HighlightWorkElement, $elm_community$html_extra$Html$Events$Extra$targetValueIntParse)),
-							A2(
-							$elm$html$Html$Events$on,
-							'mouseleave',
-							A2($elm$json$Json$Decode$map, $author$project$Main$UnHighlightWorkElement, $elm_community$html_extra$Html$Events$Extra$targetValueIntParse)),
-							_Utils_eq(model.currentHighlightWorkElementIndex, index) ? A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(250, 250, 250)') : A2($elm$html$Html$Attributes$style, 'background-color', '')
+							$elm$core$String$fromInt(index))
 						]),
 					_List_fromArray(
 						[
@@ -12596,8 +12503,7 @@ var $author$project$Main$renderSingleWorkElement = F3(
 					_List_fromArray(
 						[
 							A2($elm$html$Html$Attributes$style, 'flex', '0 0 auto'),
-							A2($elm$html$Html$Attributes$style, 'margin', '0 0.5rem'),
-							A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(210, 200, 200)')
+							A2($elm$html$Html$Attributes$style, 'margin', '0 0.5rem')
 						]),
 					_List_fromArray(
 						[
@@ -12628,18 +12534,11 @@ var $author$project$Main$renderSingleWorkElement = F3(
 						]))
 				]));
 	});
-var $author$project$Main$renderWorkElements = function (model) {
-	var partial = $author$project$Main$renderSingleWorkElement(model);
+var $author$project$Main$renderWorkElements = function (workElements) {
 	return A2(
 		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$Events$on,
-				'click',
-				A2($elm$json$Json$Decode$map, $author$project$Main$SelectWorkElement, $elm_community$html_extra$Html$Events$Extra$targetValueIntParse))
-			]),
-		A2($elm$core$List$indexedMap, partial, model.workElements));
+		_List_Nil,
+		A2($elm$core$List$indexedMap, $author$project$Main$renderSingleWorkElement, workElements));
 };
 var $author$project$Main$render = function (model) {
 	return A2(
@@ -12648,7 +12547,7 @@ var $author$project$Main$render = function (model) {
 			[
 				A2($elm$html$Html$Attributes$style, 'display', 'grid'),
 				A2($elm$html$Html$Attributes$style, 'grid-template-columns', '1px 2fr 1fr 2fr 1px'),
-				A2($elm$html$Html$Attributes$style, 'grid-template-rows', '33vh 33vh 33vh')
+				A2($elm$html$Html$Attributes$style, 'grid-template-rows', '1px 33vh 33vh')
 			]),
 		_List_fromArray(
 			[
@@ -12684,7 +12583,7 @@ var $author$project$Main$render = function (model) {
 							[
 								$elm$html$Html$text('Work Elements Progress')
 							])),
-						$author$project$Main$renderWorkElements(model)
+						A2($elm$html$Html$Lazy$lazy, $author$project$Main$renderWorkElements, model.workElements)
 					])),
 				A2(
 				$elm$html$Html$div,
@@ -12704,7 +12603,7 @@ var $author$project$Main$render = function (model) {
 							[
 								$elm$html$Html$text('Parts')
 							])),
-						$author$project$Main$renderParts(model)
+						A2($elm$html$Html$Lazy$lazy, $author$project$Main$renderParts, model.parts)
 					]))
 			]));
 };
@@ -12720,4 +12619,4 @@ var $author$project$Main$view = function (model) {
 var $author$project$Main$main = $elm$browser$Browser$document(
 	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
-	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.KeyCandidate":{"args":[],"type":"{ word : String.String, metadata : String.String, freq : List.List Basics.Int }"},"Main.WorkElement":{"args":[],"type":"{ kanji : String.String, keyword : String.String, note : String.String, svg : String.String, parts : List.List String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"NextWorkElement":[],"SelectWorkElement":["Basics.Int"],"HighlightWorkElement":["Basics.Int"],"UnHighlightWorkElement":["Basics.Int"],"SelectPart":["Basics.Int"],"HighlightPart":["Basics.Int"],"UnHighlightPart":["Basics.Int"],"KeywordInput":["String.String"],"NotesInput":["String.String"],"KeywordSubmitClick":[],"KeywordSubmitReady":["Result.Result Http.Error String.String"],"WorkElementsReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"PartsReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"KeywordCheckReady":["Result.Result Http.Error Main.KeyCandidate"],"SvgClick":["String.String"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));
+	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.WorkElement":{"args":[],"type":"{ kanji : String.String, keyword : String.String, note : String.String, svg : String.String, parts : List.List String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"NextWorkElement":[],"SelectWorkElement":["Basics.Int"],"SelectPart":["Basics.Int"],"NotesInput":["String.String"],"KeywordSubmitClick":[],"KeywordSubmitReady":["Result.Result Http.Error String.String"],"WorkElementsReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"PartsReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"KeywordCheckReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"SvgClick":["String.String"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));

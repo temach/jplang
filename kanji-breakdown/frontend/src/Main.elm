@@ -4,8 +4,8 @@ import Browser exposing (Document)
 import Css
 import Debug exposing (log)
 import Dict exposing (Dict)
-import Html exposing (Attribute, Html, button, div, input, li, ol, span, text)
-import Html.Attributes exposing (attribute, height, placeholder, style, value, width)
+import Html exposing (Attribute, Html, button, div, input, li, node, ol, span, text)
+import Html.Attributes as HA exposing (attribute, height, placeholder, style, value, width)
 import Html.Events exposing (on, onClick, onInput)
 import Html.Events.Extra exposing (targetValueIntParse)
 import Html.Lazy exposing (lazy, lazy2, lazy3, lazy4, lazy5, lazy6, lazy7, lazy8)
@@ -15,15 +15,21 @@ import Json.Encode as Encode
 import List.Extra
 import Platform.Cmd as Cmd
 import Svg exposing (Svg)
-import Svg.Attributes exposing (stroke)
+import Svg.Attributes as SA exposing (stroke)
 import Svg.Events
 import SvgParser exposing (Element, SvgAttribute, SvgNode(..))
 import Tuple exposing (second)
 import Url.Builder exposing (absolute)
+import VirtualDom
 
 
 
 -- MAIN
+
+
+rawsvg : List (Attribute msg) -> List (Html msg) -> Html msg
+rawsvg =
+    VirtualDom.node "raw-svg"
 
 
 main =
@@ -65,6 +71,7 @@ type alias KeyCandidate =
 type alias Model =
     { currentWork : WorkElement
     , kanji : String
+    , similarKanji : List WorkElement
     , keyword : String
     , note : String
     , svg : String
@@ -73,8 +80,6 @@ type alias Model =
     , currentParts : List String
     , workElements : List WorkElement
     , currentWorkIndex : Int
-    , currentHighlightWorkElementIndex : Int
-    , currentHighlightPartIndex : Int
     , userMessage : Dict String String
     }
 
@@ -91,12 +96,11 @@ init _ =
             , svgSelectedId = ""
             , currentParts = []
             , parts = []
+            , similarKanji = []
             , workElements = dummy
 
             -- , workElements = []
             , currentWorkIndex = -1
-            , currentHighlightWorkElementIndex = -1
-            , currentHighlightPartIndex = -1
             , userMessage = Dict.empty
             }
 
@@ -125,21 +129,16 @@ type
     -- work elements
     = NextWorkElement
     | SelectWorkElement Int
-    | HighlightWorkElement Int
-    | UnHighlightWorkElement Int
       -- Parts
     | SelectPart Int
-    | HighlightPart Int
-    | UnHighlightPart Int
       -- inputs
-    | KeywordInput String
     | NotesInput String
     | KeywordSubmitClick
       -- Http responses
     | KeywordSubmitReady (Result Http.Error String)
     | WorkElementsReady (Result Http.Error (List WorkElement))
     | PartsReady (Result Http.Error (List WorkElement))
-    | KeywordCheckReady (Result Http.Error KeyCandidate)
+    | KeywordCheckReady (Result Http.Error (List WorkElement))
       -- Svg debug stuff
     | SvgClick String
 
@@ -194,7 +193,7 @@ update msg model =
 
                 keywordPresentCommands =
                     Cmd.batch
-                        [ getKeywordCheck newModel.kanji newModel.keyword ]
+                        [ getKeywordCheck newModel.currentParts ]
 
                 keywordAbsentCommands =
                     Cmd.batch
@@ -206,38 +205,13 @@ update msg model =
             else
                 ( newModel, keywordAbsentCommands )
 
-        HighlightWorkElement index ->
-            ( { model | currentHighlightWorkElementIndex = index }, Cmd.none )
-
-        UnHighlightWorkElement index ->
-            if model.currentHighlightWorkElementIndex == index then
-                ( { model | currentHighlightWorkElementIndex = -1 }, Cmd.none )
-
-            else
-                ( model, Cmd.none )
-
         SelectPart index ->
-            ( choosePart index model, Cmd.none )
-
-        HighlightPart index ->
-            ( { model | currentHighlightPartIndex = index }, Cmd.none )
-
-        UnHighlightPart index ->
-            if model.currentHighlightPartIndex == index then
-                ( { model | currentHighlightPartIndex = -1 }, Cmd.none )
-
-            else
-                ( model, Cmd.none )
-
-        KeywordInput word ->
             let
                 newModel =
-                    { model
-                        | keyword = word
-                    }
+                    choosePart index model
             in
-            if String.length word >= 2 then
-                ( newModel, Cmd.batch [ getKeywordCheck newModel.kanji word ] )
+            if List.length newModel.currentParts >= 1 then
+                ( newModel, Cmd.batch [ getKeywordCheck newModel.currentParts ] )
 
             else
                 ( { newModel | userMessage = Dict.empty }, Cmd.none )
@@ -267,11 +241,11 @@ update msg model =
 
         KeywordCheckReady result ->
             case result of
-                Ok elem ->
-                    ( { model | userMessage = Dict.insert "KeywordCheckReady" elem.metadata model.userMessage }, Cmd.none )
+                Ok elements ->
+                    ( { model | similarKanji = elements, userMessage = Dict.remove "KeywordCheckReady" model.userMessage }, Cmd.none )
 
                 Err _ ->
-                    ( { model | userMessage = Dict.insert "KeywordCheckReady" "Error getting keyword frequency" model.userMessage }, Cmd.none )
+                    ( { model | userMessage = Dict.insert "KeywordCheckReady" "Error getting similar kanji" model.userMessage }, Cmd.none )
 
         SvgClick idAttr ->
             ( { model | svgSelectedId = idAttr }, Cmd.none )
@@ -361,20 +335,13 @@ workElementsDecoder =
         )
 
 
-getKeywordCheck : String -> String -> Cmd Msg
-getKeywordCheck kanji keyword =
-    Http.get
-        { url = absolute [ "api", "keywordcheck/" ++ kanji ++ "/" ++ keyword ] []
-        , expect = Http.expectJson KeywordCheckReady keyCandidateDecoder
+getKeywordCheck : List String -> Cmd Msg
+getKeywordCheck parts =
+    Http.post
+        { url = absolute [ "api", "keywordcheck" ] []
+        , body = Http.jsonBody (getKeywordCheckEncoder parts)
+        , expect = Http.expectJson KeywordCheckReady workElementsDecoder
         }
-
-
-keyCandidateDecoder : Decode.Decoder KeyCandidate
-keyCandidateDecoder =
-    Decode.map3 KeyCandidate
-        (Decode.field "word" Decode.string)
-        (Decode.field "metadata" Decode.string)
-        (Decode.field "freq" (Decode.list Decode.int))
 
 
 submitKeyword : Model -> Cmd Msg
@@ -392,6 +359,13 @@ submitKeywordEncoder model =
         [ ( "kanji", Encode.string model.kanji )
         , ( "keyword", Encode.string model.keyword )
         , ( "note", Encode.string model.note )
+        ]
+
+
+getKeywordCheckEncoder : List String -> Encode.Value
+getKeywordCheckEncoder parts =
+    Encode.object
+        [ ( "parts", Encode.list Encode.string parts )
         ]
 
 
@@ -447,55 +421,6 @@ cleanupSvg customiser svgNode =
             Svg.text ""
 
 
-svgCustomiseForPart : Element -> List (Svg.Attribute Msg)
-svgCustomiseForPart element =
-    let
-        finalAttributes =
-            if element.name == "svg" then
-                -- Change default with and height of SVG
-                let
-                    isWidthHeight =
-                        \( name, value ) -> name == "width" || name == "height"
-
-                    noWidthHeight =
-                        List.Extra.filterNot isWidthHeight element.attributes
-
-                    base =
-                        List.map SvgParser.toAttribute noWidthHeight
-
-                    newWidthHeight =
-                        [ width 30, height 30 ]
-                in
-                base ++ newWidthHeight
-
-            else if element.name == "g" && String.length (getAttributeValue "style" element) > 0 then
-                -- Change defaut stroke-width of SVG
-                let
-                    isStyle =
-                        \( name, value ) -> name == "style"
-
-                    noStyle =
-                        List.Extra.filterNot isStyle element.attributes
-
-                    base =
-                        List.map SvgParser.toAttribute noStyle
-
-                    newStyle =
-                        -- Note! Svg.Attributes.class and Html.Attributes.class are incompatiable
-                        [ Svg.Attributes.class "svgpart" ]
-                in
-                base ++ newStyle
-
-            else
-                let
-                    base =
-                        List.map SvgParser.toAttribute element.attributes
-                in
-                base
-    in
-    finalAttributes
-
-
 svgCustomiseHighlight : Element -> List (Svg.Attribute Msg)
 svgCustomiseHighlight element =
     let
@@ -512,8 +437,8 @@ svgCustomiseHighlight element =
                         List.map SvgParser.toAttribute noStyle
 
                     newStyle =
-                        -- Note! Svg.Attributes.class and Html.Attributes.class are incompatiable
-                        [ Svg.Attributes.class "svgCentralHighlight" ]
+                        -- Note! SA.class and HA.class are incompatiable
+                        [ SA.class "svgCentralHighlight" ]
 
                     idAttr =
                         getAttributeValue "id" element
@@ -551,35 +476,23 @@ getAttributeValue attributeName element =
             second idAttr
 
 
-renderSinglePart : Model -> Int -> WorkElement -> Html Msg
-renderSinglePart model index elem =
+renderSinglePart : Int -> WorkElement -> Html Msg
+renderSinglePart index elem =
     div
-        [ style "padding" "2px 0"
-        , style "display" "flex"
+        [ HA.class "row"
+        , onClick <| SelectPart index
         ]
         [ span
             [ style "flex" "0 0 1.5rem"
             , value (String.fromInt index)
-            , on "mouseenter" (Decode.map HighlightPart targetValueIntParse)
-            , on "mouseleave" (Decode.map UnHighlightPart targetValueIntParse)
-            , if model.currentHighlightPartIndex == index then
-                style "background-color" "rgb(250, 250, 250)"
-
-              else
-                style "background-color" ""
             ]
             [ text (String.fromInt index ++ ".") ]
-        , span
+        , rawsvg
             [ style "flex" "0 0 auto"
             , style "margin" "0 0.5rem"
-            , style "background-color" "rgb(210, 200, 200)"
+            , attribute "src" elem.svg
             ]
-            [ let
-                partial =
-                    stringToSvgHtml svgCustomiseForPart
-              in
-              lazy partial elem.svg
-            ]
+            []
         , span
             [ style "flex" "1 0 4rem"
             , style "margin" "0 0.5rem"
@@ -593,40 +506,27 @@ renderSinglePart model index elem =
         ]
 
 
-renderParts : Model -> Html Msg
-renderParts model =
-    let
-        partial =
-            renderSinglePart model
-    in
+renderParts : List WorkElement -> Html Msg
+renderParts parts =
     div
-        [ on "click" (Decode.map SelectPart targetValueIntParse)
-        ]
-        (List.indexedMap partial model.parts)
+        []
+        (List.indexedMap renderSinglePart parts)
 
 
-renderSingleWorkElement : Model -> Int -> WorkElement -> Html Msg
-renderSingleWorkElement model index elem =
+renderSingleWorkElement : Int -> WorkElement -> Html Msg
+renderSingleWorkElement index elem =
     div
-        [ style "padding" "2px 0"
-        , style "display" "flex"
+        [ HA.class "row"
+        , onClick <| SelectWorkElement index
         ]
         [ span
             [ style "flex" "0 0 1.5rem"
             , value (String.fromInt index)
-            , on "mouseenter" (Decode.map HighlightWorkElement targetValueIntParse)
-            , on "mouseleave" (Decode.map UnHighlightWorkElement targetValueIntParse)
-            , if model.currentHighlightWorkElementIndex == index then
-                style "background-color" "rgb(250, 250, 250)"
-
-              else
-                style "background-color" ""
             ]
             [ text (String.fromInt index ++ ".") ]
         , span
             [ style "flex" "0 0 auto"
             , style "margin" "0 0.5rem"
-            , style "background-color" "rgb(210, 200, 200)"
             ]
             [ text elem.kanji ]
         , span
@@ -651,21 +551,103 @@ renderSingleWorkElement model index elem =
         ]
 
 
-renderWorkElements : Model -> Html Msg
-renderWorkElements model =
-    let
-        partial =
-            renderSingleWorkElement model
-    in
+renderWorkElements : List WorkElement -> Html Msg
+renderWorkElements workElements =
     div
-        [ on "click" (Decode.map SelectWorkElement targetValueIntParse)
-        ]
-        (List.indexedMap partial model.workElements)
+        []
+        (List.indexedMap renderSingleWorkElement workElements)
 
 
 renderUserMessages : Model -> Html Msg
 renderUserMessages model =
     div [] [ text (String.join "!" (Dict.values model.userMessage)) ]
+
+
+
+--getElementByKey : List WorkElement -> String -> WorkElement
+--getElementByKey elements keyword =
+--    List.Extra.find (\elem -> elem.keyword == keyword) elements
+--
+--
+--getFullCurrentParts : List WorkElement -> List String -> List WorkElement
+--getFullCurrentParts elements keywords =
+--    let
+--        getPart =
+--            getElementByKey elements
+--    in
+--    List.map getPart keywords
+
+
+renderSingleCurrentPart : ( Int, WorkElement ) -> Html Msg
+renderSingleCurrentPart pair =
+    let
+        index =
+            Tuple.first pair
+
+        elem =
+            Tuple.second pair
+    in
+    div
+        [ HA.class "row"
+        , onClick <| SelectPart index
+        ]
+        [ span
+            [ style "flex" "0 0 1.5rem"
+            , value (String.fromInt index)
+            ]
+            [ text (String.fromInt index ++ ".") ]
+        , rawsvg
+            [ style "flex" "0 0 auto"
+            , style "margin" "0 0.5rem"
+            , attribute "src" elem.svg
+            ]
+            []
+        , span
+            [ style "flex" "1 0 4rem"
+            , style "margin" "0 0.5rem"
+            , if String.length elem.keyword > 0 then
+                style "background-color" "rgb(200, 210, 200)"
+
+              else
+                style "background-color" ""
+            ]
+            [ text elem.keyword ]
+        ]
+
+
+presense : List String -> ( Int, WorkElement ) -> Bool
+presense currentParts pair =
+    let
+        index =
+            Tuple.first pair
+
+        elem =
+            Tuple.second pair
+
+        keyword =
+            elem.keyword
+    in
+    List.member keyword currentParts
+
+
+renderCurrentParts : List WorkElement -> List String -> Html Msg
+renderCurrentParts parts currentParts =
+    let
+        indexedParts =
+            List.indexedMap Tuple.pair parts
+
+        filter =
+            presense currentParts
+
+        filteredParts =
+            List.filter filter indexedParts
+
+        _ =
+            Debug.log "ARTEM: filteredParts" filteredParts
+    in
+    div
+        []
+        (List.map renderSingleCurrentPart filteredParts)
 
 
 renderSubmitBar : Model -> Html Msg
@@ -694,7 +676,7 @@ renderSubmitBar model =
             [ style "flex" "10 0 70px"
             , style "background-color" "rgb(250, 210, 210)"
             ]
-            [ text <| "Parts: " ++ txt
+            [ renderCurrentParts model.parts model.currentParts
             ]
         , span
             [ style "flex" "1 0 auto" ]
@@ -719,7 +701,7 @@ render model =
     div
         [ style "display" "grid"
         , style "grid-template-columns" "1px 2fr 1fr 2fr 1px"
-        , style "grid-template-rows" "33vh 33vh 33vh"
+        , style "grid-template-rows" "1px 33vh 33vh"
         ]
         [ -- Keyword submit
           div
@@ -740,7 +722,7 @@ render model =
             , style "overflow" "auto"
             ]
             [ div [] [ text "Work Elements Progress" ]
-            , renderWorkElements model
+            , lazy renderWorkElements model.workElements
             ]
 
         -- Parts select
@@ -751,6 +733,6 @@ render model =
             , style "overflow" "auto"
             ]
             [ div [] [ text "Parts" ]
-            , renderParts model
+            , lazy renderParts model.parts
             ]
         ]
