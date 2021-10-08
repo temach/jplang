@@ -67,7 +67,7 @@ def work():
     response.content_type = "application/json"
     return json.dumps(payload[:100], ensure_ascii=False)
 
-@post("/api/keywordcheck")
+@post("/api/partscheck")
 def keywordcheck():
     payload = request.json
 

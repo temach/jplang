@@ -68,6 +68,10 @@ type alias KeyCandidate =
     }
 
 
+type alias Frequency =
+    List Int
+
+
 type alias Model =
     { currentWork : WorkElement
     , kanji : String
@@ -81,6 +85,8 @@ type alias Model =
     , workElements : List WorkElement
     , currentWorkIndex : Int
     , userMessage : Dict String String
+    , freq : List Int
+    , history : List String
     }
 
 
@@ -96,12 +102,14 @@ init _ =
             , svgSelectedId = ""
             , currentParts = []
             , parts = []
+            , freq = []
             , similarKanji = []
             , workElements = dummy
 
             -- , workElements = []
             , currentWorkIndex = -1
             , userMessage = Dict.empty
+            , history = []
             }
 
         commands =
@@ -132,13 +140,15 @@ type
       -- Parts
     | SelectPart Int
       -- inputs
+    | KeywordInput String
     | NotesInput String
     | KeywordSubmitClick
       -- Http responses
+    | KeywordCheckReady (Result Http.Error KeyCandidate)
     | KeywordSubmitReady (Result Http.Error String)
     | WorkElementsReady (Result Http.Error (List WorkElement))
     | PartsReady (Result Http.Error (List WorkElement))
-    | KeywordCheckReady (Result Http.Error (List WorkElement))
+    | PartsCheckReady (Result Http.Error (List WorkElement))
       -- Svg debug stuff
     | SvgClick String
 
@@ -193,7 +203,7 @@ update msg model =
 
                 keywordPresentCommands =
                     Cmd.batch
-                        [ getKeywordCheck newModel.currentParts ]
+                        [ getPartsCheck newModel.currentParts, getKeywordCheck newModel.kanji newModel.keyword ]
 
                 keywordAbsentCommands =
                     Cmd.batch
@@ -211,7 +221,7 @@ update msg model =
                     choosePart index model
             in
             if List.length newModel.currentParts >= 1 then
-                ( newModel, Cmd.batch [ getKeywordCheck newModel.currentParts ] )
+                ( newModel, Cmd.batch [ getPartsCheck newModel.currentParts ] )
 
             else
                 ( { newModel | userMessage = Dict.empty }, Cmd.none )
@@ -239,16 +249,63 @@ update msg model =
                 Err _ ->
                     ( { model | userMessage = Dict.insert "PartsReady" "Error getting parts" model.userMessage }, Cmd.none )
 
-        KeywordCheckReady result ->
+        PartsCheckReady result ->
             case result of
                 Ok elements ->
-                    ( { model | similarKanji = elements, userMessage = Dict.remove "KeywordCheckReady" model.userMessage }, Cmd.none )
+                    ( { model | similarKanji = elements, userMessage = Dict.remove "PartsCheckReady" model.userMessage }, Cmd.none )
 
                 Err _ ->
-                    ( { model | userMessage = Dict.insert "KeywordCheckReady" "Error getting similar kanji" model.userMessage }, Cmd.none )
+                    ( { model | userMessage = Dict.insert "PartsCheckReady" "Error getting similar kanji" model.userMessage }, Cmd.none )
 
         SvgClick idAttr ->
             ( { model | svgSelectedId = idAttr }, Cmd.none )
+
+        KeywordInput word ->
+            let
+                newCandidateHistory =
+                    model.history ++ [ model.keyword ]
+
+                newModel =
+                    { model
+                        | keyword = word
+                        , history = historyFilter newCandidateHistory
+                    }
+            in
+            if String.length word >= 2 then
+                ( newModel, Cmd.batch [ getKeywordCheck newModel.kanji word ] )
+
+            else
+                ( { newModel | freq = [], userMessage = Dict.empty }, Cmd.none )
+
+        KeywordCheckReady result ->
+            case result of
+                Ok elem ->
+                    ( { model | freq = elem.freq, userMessage = Dict.insert "KeywordCheckReady" elem.metadata model.userMessage }, Cmd.none )
+
+                Err _ ->
+                    ( { model | freq = [], userMessage = Dict.insert "KeywordCheckReady" "Error getting keyword frequency" model.userMessage }, Cmd.none )
+
+
+historyFilter : List String -> List String
+historyFilter list =
+    uniq (List.filter (\x -> String.length x >= 2) list)
+
+
+uniq : List a -> List a
+uniq list =
+    case list of
+        [] ->
+            []
+
+        [ a ] ->
+            [ a ]
+
+        a :: b :: more ->
+            if a == b then
+                uniq (a :: more)
+
+            else
+                a :: uniq (b :: more)
 
 
 chooseWorkElement : Int -> Model -> Model
@@ -335,13 +392,54 @@ workElementsDecoder =
         )
 
 
-getKeywordCheck : List String -> Cmd Msg
-getKeywordCheck parts =
+getPartsCheck : List String -> Cmd Msg
+getPartsCheck parts =
     Http.post
-        { url = absolute [ "api", "keywordcheck" ] []
-        , body = Http.jsonBody (getKeywordCheckEncoder parts)
-        , expect = Http.expectJson KeywordCheckReady workElementsDecoder
+        { url = absolute [ "api", "partscheck" ] []
+        , body = Http.jsonBody (getPartsCheckEncoder parts)
+        , expect = Http.expectJson PartsCheckReady workElementsDecoder
         }
+
+
+getPartsCheckEncoder : List String -> Encode.Value
+getPartsCheckEncoder parts =
+    Encode.object
+        [ ( "parts", Encode.list Encode.string parts )
+        ]
+
+
+submitParts : Model -> Cmd Msg
+submitParts model =
+    Http.post
+        { url = absolute [ "api", "submit" ] []
+        , body = Http.jsonBody (submitKeywordEncoder model)
+        , expect = Http.expectString KeywordSubmitReady
+        }
+
+
+submitPartsEncoder : Model -> Encode.Value
+submitPartsEncoder model =
+    Encode.object
+        [ ( "kanji", Encode.string model.kanji )
+        , ( "keyword", Encode.string model.keyword )
+        , ( "note", Encode.string model.note )
+        ]
+
+
+getKeywordCheck : String -> String -> Cmd Msg
+getKeywordCheck kanji keyword =
+    Http.get
+        { url = absolute [ "api", "keywordcheck/" ++ kanji ++ "/" ++ keyword ] []
+        , expect = Http.expectJson KeywordCheckReady keyCandidateDecoder
+        }
+
+
+keyCandidateDecoder : Decode.Decoder KeyCandidate
+keyCandidateDecoder =
+    Decode.map3 KeyCandidate
+        (Decode.field "word" Decode.string)
+        (Decode.field "metadata" Decode.string)
+        (Decode.field "freq" (Decode.list Decode.int))
 
 
 submitKeyword : Model -> Cmd Msg
@@ -358,14 +456,7 @@ submitKeywordEncoder model =
     Encode.object
         [ ( "kanji", Encode.string model.kanji )
         , ( "keyword", Encode.string model.keyword )
-        , ( "note", Encode.string model.note )
-        ]
-
-
-getKeywordCheckEncoder : List String -> Encode.Value
-getKeywordCheckEncoder parts =
-    Encode.object
-        [ ( "parts", Encode.list Encode.string parts )
+        , ( "notes", Encode.string model.note )
         ]
 
 
@@ -558,24 +649,83 @@ renderWorkElements workElements =
         (List.indexedMap renderSingleWorkElement workElements)
 
 
+keywordFrequencyRender : Model -> String
+keywordFrequencyRender model =
+    let
+        maybeCorpus =
+            List.head model.freq
+
+        maybeSubs =
+            List.head (List.drop 1 model.freq)
+    in
+    case ( maybeCorpus, maybeSubs ) of
+        ( Just c, Just s ) ->
+            "Corpus: " ++ String.fromInt c ++ " Subs: " ++ String.fromInt s
+
+        _ ->
+            "Frequency unknown"
+
+
+frequencyRender : List Int -> String
+frequencyRender freq =
+    let
+        maybeCorpus =
+            List.head freq
+
+        maybeSubs =
+            List.head (List.drop 1 freq)
+    in
+    case ( maybeCorpus, maybeSubs ) of
+        ( Just c, Just s ) ->
+            " " ++ String.fromInt c ++ " " ++ String.fromInt s
+
+        _ ->
+            "Frequency unknown"
+
+
+renderKeywordSubmitBar : Model -> Html Msg
+renderKeywordSubmitBar model =
+    div [ style "display" "flex" ]
+        [ span
+            [ style "flex" "1 0 auto" ]
+            [ text model.kanji ]
+        , span
+            [ style "flex" "10 0 70px" ]
+            [ input
+                [ placeholder "Keyword"
+                , value model.keyword
+                , onInput KeywordInput
+                , style "width" "100%"
+                , style "box-sizing" "border-box"
+                ]
+                []
+            ]
+        , span
+            [ style "flex" "1 0 auto" ]
+            [ text ("Corpus: " ++ (String.fromInt <| Maybe.withDefault 0 <| get 0 model.freq)) ]
+        , span
+            [ style "flex" "1 0 auto" ]
+            [ text ("Subs: " ++ (String.fromInt <| Maybe.withDefault 0 <| get 1 model.freq)) ]
+        , span
+            [ style "flex" "1 0 auto" ]
+            [ button [ onClick KeywordSubmitClick ] [ text "Submit" ] ]
+        , span
+            [ style "flex" "10 0 70px" ]
+            [ input
+                [ placeholder "Notes"
+                , value model.note
+                , onInput NotesInput
+                , style "width" "100%"
+                , style "box-sizing" "border-box"
+                ]
+                []
+            ]
+        ]
+
+
 renderUserMessages : Model -> Html Msg
 renderUserMessages model =
     div [] [ text (String.join "!" (Dict.values model.userMessage)) ]
-
-
-
---getElementByKey : List WorkElement -> String -> WorkElement
---getElementByKey elements keyword =
---    List.Extra.find (\elem -> elem.keyword == keyword) elements
---
---
---getFullCurrentParts : List WorkElement -> List String -> List WorkElement
---getFullCurrentParts elements keywords =
---    let
---        getPart =
---            getElementByKey elements
---    in
---    List.map getPart keywords
 
 
 renderSingleCurrentPart : ( Int, WorkElement ) -> Html Msg
@@ -703,7 +853,7 @@ render model =
         , style "grid-template-columns" "1px 2fr 1fr 2fr 1px"
         , style "grid-template-rows" "1px 33vh 33vh"
         ]
-        [ -- Keyword submit
+        [ -- Parts submit
           div
             [ style "background-color" "rgb(220, 250, 250)"
             , style "grid-column" "2 / 3"
@@ -712,6 +862,17 @@ render model =
             ]
             [ renderUserMessages model
             , renderSubmitBar model
+            ]
+
+        -- Keyword submit
+        , div
+            [ style "background-color" "rgb(220, 250, 250)"
+            , style "grid-column" "2 / 3"
+            , style "grid-row" "3 / 4"
+            , style "overflow" "auto"
+            ]
+            [ div [] [ text "Keyword" ]
+            , renderKeywordSubmitBar model
             ]
 
         -- WorkElement select
