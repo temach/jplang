@@ -16,6 +16,12 @@ import re
 from itertools import dropwhile
 from bottle import response
 
+import zmq
+
+# globals
+ZMQ_FREQ = None
+ZMQ_PARTS = None
+
 
 class KeyCandidate(TypedDict):
     word: str
@@ -38,12 +44,12 @@ def version():
 
 
 @get("/api/parts")
-def work():
+def parts():
     radicals = {}
     for data in RADICALS.values():
         svg = data["svg"]
         svg = svg.replace("<svg ", '<svg class="svgpart" ')
-        radicals[data["keyword"]] = (data["kanji"], data["keyword"], data["note"], svg, [])
+        radicals[data["keyword"]] = (data["kanji"], data["keyword"], data["note"], svg, False, [])
 
     payload = [e for e in radicals.values()]
     response.content_type = "application/json"
@@ -56,7 +62,7 @@ def work():
     c.execute("SELECT * FROM parts;")
     data_current = c.fetchall()
 
-    data_template = {data["keyword"]: (data["kanji"], data["keyword"], data["note"], data["svg"], []) for data in WORK.values()}
+    data_template = {data["keyword"]: (data["kanji"], data["keyword"], data["note"], data["svg"], False, []) for data in WORK.values()}
 
     for e in data_current:
         kanjikey = e[0]
@@ -87,24 +93,53 @@ def keywordcheck():
 
 @post("/api/submit")
 def submit():
-    # payload = request.json
+    payload = request.json
 
-    # try:
-    #     c = DB.cursor()
-    #     # https://www.sqlite.org/lang_replace.html
-    #     # https://www.sqlite.org/lang_UPSERT.html
-    #     c.execute("""INSERT OR ABORT INTO kanjikeywords VALUES (?, ?, ?)
-    #             ON CONFLICT(kanji) DO UPDATE SET keyword=excluded.keyword, note=excluded.note;
-    #             """,
-    #               (payload["kanji"], payload["keyword"], payload["note"]))
-    #     DB.commit()
-    # except Exception as e:
-    #     # return 2xx response because too lazy to unwrap errors in Elm
-    #     return HTTPResponse(status=202, body="{}".format(e))
+    try:
+        c = DB.cursor()
+        # https://www.sqlite.org/lang_replace.html
+        # https://www.sqlite.org/lang_UPSERT.html
+        c.execute("""INSERT OR ABORT INTO kanjikeywords VALUES (?, ?, ?)
+                ON CONFLICT(kanji) DO UPDATE SET keyword=excluded.keyword, note=excluded.note;
+                """,
+                  (payload["kanji"], payload["keyword"], payload["note"]))
+        DB.commit()
+    except Exception as e:
+        # return 2xx response because too lazy to unwrap errors in Elm
+        return HTTPResponse(status=202, body="{}".format(e))
 
     # # return a fake body because too lazy to unwrap properly in Elm
     # return HTTPResponse(status=200, body="")
     pass
+
+
+
+@get("/api/keywordcheck/<kanji>/<keyword>")
+def keyword_frequency(kanji, keyword):
+    global ZMQ_CONTEXT
+    global ZMQ_FREQ
+
+    if not ZMQ_FREQ:
+        #  Socket to talk to server
+        ZMQ_FREQ = ZMQ_CONTEXT.socket(zmq.REQ)
+        port = 9001
+        ZMQ_FREQ.connect("tcp://localhost:{}".format(port))
+
+    request = json.dumps({
+        "kanji": kanji,
+        "keyword": keyword,
+    }, ensure_ascii=False)
+
+    ZMQ_FREQ.send_string(request)
+
+    message = json.loads(ZMQ_FREQ.recv_string())
+
+    response = {
+        "word": "",
+        "freq": message["freq"],
+        "metadata": message["metadata"],
+    }
+    return json.dumps(response, ensure_ascii=False)
 
 
 def db_init():
@@ -131,6 +166,13 @@ if __name__ == "__main__":
     WORK = {}
     RADICALS = {}
     PARTS = defaultdict(list)
+    KEYWORDS: dict[str, tuple[str, str]] = {}
+    ONYOMI = {}
+
+    STEMMER = PorterStemmer()
+    LEMMATIZER = WordNetLemmatizer()
+
+    ZMQ_CONTEXT = zmq.Context()
 
     with open("../resources/kanji.json") as kanji:
         WORK = json.load(kanji)

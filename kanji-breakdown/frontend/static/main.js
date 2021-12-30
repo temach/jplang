@@ -10812,27 +10812,29 @@ var $elm$core$Basics$never = function (_v0) {
 	}
 };
 var $elm$browser$Browser$document = _Browser_document;
-var $author$project$Main$WorkElement = F5(
-	function (kanji, keyword, note, svg, parts) {
-		return {kanji: kanji, keyword: keyword, note: note, parts: parts, svg: svg};
+var $author$project$Main$WorkElement = F6(
+	function (kanji, keyword, note, svg, radical, parts) {
+		return {kanji: kanji, keyword: keyword, note: note, parts: parts, radical: radical, svg: svg};
 	});
 var $author$project$Main$dummy = _List_fromArray(
 	[
-		A5($author$project$Main$WorkElement, 'a', 'first', 'note1', '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"109\" height=\"109\" viewBox=\"0 0 109 109\"><g xmlns:kvg=\"http://kanjivg.tagaini.net\" id=\"kvg:StrokePaths_04eba\" style=\"fill:none;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;\"><g id=\"kvg:04eba\" kvg:element=\"&#20154;\" kvg:radical=\"general\"><path id=\"kvg:04eba-s1\" kvg:type=\"&#12754;\" d=\"M54.5,20c0.37,2.12,0.23,4.03-0.22,6.27C51.68,39.48,38.25,72.25,16.5,87.25\"/><path id=\"kvg:04eba-s2\" kvg:type=\"&#12751;\" d=\"M46,54.25c6.12,6,25.51,22.24,35.52,29.72c3.66,2.73,6.94,4.64,11.48,5.53\"/></g></g></svg>', _List_Nil),
-		A5(
+		A6($author$project$Main$WorkElement, 'a', 'first', 'note1', '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"109\" height=\"109\" viewBox=\"0 0 109 109\"><g xmlns:kvg=\"http://kanjivg.tagaini.net\" id=\"kvg:StrokePaths_04eba\" style=\"fill:none;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;\"><g id=\"kvg:04eba\" kvg:element=\"&#20154;\" kvg:radical=\"general\"><path id=\"kvg:04eba-s1\" kvg:type=\"&#12754;\" d=\"M54.5,20c0.37,2.12,0.23,4.03-0.22,6.27C51.68,39.48,38.25,72.25,16.5,87.25\"/><path id=\"kvg:04eba-s2\" kvg:type=\"&#12751;\" d=\"M46,54.25c6.12,6,25.51,22.24,35.52,29.72c3.66,2.73,6.94,4.64,11.48,5.53\"/></g></g></svg>', false, _List_Nil),
+		A6(
 		$author$project$Main$WorkElement,
 		'b',
 		'second',
 		'note2',
 		'<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"109\" height=\"109\" viewBox=\"0 0 109 109\"><g xmlns:kvg=\"http://kanjivg.tagaini.net\" id=\"kvg:StrokePaths_065e5\" style=\"fill:none;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;\"><g id=\"kvg:065e5\" kvg:element=\"&#26085;\" kvg:radical=\"general\"><path id=\"kvg:065e5-s1\" kvg:type=\"&#12753;\" d=\"M31.5,24.5c1.12,1.12,1.74,2.75,1.74,4.75c0,1.6-0.16,38.11-0.09,53.5c0.02,3.82,0.05,6.35,0.09,6.75\"/><path id=\"kvg:065e5-s2\" kvg:type=\"&#12757;a\" d=\"M33.48,26c0.8-0.05,37.67-3.01,40.77-3.25c3.19-0.25,5,1.75,5,4.25c0,4-0.22,40.84-0.23,56c0,3.48,0,5.72,0,6\"/><path id=\"kvg:065e5-s3\" kvg:type=\"&#12752;a\" d=\"M34.22,55.25c7.78-0.5,35.9-2.5,44.06-2.75\"/><path id=\"kvg:065e5-s4\" kvg:type=\"&#12752;a\" d=\"M34.23,86.5c10.52-0.75,34.15-2.12,43.81-2.25\"/></g></g></svg>',
+		false,
 		_List_fromArray(
 			['first'])),
-		A5(
+		A6(
 		$author$project$Main$WorkElement,
 		'c',
 		'third',
 		'',
 		'<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"109\" height=\"109\" viewBox=\"0 0 109 109\"><g xmlns:kvg=\"http://kanjivg.tagaini.net\" id=\"kvg:StrokePaths_04e00\" style=\"fill:none;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;\"><g id=\"kvg:04e00\" kvg:element=\"&#19968;\" kvg:radical=\"general\"><path id=\"kvg:04e00-s1\" kvg:type=\"&#12752;\" d=\"M11,54.25c3.19,0.62,6.25,0.75,9.73,0.5c20.64-1.5,50.39-5.12,68.58-5.24c3.6-0.02,5.77,0.24,7.57,0.49\"/></g></g></svg>',
+		false,
 		_List_fromArray(
 			['first', 'second']))
 	]);
@@ -11106,18 +11108,21 @@ var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
 		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
+var $elm$json$Json$Decode$bool = _Json_decodeBool;
 var $elm$json$Json$Decode$index = _Json_decodeIndex;
+var $elm$json$Json$Decode$map6 = _Json_map6;
 var $author$project$Main$workElementsDecoder = $elm$json$Json$Decode$list(
-	A6(
-		$elm$json$Json$Decode$map5,
+	A7(
+		$elm$json$Json$Decode$map6,
 		$author$project$Main$WorkElement,
 		A2($elm$json$Json$Decode$index, 0, $elm$json$Json$Decode$string),
 		A2($elm$json$Json$Decode$index, 1, $elm$json$Json$Decode$string),
 		A2($elm$json$Json$Decode$index, 2, $elm$json$Json$Decode$string),
 		A2($elm$json$Json$Decode$index, 3, $elm$json$Json$Decode$string),
+		A2($elm$json$Json$Decode$index, 4, $elm$json$Json$Decode$bool),
 		A2(
 			$elm$json$Json$Decode$index,
-			4,
+			5,
 			$elm$json$Json$Decode$list($elm$json$Json$Decode$string))));
 var $author$project$Main$getParts = $elm$http$Http$get(
 	{
@@ -11142,15 +11147,12 @@ var $author$project$Main$getWorkElements = $elm$http$Http$get(
 	});
 var $author$project$Main$init = function (_v0) {
 	var model = {
-		currentParts: _List_Nil,
-		currentWork: {kanji: '', keyword: '', note: '', parts: _List_Nil, svg: ''},
+		currentWork: {kanji: '', keyword: 'loading...', note: '', parts: _List_Nil, radical: false, svg: ''},
 		currentWorkIndex: -1,
-		kanji: '',
-		keyword: 'loading...',
-		note: '',
+		freq: _List_Nil,
+		history: _List_Nil,
 		parts: _List_Nil,
 		similarKanji: _List_Nil,
-		svg: '',
 		svgSelectedId: '',
 		userMessage: $elm$core$Dict$empty,
 		workElements: $author$project$Main$dummy
@@ -11169,6 +11171,7 @@ var $author$project$Main$NextWorkElement = {$: 'NextWorkElement'};
 var $author$project$Main$SelectWorkElement = function (a) {
 	return {$: 'SelectWorkElement', a: a};
 };
+var $author$project$Main$defaultWorkElement = A6($author$project$Main$WorkElement, 'X', 'Error', 'An error occurred', '', false, _List_Nil);
 var $elm$core$List$head = function (list) {
 	if (list.b) {
 		var x = list.a;
@@ -11229,31 +11232,63 @@ var $elm_community$list_extra$List$Extra$remove = F2(
 	});
 var $author$project$Main$choosePart = F2(
 	function (index, model) {
+		var work = model.currentWork;
 		var selected = A2(
 			$elm$core$Maybe$withDefault,
-			A5($author$project$Main$WorkElement, 'X', 'Error', 'An error occurred', '', _List_Nil),
+			$author$project$Main$defaultWorkElement,
 			A2($author$project$Main$get, index, model.parts));
-		var newParts = A2($elm$core$List$member, selected.keyword, model.currentParts) ? A2($elm_community$list_extra$List$Extra$remove, selected.keyword, model.currentParts) : A2($elm$core$List$cons, selected.keyword, model.currentParts);
+		var newParts = A2($elm$core$List$member, selected.keyword, model.currentWork.parts) ? A2($elm_community$list_extra$List$Extra$remove, selected.keyword, model.currentWork.parts) : A2($elm$core$List$cons, selected.keyword, model.currentWork.parts);
+		var newWork = _Utils_update(
+			work,
+			{parts: newParts});
 		var _v0 = A2($elm$core$Debug$log, 'Selecting part: ', selected);
 		return _Utils_update(
 			model,
-			{currentParts: newParts});
+			{currentWork: newWork});
 	});
 var $author$project$Main$chooseWorkElement = F2(
 	function (index, model) {
 		var selected = A2(
 			$elm$core$Maybe$withDefault,
-			A5($author$project$Main$WorkElement, 'X', 'Error', 'An error occurred', '', _List_Nil),
+			$author$project$Main$defaultWorkElement,
 			A2($author$project$Main$get, index, model.workElements));
 		var _v0 = A2($elm$core$Debug$log, 'Selecting element: ', selected);
 		return _Utils_update(
 			model,
-			{currentParts: selected.parts, currentWorkIndex: index, kanji: selected.kanji, keyword: selected.keyword, note: selected.note, svg: selected.svg});
+			{currentWork: selected, currentWorkIndex: index});
 	});
 var $author$project$Main$KeywordCheckReady = function (a) {
 	return {$: 'KeywordCheckReady', a: a};
 };
-var $author$project$Main$getKeywordCheckEncoder = function (parts) {
+var $author$project$Main$KeyCandidate = F3(
+	function (word, metadata, freq) {
+		return {freq: freq, metadata: metadata, word: word};
+	});
+var $author$project$Main$keyCandidateDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$KeyCandidate,
+	A2($elm$json$Json$Decode$field, 'word', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'metadata', $elm$json$Json$Decode$string),
+	A2(
+		$elm$json$Json$Decode$field,
+		'freq',
+		$elm$json$Json$Decode$list($elm$json$Json$Decode$int)));
+var $author$project$Main$getKeywordCheck = F2(
+	function (kanji, keyword) {
+		return $elm$http$Http$get(
+			{
+				expect: A2($elm$http$Http$expectJson, $author$project$Main$KeywordCheckReady, $author$project$Main$keyCandidateDecoder),
+				url: A2(
+					$elm$url$Url$Builder$absolute,
+					_List_fromArray(
+						['api', 'keywordcheck/' + (kanji + ('/' + keyword))]),
+					_List_Nil)
+			});
+	});
+var $author$project$Main$PartsCheckReady = function (a) {
+	return {$: 'PartsCheckReady', a: a};
+};
+var $author$project$Main$getPartsCheckEncoder = function (parts) {
 	return $elm$json$Json$Encode$object(
 		_List_fromArray(
 			[
@@ -11272,18 +11307,68 @@ var $elm$http$Http$post = function (r) {
 	return $elm$http$Http$request(
 		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
-var $author$project$Main$getKeywordCheck = function (parts) {
+var $author$project$Main$getPartsCheck = function (parts) {
 	return $elm$http$Http$post(
 		{
 			body: $elm$http$Http$jsonBody(
-				$author$project$Main$getKeywordCheckEncoder(parts)),
-			expect: A2($elm$http$Http$expectJson, $author$project$Main$KeywordCheckReady, $author$project$Main$workElementsDecoder),
+				$author$project$Main$getPartsCheckEncoder(parts)),
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$PartsCheckReady, $author$project$Main$workElementsDecoder),
 			url: A2(
 				$elm$url$Url$Builder$absolute,
 				_List_fromArray(
-					['api', 'keywordcheck']),
+					['api', 'partscheck']),
 				_List_Nil)
 		});
+};
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var $author$project$Main$uniq = function (list) {
+	uniq:
+	while (true) {
+		if (!list.b) {
+			return _List_Nil;
+		} else {
+			if (!list.b.b) {
+				var a = list.a;
+				return _List_fromArray(
+					[a]);
+			} else {
+				var a = list.a;
+				var _v1 = list.b;
+				var b = _v1.a;
+				var more = _v1.b;
+				if (_Utils_eq(a, b)) {
+					var $temp$list = A2($elm$core$List$cons, a, more);
+					list = $temp$list;
+					continue uniq;
+				} else {
+					return A2(
+						$elm$core$List$cons,
+						a,
+						$author$project$Main$uniq(
+							A2($elm$core$List$cons, b, more)));
+				}
+			}
+		}
+	}
+};
+var $author$project$Main$historyFilter = function (list) {
+	return $author$project$Main$uniq(
+		A2(
+			$elm$core$List$filter,
+			function (x) {
+				return $elm$core$String$length(x) >= 2;
+			},
+			list));
 };
 var $author$project$Main$KeywordSubmitReady = function (a) {
 	return {$: 'KeywordSubmitReady', a: a};
@@ -11300,13 +11385,13 @@ var $author$project$Main$submitKeywordEncoder = function (model) {
 			[
 				_Utils_Tuple2(
 				'kanji',
-				$elm$json$Json$Encode$string(model.kanji)),
+				$elm$json$Json$Encode$string(model.currentWork.kanji)),
 				_Utils_Tuple2(
 				'keyword',
-				$elm$json$Json$Encode$string(model.keyword)),
+				$elm$json$Json$Encode$string(model.currentWork.keyword)),
 				_Utils_Tuple2(
-				'note',
-				$elm$json$Json$Encode$string(model.note))
+				'notes',
+				$elm$json$Json$Encode$string(model.currentWork.note))
 			]));
 };
 var $author$project$Main$submitKeyword = function (model) {
@@ -11336,7 +11421,7 @@ var $author$project$Main$update = F2(
 		while (true) {
 			switch (msg.$) {
 				case 'KeywordSubmitClick':
-					return ($elm$core$String$length(model.keyword) > 0) ? _Utils_Tuple2(
+					return ($elm$core$String$length(model.currentWork.keyword) > 0) ? _Utils_Tuple2(
 						model,
 						$author$project$Main$submitKeyword(model)) : _Utils_Tuple2(
 						_Utils_update(
@@ -11349,7 +11434,7 @@ var $author$project$Main$update = F2(
 					var result = msg.a;
 					if (result.$ === 'Ok') {
 						var body = result.a;
-						var newElement = {kanji: model.kanji, keyword: model.keyword, note: model.note, parts: model.currentParts, svg: model.svg};
+						var newElement = model.currentWork;
 						var newWork = A3($author$project$Main$updateWorkElement, model.currentWorkIndex, newElement, model.workElements);
 						var newModel = _Utils_update(
 							model,
@@ -11396,18 +11481,19 @@ var $author$project$Main$update = F2(
 					var keywordPresentCommands = $elm$core$Platform$Cmd$batch(
 						_List_fromArray(
 							[
-								$author$project$Main$getKeywordCheck(newModel.currentParts)
+								$author$project$Main$getPartsCheck(newModel.currentWork.parts),
+								A2($author$project$Main$getKeywordCheck, newModel.currentWork.kanji, newModel.currentWork.keyword)
 							]));
-					return ($elm$core$String$length(newModel.keyword) >= 2) ? _Utils_Tuple2(newModel, keywordPresentCommands) : _Utils_Tuple2(newModel, keywordAbsentCommands);
+					return ($elm$core$String$length(newModel.currentWork.keyword) >= 2) ? _Utils_Tuple2(newModel, keywordPresentCommands) : _Utils_Tuple2(newModel, keywordAbsentCommands);
 				case 'SelectPart':
 					var index = msg.a;
 					var newModel = A2($author$project$Main$choosePart, index, model);
-					return ($elm$core$List$length(newModel.currentParts) >= 1) ? _Utils_Tuple2(
+					return ($elm$core$List$length(newModel.currentWork.parts) >= 1) ? _Utils_Tuple2(
 						newModel,
 						$elm$core$Platform$Cmd$batch(
 							_List_fromArray(
 								[
-									$author$project$Main$getKeywordCheck(newModel.currentParts)
+									$author$project$Main$getPartsCheck(newModel.currentWork.parts)
 								]))) : _Utils_Tuple2(
 						_Utils_update(
 							newModel,
@@ -11415,10 +11501,14 @@ var $author$project$Main$update = F2(
 						$elm$core$Platform$Cmd$none);
 				case 'NotesInput':
 					var word = msg.a;
+					var work = model.currentWork;
+					var newWork = _Utils_update(
+						work,
+						{note: word});
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{note: word}),
+							{currentWork: newWork}),
 						$elm$core$Platform$Cmd$none);
 				case 'WorkElementsReady':
 					var result = msg.a;
@@ -11465,7 +11555,7 @@ var $author$project$Main$update = F2(
 								}),
 							$elm$core$Platform$Cmd$none);
 					}
-				case 'KeywordCheckReady':
+				case 'PartsCheckReady':
 					var result = msg.a;
 					if (result.$ === 'Ok') {
 						var elements = result.a;
@@ -11474,7 +11564,7 @@ var $author$project$Main$update = F2(
 								model,
 								{
 									similarKanji: elements,
-									userMessage: A2($elm$core$Dict$remove, 'KeywordCheckReady', model.userMessage)
+									userMessage: A2($elm$core$Dict$remove, 'PartsCheckReady', model.userMessage)
 								}),
 							$elm$core$Platform$Cmd$none);
 					} else {
@@ -11482,17 +11572,66 @@ var $author$project$Main$update = F2(
 							_Utils_update(
 								model,
 								{
-									userMessage: A3($elm$core$Dict$insert, 'KeywordCheckReady', 'Error getting similar kanji', model.userMessage)
+									userMessage: A3($elm$core$Dict$insert, 'PartsCheckReady', 'Error getting similar kanji', model.userMessage)
 								}),
 							$elm$core$Platform$Cmd$none);
 					}
-				default:
+				case 'SvgClick':
 					var idAttr = msg.a;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
 							{svgSelectedId: idAttr}),
 						$elm$core$Platform$Cmd$none);
+				case 'KeywordInput':
+					var word = msg.a;
+					var work = model.currentWork;
+					var newWork = _Utils_update(
+						work,
+						{keyword: word});
+					var newCandidateHistory = _Utils_ap(
+						model.history,
+						_List_fromArray(
+							[model.currentWork.keyword]));
+					var newModel = _Utils_update(
+						model,
+						{
+							currentWork: newWork,
+							history: $author$project$Main$historyFilter(newCandidateHistory)
+						});
+					return ($elm$core$String$length(word) >= 2) ? _Utils_Tuple2(
+						newModel,
+						$elm$core$Platform$Cmd$batch(
+							_List_fromArray(
+								[
+									A2($author$project$Main$getKeywordCheck, newModel.currentWork.kanji, word)
+								]))) : _Utils_Tuple2(
+						_Utils_update(
+							newModel,
+							{freq: _List_Nil, userMessage: $elm$core$Dict$empty}),
+						$elm$core$Platform$Cmd$none);
+				default:
+					var result = msg.a;
+					if (result.$ === 'Ok') {
+						var elem = result.a;
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									freq: elem.freq,
+									userMessage: A3($elm$core$Dict$insert, 'KeywordCheckReady', elem.metadata, model.userMessage)
+								}),
+							$elm$core$Platform$Cmd$none);
+					} else {
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									freq: _List_Nil,
+									userMessage: A3($elm$core$Dict$insert, 'KeywordCheckReady', 'Error getting keyword frequency', model.userMessage)
+								}),
+							$elm$core$Platform$Cmd$none);
+					}
 			}
 		}
 	});
@@ -11500,6 +11639,124 @@ var $elm$browser$Browser$Document = F2(
 	function (title, body) {
 		return {body: body, title: title};
 	});
+var $author$project$Main$KeywordInput = function (a) {
+	return {$: 'KeywordInput', a: a};
+};
+var $author$project$Main$KeywordSubmitClick = {$: 'KeywordSubmitClick'};
+var $author$project$Main$NotesInput = function (a) {
+	return {$: 'NotesInput', a: a};
+};
+var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
+var $author$project$Main$renderKeywordSubmitBar = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'display', 'flex')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'flex', '1 0 auto')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text(model.currentWork.kanji)
+					])),
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'flex', '10 0 70px')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$input,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$placeholder('Keyword'),
+								$elm$html$Html$Attributes$value(model.currentWork.keyword),
+								$elm$html$Html$Events$onInput($author$project$Main$KeywordInput),
+								A2($elm$html$Html$Attributes$style, 'width', '100%'),
+								A2($elm$html$Html$Attributes$style, 'box-sizing', 'border-box')
+							]),
+						_List_Nil)
+					])),
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'flex', '1 0 auto')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text(
+						'Corpus: ' + $elm$core$String$fromInt(
+							A2(
+								$elm$core$Maybe$withDefault,
+								0,
+								A2($author$project$Main$get, 0, model.freq))))
+					])),
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'flex', '1 0 auto')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text(
+						'Subs: ' + $elm$core$String$fromInt(
+							A2(
+								$elm$core$Maybe$withDefault,
+								0,
+								A2($author$project$Main$get, 1, model.freq))))
+					])),
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'flex', '1 0 auto')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$KeywordSubmitClick)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Submit')
+							]))
+					])),
+				A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'flex', '10 0 70px')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$input,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$placeholder('Notes'),
+								$elm$html$Html$Attributes$value(model.currentWork.note),
+								$elm$html$Html$Events$onInput($author$project$Main$NotesInput),
+								A2($elm$html$Html$Attributes$style, 'width', '100%'),
+								A2($elm$html$Html$Attributes$style, 'box-sizing', 'border-box')
+							]),
+						_List_Nil)
+					]))
+			]));
+};
 var $author$project$Main$SelectPart = function (a) {
 	return {$: 'SelectPart', a: a};
 };
@@ -11559,22 +11816,6 @@ var $author$project$Main$renderParts = function (parts) {
 		_List_Nil,
 		A2($elm$core$List$indexedMap, $author$project$Main$renderSinglePart, parts));
 };
-var $author$project$Main$KeywordSubmitClick = {$: 'KeywordSubmitClick'};
-var $author$project$Main$NotesInput = function (a) {
-	return {$: 'NotesInput', a: a};
-};
-var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
-var $elm$core$List$filter = F2(
-	function (isGood, list) {
-		return A3(
-			$elm$core$List$foldr,
-			F2(
-				function (x, xs) {
-					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
-				}),
-			_List_Nil,
-			list);
-	});
 var $elm$core$Tuple$pair = F2(
 	function (a, b) {
 		return _Utils_Tuple2(a, b);
@@ -12382,7 +12623,7 @@ var $author$project$Main$renderSubmitBar = function (model) {
 		function (s1, s2) {
 			return s1 + (', ' + s2);
 		});
-	var txt = A3($elm$core$List$foldl, join, '', model.currentParts);
+	var txt = A3($elm$core$List$foldl, join, '', model.currentWork.parts);
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -12400,9 +12641,9 @@ var $author$project$Main$renderSubmitBar = function (model) {
 				_List_fromArray(
 					[
 						function () {
-						if ($elm$core$String$length(model.svg) > 0) {
+						if ($elm$core$String$length(model.currentWork.svg) > 0) {
 							var renderCentralKanji = $author$project$Main$stringToSvgHtml($author$project$Main$svgCustomiseHighlight);
-							return renderCentralKanji(model.svg);
+							return renderCentralKanji(model.currentWork.svg);
 						} else {
 							return $elm$html$Html$text('');
 						}
@@ -12417,7 +12658,7 @@ var $author$project$Main$renderSubmitBar = function (model) {
 					]),
 				_List_fromArray(
 					[
-						A2($author$project$Main$renderCurrentParts, model.parts, model.currentParts)
+						A2($author$project$Main$renderCurrentParts, model.parts, model.currentWork.parts)
 					])),
 				A2(
 				$elm$html$Html$span,
@@ -12451,7 +12692,7 @@ var $author$project$Main$renderSubmitBar = function (model) {
 						_List_fromArray(
 							[
 								$elm$html$Html$Attributes$placeholder('Notes'),
-								$elm$html$Html$Attributes$value(model.note),
+								$elm$html$Html$Attributes$value(model.currentWork.note),
 								$elm$html$Html$Events$onInput($author$project$Main$NotesInput),
 								A2($elm$html$Html$Attributes$style, 'width', '100%'),
 								A2($elm$html$Html$Attributes$style, 'box-sizing', 'border-box')
@@ -12569,6 +12810,26 @@ var $author$project$Main$render = function (model) {
 				$elm$html$Html$div,
 				_List_fromArray(
 					[
+						A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(220, 250, 250)'),
+						A2($elm$html$Html$Attributes$style, 'grid-column', '2 / 3'),
+						A2($elm$html$Html$Attributes$style, 'grid-row', '3 / 4'),
+						A2($elm$html$Html$Attributes$style, 'overflow', 'auto')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Keyword')
+							])),
+						$author$project$Main$renderKeywordSubmitBar(model)
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
 						A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(210, 210, 210)'),
 						A2($elm$html$Html$Attributes$style, 'grid-column', '4 / 5'),
 						A2($elm$html$Html$Attributes$style, 'grid-row', '2 / 4'),
@@ -12619,4 +12880,4 @@ var $author$project$Main$view = function (model) {
 var $author$project$Main$main = $elm$browser$Browser$document(
 	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
-	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.WorkElement":{"args":[],"type":"{ kanji : String.String, keyword : String.String, note : String.String, svg : String.String, parts : List.List String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"NextWorkElement":[],"SelectWorkElement":["Basics.Int"],"SelectPart":["Basics.Int"],"NotesInput":["String.String"],"KeywordSubmitClick":[],"KeywordSubmitReady":["Result.Result Http.Error String.String"],"WorkElementsReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"PartsReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"KeywordCheckReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"SvgClick":["String.String"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));
+	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.KeyCandidate":{"args":[],"type":"{ word : String.String, metadata : String.String, freq : List.List Basics.Int }"},"Main.WorkElement":{"args":[],"type":"{ kanji : String.String, keyword : String.String, note : String.String, svg : String.String, radical : Basics.Bool, parts : List.List String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"NextWorkElement":[],"SelectWorkElement":["Basics.Int"],"SelectPart":["Basics.Int"],"KeywordInput":["String.String"],"NotesInput":["String.String"],"KeywordSubmitClick":[],"KeywordCheckReady":["Result.Result Http.Error Main.KeyCandidate"],"KeywordSubmitReady":["Result.Result Http.Error String.String"],"WorkElementsReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"PartsReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"PartsCheckReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"SvgClick":["String.String"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));

@@ -1,13 +1,12 @@
 module Main exposing (..)
 
 import Browser exposing (Document)
-import Css
 import Debug exposing (log)
 import Dict exposing (Dict)
 import Html exposing (Attribute, Html, button, div, input, li, node, ol, span, text)
 import Html.Attributes as HA exposing (attribute, height, placeholder, style, value, width)
 import Html.Events exposing (on, onClick, onInput)
-import Html.Events.Extra exposing (targetValueIntParse)
+import Html.Events.Extra as HE
 import Html.Lazy exposing (lazy, lazy2, lazy3, lazy4, lazy5, lazy6, lazy7, lazy8)
 import Http
 import Json.Decode as Decode
@@ -15,7 +14,7 @@ import Json.Encode as Encode
 import List.Extra
 import Platform.Cmd as Cmd
 import Svg exposing (Svg)
-import Svg.Attributes as SA exposing (stroke)
+import Svg.Attributes as SA
 import Svg.Events
 import SvgParser exposing (Element, SvgAttribute, SvgNode(..))
 import Tuple exposing (second)
@@ -42,10 +41,15 @@ main =
 
 
 dummy =
-    [ WorkElement "a" "first" "note1" "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"109\" height=\"109\" viewBox=\"0 0 109 109\"><g xmlns:kvg=\"http://kanjivg.tagaini.net\" id=\"kvg:StrokePaths_04eba\" style=\"fill:none;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;\"><g id=\"kvg:04eba\" kvg:element=\"&#20154;\" kvg:radical=\"general\"><path id=\"kvg:04eba-s1\" kvg:type=\"&#12754;\" d=\"M54.5,20c0.37,2.12,0.23,4.03-0.22,6.27C51.68,39.48,38.25,72.25,16.5,87.25\"/><path id=\"kvg:04eba-s2\" kvg:type=\"&#12751;\" d=\"M46,54.25c6.12,6,25.51,22.24,35.52,29.72c3.66,2.73,6.94,4.64,11.48,5.53\"/></g></g></svg>" []
-    , WorkElement "b" "second" "note2" "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"109\" height=\"109\" viewBox=\"0 0 109 109\"><g xmlns:kvg=\"http://kanjivg.tagaini.net\" id=\"kvg:StrokePaths_065e5\" style=\"fill:none;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;\"><g id=\"kvg:065e5\" kvg:element=\"&#26085;\" kvg:radical=\"general\"><path id=\"kvg:065e5-s1\" kvg:type=\"&#12753;\" d=\"M31.5,24.5c1.12,1.12,1.74,2.75,1.74,4.75c0,1.6-0.16,38.11-0.09,53.5c0.02,3.82,0.05,6.35,0.09,6.75\"/><path id=\"kvg:065e5-s2\" kvg:type=\"&#12757;a\" d=\"M33.48,26c0.8-0.05,37.67-3.01,40.77-3.25c3.19-0.25,5,1.75,5,4.25c0,4-0.22,40.84-0.23,56c0,3.48,0,5.72,0,6\"/><path id=\"kvg:065e5-s3\" kvg:type=\"&#12752;a\" d=\"M34.22,55.25c7.78-0.5,35.9-2.5,44.06-2.75\"/><path id=\"kvg:065e5-s4\" kvg:type=\"&#12752;a\" d=\"M34.23,86.5c10.52-0.75,34.15-2.12,43.81-2.25\"/></g></g></svg>" [ "first" ]
-    , WorkElement "c" "third" "" "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"109\" height=\"109\" viewBox=\"0 0 109 109\"><g xmlns:kvg=\"http://kanjivg.tagaini.net\" id=\"kvg:StrokePaths_04e00\" style=\"fill:none;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;\"><g id=\"kvg:04e00\" kvg:element=\"&#19968;\" kvg:radical=\"general\"><path id=\"kvg:04e00-s1\" kvg:type=\"&#12752;\" d=\"M11,54.25c3.19,0.62,6.25,0.75,9.73,0.5c20.64-1.5,50.39-5.12,68.58-5.24c3.6-0.02,5.77,0.24,7.57,0.49\"/></g></g></svg>" [ "first", "second" ]
+    [ WorkElement "a" "first" "note1" "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"109\" height=\"109\" viewBox=\"0 0 109 109\"><g xmlns:kvg=\"http://kanjivg.tagaini.net\" id=\"kvg:StrokePaths_04eba\" style=\"fill:none;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;\"><g id=\"kvg:04eba\" kvg:element=\"&#20154;\" kvg:radical=\"general\"><path id=\"kvg:04eba-s1\" kvg:type=\"&#12754;\" d=\"M54.5,20c0.37,2.12,0.23,4.03-0.22,6.27C51.68,39.48,38.25,72.25,16.5,87.25\"/><path id=\"kvg:04eba-s2\" kvg:type=\"&#12751;\" d=\"M46,54.25c6.12,6,25.51,22.24,35.52,29.72c3.66,2.73,6.94,4.64,11.48,5.53\"/></g></g></svg>" False []
+    , WorkElement "b" "second" "note2" "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"109\" height=\"109\" viewBox=\"0 0 109 109\"><g xmlns:kvg=\"http://kanjivg.tagaini.net\" id=\"kvg:StrokePaths_065e5\" style=\"fill:none;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;\"><g id=\"kvg:065e5\" kvg:element=\"&#26085;\" kvg:radical=\"general\"><path id=\"kvg:065e5-s1\" kvg:type=\"&#12753;\" d=\"M31.5,24.5c1.12,1.12,1.74,2.75,1.74,4.75c0,1.6-0.16,38.11-0.09,53.5c0.02,3.82,0.05,6.35,0.09,6.75\"/><path id=\"kvg:065e5-s2\" kvg:type=\"&#12757;a\" d=\"M33.48,26c0.8-0.05,37.67-3.01,40.77-3.25c3.19-0.25,5,1.75,5,4.25c0,4-0.22,40.84-0.23,56c0,3.48,0,5.72,0,6\"/><path id=\"kvg:065e5-s3\" kvg:type=\"&#12752;a\" d=\"M34.22,55.25c7.78-0.5,35.9-2.5,44.06-2.75\"/><path id=\"kvg:065e5-s4\" kvg:type=\"&#12752;a\" d=\"M34.23,86.5c10.52-0.75,34.15-2.12,43.81-2.25\"/></g></g></svg>" False [ "first" ]
+    , WorkElement "c" "third" "" "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"109\" height=\"109\" viewBox=\"0 0 109 109\"><g xmlns:kvg=\"http://kanjivg.tagaini.net\" id=\"kvg:StrokePaths_04e00\" style=\"fill:none;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;\"><g id=\"kvg:04e00\" kvg:element=\"&#19968;\" kvg:radical=\"general\"><path id=\"kvg:04e00-s1\" kvg:type=\"&#12752;\" d=\"M11,54.25c3.19,0.62,6.25,0.75,9.73,0.5c20.64-1.5,50.39-5.12,68.58-5.24c3.6-0.02,5.77,0.24,7.57,0.49\"/></g></g></svg>" False [ "first", "second" ]
     ]
+
+
+defaultWorkElement =
+    -- When adding fields to WorkElement remember to add them here as well and to "dummy" array
+    WorkElement "X" "Error" "An error occurred" "" False []
 
 
 
@@ -57,6 +61,7 @@ type alias WorkElement =
     , keyword : String
     , note : String
     , svg : String
+    , radical : Bool
     , parts : List String
     }
 
@@ -74,19 +79,14 @@ type alias Frequency =
 
 type alias Model =
     { currentWork : WorkElement
-    , kanji : String
     , similarKanji : List WorkElement
-    , keyword : String
-    , note : String
-    , svg : String
     , svgSelectedId : String
-    , parts : List WorkElement
-    , currentParts : List String
     , workElements : List WorkElement
     , currentWorkIndex : Int
     , userMessage : Dict String String
     , freq : List Int
     , history : List String
+    , parts : List WorkElement
     }
 
 
@@ -94,19 +94,12 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     let
         model =
-            { currentWork = { kanji = "", keyword = "", note = "", svg = "", parts = [] }
-            , kanji = ""
-            , keyword = "loading..."
-            , note = ""
-            , svg = ""
+            { currentWork = { kanji = "", keyword = "loading...", note = "", svg = "", parts = [], radical = False }
             , svgSelectedId = ""
-            , currentParts = []
-            , parts = []
             , freq = []
             , similarKanji = []
             , workElements = dummy
-
-            -- , workElements = []
+            , parts = []
             , currentWorkIndex = -1
             , userMessage = Dict.empty
             , history = []
@@ -157,7 +150,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         KeywordSubmitClick ->
-            if String.length model.keyword > 0 then
+            if String.length model.currentWork.keyword > 0 then
                 ( model, submitKeyword model )
 
             else
@@ -168,12 +161,7 @@ update msg model =
                 Ok body ->
                     let
                         newElement =
-                            { kanji = model.kanji
-                            , keyword = model.keyword
-                            , note = model.note
-                            , svg = model.svg
-                            , parts = model.currentParts
-                            }
+                            model.currentWork
 
                         newWork =
                             updateWorkElement model.currentWorkIndex newElement model.workElements
@@ -203,13 +191,13 @@ update msg model =
 
                 keywordPresentCommands =
                     Cmd.batch
-                        [ getPartsCheck newModel.currentParts, getKeywordCheck newModel.kanji newModel.keyword ]
+                        [ getPartsCheck newModel.currentWork.parts, getKeywordCheck newModel.currentWork.kanji newModel.currentWork.keyword ]
 
                 keywordAbsentCommands =
                     Cmd.batch
                         []
             in
-            if String.length newModel.keyword >= 2 then
+            if String.length newModel.currentWork.keyword >= 2 then
                 ( newModel, keywordPresentCommands )
 
             else
@@ -220,14 +208,21 @@ update msg model =
                 newModel =
                     choosePart index model
             in
-            if List.length newModel.currentParts >= 1 then
-                ( newModel, Cmd.batch [ getPartsCheck newModel.currentParts ] )
+            if List.length newModel.currentWork.parts >= 1 then
+                ( newModel, Cmd.batch [ getPartsCheck newModel.currentWork.parts ] )
 
             else
                 ( { newModel | userMessage = Dict.empty }, Cmd.none )
 
         NotesInput word ->
-            ( { model | note = word }, Cmd.none )
+            let
+                work =
+                    model.currentWork
+
+                newWork =
+                    { work | note = word }
+            in
+            ( { model | currentWork = newWork }, Cmd.none )
 
         WorkElementsReady result ->
             case result of
@@ -263,16 +258,22 @@ update msg model =
         KeywordInput word ->
             let
                 newCandidateHistory =
-                    model.history ++ [ model.keyword ]
+                    model.history ++ [ model.currentWork.keyword ]
+
+                work =
+                    model.currentWork
+
+                newWork =
+                    { work | keyword = word }
 
                 newModel =
                     { model
-                        | keyword = word
+                        | currentWork = newWork
                         , history = historyFilter newCandidateHistory
                     }
             in
             if String.length word >= 2 then
-                ( newModel, Cmd.batch [ getKeywordCheck newModel.kanji word ] )
+                ( newModel, Cmd.batch [ getKeywordCheck newModel.currentWork.kanji word ] )
 
             else
                 ( { newModel | freq = [], userMessage = Dict.empty }, Cmd.none )
@@ -312,18 +313,14 @@ chooseWorkElement : Int -> Model -> Model
 chooseWorkElement index model =
     let
         selected =
-            Maybe.withDefault (WorkElement "X" "Error" "An error occurred" "" []) (get index model.workElements)
+            Maybe.withDefault defaultWorkElement (get index model.workElements)
 
         _ =
             Debug.log "Selecting element: " selected
     in
     { model
         | currentWorkIndex = index
-        , kanji = selected.kanji
-        , keyword = selected.keyword
-        , note = selected.note
-        , svg = selected.svg
-        , currentParts = selected.parts
+        , currentWork = selected
     }
 
 
@@ -331,19 +328,25 @@ choosePart : Int -> Model -> Model
 choosePart index model =
     let
         selected =
-            Maybe.withDefault (WorkElement "X" "Error" "An error occurred" "" []) (get index model.parts)
+            Maybe.withDefault defaultWorkElement (get index model.parts)
 
         _ =
             Debug.log "Selecting part: " selected
 
         newParts =
-            if List.member selected.keyword model.currentParts then
-                List.Extra.remove selected.keyword model.currentParts
+            if List.member selected.keyword model.currentWork.parts then
+                List.Extra.remove selected.keyword model.currentWork.parts
 
             else
-                selected.keyword :: model.currentParts
+                selected.keyword :: model.currentWork.parts
+
+        work =
+            model.currentWork
+
+        newWork =
+            { work | parts = newParts }
     in
-    { model | currentParts = newParts }
+    { model | currentWork = newWork }
 
 
 updateWorkElement : Int -> WorkElement -> List WorkElement -> List WorkElement
@@ -383,12 +386,13 @@ getParts =
 workElementsDecoder : Decode.Decoder (List WorkElement)
 workElementsDecoder =
     Decode.list
-        (Decode.map5 WorkElement
+        (Decode.map6 WorkElement
             (Decode.index 0 Decode.string)
             (Decode.index 1 Decode.string)
             (Decode.index 2 Decode.string)
             (Decode.index 3 Decode.string)
-            (Decode.index 4 (Decode.list Decode.string))
+            (Decode.index 4 Decode.bool)
+            (Decode.index 5 (Decode.list Decode.string))
         )
 
 
@@ -420,9 +424,9 @@ submitParts model =
 submitPartsEncoder : Model -> Encode.Value
 submitPartsEncoder model =
     Encode.object
-        [ ( "kanji", Encode.string model.kanji )
-        , ( "keyword", Encode.string model.keyword )
-        , ( "note", Encode.string model.note )
+        [ ( "kanji", Encode.string model.currentWork.kanji )
+        , ( "keyword", Encode.string model.currentWork.keyword )
+        , ( "note", Encode.string model.currentWork.note )
         ]
 
 
@@ -454,9 +458,9 @@ submitKeyword model =
 submitKeywordEncoder : Model -> Encode.Value
 submitKeywordEncoder model =
     Encode.object
-        [ ( "kanji", Encode.string model.kanji )
-        , ( "keyword", Encode.string model.keyword )
-        , ( "notes", Encode.string model.note )
+        [ ( "kanji", Encode.string model.currentWork.kanji )
+        , ( "keyword", Encode.string model.currentWork.keyword )
+        , ( "notes", Encode.string model.currentWork.note )
         ]
 
 
@@ -688,12 +692,12 @@ renderKeywordSubmitBar model =
     div [ style "display" "flex" ]
         [ span
             [ style "flex" "1 0 auto" ]
-            [ text model.kanji ]
+            [ text model.currentWork.kanji ]
         , span
             [ style "flex" "10 0 70px" ]
             [ input
                 [ placeholder "Keyword"
-                , value model.keyword
+                , value model.currentWork.keyword
                 , onInput KeywordInput
                 , style "width" "100%"
                 , style "box-sizing" "border-box"
@@ -713,7 +717,7 @@ renderKeywordSubmitBar model =
             [ style "flex" "10 0 70px" ]
             [ input
                 [ placeholder "Notes"
-                , value model.note
+                , value model.currentWork.note
                 , onInput NotesInput
                 , style "width" "100%"
                 , style "box-sizing" "border-box"
@@ -807,17 +811,17 @@ renderSubmitBar model =
             \s1 s2 -> s1 ++ ", " ++ s2
 
         txt =
-            List.foldl join "" model.currentParts
+            List.foldl join "" model.currentWork.parts
     in
     div [ style "display" "flex" ]
         [ span
             [ style "flex" "1 0 auto" ]
-            [ if String.length model.svg > 0 then
+            [ if String.length model.currentWork.svg > 0 then
                 let
                     renderCentralKanji =
                         stringToSvgHtml svgCustomiseHighlight
                 in
-                renderCentralKanji model.svg
+                renderCentralKanji model.currentWork.svg
 
               else
                 text ""
@@ -826,7 +830,7 @@ renderSubmitBar model =
             [ style "flex" "10 0 70px"
             , style "background-color" "rgb(250, 210, 210)"
             ]
-            [ renderCurrentParts model.parts model.currentParts
+            [ renderCurrentParts model.parts model.currentWork.parts
             ]
         , span
             [ style "flex" "1 0 auto" ]
@@ -835,7 +839,7 @@ renderSubmitBar model =
             [ style "flex" "10 0 70px" ]
             [ input
                 [ placeholder "Notes"
-                , value model.note
+                , value model.currentWork.note
                 , onInput NotesInput
                 , style "width" "100%"
                 , style "box-sizing" "border-box"
