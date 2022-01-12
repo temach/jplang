@@ -1,0 +1,18 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="{% static 'breakdown/main.css' %}">
+  </head>
+
+  <body>
+    <div id="elm-app"></div>
+    <script src="{% static 'breakdown/base.js' %}"></script>
+    <script src="{% static 'breakdown/main.js' %}"></script>
+    <script>
+      var app = Elm.Main.init({
+        node: document.getElementById("elm-app")
+      });
+    </script>
+  </body>
+</html>

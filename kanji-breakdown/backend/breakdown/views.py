@@ -15,6 +15,22 @@ from typeguard import typechecked
 import re
 from itertools import dropwhile
 from bottle import response
+from django.shortcuts import render
+
+from django.http import HttpResponse
+
+from django.template import loader
+
+# Create your views here.
+
+def shlupa(request):
+    return render(request, '')
+
+def index(request):
+    #return HttpResponse('Helo World!')
+    template = loader.get_template('breakdown/index.html')
+    return HttpResponse(template.render({}, request))
+
 
 
 class KeyCandidate(TypedDict):
@@ -23,9 +39,9 @@ class KeyCandidate(TypedDict):
     freq: list[int]
 
 
-@get("/")
-def index():
-    return static("index.html")
+#@get("/")
+#def index():
+ #   return static("index.html")
 
 @route("/static/<path:path>")
 def static(path):
