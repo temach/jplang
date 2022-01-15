@@ -1,3 +1,8 @@
 from django.db import models
 
-# Create your models here.
+class Radical(models.Model):
+    keyword = models.CharField(max_length=200)
+    kanji = models.CharField(max_length=200)
+    unicode = models.CharField(max_length=200)
+    note = models.CharField(max_length=200)
+    svg = models.CharField(max_length=10000)

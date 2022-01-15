@@ -23,14 +23,21 @@ from django.template import loader
 
 # Create your views here.
 
-def shlupa(request):
-    return render(request, '')
-
 def index(request):
     #return HttpResponse('Helo World!')
     template = loader.get_template('breakdown/index.html')
     return HttpResponse(template.render({}, request))
 
+def work(request):
+    radicals = {}
+    for data in RADICALS.values():
+        svg = data["svg"]
+        svg = svg.replace("<svg ", '<svg class="svgpart" ')
+        radicals[data["keyword"]] = (data["kanji"], data["keyword"], data["note"], svg, [])
+
+    payload = [e for e in radicals.values()]
+    response.content_type = "application/json"
+    return json.dumps(payload[:50], ensure_ascii=False)
 
 
 class KeyCandidate(TypedDict):
@@ -53,17 +60,6 @@ def version():
     return json.dumps(data)
 
 
-@get("/api/parts")
-def work():
-    radicals = {}
-    for data in RADICALS.values():
-        svg = data["svg"]
-        svg = svg.replace("<svg ", '<svg class="svgpart" ')
-        radicals[data["keyword"]] = (data["kanji"], data["keyword"], data["note"], svg, [])
-
-    payload = [e for e in radicals.values()]
-    response.content_type = "application/json"
-    return json.dumps(payload[:50], ensure_ascii=False)
 
 
 @get("/api/work")
