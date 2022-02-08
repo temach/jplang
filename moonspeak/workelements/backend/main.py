@@ -3,18 +3,13 @@ import os
 import json
 import sqlite3
 from pprint import pprint
-from collections import defaultdict
 
 import zmq
-from nltk.stem.porter import PorterStemmer  # type: ignore
-from nltk.stem import WordNetLemmatizer  # type: ignore
-from typing import TypedDict, Any
-from typeguard import typechecked
 from bottle import response, request, post, get, route, run, template, HTTPResponse, static_file  # type: ignore
 
 
 VERSION = "0.1"
-KANJI_DB_PATH = "../kanji-parts.db"
+KANJI_DB_PATH = "../tmp/kanji-parts.db"
 DB = sqlite3.connect(KANJI_DB_PATH)
 WORK = {}
 ZMQ_CONTEXT = zmq.Context()
@@ -28,15 +23,14 @@ def index():
 def static(path):
     return static_file(os.path.join("static", path), root="../frontend/")
 
-@ get("/api/work")
+@get("/api/work")
 def work():
     c = DB.cursor()
     c.execute("SELECT * FROM kanjikeywords;")
     rows = c.fetchall()
-    data = {k: (k, "", "") for k in WORK.keys()}
+    data = {e["kanji"]: (e["kanji"], e["keyword"], e["note"]) for e in WORK}
     for r in rows:
         kanji = r[0]
-        keyword = r[1]
         data[kanji] = r
 
     payload = [e for e in data.values()]
@@ -63,9 +57,9 @@ if __name__ == "__main__":
         db_init()
 
     with open("../resources/kanji.json") as kanji:
-        WORK = json.load(kanji)
+        WORK = json.load(kanji)["work_elements"]
 
-    pprint(list(WORK.items())[:10])
+    pprint(WORK[:10])
 
     port = 9000
     print("Running bottle server on port {}".format(port))

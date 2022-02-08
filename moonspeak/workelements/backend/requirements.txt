@@ -5,3 +5,4 @@ typed-ast
 typeguard
 typing
 typing-extensions
+zmq

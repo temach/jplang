@@ -5,7 +5,7 @@ import Css
 import Debug exposing (log)
 import Dict exposing (Dict)
 import Html exposing (Attribute, Html, button, div, input, li, ol, span, text)
-import Html.Attributes exposing (attribute, placeholder, style, value)
+import Html.Attributes exposing (attribute, class, placeholder, style, value)
 import Html.Events exposing (on, onClick, onInput)
 import Html.Events.Extra exposing (targetValueIntParse)
 import Http
@@ -53,16 +53,16 @@ init _ =
     let
         model =
             { currentWork = { kanji = "", keyword = "", notes = "" }
-            , workElements = [ WorkElement "a" "first" "", WorkElement "b" "second" "asd", WorkElement "c" "third" "" ]
 
-            -- , workElements = []
+            -- , workElements = [ WorkElement "a" "first" "", WorkElement "b" "" "asd", WorkElement "c" "third" "and comment" ]
+            , workElements = []
             , currentWorkIndex = -1
             , currentHighlightWorkElementIndex = -1
             }
     in
     -- update NextWorkElement model
-    -- ( model, getWorkElements )
-    ( model, Cmd.none )
+    -- ( model, Cmd.none )
+    ( model, getWorkElements )
 
 
 
@@ -83,8 +83,6 @@ type Msg
     | NextWorkElement
     | SelectWorkElement Int
     | WorkElementsReady (Result Http.Error (List WorkElement))
-    | HighlightWorkElement Int
-    | UnHighlightWorkElement Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -115,16 +113,6 @@ update msg model =
                     { model | currentWorkIndex = index, currentWork = selected }
             in
             ( newModel, Cmd.none )
-
-        HighlightWorkElement index ->
-            ( { model | currentHighlightWorkElementIndex = index }, Cmd.none )
-
-        UnHighlightWorkElement index ->
-            if model.currentHighlightWorkElementIndex == index then
-                ( { model | currentHighlightWorkElementIndex = -1 }, Cmd.none )
-
-            else
-                ( model, Cmd.none )
 
         WorkElementsReady result ->
             case result of
@@ -186,27 +174,16 @@ renderSingleWorkElement model index elem =
     div
         [ style "padding" "2px 0"
         , style "display" "flex"
+        , class "row"
         ]
         [ span
             [ style "flex" "0 0 1.5rem"
             , value (String.fromInt index)
-            , on "mouseenter" (Decode.map HighlightWorkElement targetValueIntParse)
-            , on "mouseleave" (Decode.map UnHighlightWorkElement targetValueIntParse)
-            , if model.currentHighlightWorkElementIndex == index then
-                style "background-color" "rgb(200, 250, 200)"
-
-              else
-                style "background-color" ""
             ]
             [ text (String.fromInt index ++ ".") ]
         , span
             [ style "flex" "0 0 auto"
             , style "margin" "0 0.5rem"
-            , if model.currentHighlightWorkElementIndex == index then
-                style "background-color" "rgb(210, 250, 200)"
-
-              else
-                style "background-color" "rgb(210, 200, 200)"
             ]
             [ text elem.kanji ]
         , span
@@ -245,7 +222,6 @@ renderWorkElements model =
 
 render : Model -> Html Msg
 render model =
-    -- Select one of the WorkElements
     div
         [ style "background-color" "rgb(210, 210, 210)"
         , style "overflow" "auto"
