@@ -10712,7 +10712,7 @@ var $elm$core$Basics$never = function (_v0) {
 };
 var $elm$browser$Browser$document = _Browser_document;
 var $author$project$Main$init = function (_v0) {
-	var model = {freq: _List_Nil, history: _List_Nil, kanji: '', keyword: 'loading...', notes: '', userMessage: $elm$core$Dict$empty};
+	var model = {freq: _List_Nil, history: _List_Nil, kanji: 'X', keyword: 'loading...', notes: 'loading notes...', userMessage: $elm$core$Dict$empty};
 	return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 };
 var $elm$core$Platform$Sub$batch = _Platform_batch;

@@ -33,13 +33,6 @@ main =
 -- MODEL
 
 
-type alias WorkElement =
-    { kanji : String
-    , keyword : String
-    , notes : String
-    }
-
-
 type alias KeyCandidate =
     { word : String
     , metadata : String
@@ -65,9 +58,9 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     let
         model =
-            { kanji = ""
+            { kanji = "X"
             , keyword = "loading..."
-            , notes = ""
+            , notes = "loading notes..."
             , freq = []
             , userMessage = Dict.empty
             , history = []
@@ -188,16 +181,6 @@ uniq list =
 historyFilter : List String -> List String
 historyFilter list =
     uniq (List.filter (\x -> String.length x >= 2) list)
-
-
-workElementsDecoder : Decode.Decoder (List WorkElement)
-workElementsDecoder =
-    Decode.list
-        (Decode.map3 WorkElement
-            (Decode.index 0 Decode.string)
-            (Decode.index 1 Decode.string)
-            (Decode.index 2 Decode.string)
-        )
 
 
 getKeywordCheck : String -> String -> Cmd Msg
