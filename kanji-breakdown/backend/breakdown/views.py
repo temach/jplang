@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from .models import Radical
 from datetime import datetime
 from pprint import pprint
 from collections import defaultdict
@@ -16,11 +17,13 @@ import re
 from itertools import dropwhile
 from bottle import response
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt,csrf_protect
 
 from django.http import HttpResponse
-
+from pprint import pprint
 from django.template import loader
-
+from .models import Radical
+from .models import WorkElement
 # Create your views here.
 
 def index(request):
@@ -28,17 +31,24 @@ def index(request):
     template = loader.get_template('breakdown/index.html')
     return HttpResponse(template.render({}, request))
 
-def work(request):
+def parts(request):
     radicals = {}
-    for data in RADICALS.values():
-        svg = data["svg"]
+    for data in Radical.objects.all():
+        svg = data.svg
         svg = svg.replace("<svg ", '<svg class="svgpart" ')
-        radicals[data["keyword"]] = (data["kanji"], data["keyword"], data["note"], svg, [])
+        radicals[data.keyword] = (data.kanji, data.keyword, data.note, svg, [])
 
     payload = [e for e in radicals.values()]
-    response.content_type = "application/json"
-    return json.dumps(payload[:50], ensure_ascii=False)
+    data = json.dumps(payload[:50], ensure_ascii=False)
+    return HttpResponse(data, content_type="application/json")
 
+@csrf_exempt
+def submit(request):
+    pprint(request.body)
+    a = json.loads(request.body)
+    workEl = WorkElement(note=a['note'])
+    workEl.save()
+    return HttpResponse(status=200)
 
 class KeyCandidate(TypedDict):
     word: str
@@ -60,9 +70,6 @@ def version():
     return json.dumps(data)
 
 
-
-
-@get("/api/work")
 def work():
     c = DB.cursor()
     c.execute("SELECT * FROM parts;")
@@ -95,12 +102,18 @@ def keywordcheck():
     payload = [e for e in similar_kanji.values()]
     response.content_type = "application/json"
     return json.dumps(payload[:100], ensure_ascii=False)
-
-
-@post("/api/submit")
-def submit():
-    # payload = request.json
-
+#
+#
+# def submit():
+#     payload = request.json
+#     pprint('hello')
+#     r = Radical(payload['keyword'])
+#
+#
+#
+#     for element in data.values():
+#         radical = Radical(**element)
+#         radical.save()
     # try:
     #     c = DB.cursor()
     #     # https://www.sqlite.org/lang_replace.html
@@ -116,7 +129,7 @@ def submit():
 
     # # return a fake body because too lazy to unwrap properly in Elm
     # return HTTPResponse(status=200, body="")
-    pass
+    # pass
 
 
 def db_init():
