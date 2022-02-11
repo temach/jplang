@@ -5,7 +5,6 @@ import sqlite3
 import re
 from pprint import pprint
 
-import zmq
 from bottle import response, request, post, get, route, run, template, HTTPResponse, static_file  # type: ignore
 from nltk.stem.porter import PorterStemmer  # type: ignore
 from nltk.stem import WordNetLemmatizer  # type: ignore
@@ -13,7 +12,6 @@ from nltk.stem import WordNetLemmatizer  # type: ignore
 VERSION = "0.1"
 KANJI_DB_PATH = "../tmp/kanji-submit.db"
 DB = sqlite3.connect(KANJI_DB_PATH)
-ZMQ_CONTEXT = zmq.Context()
 
 
 class KeywordInfo():
@@ -56,7 +54,7 @@ def get_en_freq_regex(word):
 
 
 @get("/api/keywordcheck/<kanji>/<keyword>")
-def keyword_frequency(kanji, keyword):
+def keyword_check(kanji, keyword):
     """
     Test conflict search with a database like this
     Note that stem for 'children' is 'child' and overrides the 'child' keyword:
@@ -192,19 +190,19 @@ if __name__ == "__main__":
             KEYWORDS[STEMMER.stem(keyword)] = ki
             KEYWORDS[LEMMATIZER.lemmatize(keyword)] = ki
 
-    # with open("../resources/english-onyomi-keywords.txt") as onyomi:
-    #     for line in onyomi:
-    #         _, _, hiragana, romaji, keywords = line.split("=")
-    #         # sometimes might have more than one section, when not finally decided
-    #         first_keywords_section = keywords.split("/")[0].strip()
-    #         # take all words with two or more capital letters, transform into lowercase and strip
-    #         keys = [w.lower().strip() for w in first_keywords_section.split() if count_uppercase(w) >= 2]
-    #         # try to make lemma and stem for each key
-    #         for key in keys:
-    #             ki = KeywordInfo(key, f"{first_keywords_section} is key for {hiragana} ({romaji}) onyomi")
-    #             KEYWORDS[key] = ki
-    #             KEYWORDS[STEMMER.stem(key)] = ki
-    #             KEYWORDS[LEMMATIZER.lemmatize(key)] = ki
+    with open("../resources/english-onyomi-keywords.txt") as onyomi:
+        for line in onyomi:
+            _, _, hiragana, romaji, keywords = line.split("=")
+            # sometimes might have more than one section, when not finally decided
+            first_keywords_section = keywords.split("/")[0].strip()
+            # take all words with two or more capital letters, transform into lowercase and strip
+            keys = [w.lower().strip() for w in first_keywords_section.split() if count_uppercase(w) >= 2]
+            # try to make lemma and stem for each key
+            for key in keys:
+                ki = KeywordInfo(key, f"{first_keywords_section} is key for {hiragana} ({romaji}) onyomi")
+                KEYWORDS[key] = ki
+                KEYWORDS[STEMMER.stem(key)] = ki
+                KEYWORDS[LEMMATIZER.lemmatize(key)] = ki
 
     with open("../resources/english-from-gogle-corpus-by-freq.txt") as f:
         for number, line in enumerate(f, start=1):
