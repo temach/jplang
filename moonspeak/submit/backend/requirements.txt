@@ -1,8 +1,2 @@
-bottle
-mypy
-mypy-extensions
-typed-ast
-typeguard
-typing
-typing-extensions
-zmq
+bottle==0.12.19
+nltk==3.7
