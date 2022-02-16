@@ -13,7 +13,7 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import List.Extra exposing (getAt)
 import Platform.Cmd as Cmd
-import Url.Builder exposing (absolute)
+import Url.Builder exposing (relative)
 
 
 
@@ -186,7 +186,7 @@ historyFilter list =
 getKeywordCheck : String -> String -> Cmd Msg
 getKeywordCheck kanji keyword =
     Http.get
-        { url = absolute [ "api", "keywordcheck/" ++ kanji ++ "/" ++ keyword ] []
+        { url = relative [ "api", "keywordcheck/" ++ kanji ++ "/" ++ keyword ] []
         , expect = Http.expectJson KeywordCheckReady keyCandidateDecoder
         }
 
@@ -202,7 +202,7 @@ keyCandidateDecoder =
 submitKeyword : Model -> Cmd Msg
 submitKeyword model =
     Http.post
-        { url = absolute [ "api", "submit" ] []
+        { url = relative [ "api", "submit" ] []
         , body = Http.jsonBody (submitKeywordEncoder model)
         , expect = Http.expectString KeywordSubmitReady
         }

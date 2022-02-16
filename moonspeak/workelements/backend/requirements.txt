@@ -1,8 +1,1 @@
 bottle
-mypy
-mypy-extensions
-typed-ast
-typeguard
-typing
-typing-extensions
-zmq

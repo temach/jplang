@@ -30,7 +30,6 @@ def index():
 def static(path):
     if "index.html" in path:
         return static_file("index.html", root="../frontend/")
-
     return static_file(os.path.join("static", path), root="../frontend/")
 
 

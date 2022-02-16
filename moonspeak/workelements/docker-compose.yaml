@@ -2,12 +2,12 @@ version: "3.9"
     
 services:
   backend:
-    image: ms-backend:latest
+    image: ms-workelements-backend:latest
     build:
       context: ./
       dockerfile: ./Dockerfile-backend 
     ports:
-      - "9002:9000"
+      - "9003:9000"
     volumes:
       - db_data:/opt/ms/tmp
     

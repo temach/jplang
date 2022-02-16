@@ -10724,25 +10724,6 @@ var $author$project$Main$NextWorkElement = {$: 'NextWorkElement'};
 var $author$project$Main$KeywordCheckReady = function (a) {
 	return {$: 'KeywordCheckReady', a: a};
 };
-var $elm$url$Url$Builder$toQueryPair = function (_v0) {
-	var key = _v0.a;
-	var value = _v0.b;
-	return key + ('=' + value);
-};
-var $elm$url$Url$Builder$toQuery = function (parameters) {
-	if (!parameters.b) {
-		return '';
-	} else {
-		return '?' + A2(
-			$elm$core$String$join,
-			'&',
-			A2($elm$core$List$map, $elm$url$Url$Builder$toQueryPair, parameters));
-	}
-};
-var $elm$url$Url$Builder$absolute = F2(
-	function (pathSegments, parameters) {
-		return '/' + (A2($elm$core$String$join, '/', pathSegments) + $elm$url$Url$Builder$toQuery(parameters));
-	});
 var $elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
 		return {$: 'BadStatus_', a: a, b: b};
@@ -11004,13 +10985,34 @@ var $author$project$Main$keyCandidateDecoder = A4(
 		$elm$json$Json$Decode$field,
 		'freq',
 		$elm$json$Json$Decode$list($elm$json$Json$Decode$int)));
+var $elm$url$Url$Builder$toQueryPair = function (_v0) {
+	var key = _v0.a;
+	var value = _v0.b;
+	return key + ('=' + value);
+};
+var $elm$url$Url$Builder$toQuery = function (parameters) {
+	if (!parameters.b) {
+		return '';
+	} else {
+		return '?' + A2(
+			$elm$core$String$join,
+			'&',
+			A2($elm$core$List$map, $elm$url$Url$Builder$toQueryPair, parameters));
+	}
+};
+var $elm$url$Url$Builder$relative = F2(
+	function (pathSegments, parameters) {
+		return _Utils_ap(
+			A2($elm$core$String$join, '/', pathSegments),
+			$elm$url$Url$Builder$toQuery(parameters));
+	});
 var $author$project$Main$getKeywordCheck = F2(
 	function (kanji, keyword) {
 		return $elm$http$Http$get(
 			{
 				expect: A2($elm$http$Http$expectJson, $author$project$Main$KeywordCheckReady, $author$project$Main$keyCandidateDecoder),
 				url: A2(
-					$elm$url$Url$Builder$absolute,
+					$elm$url$Url$Builder$relative,
 					_List_fromArray(
 						['api', 'keywordcheck/' + (kanji + ('/' + keyword))]),
 					_List_Nil)
@@ -11107,7 +11109,7 @@ var $author$project$Main$submitKeyword = function (model) {
 				$author$project$Main$submitKeywordEncoder(model)),
 			expect: $elm$http$Http$expectString($author$project$Main$KeywordSubmitReady),
 			url: A2(
-				$elm$url$Url$Builder$absolute,
+				$elm$url$Url$Builder$relative,
 				_List_fromArray(
 					['api', 'submit']),
 				_List_Nil)

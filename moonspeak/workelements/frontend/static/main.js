@@ -10714,25 +10714,6 @@ var $elm$browser$Browser$document = _Browser_document;
 var $author$project$Main$WorkElementsReady = function (a) {
 	return {$: 'WorkElementsReady', a: a};
 };
-var $elm$url$Url$Builder$toQueryPair = function (_v0) {
-	var key = _v0.a;
-	var value = _v0.b;
-	return key + ('=' + value);
-};
-var $elm$url$Url$Builder$toQuery = function (parameters) {
-	if (!parameters.b) {
-		return '';
-	} else {
-		return '?' + A2(
-			$elm$core$String$join,
-			'&',
-			A2($elm$core$List$map, $elm$url$Url$Builder$toQueryPair, parameters));
-	}
-};
-var $elm$url$Url$Builder$absolute = F2(
-	function (pathSegments, parameters) {
-		return '/' + (A2($elm$core$String$join, '/', pathSegments) + $elm$url$Url$Builder$toQuery(parameters));
-	});
 var $elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
 		return {$: 'BadStatus_', a: a, b: b};
@@ -10981,6 +10962,27 @@ var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
 		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
+var $elm$url$Url$Builder$toQueryPair = function (_v0) {
+	var key = _v0.a;
+	var value = _v0.b;
+	return key + ('=' + value);
+};
+var $elm$url$Url$Builder$toQuery = function (parameters) {
+	if (!parameters.b) {
+		return '';
+	} else {
+		return '?' + A2(
+			$elm$core$String$join,
+			'&',
+			A2($elm$core$List$map, $elm$url$Url$Builder$toQueryPair, parameters));
+	}
+};
+var $elm$url$Url$Builder$relative = F2(
+	function (pathSegments, parameters) {
+		return _Utils_ap(
+			A2($elm$core$String$join, '/', pathSegments),
+			$elm$url$Url$Builder$toQuery(parameters));
+	});
 var $author$project$Main$WorkElement = F3(
 	function (kanji, keyword, notes) {
 		return {kanji: kanji, keyword: keyword, notes: notes};
@@ -10997,7 +10999,7 @@ var $author$project$Main$getWorkElements = $elm$http$Http$get(
 	{
 		expect: A2($elm$http$Http$expectJson, $author$project$Main$WorkElementsReady, $author$project$Main$workElementsDecoder),
 		url: A2(
-			$elm$url$Url$Builder$absolute,
+			$elm$url$Url$Builder$relative,
 			_List_fromArray(
 				['api', 'work']),
 			_List_Nil)

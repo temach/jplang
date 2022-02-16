@@ -4,7 +4,6 @@ import json
 import sqlite3
 from pprint import pprint
 
-import zmq
 from bottle import response, request, post, get, route, run, template, HTTPResponse, static_file  # type: ignore
 
 
@@ -12,8 +11,6 @@ VERSION = "0.1"
 KANJI_DB_PATH = "../tmp/kanji-parts.db"
 DB = sqlite3.connect(KANJI_DB_PATH)
 WORK = {}
-ZMQ_CONTEXT = zmq.Context()
-
 
 @get("/")
 def index():

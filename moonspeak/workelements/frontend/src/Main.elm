@@ -13,7 +13,7 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import List.Extra
 import Platform.Cmd as Cmd
-import Url.Builder exposing (absolute)
+import Url.Builder exposing (relative)
 
 
 
@@ -130,7 +130,7 @@ update msg model =
 getWorkElements : Cmd Msg
 getWorkElements =
     Http.get
-        { url = absolute [ "api", "work" ] []
+        { url = relative [ "api", "work" ] []
         , expect = Http.expectJson WorkElementsReady workElementsDecoder
         }
 
