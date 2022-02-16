@@ -10,8 +10,11 @@ services:
       - "9000:9000"
     volumes:
       - db_data:/opt/ms/tmp
+    # this is a hack to run on the local machine
+    network_mode: "host"
     
 volumes:
   db_data: {}
+
 
 

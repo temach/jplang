@@ -1,2 +1,4 @@
 requests
-bottle
+fastapi
+uvicorn
+beautifulsoup4

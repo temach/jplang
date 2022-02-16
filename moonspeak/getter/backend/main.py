@@ -3,11 +3,13 @@ import os
 import json
 import sqlite3
 import re
-from pprint import pprint
 import uuid
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse
 
-from bottle import response, request, post, get, route, run, template, HTTPResponse, static_file, error  # type: ignore
+from fastapi import FastAPI
+from fastapi.requests import Request
+from fastapi.responses import Response, FileResponse
+import uvicorn
 import requests
 
 VERSION = "0.1"
@@ -15,35 +17,38 @@ DB_PATH = "../tmp/features.db"
 DB = sqlite3.connect(DB_PATH)
 MAPPING = {}
 
+app = FastAPI()
 
-@route('/api/routing/<fid>/<furl:re:.+>', methods=['GET', 'PUT', 'POST'])
-def routing(fid, furl):
-    print(MAPPING)
+
+@app.api_route("/api/routing/{fid}/{furl:path}", methods=['GET', 'PUT', 'POST', 'DELETE', 'HEAD'])
+def routing(request: Request, fid, furl: str):
     print(f'Request {furl} of feature {fid}')
     feature_root_url = MAPPING[fid]
     url = feature_root_url + furl
-    r = requests.get(url)
+    r = requests.get(url, headers=request.headers)
     print(f'Requested {r.url}')
-    return r.text
+    return Response(content=r.content, status_code=r.status_code, headers=r.headers)
 
 
-@get("/")
+@app.get("/")
 def index():
     return static("index.html")
 
 
-@route("/static/<path:path>")
+@app.get("/static/{path:path}")
 def static(path):
     if "index.html" in path:
-        return static_file("index.html", root="../frontend/")
-    return static_file(os.path.join("static", path), root="../frontend/")
+        p = os.path.join("..", "frontend", path)
+        return FileResponse(p)
+
+    p = os.path.join("..", "frontend", "static", path)
+    return FileResponse(p)
 
 
-@get("/api/getfeature")
-def feature():
-    url = request.query.feature_url
-
-    r = requests.get(url, headers={'accept':'application/json'})
+@app.get("/api/getfeature")
+def feature(feature_url: str):
+    # feature_url gets automatically inferred as url query parameter by FastAPI
+    r = requests.get(feature_url)
 
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(r.text, 'html.parser')
@@ -53,12 +58,12 @@ def feature():
     soup.head.insert(0, base_tag)
 
     # unify url representation
-    MAPPING[fid] = urlparse(url).geturl()
+    MAPPING[fid] = urlparse(feature_url).geturl()
 
     resp = {
         "text": str(soup),
     }
-    return json.dumps(resp)
+    return resp
 
 
 def db_init():
@@ -90,5 +95,5 @@ if __name__ == "__main__":
             print(r)
 
     port = 9000
-    print("Running bottle server on port {}".format(port))
-    run(host="0.0.0.0", port=port, debug=True)
+    print("Running server on port {}".format(port))
+    uvicorn.run(app, host="0.0.0.0", port=port)
