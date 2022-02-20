@@ -20,3 +20,14 @@ function append_feature(parent_elem, feature_url) {
         console.log("HTTP error:" + error.message);
     });
 }
+
+
+// see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+window.addEventListener("message", (event) => {
+  if (event.origin !== window.top.location.origin) {
+    // we only accept messages from the IFrames (must be on the same domain)
+    return;
+  }
+
+  console.log("getter received: " + event.data);
+});

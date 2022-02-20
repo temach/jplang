@@ -1,4 +1,4 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Browser exposing (Document)
 import Css
@@ -14,6 +14,16 @@ import Json.Encode as Encode
 import List.Extra
 import Platform.Cmd as Cmd
 import Url.Builder exposing (relative)
+
+
+
+-- PORTS
+
+
+port sendMessage : String -> Cmd msg
+
+
+port messageReceiver : (String -> msg) -> Sub msg
 
 
 
@@ -71,7 +81,7 @@ init _ =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    messageReceiver Recv
 
 
 
@@ -83,6 +93,7 @@ type Msg
     | NextWorkElement
     | SelectWorkElement Int
     | WorkElementsReady (Result Http.Error (List WorkElement))
+    | Recv String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -112,7 +123,7 @@ update msg model =
                 newModel =
                     { model | currentWorkIndex = index, currentWork = selected }
             in
-            ( newModel, Cmd.none )
+            ( newModel, sendMessage newModel.currentWork.keyword )
 
         WorkElementsReady result ->
             case result of
@@ -125,6 +136,13 @@ update msg model =
 
                 Err message ->
                     ( model, Cmd.none )
+
+        Recv message ->
+            let
+                newElement =
+                    WorkElement model.currentWork.kanji message model.currentWork.notes
+            in
+            update (UpdateWorkElement newElement) model
 
 
 getWorkElements : Cmd Msg

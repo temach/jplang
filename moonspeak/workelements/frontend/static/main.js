@@ -11013,14 +11013,19 @@ var $author$project$Main$init = function (_v0) {
 	};
 	return _Utils_Tuple2(model, $author$project$Main$getWorkElements);
 };
-var $elm$core$Platform$Sub$batch = _Platform_batch;
-var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
+var $author$project$Main$Recv = function (a) {
+	return {$: 'Recv', a: a};
+};
+var $author$project$Main$messageReceiver = _Platform_incomingPort('messageReceiver', $elm$json$Json$Decode$string);
 var $author$project$Main$subscriptions = function (_v0) {
-	return $elm$core$Platform$Sub$none;
+	return $author$project$Main$messageReceiver($author$project$Main$Recv);
 };
 var $author$project$Main$NextWorkElement = {$: 'NextWorkElement'};
 var $author$project$Main$SelectWorkElement = function (a) {
 	return {$: 'SelectWorkElement', a: a};
+};
+var $author$project$Main$UpdateWorkElement = function (a) {
+	return {$: 'UpdateWorkElement', a: a};
 };
 var $elm$core$List$head = function (list) {
 	if (list.b) {
@@ -11036,6 +11041,7 @@ var $elm_community$list_extra$List$Extra$getAt = F2(
 		return (idx < 0) ? $elm$core$Maybe$Nothing : $elm$core$List$head(
 			A2($elm$core$List$drop, idx, xs));
 	});
+var $author$project$Main$sendMessage = _Platform_outgoingPort('sendMessage', $elm$json$Json$Encode$string);
 var $elm$core$List$takeReverse = F3(
 	function (n, list, kept) {
 		takeReverse:
@@ -11220,8 +11226,10 @@ var $author$project$Main$update = F2(
 					var newModel = _Utils_update(
 						model,
 						{currentWork: selected, currentWorkIndex: index});
-					return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
-				default:
+					return _Utils_Tuple2(
+						newModel,
+						$author$project$Main$sendMessage(newModel.currentWork.keyword));
+				case 'WorkElementsReady':
 					var result = msg.a;
 					if (result.$ === 'Ok') {
 						var elements = result.a;
@@ -11237,6 +11245,14 @@ var $author$project$Main$update = F2(
 						var message = result.a;
 						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 					}
+				default:
+					var message = msg.a;
+					var newElement = A3($author$project$Main$WorkElement, model.currentWork.kanji, message, model.currentWork.notes);
+					var $temp$msg = $author$project$Main$UpdateWorkElement(newElement),
+						$temp$model = model;
+					msg = $temp$msg;
+					model = $temp$model;
+					continue update;
 			}
 		}
 	});
@@ -11382,4 +11398,4 @@ var $author$project$Main$view = function (model) {
 var $author$project$Main$main = $elm$browser$Browser$document(
 	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
-	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.WorkElement":{"args":[],"type":"{ kanji : String.String, keyword : String.String, notes : String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"UpdateWorkElement":["Main.WorkElement"],"NextWorkElement":[],"SelectWorkElement":["Basics.Int"],"WorkElementsReady":["Result.Result Http.Error (List.List Main.WorkElement)"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));
+	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.WorkElement":{"args":[],"type":"{ kanji : String.String, keyword : String.String, notes : String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"UpdateWorkElement":["Main.WorkElement"],"NextWorkElement":[],"SelectWorkElement":["Basics.Int"],"WorkElementsReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"Recv":["String.String"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));

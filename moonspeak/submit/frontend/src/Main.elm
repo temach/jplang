@@ -1,4 +1,4 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Browser exposing (Document)
 import Css
@@ -14,6 +14,16 @@ import Json.Encode as Encode
 import List.Extra exposing (getAt)
 import Platform.Cmd as Cmd
 import Url.Builder exposing (relative)
+
+
+
+-- PORTS
+
+
+port sendMessage : String -> Cmd msg
+
+
+port messageReceiver : (String -> msg) -> Sub msg
 
 
 
@@ -77,7 +87,7 @@ init _ =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    messageReceiver Recv
 
 
 
@@ -93,6 +103,8 @@ type Msg
     | KeywordCheckReady (Result Http.Error KeyCandidate)
       -- input/output?
     | NextWorkElement
+      -- ports
+    | Recv String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -130,7 +142,7 @@ update msg model =
                     ( { model | userMessage = Dict.insert "KeywordSubmitReady" "Error submitting keyword. Details unknown." model.userMessage }, Cmd.none )
 
         NextWorkElement ->
-            ( model, Cmd.none )
+            ( model, sendMessage model.keyword )
 
         KeywordInput word ->
             let
@@ -159,6 +171,9 @@ update msg model =
 
                 Err _ ->
                     ( { model | freq = [], userMessage = Dict.insert "KeywordCheckReady" "Error getting keyword frequency" model.userMessage }, Cmd.none )
+
+        Recv message ->
+            update (KeywordInput message) model
 
 
 uniq : List a -> List a

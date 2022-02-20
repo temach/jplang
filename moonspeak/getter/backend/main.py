@@ -20,12 +20,12 @@ MAPPING = {}
 app = FastAPI()
 
 
-@app.api_route("/api/routing/{fid}/{furl:path}", methods=['GET', 'PUT', 'POST', 'DELETE', 'HEAD'])
-def routing(request: Request, fid, furl: str):
+@app.api_route("/api/routing/{fid}/{furl:path}", methods=["GET", "HEAD", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"])
+async def routing(request: Request, fid, furl: str):
     print(f'Request {furl} of feature {fid}')
     feature_root_url = MAPPING[fid]
     url = feature_root_url + furl
-    r = requests.get(url, headers=request.headers)
+    r = requests.request(request.method, url, headers=request.headers, data=await request.body())
     print(f'Requested {r.url}')
     return Response(content=r.content, status_code=r.status_code, headers=r.headers)
 
@@ -39,10 +39,13 @@ def index():
 def static(path):
     if "index.html" in path:
         p = os.path.join("..", "frontend", path)
-        return FileResponse(p)
+    else:
+        p = os.path.join("..", "frontend", "static", path)
 
-    p = os.path.join("..", "frontend", "static", path)
-    return FileResponse(p)
+    if os.path.exists(p):
+        return FileResponse(p)
+    else:
+        return Response(status_code=404)
 
 
 @app.get("/api/getfeature")
@@ -96,4 +99,5 @@ if __name__ == "__main__":
 
     port = 9000
     print("Running server on port {}".format(port))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    import logging
+    uvicorn.run(app, host="0.0.0.0", port=port, debug=True)

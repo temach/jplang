@@ -12,6 +12,24 @@
       var app = Elm.Main.init({
         node: document.getElementById("elm-app")
       });
+
+        app.ports.sendMessage.subscribe(function(message) {
+            // message from elm for javascript
+            // broadcast it to top window
+            // also: enforce same origin
+            console.log("workelements posted: " + message );
+            window.top.postMessage(message, window.top.location.origin);
+        });
+
+        // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+        window.addEventListener("message", (event) => {
+            if (event.origin !== window.top.location.origin) {
+                // we only accept messages from the IFrames (must be on the same domain)
+                return;
+            }
+            console.log("workelements received: " + event.data);
+            app.ports.messageReceiver.send(event.data);
+        });
     </script>
   </body>
 </html>
