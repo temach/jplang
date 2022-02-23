@@ -1,0 +1,20 @@
+version: "3.9"
+    
+services:
+  backend:
+    image: ms-getter-backend:latest
+    build:
+      context: ./
+      dockerfile: ./Dockerfile-backend 
+    ports:
+      - "9000:9000"
+    volumes:
+      - db_data:/opt/ms/tmp
+    # this is a hack to run on the local machine
+    network_mode: "host"
+    
+volumes:
+  db_data: {}
+
+
+
