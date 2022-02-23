@@ -18,17 +18,48 @@ function initGraph(container, toolbar, sidebar, status)
     // container.style.top = '0px';
     // container.style.right = '0px';
     // container.style.bottom = '0px';
-    // container.style.background = 'url("images/grid.gif")';
+    container.style.background = 'url("images/grid.gif")';
+
+    // Adjust hanlders to make sure right click is only for panning
+    var mxSelectionCellsHandlerMouseDown = mxSelectionCellsHandler.prototype.mouseDown;
+    mxSelectionCellsHandler.prototype.mouseDown = function(sender, me)
+    {
+        if (me.evt.button !== 2)
+        {
+            // works because there is a variable called "this.graph" in the scope, which is critical
+            return mxSelectionCellsHandlerMouseDown.apply(this, arguments);
+        }
+    };
+
+    var mxConnectionHandlerMouseDown = mxConnectionHandler.prototype.mouseDown;
+    mxConnectionHandler.prototype.mouseDown = function(sender, me)
+    {
+        if (me.evt.button !== 2)
+        {
+            // works because there is a variable called "this.graph" in the scope, which is critical
+            return mxConnectionHandlerMouseDown.apply(this, arguments);
+        }
+    };
+
+    var mxGraphHandlerMouseDown = mxGraphHandler.prototype.mouseDown;
+    mxGraphHandler.prototype.mouseDown = function(sender, me)
+    {
+        if (me.evt.button !== 2)
+        {
+            // works because there is a variable called "this.graph" in the scope, which is critical
+            return mxGraphHandlerMouseDown.apply(this, arguments);
+        }
+    };
 
     // Constructs a new editor.  This function invokes the onInit callback upon completion.
     // var config = mxUtils.load('config/uiconfig.xml').getDocumentElement();
     var editor = new mxEditor();
 
     // Sets the graph container and configures the editor
-    // editor.setGraphContainer(container);
-    // var config = mxUtils.load('config/diagrameditor.xml').getDocumentElement();
-    // var config = mxUtils.load('config/keyhandler-minimal.xml').getDocumentElement();
-    // editor.configure(config);
+    editor.setGraphContainer(container);
+    // var config = mxUtils.load('config/uiconfig.xml').getDocumentElement();
+    var config = mxUtils.load('config/keyhandler-minimal.xml').getDocumentElement();
+    editor.configure(config);
 
     // graph, such as the rubberband selection, but most parts
     // of the UI are custom in this example.
@@ -37,13 +68,10 @@ function initGraph(container, toolbar, sidebar, status)
     
     // Disables some global features
     graph.setConnectable(true);
-    graph.setCellsDisconnectable(false);
+    // graph.setCellsDisconnectable(false);
     graph.setCellsCloneable(false);
     //graph.swimlaneNesting = false;
     //graph.dropEnabled = true;
-
-    // Creates the graph inside the given container
-    // var graph = new mxGraph(container);
 
     // Change edge tolerance
     graph.setTolerance(20);
@@ -75,59 +103,72 @@ function initGraph(container, toolbar, sidebar, status)
     graph.alternateEdgeStyle = 'elbow=vertical';
 
     // Adds zoom buttons in top, left corner
-    // var buttons = document.createElement('div');
-    // buttons.style.position = 'absolute';
-    // buttons.style.overflow = 'visible';
+    var buttons = document.createElement('div');
+    buttons.style.position = 'absolute';
+    buttons.style.overflow = 'visible';
 
-    // var bs = graph.getBorderSizes();
-    // buttons.style.top = (container.offsetTop + bs.y) + 'px';
-    // buttons.style.left = (container.offsetLeft + bs.x) + 'px';
-    // 
-    // var left = 0;
-    // var bw = 16;
-    // var bh = 16;
-    // 
-    // if (mxClient.IS_QUIRKS)
-    // {
-    //     bw -= 1;
-    //     bh -= 1;
-    // }
-    // 
-    // function addButton(label, funct)
-    // {
-    //     var btn = document.createElement('div');
-    //     mxUtils.write(btn, label);
-    //     btn.style.position = 'absolute';
-    //     btn.style.backgroundColor = 'transparent';
-    //     btn.style.border = '1px solid gray';
-    //     btn.style.textAlign = 'center';
-    //     btn.style.fontSize = '10px';
-    //     btn.style.cursor = 'hand';
-    //     btn.style.width = bw + 'px';
-    //     btn.style.height = bh + 'px';
-    //     btn.style.left = left + 'px';
-    //     btn.style.top = '0px';
-    //     
-    //     mxEvent.addListener(btn, 'click', function(evt)
-    //     {
-    //         funct();
-    //         mxEvent.consume(evt);
-    //     });
-    //     
-    //     left += bw;
-    //     
-    //     buttons.appendChild(btn);
-    // };
-    // 
-    // addButton('+', function()
-    // {
-    //     graph.zoomIn();
-    // });
-    // 
-    // addButton('-', function()
-    // {
-    //     graph.zoomOut();
-    // });
+    var bs = graph.getBorderSizes();
+    buttons.style.top = (container.offsetTop + bs.y) + 'px';
+    buttons.style.left = (container.offsetLeft + bs.x) + 'px';
+    
+    var left = 0;
+    var bw = 16;
+    var bh = 16;
+    
+    if (mxClient.IS_QUIRKS)
+    {
+        bw -= 1;
+        bh -= 1;
+    }
+    
+    function addButton(label, funct)
+    {
+        var btn = document.createElement('div');
+        mxUtils.write(btn, label);
+        btn.style.position = 'absolute';
+        btn.style.backgroundColor = 'transparent';
+        btn.style.border = '1px solid gray';
+        btn.style.textAlign = 'center';
+        btn.style.fontSize = '10px';
+        btn.style.cursor = 'hand';
+        btn.style.width = bw + 'px';
+        btn.style.height = bh + 'px';
+        btn.style.left = left + 'px';
+        btn.style.top = '0px';
+        
+        mxEvent.addListener(btn, 'click', function(evt)
+        {
+            funct();
+            mxEvent.consume(evt);
+        });
+        
+        left += bw;
+        
+        buttons.appendChild(btn);
+    };
+    
+    addButton('+', function()
+    {
+        graph.zoomIn();
+    });
+    
+    addButton('-', function()
+    {
+        graph.zoomOut();
+    });
+
+    // Creates a new DIV that is used as a toolbar and adds
+    // toolbar buttons.
+    var spacer = document.createElement('div');
+    spacer.style.display = 'inline';
+    spacer.style.padding = '8px';
+
+    addToolbarButton(editor, toolbar, 'delete', 'Delete', 'images/delete2.png');
+
+    toolbar.appendChild(spacer.cloneNode(true));
+
+    addToolbarButton(editor, toolbar, 'undo', '', 'images/undo.png');
+    addToolbarButton(editor, toolbar, 'redo', '', 'images/redo.png');
 
     // Displays useful hints in a small semi-transparent box.
     var hints = document.createElement('div');
@@ -173,4 +214,34 @@ function initGraph(container, toolbar, sidebar, status)
         graph.getModel().endUpdate();
     }
 
+};
+
+
+
+function addToolbarButton(editor, toolbar, action, label, image, isTransparent)
+{
+    var button = document.createElement('button');
+    button.style.fontSize = '10';
+    if (image != null)
+    {
+        var img = document.createElement('img');
+        img.setAttribute('src', image);
+        img.style.width = '16px';
+        img.style.height = '16px';
+        img.style.verticalAlign = 'middle';
+        img.style.marginRight = '2px';
+        button.appendChild(img);
+    }
+    if (isTransparent)
+    {
+        button.style.background = 'transparent';
+        button.style.color = '#FFFFFF';
+        button.style.border = 'none';
+    }
+    mxEvent.addListener(button, 'click', function(evt)
+    {
+        editor.execute(action);
+    });
+    mxUtils.write(button, label);
+    toolbar.appendChild(button);
 };
