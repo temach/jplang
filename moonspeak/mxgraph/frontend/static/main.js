@@ -51,6 +51,7 @@ function initGraph(container, toolbar, sidebar, status)
         }
     };
 
+
     // Constructs a new editor.  This function invokes the onInit callback upon completion.
     // var config = mxUtils.load('config/uiconfig.xml').getDocumentElement();
     var editor = new mxEditor();
@@ -75,6 +76,26 @@ function initGraph(container, toolbar, sidebar, status)
 
     // Change edge tolerance
     graph.setTolerance(20);
+
+    // Creates hover icons
+    var hoverIcons = new HoverIcons(graph);
+
+    // Hides hover icons when cells are moved
+    if (graph.graphHandler != null)
+    {
+        var graphHandlerStart = graph.graphHandler.start;
+        
+        graph.graphHandler.start = function()
+        {
+            if (hoverIcons != null)
+            {
+                hoverIcons.reset();
+            }
+            
+            graphHandlerStart.apply(this, arguments);
+        };
+    }
+
 
     // Enables rubberband (marquee) selection and a handler
     // for basic keystrokes (eg. return, escape during editing).
@@ -245,3 +266,4 @@ function addToolbarButton(editor, toolbar, action, label, image, isTransparent)
     mxUtils.write(button, label);
     toolbar.appendChild(button);
 };
+
