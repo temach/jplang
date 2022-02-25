@@ -54,7 +54,7 @@ function initGraph(container, toolbar, sidebar, status)
 
     // Constructs a new editor.  This function invokes the onInit callback upon completion.
     // var config = mxUtils.load('config/uiconfig.xml').getDocumentElement();
-    // var editor = new mxEditor();
+    var editor = new mxEditor();
 
     // Sets the graph container and configures the editor
     editor.setGraphContainer(container);
@@ -93,22 +93,22 @@ function initGraph(container, toolbar, sidebar, status)
     // Graph.prototype = proto;
     // var mxGraphWrapper = new Graph(null, null, false);
     // var mxGraphWrapper = new Graph(graph)
-    // var hoverIcons = new HoverIcons(graph);
+    var hoverIcons = new HoverIcons(graph);
 
-    // if (graph.graphHandler != null)
-    // {
-    //     var graphHandlerStart = graph.graphHandler.start;
-    //     
-    //     graph.graphHandler.start = function()
-    //     {
-    //         if (hoverIcons != null)
-    //         {
-    //             hoverIcons.reset();
-    //         }
-    //         
-    //         graphHandlerStart.apply(this, arguments);
-    //     };
-    // }
+    if (graph.graphHandler != null)
+    {
+        var graphHandlerStart = graph.graphHandler.start;
+        
+        graph.graphHandler.start = function()
+        {
+            if (hoverIcons != null)
+            {
+                hoverIcons.reset();
+            }
+            
+            graphHandlerStart.apply(this, arguments);
+        };
+    }
 
 
     // Enables rubberband (marquee) selection and a handler

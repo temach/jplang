@@ -133,6 +133,11 @@ HoverIcons.prototype.tolerance = (mxClient.IS_TOUCH) ? 6 : 0;
  */
 HoverIcons.prototype.init = function()
 {
+
+    // init from Graph
+	this.currentEdgeStyle = mxUtils.clone(this.defaultEdgeStyle);
+    // end init from Graph
+
     this.arrowUp = this.createArrow(this.triangleUp, mxResources.get('plusTooltip'));
     this.arrowRight = this.createArrow(this.triangleRight, mxResources.get('plusTooltip'));
     this.arrowDown = this.createArrow(this.triangleDown, mxResources.get('plusTooltip'));
@@ -378,7 +383,7 @@ HoverIcons.prototype.createArrow = function(img, tooltip)
     
     mxEvent.addListener(arrow, 'mouseleave', mxUtils.bind(this, function(evt)
     {
-        // Workaround for IE11 firing this event on touch
+        // Workaround for IE11 firing the event on touch
         if (!this.graph.isMouseDown)
         {
             this.resetActiveArrow();
@@ -694,7 +699,7 @@ HoverIcons.prototype.repaint = function()
                 {
                     var geo = this.graph.model.isVertex(cell) && this.graph.getCellGeometry(cell);
                     
-                    // Ignores collision if vertex is more than 3 times the size of this vertex
+                    // Ignores collision if vertex is more than 3 times the size of the vertex
                     if (cell != null && !this.graph.model.isAncestor(cell, this.currentState.cell) &&
                         !this.graph.isSwimlane(cell) && (geo == null || currentGeo == null ||
                         (geo.height < 3 * currentGeo.height && geo.width < 3 * currentGeo.width)))
@@ -1012,7 +1017,7 @@ HoverIcons.prototype.isTable = function(cell)
  */
 HoverIcons.prototype.getCompositeParent = function(cell)
 {
-	while (this.graph.isPart(cell))
+	while (this.isPart(cell))
 	{
 		var temp = this.graph.model.getParent(cell);
 		
@@ -1208,23 +1213,23 @@ HoverIcons.prototype.connectVertex = function(source, direction, length, evt, fo
 	var swimlane = target != null && this.graph.isSwimlane(target);
 	var realTarget = (!swimlane) ? target : null;
 
-	var execute = mxUtils.bind(this.graph, function(targetCell)
+	var execute = mxUtils.bind(this, function(targetCell)
 	{
 		if (createTarget == null || targetCell != null || (target == null && cloneSource))
 		{
-			this.model.beginUpdate();
+			this.graph.model.beginUpdate();
 			try
 			{
 				if (realTarget == null && duplicate)
 				{
 					// Handles relative children
 					var cellToClone = (targetCell != null) ? targetCell : source;
-					var geo = this.getCellGeometry(cellToClone);
+					var geo = this.graph.getCellGeometry(cellToClone);
 					
 					while (geo != null && geo.relative)
 					{
-						cellToClone = this.getModel().getParent(cellToClone);
-						geo = this.getCellGeometry(cellToClone);
+						cellToClone = this.graph.getModel().getParent(cellToClone);
+						geo = this.graph.getCellGeometry(cellToClone);
 					}
 					
 					// Handles composite cells for cloning
@@ -1233,10 +1238,10 @@ HoverIcons.prototype.connectVertex = function(source, direction, length, evt, fo
 					
 					if (targetCell != null)
 					{
-						this.addCells([realTarget], this.model.getParent(source), null, null, null, true);
+						this.graph.addCells([realTarget], this.graph.model.getParent(source), null, null, null, true);
 					}
 					
-					var geo = this.getCellGeometry(realTarget);
+					var geo = this.graph.getCellGeometry(realTarget);
 	
 					if (geo != null)
 					{
@@ -1246,21 +1251,21 @@ HoverIcons.prototype.connectVertex = function(source, direction, length, evt, fo
 					
 					if (swimlane)
 					{
-						this.addCells([realTarget], target, null, null, null, true);
+						this.graph.addCells([realTarget], target, null, null, null, true);
 						target = null;
 					}
 					else if (duplicate && target == null && !keepParent && !cloneSource)
 					{
-						this.addCells([realTarget], this.getDefaultParent(), null, null, null, true);
+						this.graph.addCells([realTarget], this.graph.getDefaultParent(), null, null, null, true);
 					}
 				}
 				
 				var edge = ((mxEvent.isControlDown(evt) && mxEvent.isShiftDown(evt) && duplicate) ||
-					(target == null && cloneSource)) ? null : this.insertEdge(this.model.getParent(source),
+					(target == null && cloneSource)) ? null : this.graph.insertEdge(this.graph.model.getParent(source),
 						null, '', source, realTarget, this.createCurrentEdgeStyle());
 		
 				// Inserts edge before source
-				if (edge != null && this.connectionHandler.insertBeforeSource)
+				if (edge != null && this.graph.connectionHandler.insertBeforeSource)
 				{
 					var index = null;
 					var tmp = source;
@@ -1268,13 +1273,13 @@ HoverIcons.prototype.connectVertex = function(source, direction, length, evt, fo
 					while (tmp.parent != null && tmp.geometry != null &&
 						tmp.geometry.relative && tmp.parent != edge.parent)
 					{
-						tmp = this.model.getParent(tmp);
+						tmp = this.graph.model.getParent(tmp);
 					}
 				
 					if (tmp != null && tmp.parent != null && tmp.parent == edge.parent)
 					{
 						var index = tmp.parent.getIndex(tmp);
-						this.model.add(tmp.parent, edge, index);
+						this.graph.model.add(tmp.parent, edge, index);
 					}
 				}
 				
@@ -1283,7 +1288,7 @@ HoverIcons.prototype.connectVertex = function(source, direction, length, evt, fo
 					cloneSource && direction == mxConstants.DIRECTION_WEST)
 				{
 					var index = source.parent.getIndex(source);
-					this.model.add(source.parent, realTarget, index);
+					this.graph.model.add(source.parent, realTarget, index);
 				}
 				
 				if (edge != null)
@@ -1303,12 +1308,12 @@ HoverIcons.prototype.connectVertex = function(source, direction, length, evt, fo
 				
 				if (edge != null)
 				{
-					this.fireEvent(new mxEventObject('cellsInserted', 'cells', [edge]));
+					this.graph.fireEvent(new mxEventObject('cellsInserted', 'cells', [edge]));
 				}
 			}
 			finally
 			{
-				this.model.endUpdate();
+				this.graph.model.endUpdate();
 			}
 		}
 			
@@ -1333,6 +1338,387 @@ HoverIcons.prototype.connectVertex = function(source, direction, length, evt, fo
 	}
 };
 
+/**
+ * Returns the first parent that is not a part.
+ */
+HoverIcons.prototype.isPart = function(cell)
+{
+	return mxUtils.getValue(this.graph.getCurrentCellStyle(cell), 'part', '0') == '1' ||
+		this.isTableCell(cell) || this.isTableRow(cell);
+};
+
+/**
+ * Duplicates the given cells and returns the duplicates.
+ */
+HoverIcons.prototype.duplicateCells = function(cells, append)
+{
+	cells = (cells != null) ? cells : this.graph.getSelectionCells();
+	append = (append != null) ? append : true;
+	
+	// Duplicates rows for table cells
+	for (var i = 0; i < cells.length; i++)
+	{
+		if (this.isTableCell(cells[i]))
+		{
+			cells[i] = this.graph.model.getParent(cells[i]);
+		}
+	}
+	
+	cells = this.graph.model.getTopmostCells(cells);
+	
+	var model = this.graph.getModel();
+	var s = this.graph.gridSize;
+	var select = [];
+	
+	model.beginUpdate();
+	try
+	{
+		var clones = this.graph.cloneCells(cells, false, null, true);
+		
+		for (var i = 0; i < cells.length; i++)
+		{
+			var parent = model.getParent(cells[i]);
+			var child = this.moveCells([clones[i]], s, s, false)[0];
+			select.push(child);
+			
+			if (append)
+			{
+				model.add(parent, clones[i]);
+			}
+			else
+			{
+				// Maintains child index by inserting after clone in parent
+				var index = parent.getIndex(cells[i]);
+				model.add(parent, clones[i], index + 1);
+			}
+			
+			// Extends tables	
+			if (this.isTable(parent))
+			{
+				var row = this.graph.getCellGeometry(clones[i]);
+				var table = this.graph.getCellGeometry(parent);
+				
+				if (row != null && table != null)
+				{
+					table = table.clone();
+					table.height += row.height;
+					model.setGeometry(parent, table);
+				}
+			}
+		}
+	}
+	finally
+	{
+		model.endUpdate();
+	}
+	
+	return select;
+};
+
+
+/**
+ * Overrides cloning cells in moveCells.
+ */
+HoverIcons.prototype.moveCells = function(cells, dx, dy, clone, target, evt, mapping)
+{
+	mapping = (mapping != null) ? mapping : new Object();
+	
+	// Replaces source tables with rows
+	if (this.isTable(target))
+	{
+		var newCells = [];
+		
+		for (var i = 0; i < cells.length; i++)
+		{
+			if (this.isTable(cells[i]))
+			{
+				newCells = newCells.concat(this.graph.model.getChildCells(cells[i], true).reverse());
+			}
+			else
+			{
+				newCells.push(cells[i]);
+			}
+		}
+		
+		cells = newCells;
+	}
+	
+	this.graph.model.beginUpdate();
+	try
+	{
+		// Updates source and target table heights and matches
+		// column count for moving rows between tables
+		var sourceTables = [];
+		
+		for (var i = 0; i < cells.length; i++)
+		{
+			if (target != null && this.isTableRow(cells[i]))
+			{
+				var parent = this.graph.model.getParent(cells[i]);
+				var row = this.graph.getCellGeometry(cells[i]);
+				
+				if (this.isTable(parent))
+				{
+					sourceTables.push(parent);
+				}
+				
+				if (parent != null && row != null &&
+					this.isTable(parent) &&
+					this.isTable(target) &&
+					(clone || parent != target))
+				{
+					if (!clone)
+					{
+						var table = this.graph.getCellGeometry(parent);
+				
+						if (table != null)
+						{
+							table = table.clone();
+							table.height -= row.height;
+							this.graph.model.setGeometry(parent, table);
+						}
+					}
+
+					var table = this.graph.getCellGeometry(target);
+			
+					if (table != null)
+					{
+						table = table.clone();
+						table.height += row.height;
+						this.graph.model.setGeometry(target, table);
+					}
+					
+					// Matches column count
+					var rows = this.graph.model.getChildCells(target, true);
+					
+					if (rows.length > 0)
+					{
+						var cell = (clone) ? this.graph.cloneCell(cells[i]) : cells[i];
+						
+						var sourceCols = this.graph.model.getChildCells(cell, true);
+						var cols = this.graph.model.getChildCells(rows[0], true);
+						var count = cols.length - sourceCols.length;
+						
+						if (count > 0)
+						{
+							for (var j = 0; j < count; j++)
+							{
+								var col = this.graph.cloneCell(sourceCols[sourceCols.length - 1]);
+								
+								if (col != null)
+								{
+									col.value = '';
+									
+									this.graph.model.add(cell, col);
+								}
+							}
+						}
+						else if (count < 0)
+						{
+							for (var j = 0; j > count; j--)
+							{
+								this.graph.model.remove(sourceCols[sourceCols.length + j - 1]);
+							}
+						}
+						
+						// Updates column widths
+						sourceCols = this.graph.model.getChildCells(cell, true);
+						
+						for (var j = 0; j < cols.length; j++)
+						{
+							var geo = this.graph.getCellGeometry(cols[j]);
+							var geo2 = this.graph.getCellGeometry(sourceCols[j]);
+							
+							if (geo != null && geo2 != null)
+							{
+								geo2 = geo2.clone();
+								geo2.width = geo.width;
+								
+								this.graph.model.setGeometry(sourceCols[j], geo2);
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		var result = mxGraph.prototype.moveCells.apply(this.graph, arguments);
+		
+		// Removes empty tables
+		for (var i = 0; i < sourceTables.length; i++)
+		{
+			if (!clone && this.graph.model.contains(sourceTables[i]) &&
+				this.graph.model.getChildCount(sourceTables[i]) == 0)
+			{
+				this.graph.model.remove(sourceTables[i]);	
+			}
+		}
+	}
+	finally
+	{
+		this.graph.model.endUpdate();
+	}
+	
+	return result;
+};
+
+
+/**
+ * Function: distributeCells
+ * 
+ * Distribuets the centers of the given cells equally along the available
+ * horizontal or vertical space.
+ * 
+ * Parameters:
+ * 
+ * horizontal - Boolean that specifies the direction of the distribution.
+ * cells - Optional array of <mxCells> to be distributed. Edges are ignored.
+ */
+HoverIcons.prototype.distributeCells = function(horizontal, cells)
+{
+	if (cells == null)
+	{
+		cells = this.graph.getSelectionCells();
+	}
+	
+	if (cells != null && cells.length > 1)
+	{
+		var vertices = [];
+		var max = null;
+		var min = null;
+		
+		for (var i = 0; i < cells.length; i++)
+		{
+			if (this.graph.getModel().isVertex(cells[i]))
+			{
+				var state = this.graph.view.getState(cells[i]);
+				
+				if (state != null)
+				{
+					var tmp = (horizontal) ? state.getCenterX() : state.getCenterY();
+					max = (max != null) ? Math.max(max, tmp) : tmp;
+					min = (min != null) ? Math.min(min, tmp) : tmp;
+					
+					vertices.push(state);
+				}
+			}
+		}
+		
+		if (vertices.length > 2)
+		{
+			vertices.sort(function(a, b)
+			{
+				return (horizontal) ? a.x - b.x : a.y - b.y;
+			});
+
+			var t = this.graph.view.translate;
+			var s = this.graph.view.scale;
+			
+			min = min / s - ((horizontal) ? t.x : t.y);
+			max = max / s - ((horizontal) ? t.x : t.y);
+			
+			this.graph.getModel().beginUpdate();
+			try
+			{
+				var dt = (max - min) / (vertices.length - 1);
+				var t0 = min;
+				
+				for (var i = 1; i < vertices.length - 1; i++)
+				{
+					var pstate = this.graph.view.getState(this.graph.model.getParent(vertices[i].cell));
+					var geo = this.graph.getCellGeometry(vertices[i].cell);
+					t0 += dt;
+					
+					if (geo != null && pstate != null)
+					{
+						geo = geo.clone();
+						
+						if (horizontal)
+						{
+							geo.x = Math.round(t0 - geo.width / 2) - pstate.origin.x;
+						}
+						else
+						{
+							geo.y = Math.round(t0 - geo.height / 2) - pstate.origin.y;
+						}
+						
+						this.graph.getModel().setGeometry(vertices[i].cell, geo);
+					}
+				}
+			}
+			finally
+			{
+				this.graph.getModel().endUpdate();
+			}
+		}
+	}
+	
+	return cells;
+};
+
+
+/**
+ * Returns the current edge style as a string.
+ */
+HoverIcons.prototype.createCurrentEdgeStyle = function()
+{
+	var style = 'edgeStyle=' + (this.currentEdgeStyle['edgeStyle'] || 'none') + ';';
+	var keys = ['shape', 'curved', 'rounded', 'comic', 'sketch', 'fillWeight', 'hachureGap',
+		'hachureAngle', 'jiggle', 'disableMultiStroke', 'disableMultiStrokeFill', 'fillStyle',
+		'curveFitting', 'simplification', 'comicStyle', 'jumpStyle', 'jumpSize'];
+	
+	for (var i = 0; i < keys.length; i++)
+	{
+		if (this.currentEdgeStyle[keys[i]] != null)
+		{
+			style += keys[i] + '=' + this.currentEdgeStyle[keys[i]] + ';';
+		}
+	}
+	
+	// Overrides the global default to match the default edge style
+	if (this.currentEdgeStyle['orthogonalLoop'] != null)
+	{
+		style += 'orthogonalLoop=' + this.currentEdgeStyle['orthogonalLoop'] + ';';
+	}
+	else if (Graph.prototype.defaultEdgeStyle['orthogonalLoop'] != null)
+	{
+		style += 'orthogonalLoop=' + Graph.prototype.defaultEdgeStyle['orthogonalLoop'] + ';';
+	}
+
+	// Overrides the global default to match the default edge style
+	if (this.currentEdgeStyle['jettySize'] != null)
+	{
+		style += 'jettySize=' + this.currentEdgeStyle['jettySize'] + ';';
+	}
+	else if (Graph.prototype.defaultEdgeStyle['jettySize'] != null)
+	{
+		style += 'jettySize=' + Graph.prototype.defaultEdgeStyle['jettySize'] + ';';
+	}
+	
+	// Special logic for custom property of elbowEdgeStyle
+	if (this.currentEdgeStyle['edgeStyle'] == 'elbowEdgeStyle' && this.currentEdgeStyle['elbow'] != null)
+	{
+		style += 'elbow=' + this.currentEdgeStyle['elbow'] + ';';
+	}
+	
+	if (this.currentEdgeStyle['html'] != null)
+	{
+		style += 'html=' + this.currentEdgeStyle['html'] + ';';
+	}
+	else
+	{
+		style += 'html=1;';
+	}
+	
+	return style;
+};
+
+/**
+ * Contains the default style for edges.
+ */
+HoverIcons.prototype.defaultEdgeStyle = {'edgeStyle': 'orthogonalEdgeStyle', 'rounded': '0',
+	'jettySize': 'auto', 'orthogonalLoop': '1'};
+	
 
 /**
  * These overrides are only added if mxVertexHandler is defined (ie. not in embedded graph)

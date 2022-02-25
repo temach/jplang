@@ -163,9 +163,9 @@ mxShape.prototype.getConstraints = function(style, w, h)
 /**
  * Defines graph class.
  */
-Graph.prototype.init = function(stylesheet, themes, standalone)
+Graph = function(container, model, renderHint, stylesheet, themes, standalone)
 {
-	// mxGraph.call(this, container, model, renderHint, stylesheet);
+	mxGraph.call(this, container, model, renderHint, stylesheet);
 	
 	this.themes = themes || this.defaultThemes;
 	this.currentEdgeStyle = mxUtils.clone(this.defaultEdgeStyle);
@@ -1449,7 +1449,7 @@ Graph.linkPattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
 /**
  * Graph inherits from mxGraph.
  */
-// mxUtils.extend(Graph, mxGraph);
+mxUtils.extend(Graph, mxGraph);
 
 /**
  * Allows all values in fit.
@@ -1588,9 +1588,9 @@ Graph.prototype.standalone = false;
 /**
  * Installs child layout styles.
  */
-Graph.prototype.init2 = function(container)
+Graph.prototype.init = function(container)
 {
-	// mxGraph.prototype.init.apply(this, arguments);
+	mxGraph.prototype.init.apply(this, arguments);
 
 	// Intercepts links with no target attribute and opens in new window
 	this.cellRenderer.initializeLabel = function(state, shape)
