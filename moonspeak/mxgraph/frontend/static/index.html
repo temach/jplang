@@ -3,10 +3,7 @@
 	<title>Basic panel</title>
 </head>
 
-<body onload="initGraph(document.getElementById('graphContainer'),
-		 	document.getElementById('toolbarContainer'),
-			document.getElementById('sidebarContainer'),
-			document.getElementById('statusContainer'));">
+<body onload="">
 
     <!-- Creates a container for the sidebar -->
     <div id="toolbarContainer"
@@ -32,7 +29,80 @@
     </div>
  
 	<script type="text/javascript" src="mxClient.js"></script>
-	<script type="text/javascript" src="HoverIcons.js"></script>
+    <script type="text/javascript">
+        // Parses URL parameters. Supported parameters are:
+        // - lang=xy: Specifies the language of the user interface.
+        // - touch=1: Enables a touch-style user interface.
+        // - storage=local: Enables HTML5 local storage.
+        // - chrome=0: Chromeless mode.
+        var urlParams = (function(url)
+        {
+                var result = new Object();
+                var idx = url.lastIndexOf('?');
+                if (idx > 0)
+                {
+                        var params = url.substring(idx + 1).split('&');
+                        for (var i = 0; i < params.length; i++)
+                        {
+                                idx = params[i].indexOf('=');
+                                if (idx > 0)
+                                {
+                                        result[params[i].substring(0, idx)] = params[i].substring(idx + 1);
+                                }
+                        }
+                }
+                return result;
+        })(window.location.href);
+   
+        // Default resources are included in grapheditor resources
+        // mxLoadResources = false;
+    </script>
+
+    <script type="text/javascript">
+        // Constructs a new editor.  This function invokes the onInit callback upon completion.
+        // var config = mxUtils.load('config/uiconfig.xml').getDocumentElement();
+        var editor = new mxEditor();
+    </script>
+
+	<script type="text/javascript" src="GraphDef.js"></script>
+
 	<script type="text/javascript" src="main.js"></script>
+
+    <script type="text/javascript">
+    initGraph(document.getElementById('graphContainer'),
+		 	document.getElementById('toolbarContainer'),
+			document.getElementById('sidebarContainer'),
+			document.getElementById('statusContainer'));
+    </script>
+
+    <script type="text/javascript">
+        // var graphWrapper = new Graph(null, null, false);
+        Graph.prototype = editor.graph;
+    </script>
+
+	<script type="text/javascript" src="Graph.js"></script>
+
+    <script type="text/javascript">
+        // var graphWrapper = new Graph(null, null, false);
+        // Graph.prototype = editor.graph;
+        Graph.prototype.init.call(editor.graph, null, null, false);
+        // var graph = editor.graph;
+
+        // if (graph.graphHandler != null)
+        // {
+        //     var graphHandlerStart = graph.graphHandler.start;
+        //     
+        //     graph.graphHandler.start = function()
+        //     {
+        //         if (hoverIcons != null)
+        //         {
+        //             hoverIcons.reset();
+        //         }
+        //         
+        //         graphHandlerStart.apply(this, arguments);
+        //     };
+        // }
+
+    </script>
 </body>
 </html>

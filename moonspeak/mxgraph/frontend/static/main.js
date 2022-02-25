@@ -54,7 +54,7 @@ function initGraph(container, toolbar, sidebar, status)
 
     // Constructs a new editor.  This function invokes the onInit callback upon completion.
     // var config = mxUtils.load('config/uiconfig.xml').getDocumentElement();
-    var editor = new mxEditor();
+    // var editor = new mxEditor();
 
     // Sets the graph container and configures the editor
     editor.setGraphContainer(container);
@@ -77,24 +77,38 @@ function initGraph(container, toolbar, sidebar, status)
     // Change edge tolerance
     graph.setTolerance(20);
 
-    // Creates hover icons
-    var hoverIcons = new HoverIcons(graph);
-
-    // Hides hover icons when cells are moved
-    if (graph.graphHandler != null)
+    // Render only 4 sizers on each box, not singleSizer, not all sizers
+    mxVertexHandler.prototype.isSizerVisible = function(index)
     {
-        var graphHandlerStart = graph.graphHandler.start;
-        
-        graph.graphHandler.start = function()
-        {
-            if (hoverIcons != null)
-            {
-                hoverIcons.reset();
-            }
-            
-            graphHandlerStart.apply(this, arguments);
-        };
-    }
+        return index === 0 || index === 2 || index === 5 || index === 7;
+    };
+
+    // Creates hover icons and hides hover icons when cells are moved
+    // Graph.prototype = graph;
+    // var mxGraphWrapper = new Graph(graph, null, null, false);
+    // var mxGraphWrapper = new Graph(graph, null, null, false);
+    // mxUtils.extend(mxGraph, Graph);
+    // Graph.call(graph, null, null, false);
+    // var proto = Object.create(graph, Graph.prototype);
+    // Graph.prototype = proto;
+    // var mxGraphWrapper = new Graph(null, null, false);
+    // var mxGraphWrapper = new Graph(graph)
+    // var hoverIcons = new HoverIcons(graph);
+
+    // if (graph.graphHandler != null)
+    // {
+    //     var graphHandlerStart = graph.graphHandler.start;
+    //     
+    //     graph.graphHandler.start = function()
+    //     {
+    //         if (hoverIcons != null)
+    //         {
+    //             hoverIcons.reset();
+    //         }
+    //         
+    //         graphHandlerStart.apply(this, arguments);
+    //     };
+    // }
 
 
     // Enables rubberband (marquee) selection and a handler

@@ -546,7 +546,7 @@ HoverIcons.prototype.execute = function(state, dir, me)
 {
     var evt = me.getEvent();
 
-    this.selectCellsForConnectVertex(this.graph.connectVertex(
+    this.selectCellsForConnectVertex(this.connectVertex(
         state.cell, dir, this.defaultEdgeLength, evt, this.graph.isCloneEvent(evt),
         this.graph.isCloneEvent(evt)), evt, this);
 };
@@ -982,6 +982,14 @@ HoverIcons.prototype.getCellAt = function(x, y, parent, vertices, edges, ignoreF
 };
 
 /**
+ * Returns true if the given cell is a table cell.
+ */
+HoverIcons.prototype.isTableCell = function(cell)
+{
+	return this.graph.model.isVertex(cell) && this.isTableRow(this.graph.model.getParent(cell));
+};
+
+/**
  * Returns true if the given cell is a table row.
  */
 HoverIcons.prototype.isTableRow = function(cell)
@@ -999,6 +1007,331 @@ HoverIcons.prototype.isTable = function(cell)
 	return style != null && style['childLayout'] == 'tableLayout';
 };
 
+/**
+ * Returns the first parent that is not a part.
+ */
+HoverIcons.prototype.getCompositeParent = function(cell)
+{
+	while (this.graph.isPart(cell))
+	{
+		var temp = this.graph.model.getParent(cell);
+		
+		if (!this.graph.model.isVertex(temp))
+		{
+			break;
+		}
+		
+		cell = temp;
+	}
+	
+	return cell;
+};
+
+
+/**
+ * Never connects children in stack layouts or tables.
+ */
+HoverIcons.prototype.isCloneConnectSource = function(source)
+{
+	var layout = null;
+
+	if (this.graph.layoutManager != null)
+	{
+		layout = this.graph.layoutManager.getLayout(this.graph.model.getParent(source));
+	}
+	
+	return this.isTableRow(source) || this.isTableCell(source) ||
+		(layout != null && layout.constructor == mxStackLayout);
+};
+
+
+/**
+ * Adds a connection to the given vertex.
+ */
+HoverIcons.prototype.connectVertex = function(source, direction, length, evt, forceClone, ignoreCellAt, createTarget, done)
+{	
+	ignoreCellAt = (ignoreCellAt) ? ignoreCellAt : false;
+	
+	// Ignores relative edge labels
+	if (source.geometry.relative && this.graph.model.isEdge(source.parent))
+	{
+		return [];
+	}
+	
+	// Uses parent for relative child cells
+	while (source.geometry.relative && this.graph.model.isVertex(source.parent))
+	{
+		source = source.parent;
+	}
+	
+	// Handles clone connect sources
+	var cloneSource = this.isCloneConnectSource(source);
+	var composite = (cloneSource) ? source : this.getCompositeParent(source);
+	
+	var pt = (source.geometry.relative && source.parent.geometry != null) ?
+		new mxPoint(source.parent.geometry.width * source.geometry.x,
+			source.parent.geometry.height * source.geometry.y) :
+		new mxPoint(composite.geometry.x, composite.geometry.y);
+		
+	if (direction == mxConstants.DIRECTION_NORTH)
+	{
+		pt.x += composite.geometry.width / 2;
+		pt.y -= length ;
+	}
+	else if (direction == mxConstants.DIRECTION_SOUTH)
+	{
+		pt.x += composite.geometry.width / 2;
+		pt.y += composite.geometry.height + length;
+	}
+	else if (direction == mxConstants.DIRECTION_WEST)
+	{
+		pt.x -= length;
+		pt.y += composite.geometry.height / 2;
+	}
+	else
+	{
+		pt.x += composite.geometry.width + length;
+		pt.y += composite.geometry.height / 2;
+	}
+
+	var parentState = this.graph.view.getState(this.graph.model.getParent(source));
+	var s = this.graph.view.scale;
+	var t = this.graph.view.translate;
+	var dx = t.x * s;
+	var dy = t.y * s;
+	
+	if (parentState != null && this.graph.model.isVertex(parentState.cell))
+	{
+		dx = parentState.x;
+		dy = parentState.y;
+	}
+
+	// Workaround for relative child cells
+	if (this.graph.model.isVertex(source.parent) && source.geometry.relative)
+	{
+		pt.x += source.parent.geometry.x;
+		pt.y += source.parent.geometry.y;
+	}
+	
+	// Checks actual end point of edge for target cell
+	var rect = (!ignoreCellAt) ? new mxRectangle(dx + pt.x * s, dy + pt.y * s).grow(40) : null;
+	var tempCells = (rect != null) ? this.graph.getCells(0, 0, 0, 0, null, null, rect) : null;
+	var target = (tempCells != null && tempCells.length > 0) ? tempCells.reverse()[0] : null;
+	var keepParent = false;
+	
+	if (target != null && this.graph.model.isAncestor(target, source))
+	{
+		keepParent = true;
+		target = null;
+	}
+	
+	// Checks for swimlane at drop location
+	if (target == null)
+	{
+		var temp = this.graph.getSwimlaneAt(dx + pt.x * s, dy + pt.y * s);
+		
+		if (temp != null)
+		{
+			keepParent = false;
+			target = temp;
+		}
+	}
+	
+	// Checks if target or ancestor is locked
+	var temp = target;
+	
+	while (temp != null)
+	{
+		if (this.graph.isCellLocked(temp))
+		{
+			target = null;
+			break;
+		}
+		
+		temp = this.graph.model.getParent(temp);
+	}
+	
+	// Checks if source and target intersect
+	if (target != null)
+	{
+		var sourceState = this.graph.view.getState(source);
+		var targetState = this.graph.view.getState(target);
+		
+		if (sourceState != null && targetState != null && mxUtils.intersects(sourceState, targetState))
+		{
+			target = null;
+		}
+	}
+	
+	var duplicate = (!mxEvent.isShiftDown(evt) || mxEvent.isControlDown(evt)) || forceClone;
+	
+	if (duplicate)
+	{
+		if (direction == mxConstants.DIRECTION_NORTH)
+		{
+			pt.y -= source.geometry.height / 2;
+		}
+		else if (direction == mxConstants.DIRECTION_SOUTH)
+		{
+			pt.y += source.geometry.height / 2;
+		}
+		else if (direction == mxConstants.DIRECTION_WEST)
+		{
+			pt.x -= source.geometry.width / 2;
+		}
+		else
+		{
+			pt.x += source.geometry.width / 2;
+		}
+	}
+
+	// Uses connectable parent vertex if one exists
+	// TODO: Fix using target as parent for swimlane
+	if (target != null && !this.graph.isCellConnectable(target) && !this.graph.isSwimlane(target))
+	{
+		var parent = this.graph.getModel().getParent(target);
+		
+		if (this.graph.getModel().isVertex(parent) && this.graph.isCellConnectable(parent))
+		{
+			target = parent;
+		}
+	}
+	
+	if (target == source || this.graph.model.isEdge(target) ||
+		!this.graph.isCellConnectable(target) &&
+		!this.graph.isSwimlane(target))
+	{
+		target = null;
+	}
+	
+	var result = [];
+	var swimlane = target != null && this.graph.isSwimlane(target);
+	var realTarget = (!swimlane) ? target : null;
+
+	var execute = mxUtils.bind(this.graph, function(targetCell)
+	{
+		if (createTarget == null || targetCell != null || (target == null && cloneSource))
+		{
+			this.model.beginUpdate();
+			try
+			{
+				if (realTarget == null && duplicate)
+				{
+					// Handles relative children
+					var cellToClone = (targetCell != null) ? targetCell : source;
+					var geo = this.getCellGeometry(cellToClone);
+					
+					while (geo != null && geo.relative)
+					{
+						cellToClone = this.getModel().getParent(cellToClone);
+						geo = this.getCellGeometry(cellToClone);
+					}
+					
+					// Handles composite cells for cloning
+					cellToClone =  (cloneSource) ? source : this.getCompositeParent(cellToClone);
+					realTarget = (targetCell != null) ? targetCell : this.duplicateCells([cellToClone], false)[0];
+					
+					if (targetCell != null)
+					{
+						this.addCells([realTarget], this.model.getParent(source), null, null, null, true);
+					}
+					
+					var geo = this.getCellGeometry(realTarget);
+	
+					if (geo != null)
+					{
+						geo.x = pt.x - geo.width / 2;
+						geo.y = pt.y - geo.height / 2;
+					}
+					
+					if (swimlane)
+					{
+						this.addCells([realTarget], target, null, null, null, true);
+						target = null;
+					}
+					else if (duplicate && target == null && !keepParent && !cloneSource)
+					{
+						this.addCells([realTarget], this.getDefaultParent(), null, null, null, true);
+					}
+				}
+				
+				var edge = ((mxEvent.isControlDown(evt) && mxEvent.isShiftDown(evt) && duplicate) ||
+					(target == null && cloneSource)) ? null : this.insertEdge(this.model.getParent(source),
+						null, '', source, realTarget, this.createCurrentEdgeStyle());
+		
+				// Inserts edge before source
+				if (edge != null && this.connectionHandler.insertBeforeSource)
+				{
+					var index = null;
+					var tmp = source;
+					
+					while (tmp.parent != null && tmp.geometry != null &&
+						tmp.geometry.relative && tmp.parent != edge.parent)
+					{
+						tmp = this.model.getParent(tmp);
+					}
+				
+					if (tmp != null && tmp.parent != null && tmp.parent == edge.parent)
+					{
+						var index = tmp.parent.getIndex(tmp);
+						this.model.add(tmp.parent, edge, index);
+					}
+				}
+				
+				// Special case: Click on west icon puts clone before cell
+				if (target == null && realTarget != null && source.parent != null &&
+					cloneSource && direction == mxConstants.DIRECTION_WEST)
+				{
+					var index = source.parent.getIndex(source);
+					this.model.add(source.parent, realTarget, index);
+				}
+				
+				if (edge != null)
+				{
+					result.push(edge);
+				}
+				
+				if (target == null && realTarget != null)
+				{
+					result.push(realTarget);
+				}
+				
+				if (realTarget == null && edge != null)
+				{
+					edge.geometry.setTerminalPoint(pt, false);
+				}
+				
+				if (edge != null)
+				{
+					this.fireEvent(new mxEventObject('cellsInserted', 'cells', [edge]));
+				}
+			}
+			finally
+			{
+				this.model.endUpdate();
+			}
+		}
+			
+		if (done != null)
+		{
+			done(result);
+		}
+		else
+		{
+			return result;
+		}
+	});
+	
+	if (createTarget != null && realTarget == null && duplicate &&
+		(target != null || !cloneSource))
+	{
+		createTarget(dx + pt.x * s, dy + pt.y * s, execute);
+	}
+	else
+	{
+		return execute(realTarget);
+	}
+};
 
 
 /**
