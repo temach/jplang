@@ -84,15 +84,6 @@ function initGraph(container, toolbar, sidebar, status)
     };
 
     // Creates hover icons and hides hover icons when cells are moved
-    // Graph.prototype = graph;
-    // var mxGraphWrapper = new Graph(graph, null, null, false);
-    // var mxGraphWrapper = new Graph(graph, null, null, false);
-    // mxUtils.extend(mxGraph, Graph);
-    // Graph.call(graph, null, null, false);
-    // var proto = Object.create(graph, Graph.prototype);
-    // Graph.prototype = proto;
-    // var mxGraphWrapper = new Graph(null, null, false);
-    // var mxGraphWrapper = new Graph(graph)
     var hoverIcons = new HoverIcons(graph);
 
     if (graph.graphHandler != null)
@@ -109,12 +100,6 @@ function initGraph(container, toolbar, sidebar, status)
             graphHandlerStart.apply(this, arguments);
         };
     }
-
-
-    // Enables rubberband (marquee) selection and a handler
-    // for basic keystrokes (eg. return, escape during editing).
-    // var rubberband = new mxRubberband(graph);
-    // var keyHandler = new mxKeyHandler(graph);
 
     // Defines an icon for creating new connections in the connection handler.
     // This will automatically disable the highlighting of the source vertex.
