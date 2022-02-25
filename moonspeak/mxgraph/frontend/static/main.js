@@ -20,6 +20,13 @@ function initGraph(container, toolbar, sidebar, status)
     // container.style.bottom = '0px';
     container.style.background = 'url("images/grid.gif")';
 
+    // Disable mxConnectionHandler initiating connections from the center of a shape
+    // also disables border highlight when moving mouse over shape center
+    mxGraph.prototype.isIgnoreTerminalEvent = function(evt)
+    {
+        return true;
+    };
+
     // Adjust hanlders to make sure right click is only for panning
     var mxSelectionCellsHandlerMouseDown = mxSelectionCellsHandler.prototype.mouseDown;
     mxSelectionCellsHandler.prototype.mouseDown = function(sender, me)
