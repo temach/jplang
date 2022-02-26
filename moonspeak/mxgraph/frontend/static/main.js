@@ -118,33 +118,6 @@ function initGraph(container, toolbar, sidebar, status)
         };
     }
 
-    // When moving the edge, snap and move the start or end port
-    // becasue rigidly moving the whole edge is not useful
-    graph.graphHandler.setMoveEnabled(false);
-    var mxEdgeHandlerGetHandleForEvent = mxEdgeHandler.prototype.getHandleForEvent;
-    mxEdgeHandler.prototype.getHandleForEvent = function(me)
-    {
-        // call the original
-        var handle = mxEdgeHandlerGetHandleForEvent.apply(this, arguments);
-
-        // if handle is null, meaning the edge line was clicked, not any specific marker on the edge
-        // then force select one of the end markers (either start or end port)
-        if (handle == null && this.bends != null && me.state != null && me.state.cell == this.state.cell)
-        {
-            var start = this.bends[0];
-            var startDist = sqrtDist(me.getGraphX(), me.getGraphY(), start.bounds.getCenterX(), start.bounds.getCenterY());
-            var end = this.bends[this.bends.length - 1];
-            var endDist = sqrtDist(me.getGraphX(), me.getGraphY(), end.bounds.getCenterX(), end.bounds.getCenterY());
-            if (startDist < endDist) {
-                return 0;
-            } else {
-                return this.bends.length - 1;
-            }
-        }
-
-        return handle;
-    };
-
     // Defines an icon for creating new connections in the connection handler.
     // This will automatically disable the highlighting of the source vertex.
     // mxConnectionHandler.prototype.connectImage = new mxImage('images/connector.gif', 16, 16);
@@ -165,6 +138,35 @@ function initGraph(container, toolbar, sidebar, status)
     style[mxConstants.STYLE_ROUNDED] = true;
     style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector;
     graph.alternateEdgeStyle = 'elbow=vertical';
+
+    // When moving the edge, snap and move the start or end port
+    // becasue rigidly moving the whole edge is not useful
+    style[mxConstants.STYLE_MOVABLE] = 0;
+
+    var mxEdgeHandlerGetHandleForEvent = mxEdgeHandler.prototype.getHandleForEvent;
+    mxEdgeHandler.prototype.getHandleForEvent = function(me)
+    {
+        // call the original
+        var handle = mxEdgeHandlerGetHandleForEvent.apply(this, arguments);
+    
+        // if handle is null, meaning the edge line was clicked, not any specific marker on the edge
+        // then force select one of the end markers (either start or end port)
+        if (handle == null && this.bends != null && me.state != null && me.state.cell == this.state.cell)
+        {
+            var start = this.bends[0];
+            var startDist = sqrtDist(me.getGraphX(), me.getGraphY(), start.bounds.getCenterX(), start.bounds.getCenterY());
+            var end = this.bends[this.bends.length - 1];
+            var endDist = sqrtDist(me.getGraphX(), me.getGraphY(), end.bounds.getCenterX(), end.bounds.getCenterY());
+            if (startDist < endDist) {
+                return 0;
+            } else {
+                return this.bends.length - 1;
+            }
+        }
+    
+        return handle;
+    };
+
 
     // Adds zoom buttons in top, left corner
     var buttons = document.createElement('div');
