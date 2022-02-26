@@ -27,11 +27,18 @@ function initGraph(container, toolbar, sidebar, status)
 
     // Disable mxConnectionHandler initiating connections from the center of a shape
     // also disables border highlight when moving mouse over shape center
-    // mxGraph.prototype.isIgnoreTerminalEvent = function(evt)
-    // {
-    //     return true;
-    // };
+    var mxGraphIsIgnoreTerminalEvent = mxGraph.prototype.isIgnoreTerminalEvent;
+    mxGraph.prototype.isIgnoreTerminalEvent = function(evt)
+    {
+        if (evt.buttons == 0) {
+            // just mousing over, ignore such events
+            return true;
+        }
+        return mxGraphIsIgnoreTerminalEvent.call(this, arguments);
+    };
 
+    // When moving the edge, snap and move the start or end port
+    // becasue rigidly moving the whole edge is not useful
     var mxEdgeHandlerGetHandleForEvent = mxEdgeHandler.prototype.getHandleForEvent;
     mxEdgeHandler.prototype.getHandleForEvent = function(me)
     {
@@ -40,8 +47,7 @@ function initGraph(container, toolbar, sidebar, status)
 
         // if handle is null, meaning the edge line was clicked, not any specific marker on the edge
         // then force select one of the end markers (either start or end port)
-        // this.graph.isCellSelected(this.state.cell)
-        if (handle == null && this.bends != null &&  me.state != null && me.state.cell == this.state.cell)
+        if (handle == null && this.bends != null && me.state != null && me.state.cell == this.state.cell)
         {
             var start = this.bends[0];
             var startDist = sqrtDist(me.getGraphX(), me.getGraphY(), start.bounds.getCenterX(), start.bounds.getCenterY());
