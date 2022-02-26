@@ -20,12 +20,43 @@ function initGraph(container, toolbar, sidebar, status)
     // container.style.bottom = '0px';
     container.style.background = 'url("images/grid.gif")';
 
+    // mxGraph.prototype.allowDanglingEdges = false;
+
+    // Do not allow multiple edges between any two components, this is a DAG
+    mxGraph.prototype.multigraph = false;
+
     // Disable mxConnectionHandler initiating connections from the center of a shape
     // also disables border highlight when moving mouse over shape center
-    mxGraph.prototype.isIgnoreTerminalEvent = function(evt)
+    // mxGraph.prototype.isIgnoreTerminalEvent = function(evt)
+    // {
+    //     return true;
+    // };
+
+    var mxEdgeHandlerGetHandleForEvent = mxEdgeHandler.prototype.getHandleForEvent;
+    mxEdgeHandler.prototype.getHandleForEvent = function(me)
     {
-        return true;
+        // call the original
+        var handle = mxEdgeHandlerGetHandleForEvent.apply(this, arguments);
+
+        // if handle is null, meaning the edge line was clicked, not any specific marker on the edge
+        // then force select one of the end markers (either start or end port)
+        // this.graph.isCellSelected(this.state.cell)
+        if (handle == null && this.bends != null &&  me.state != null && me.state.cell == this.state.cell)
+        {
+            var start = this.bends[0];
+            var startDist = sqrtDist(me.getGraphX(), me.getGraphY(), start.bounds.getCenterX(), start.bounds.getCenterY());
+            var end = this.bends[this.bends.length - 1];
+            var endDist = sqrtDist(me.getGraphX(), me.getGraphY(), end.bounds.getCenterX(), end.bounds.getCenterY());
+            if (startDist < endDist) {
+                return 0;
+            } else {
+                return this.bends.length - 1;
+            }
+        }
+
+        return handle;
     };
+
 
     // Adjust hanlders to make sure right click is only for panning
     var mxSelectionCellsHandlerMouseDown = mxSelectionCellsHandler.prototype.mouseDown;
@@ -271,5 +302,14 @@ function addToolbarButton(editor, toolbar, action, label, image, isTransparent)
     });
     mxUtils.write(button, label);
     toolbar.appendChild(button);
+};
+
+
+function sqrtDist(ax, ay, bx, by)
+{
+    var dx = ax - bx;
+    var dy = ay - by;
+    var tmp = dx * dx + dy * dy;
+    return tmp;
 };
 
