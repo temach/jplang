@@ -22,9 +22,6 @@ function initGraph(container, toolbar, sidebar, status)
 
     // mxGraph.prototype.allowDanglingEdges = false;
 
-    // Do not allow multiple edges between any two components, this is a DAG
-    mxGraph.prototype.multigraph = false;
-
     // Disable mxConnectionHandler initiating connections from the center of a shape
     // also disables border highlight when moving mouse over shape center
     var mxGraphIsIgnoreTerminalEvent = mxGraph.prototype.isIgnoreTerminalEvent;
@@ -36,33 +33,7 @@ function initGraph(container, toolbar, sidebar, status)
         }
         return mxGraphIsIgnoreTerminalEvent.call(this, arguments);
     };
-
-    // When moving the edge, snap and move the start or end port
-    // becasue rigidly moving the whole edge is not useful
-    var mxEdgeHandlerGetHandleForEvent = mxEdgeHandler.prototype.getHandleForEvent;
-    mxEdgeHandler.prototype.getHandleForEvent = function(me)
-    {
-        // call the original
-        var handle = mxEdgeHandlerGetHandleForEvent.apply(this, arguments);
-
-        // if handle is null, meaning the edge line was clicked, not any specific marker on the edge
-        // then force select one of the end markers (either start or end port)
-        if (handle == null && this.bends != null && me.state != null && me.state.cell == this.state.cell)
-        {
-            var start = this.bends[0];
-            var startDist = sqrtDist(me.getGraphX(), me.getGraphY(), start.bounds.getCenterX(), start.bounds.getCenterY());
-            var end = this.bends[this.bends.length - 1];
-            var endDist = sqrtDist(me.getGraphX(), me.getGraphY(), end.bounds.getCenterX(), end.bounds.getCenterY());
-            if (startDist < endDist) {
-                return 0;
-            } else {
-                return this.bends.length - 1;
-            }
-        }
-
-        return handle;
-    };
-
+    
 
     // Adjust hanlders to make sure right click is only for panning
     var mxSelectionCellsHandlerMouseDown = mxSelectionCellsHandler.prototype.mouseDown;
@@ -111,6 +82,8 @@ function initGraph(container, toolbar, sidebar, status)
     var graph = editor.graph;
     var model = graph.model;
     
+    // Do not allow multiple edges between any two components, this is a DAG
+    graph.setMultigraph(false);
     // Disables some global features
     graph.setConnectable(true);
     // graph.setCellsDisconnectable(false);
@@ -144,6 +117,33 @@ function initGraph(container, toolbar, sidebar, status)
             graphHandlerStart.apply(this, arguments);
         };
     }
+
+    // When moving the edge, snap and move the start or end port
+    // becasue rigidly moving the whole edge is not useful
+    graph.graphHandler.setMoveEnabled(false);
+    var mxEdgeHandlerGetHandleForEvent = mxEdgeHandler.prototype.getHandleForEvent;
+    mxEdgeHandler.prototype.getHandleForEvent = function(me)
+    {
+        // call the original
+        var handle = mxEdgeHandlerGetHandleForEvent.apply(this, arguments);
+
+        // if handle is null, meaning the edge line was clicked, not any specific marker on the edge
+        // then force select one of the end markers (either start or end port)
+        if (handle == null && this.bends != null && me.state != null && me.state.cell == this.state.cell)
+        {
+            var start = this.bends[0];
+            var startDist = sqrtDist(me.getGraphX(), me.getGraphY(), start.bounds.getCenterX(), start.bounds.getCenterY());
+            var end = this.bends[this.bends.length - 1];
+            var endDist = sqrtDist(me.getGraphX(), me.getGraphY(), end.bounds.getCenterX(), end.bounds.getCenterY());
+            if (startDist < endDist) {
+                return 0;
+            } else {
+                return this.bends.length - 1;
+            }
+        }
+
+        return handle;
+    };
 
     // Defines an icon for creating new connections in the connection handler.
     // This will automatically disable the highlighting of the source vertex.
