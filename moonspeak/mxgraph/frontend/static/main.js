@@ -118,6 +118,105 @@ function initGraph(container, toolbar, sidebar, status)
         };
     }
 
+    //================================================
+    // Disable highlight of cells when dragging from toolbar
+    graph.setDropEnabled(false);
+
+    // Uses the port icon while connections are previewed
+    graph.connectionHandler.getConnectImage = function(state)
+    {
+        return new mxImage(state.style[mxConstants.STYLE_IMAGE], 16, 16);
+    };
+
+    // Centers the port icon on the target port
+    graph.connectionHandler.targetConnectImage = true;
+
+    // Disables drilling into non-swimlanes.
+	graph.isValidRoot = function(cell)
+	{
+		return this.isValidDropTarget(cell);
+	}
+
+	// Does not allow selection of locked cells
+	graph.isCellSelectable = function(cell)
+	{
+		return !this.isCellLocked(cell);
+	};
+
+	// Returns a shorter label if the cell is collapsed and no
+	// label for expanded groups
+	graph.getLabel = function(cell)
+	{
+		var tmp = mxGraph.prototype.getLabel.apply(this, arguments); // "supercall"
+		
+		if (this.isCellLocked(cell))
+		{
+			// Returns an empty label but makes sure an HTML
+			// element is created for the label (for event
+			// processing wrt the parent label)
+			return '';
+		}
+		else if (this.isCellCollapsed(cell))
+		{
+			var index = tmp.indexOf('</h1>');
+			
+			if (index > 0)
+			{
+				tmp = tmp.substring(0, index+5);
+			}
+		}
+		
+		return tmp;
+	}
+
+	// Disables HTML labels for swimlanes to avoid conflict
+	// for the event processing on the child cells. HTML
+	// labels consume events before underlying cells get the
+	// chance to process those events.
+	//
+	// NOTE: Use of HTML labels is only recommended if the specific
+	// features of such labels are required, such as special label
+	// styles or interactive form fields. Otherwise non-HTML labels
+	// should be used by not overidding the following function.
+	// See also: configureStylesheet.
+	graph.isHtmlLabel = function(cell)
+	{
+		return !this.isSwimlane(cell);
+	}
+
+    // Add graph elements
+    addSidebarIcon(graph, sidebar,
+        '<iframe src="temp.html">',
+        'images/icons48/table.png');
+    addSidebarIcon(graph, sidebar,
+        '<h1 style="margin:0px;">Website</h1><br>'+
+        '<img src="images/icons48/earth.png" width="48" height="48">'+
+        '<br>'+
+        '<a href="http://www.jgraph.com" target="_blank">Browse</a>',
+        'images/icons48/earth.png');
+    addSidebarIcon(graph, sidebar,
+        '<h1 style="margin:0px;">Process</h1><br>'+
+        '<img src="images/icons48/gear.png" width="48" height="48">'+
+        '<br><select><option>Value1</option><option>Value2</option></select><br>',
+        'images/icons48/gear.png');
+    addSidebarIcon(graph, sidebar,
+        '<h1 style="margin:0px;">Keys</h1><br>'+
+        '<img src="images/icons48/keys.png" width="48" height="48">'+
+        '<br>'+
+        '<button onclick="mxUtils.alert(\'generate\');">Generate</button>',
+        'images/icons48/keys.png');
+    addSidebarIcon(graph, sidebar,
+        '<h1 style="margin:0px;">New Mail</h1><br>'+
+        '<img src="images/icons48/mail_new.png" width="48" height="48">'+
+        '<br><input type="checkbox"/>CC Archive',
+        'images/icons48/mail_new.png');
+    addSidebarIcon(graph, sidebar,
+        '<h1 style="margin:0px;">Server</h1><br>'+
+        '<img src="images/icons48/server.png" width="48" height="48">'+
+        '<br>'+
+        '<input type="text" size="12" value="127.0.0.1"/>',
+        'images/icons48/server.png');
+
     // Defines an icon for creating new connections in the connection handler.
     // This will automatically disable the highlighting of the source vertex.
     // mxConnectionHandler.prototype.connectImage = new mxImage('images/connector.gif', 16, 16);
@@ -280,6 +379,74 @@ function initGraph(container, toolbar, sidebar, status)
         graph.getModel().endUpdate();
     }
 
+};
+
+function addSidebarIcon(graph, sidebar, label, image)
+{
+	// Function that is executed when the image is dropped on
+	// the graph. The cell argument points to the cell under
+	// the mousepointer if there is one.
+	var funct = function(graph, evt, cell, x, y)
+	{
+		var parent = graph.getDefaultParent();
+		var model = graph.getModel();
+		
+		var v1 = null;
+		
+		model.beginUpdate();
+		try
+		{
+			// NOTE: For non-HTML labels the image must be displayed via the style
+			// rather than the label markup, so use 'image=' + image for the style.
+			// as follows: v1 = graph.insertVertex(parent, null, label,
+			// pt.x, pt.y, 120, 120, 'image=' + image);
+			v1 = graph.insertVertex(parent, null, label, x, y, 120, 120);
+			// v1.setConnectable(false);
+			
+			// Presets the collapsed size
+			v1.geometry.alternateBounds = new mxRectangle(0, 0, 120, 40);
+								
+			//// Adds the ports at various relative locations
+			//var port = graph.insertVertex(v1, null, 'Trigger', 0, 0.25, 16, 16,
+			//		'port;image=editors/images/overlays/flash.png;align=right;imageAlign=right;spacingRight=18', true);
+			//port.geometry.offset = new mxPoint(-6, -8);
+
+			//var port = graph.insertVertex(v1, null, 'Input', 0, 0.75, 16, 16,
+			//		'port;image=editors/images/overlays/check.png;align=right;imageAlign=right;spacingRight=18', true);
+			//port.geometry.offset = new mxPoint(-6, -4);
+			//
+			//var port = graph.insertVertex(v1, null, 'Error', 1, 0.25, 16, 16,
+			//		'port;image=editors/images/overlays/error.png;spacingLeft=18', true);
+			//port.geometry.offset = new mxPoint(-8, -8);
+
+			//var port = graph.insertVertex(v1, null, 'Result', 1, 0.75, 16, 16,
+			//		'port;image=editors/images/overlays/information.png;spacingLeft=18', true);
+			//port.geometry.offset = new mxPoint(-8, -4);
+		}
+		finally
+		{
+			model.endUpdate();
+		}
+		
+		graph.setSelectionCell(v1);
+	}
+	
+	// Creates the image which is used as the sidebar icon (drag source)
+	var img = document.createElement('img');
+	img.setAttribute('src', image);
+	img.style.width = '48px';
+	img.style.height = '48px';
+	img.title = 'Drag this to the diagram to create a new vertex';
+	sidebar.appendChild(img);
+	
+	var dragElt = document.createElement('div');
+	dragElt.style.border = 'dashed black 1px';
+	dragElt.style.width = '120px';
+	dragElt.style.height = '120px';
+	  					
+	// Creates the image which is used as the drag icon (preview)
+	var ds = mxUtils.makeDraggable(img, graph, funct, dragElt, 0, 0, true, true);
+	ds.setGuidesEnabled(true);
 };
 
 
