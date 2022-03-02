@@ -184,6 +184,8 @@ function initGraph(container, toolbar, sidebar, status)
 		return !this.isSwimlane(cell);
 	}
 
+    graph.isClipping
+
     // Add graph elements
     addSidebarIcon(graph, sidebar,
         '<iframe src="temp.html">',
@@ -226,6 +228,30 @@ function initGraph(container, toolbar, sidebar, status)
     // graph.panningHandler.useLeftButtonForPanning = true;
     graph.setTooltips(false);
     graph.setConnectable(true);
+
+    // Set minWidth and minHeight for cells
+    var cellStyle = graph.getStylesheet().getDefaultVertexStyle();
+    cellStyle['minWidth'] = 50;
+    cellStyle['minHeight'] = 40;
+
+    var graphGetPreferredSizeForCell = graph.getPreferredSizeForCell;
+    graph.getPreferredSizeForCell = function(cell)
+    {
+      var result = graphGetPreferredSizeForCell.apply(this, arguments);
+      var thisCellStyle = this.getCellStyle(cell);
+      
+      if (thisCellStyle['minWidth'] > 0)
+      {
+        result.width = Math.max(thisCellStyle['minWidth'], result.width);
+      }
+      if (thisCellStyle['minHeight'] > 0)
+      {
+        result.width = Math.max(thisCellStyle['minHeight'], result.height);
+      }
+    
+      return result;
+    };
+
 
     // Set edge style
     // Changes the default style for edges "in-place" and assigns
