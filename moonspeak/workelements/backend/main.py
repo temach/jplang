@@ -47,6 +47,12 @@ def db_init():
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Feature, run as "python main.py"')
+    parser.add_argument('port', type=int, help='port number')
+    args = parser.parse_args()
+
     db_needs_init = (not os.path.isfile(KANJI_DB_PATH)) or (
         os.path.getsize(KANJI_DB_PATH) == 0)
 
@@ -58,6 +64,5 @@ if __name__ == "__main__":
 
     pprint(WORK[:10])
 
-    port = 9000
-    print("Running bottle server on port {}".format(port))
-    run(host="0.0.0.0", port=port, debug=True)
+    print("Running bottle server on port {}".format(args.port))
+    run(host="0.0.0.0", port=args.port, debug=True)

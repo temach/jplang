@@ -17,7 +17,8 @@
             // message from elm for javascript
             // broadcast it to top window
             // also: enforce same origin
-            console.log("workelements posted: " + message );
+            console.log("workelements posted: ");
+            console.log(message);
             window.top.postMessage(message, window.top.location.origin);
         });
 
@@ -27,7 +28,8 @@
                 // we only accept messages from the IFrames (must be on the same domain)
                 return;
             }
-            console.log("workelements received: " + event.data);
+            console.log("workelements received: ")
+            console.log(event.data);
             app.ports.messageReceiver.send(event.data);
         });
     </script>

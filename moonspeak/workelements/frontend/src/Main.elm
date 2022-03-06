@@ -9,8 +9,8 @@ import Html.Attributes exposing (attribute, class, placeholder, style, value)
 import Html.Events exposing (on, onClick, onInput)
 import Html.Events.Extra exposing (targetValueIntParse)
 import Http
-import Json.Decode as Decode
-import Json.Encode as Encode
+import Json.Decode as D
+import Json.Encode as E
 import List.Extra
 import Platform.Cmd as Cmd
 import Url.Builder exposing (relative)
@@ -20,10 +20,10 @@ import Url.Builder exposing (relative)
 -- PORTS
 
 
-port sendMessage : String -> Cmd msg
+port sendMessage : E.Value -> Cmd msg
 
 
-port messageReceiver : (String -> msg) -> Sub msg
+port messageReceiver : (D.Value -> msg) -> Sub msg
 
 
 
@@ -58,21 +58,31 @@ type alias Model =
     }
 
 
+defaultCurrentWork =
+    WorkElement "" "" ""
+
+
+brokenCurrentWork =
+    WorkElement "X" "Error" "An error occurred"
+
+
+defaultModel =
+    { currentWork = defaultCurrentWork
+    , workElements = []
+    , currentWorkIndex = -1
+    , currentHighlightWorkElementIndex = -1
+    }
+
+
+defaultModelTwo =
+    { defaultModel | workElements = [ WorkElement "a" "first" "", WorkElement "b" "" "asd", WorkElement "c" "third" "and comment" ] }
+
+
 init : () -> ( Model, Cmd Msg )
 init _ =
-    let
-        model =
-            { currentWork = { kanji = "", keyword = "", notes = "" }
-
-            -- , workElements = [ WorkElement "a" "first" "", WorkElement "b" "" "asd", WorkElement "c" "third" "and comment" ]
-            , workElements = []
-            , currentWorkIndex = -1
-            , currentHighlightWorkElementIndex = -1
-            }
-    in
     -- update NextWorkElement model
     -- ( model, Cmd.none )
-    ( model, getWorkElements )
+    ( defaultModel, getWorkElements )
 
 
 
@@ -84,6 +94,27 @@ subscriptions _ =
     messageReceiver Recv
 
 
+portEncoder : WorkElement -> E.Value
+portEncoder elem =
+    E.object
+        [ ( "kanji", E.string elem.kanji )
+        , ( "keyword", E.string elem.keyword )
+        , ( "notes", E.string elem.notes )
+        ]
+
+
+type alias MsgDecoded =
+    { keyword : String, kanji : String, notes : String }
+
+
+portDecoder : D.Decoder MsgDecoded
+portDecoder =
+    D.map3 MsgDecoded
+        (D.field "keyword" D.string)
+        (D.field "kanji" D.string)
+        (D.field "notes" D.string)
+
+
 
 -- UPDATE
 
@@ -93,7 +124,8 @@ type Msg
     | NextWorkElement
     | SelectWorkElement Int
     | WorkElementsReady (Result Http.Error (List WorkElement))
-    | Recv String
+      -- ports
+    | Recv D.Value
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -123,7 +155,7 @@ update msg model =
                 newModel =
                     { model | currentWorkIndex = index, currentWork = selected }
             in
-            ( newModel, sendMessage newModel.currentWork.keyword )
+            ( newModel, sendMessage (portEncoder newModel.currentWork) )
 
         WorkElementsReady result ->
             case result of
@@ -137,12 +169,17 @@ update msg model =
                 Err message ->
                     ( model, Cmd.none )
 
-        Recv message ->
-            let
-                newElement =
-                    WorkElement model.currentWork.kanji message model.currentWork.notes
-            in
-            update (UpdateWorkElement newElement) model
+        Recv jsonValue ->
+            case D.decodeValue portDecoder jsonValue of
+                Ok value ->
+                    let
+                        newElement =
+                            WorkElement value.kanji value.keyword value.notes
+                    in
+                    update (UpdateWorkElement newElement) model
+
+                Err _ ->
+                    update (UpdateWorkElement defaultModel.currentWork) defaultModel
 
 
 getWorkElements : Cmd Msg
@@ -153,17 +190,17 @@ getWorkElements =
         }
 
 
-workElementsDecoder : Decode.Decoder (List WorkElement)
+workElementsDecoder : D.Decoder (List WorkElement)
 workElementsDecoder =
-    Decode.list
-        (Decode.map3 WorkElement
-            (Decode.index 0 Decode.string)
-            (Decode.index 1 Decode.string)
-            (Decode.index 2 Decode.string)
+    D.list
+        (D.map3 WorkElement
+            (D.index 0 D.string)
+            (D.index 1 D.string)
+            (D.index 2 D.string)
         )
 
 
-workElementEncoder : Model -> Encode.Value
+workElementEncoder : Model -> E.Value
 workElementEncoder model =
     let
         selected =
@@ -171,10 +208,10 @@ workElementEncoder model =
                 (WorkElement "X" "Error" "An error occurred")
                 (List.Extra.getAt model.currentWorkIndex model.workElements)
     in
-    Encode.object
-        [ ( "kanji", Encode.string selected.kanji )
-        , ( "keyword", Encode.string selected.keyword )
-        , ( "notes", Encode.string selected.notes )
+    E.object
+        [ ( "kanji", E.string selected.kanji )
+        , ( "keyword", E.string selected.keyword )
+        , ( "notes", E.string selected.notes )
         ]
 
 
@@ -233,7 +270,7 @@ renderWorkElements model =
             renderSingleWorkElement model
     in
     div
-        [ on "click" (Decode.map SelectWorkElement targetValueIntParse)
+        [ on "click" (D.map SelectWorkElement targetValueIntParse)
         ]
         (List.indexedMap partial model.workElements)
 

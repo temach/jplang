@@ -10711,14 +10711,14 @@ var $elm$core$Basics$never = function (_v0) {
 	}
 };
 var $elm$browser$Browser$document = _Browser_document;
+var $author$project$Main$defaultModel = {freq: _List_Nil, history: _List_Nil, kanji: 'X', keyword: 'loading...', notes: 'loading notes...', userMessage: $elm$core$Dict$empty};
 var $author$project$Main$init = function (_v0) {
-	var model = {freq: _List_Nil, history: _List_Nil, kanji: 'X', keyword: 'loading...', notes: 'loading notes...', userMessage: $elm$core$Dict$empty};
-	return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+	return _Utils_Tuple2($author$project$Main$defaultModel, $elm$core$Platform$Cmd$none);
 };
 var $author$project$Main$Recv = function (a) {
 	return {$: 'Recv', a: a};
 };
-var $author$project$Main$messageReceiver = _Platform_incomingPort('messageReceiver', $elm$json$Json$Decode$string);
+var $author$project$Main$messageReceiver = _Platform_incomingPort('messageReceiver', $elm$json$Json$Decode$value);
 var $author$project$Main$subscriptions = function (_v0) {
 	return $author$project$Main$messageReceiver($author$project$Main$Recv);
 };
@@ -11073,7 +11073,32 @@ var $author$project$Main$historyFilter = function (list) {
 			},
 			list));
 };
-var $author$project$Main$sendMessage = _Platform_outgoingPort('sendMessage', $elm$json$Json$Encode$string);
+var $author$project$Main$MsgDecoded = F3(
+	function (keyword, kanji, notes) {
+		return {kanji: kanji, keyword: keyword, notes: notes};
+	});
+var $author$project$Main$portDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$MsgDecoded,
+	A2($elm$json$Json$Decode$field, 'keyword', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'kanji', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'notes', $elm$json$Json$Decode$string));
+var $author$project$Main$portEncoder = function (model) {
+	return $elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'kanji',
+				$elm$json$Json$Encode$string(model.kanji)),
+				_Utils_Tuple2(
+				'keyword',
+				$elm$json$Json$Encode$string(model.keyword)),
+				_Utils_Tuple2(
+				'notes',
+				$elm$json$Json$Encode$string(model.notes))
+			]));
+};
+var $author$project$Main$sendMessage = _Platform_outgoingPort('sendMessage', $elm$core$Basics$identity);
 var $author$project$Main$KeywordSubmitReady = function (a) {
 	return {$: 'KeywordSubmitReady', a: a};
 };
@@ -11171,7 +11196,8 @@ var $author$project$Main$update = F2(
 				case 'NextWorkElement':
 					return _Utils_Tuple2(
 						model,
-						$author$project$Main$sendMessage(model.keyword));
+						$author$project$Main$sendMessage(
+							$author$project$Main$portEncoder(model)));
 				case 'KeywordInput':
 					var word = msg.a;
 					var newCandidateHistory = _Utils_ap(
@@ -11221,12 +11247,24 @@ var $author$project$Main$update = F2(
 							$elm$core$Platform$Cmd$none);
 					}
 				default:
-					var message = msg.a;
-					var $temp$msg = $author$project$Main$KeywordInput(message),
-						$temp$model = model;
-					msg = $temp$msg;
-					model = $temp$model;
-					continue update;
+					var jsonValue = msg.a;
+					var _v3 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$portDecoder, jsonValue);
+					if (_v3.$ === 'Ok') {
+						var value = _v3.a;
+						var $temp$msg = $author$project$Main$KeywordInput(value.keyword),
+							$temp$model = _Utils_update(
+							model,
+							{kanji: value.kanji, keyword: value.keyword, notes: value.notes});
+						msg = $temp$msg;
+						model = $temp$model;
+						continue update;
+					} else {
+						var $temp$msg = $author$project$Main$KeywordInput($author$project$Main$defaultModel.keyword),
+							$temp$model = $author$project$Main$defaultModel;
+						msg = $temp$msg;
+						model = $temp$model;
+						continue update;
+					}
 			}
 		}
 	});
@@ -11402,4 +11440,4 @@ var $author$project$Main$view = function (model) {
 var $author$project$Main$main = $elm$browser$Browser$document(
 	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
-	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.KeyCandidate":{"args":[],"type":"{ word : String.String, metadata : String.String, freq : List.List Basics.Int }"}},"unions":{"Main.Msg":{"args":[],"tags":{"KeywordInput":["String.String"],"NotesInput":["String.String"],"KeywordSubmitClick":[],"KeywordSubmitReady":["Result.Result Http.Error String.String"],"KeywordCheckReady":["Result.Result Http.Error Main.KeyCandidate"],"NextWorkElement":[],"Recv":["String.String"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));
+	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.KeyCandidate":{"args":[],"type":"{ word : String.String, metadata : String.String, freq : List.List Basics.Int }"},"Json.Decode.Value":{"args":[],"type":"Json.Encode.Value"}},"unions":{"Main.Msg":{"args":[],"tags":{"KeywordInput":["String.String"],"NotesInput":["String.String"],"KeywordSubmitClick":[],"KeywordSubmitReady":["Result.Result Http.Error String.String"],"KeywordCheckReady":["Result.Result Http.Error Main.KeyCandidate"],"NextWorkElement":[],"Recv":["Json.Decode.Value"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Json.Encode.Value":{"args":[],"tags":{"Value":[]}}}}})}});}(this));

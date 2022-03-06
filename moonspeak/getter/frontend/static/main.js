@@ -1,3 +1,5 @@
+var iframes = new Array();
+
 async function get_feature(feature_url, callback) {
     let backend = new URL("/api/getfeature", window.location);
     backend.searchParams.set('feature_url', new URL(feature_url));
@@ -16,6 +18,7 @@ function append_feature(parent_elem, feature_url) {
         let iframe = document.createElement("iframe");
         iframe.srcdoc = feature_json["text"];
         parent_elem.appendChild(iframe);
+        iframes.push(iframe);
     }).catch(error => {
         console.log("HTTP error:" + error.message);
     });
@@ -24,10 +27,20 @@ function append_feature(parent_elem, feature_url) {
 
 // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 window.addEventListener("message", (event) => {
-  if (event.origin !== window.top.location.origin) {
-    // we only accept messages from the IFrames (must be on the same domain)
-    return;
-  }
+    if (event.origin !== window.top.location.origin) {
+        // we only accept messages from the IFrames (must be on the same domain)
+        return;
+    }
 
-  console.log("getter received: " + event.data);
+    console.log("getter received: ");
+    console.log(event.data);
+
+    iframes.forEach(function(currentFrame, index, array) {
+        var iframeWindow = (currentFrame.contentWindow || currentFrame.contentDocument);
+        if (iframeWindow !== event.source) {
+            iframeWindow.postMessage(event.data, window.top.location.origin);
+        }
+        // Do something with currentValue or array[index]
+    });
+
 });

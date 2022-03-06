@@ -10711,6 +10711,12 @@ var $elm$core$Basics$never = function (_v0) {
 	}
 };
 var $elm$browser$Browser$document = _Browser_document;
+var $author$project$Main$WorkElement = F3(
+	function (kanji, keyword, notes) {
+		return {kanji: kanji, keyword: keyword, notes: notes};
+	});
+var $author$project$Main$defaultCurrentWork = A3($author$project$Main$WorkElement, '', '', '');
+var $author$project$Main$defaultModel = {currentHighlightWorkElementIndex: -1, currentWork: $author$project$Main$defaultCurrentWork, currentWorkIndex: -1, workElements: _List_Nil};
 var $author$project$Main$WorkElementsReady = function (a) {
 	return {$: 'WorkElementsReady', a: a};
 };
@@ -10983,10 +10989,6 @@ var $elm$url$Url$Builder$relative = F2(
 			A2($elm$core$String$join, '/', pathSegments),
 			$elm$url$Url$Builder$toQuery(parameters));
 	});
-var $author$project$Main$WorkElement = F3(
-	function (kanji, keyword, notes) {
-		return {kanji: kanji, keyword: keyword, notes: notes};
-	});
 var $elm$json$Json$Decode$index = _Json_decodeIndex;
 var $author$project$Main$workElementsDecoder = $elm$json$Json$Decode$list(
 	A4(
@@ -11005,18 +11007,12 @@ var $author$project$Main$getWorkElements = $elm$http$Http$get(
 			_List_Nil)
 	});
 var $author$project$Main$init = function (_v0) {
-	var model = {
-		currentHighlightWorkElementIndex: -1,
-		currentWork: {kanji: '', keyword: '', notes: ''},
-		currentWorkIndex: -1,
-		workElements: _List_Nil
-	};
-	return _Utils_Tuple2(model, $author$project$Main$getWorkElements);
+	return _Utils_Tuple2($author$project$Main$defaultModel, $author$project$Main$getWorkElements);
 };
 var $author$project$Main$Recv = function (a) {
 	return {$: 'Recv', a: a};
 };
-var $author$project$Main$messageReceiver = _Platform_incomingPort('messageReceiver', $elm$json$Json$Decode$string);
+var $author$project$Main$messageReceiver = _Platform_incomingPort('messageReceiver', $elm$json$Json$Decode$value);
 var $author$project$Main$subscriptions = function (_v0) {
 	return $author$project$Main$messageReceiver($author$project$Main$Recv);
 };
@@ -11041,7 +11037,32 @@ var $elm_community$list_extra$List$Extra$getAt = F2(
 		return (idx < 0) ? $elm$core$Maybe$Nothing : $elm$core$List$head(
 			A2($elm$core$List$drop, idx, xs));
 	});
-var $author$project$Main$sendMessage = _Platform_outgoingPort('sendMessage', $elm$json$Json$Encode$string);
+var $author$project$Main$MsgDecoded = F3(
+	function (keyword, kanji, notes) {
+		return {kanji: kanji, keyword: keyword, notes: notes};
+	});
+var $author$project$Main$portDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$MsgDecoded,
+	A2($elm$json$Json$Decode$field, 'keyword', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'kanji', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'notes', $elm$json$Json$Decode$string));
+var $author$project$Main$portEncoder = function (elem) {
+	return $elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'kanji',
+				$elm$json$Json$Encode$string(elem.kanji)),
+				_Utils_Tuple2(
+				'keyword',
+				$elm$json$Json$Encode$string(elem.keyword)),
+				_Utils_Tuple2(
+				'notes',
+				$elm$json$Json$Encode$string(elem.notes))
+			]));
+};
+var $author$project$Main$sendMessage = _Platform_outgoingPort('sendMessage', $elm$core$Basics$identity);
 var $elm$core$List$takeReverse = F3(
 	function (n, list, kept) {
 		takeReverse:
@@ -11228,7 +11249,8 @@ var $author$project$Main$update = F2(
 						{currentWork: selected, currentWorkIndex: index});
 					return _Utils_Tuple2(
 						newModel,
-						$author$project$Main$sendMessage(newModel.currentWork.keyword));
+						$author$project$Main$sendMessage(
+							$author$project$Main$portEncoder(newModel.currentWork)));
 				case 'WorkElementsReady':
 					var result = msg.a;
 					if (result.$ === 'Ok') {
@@ -11246,13 +11268,23 @@ var $author$project$Main$update = F2(
 						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 					}
 				default:
-					var message = msg.a;
-					var newElement = A3($author$project$Main$WorkElement, model.currentWork.kanji, message, model.currentWork.notes);
-					var $temp$msg = $author$project$Main$UpdateWorkElement(newElement),
-						$temp$model = model;
-					msg = $temp$msg;
-					model = $temp$model;
-					continue update;
+					var jsonValue = msg.a;
+					var _v2 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$portDecoder, jsonValue);
+					if (_v2.$ === 'Ok') {
+						var value = _v2.a;
+						var newElement = A3($author$project$Main$WorkElement, value.kanji, value.keyword, value.notes);
+						var $temp$msg = $author$project$Main$UpdateWorkElement(newElement),
+							$temp$model = model;
+						msg = $temp$msg;
+						model = $temp$model;
+						continue update;
+					} else {
+						var $temp$msg = $author$project$Main$UpdateWorkElement($author$project$Main$defaultModel.currentWork),
+							$temp$model = $author$project$Main$defaultModel;
+						msg = $temp$msg;
+						model = $temp$model;
+						continue update;
+					}
 			}
 		}
 	});
@@ -11398,4 +11430,4 @@ var $author$project$Main$view = function (model) {
 var $author$project$Main$main = $elm$browser$Browser$document(
 	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
-	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.WorkElement":{"args":[],"type":"{ kanji : String.String, keyword : String.String, notes : String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"UpdateWorkElement":["Main.WorkElement"],"NextWorkElement":[],"SelectWorkElement":["Basics.Int"],"WorkElementsReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"Recv":["String.String"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));
+	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Json.Decode.Value":{"args":[],"type":"Json.Encode.Value"},"Main.WorkElement":{"args":[],"type":"{ kanji : String.String, keyword : String.String, notes : String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"UpdateWorkElement":["Main.WorkElement"],"NextWorkElement":[],"SelectWorkElement":["Basics.Int"],"WorkElementsReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"Recv":["Json.Decode.Value"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Json.Encode.Value":{"args":[],"tags":{"Value":[]}}}}})}});}(this));

@@ -9,8 +9,8 @@ import Html.Attributes exposing (attribute, placeholder, style, value)
 import Html.Events exposing (on, onClick, onInput)
 import Html.Events.Extra exposing (targetValueIntParse)
 import Http
-import Json.Decode as Decode
-import Json.Encode as Encode
+import Json.Decode as D
+import Json.Encode as E
 import List.Extra exposing (getAt)
 import Platform.Cmd as Cmd
 import Url.Builder exposing (relative)
@@ -20,16 +20,17 @@ import Url.Builder exposing (relative)
 -- PORTS
 
 
-port sendMessage : String -> Cmd msg
+port sendMessage : E.Value -> Cmd msg
 
 
-port messageReceiver : (String -> msg) -> Sub msg
+port messageReceiver : (D.Value -> msg) -> Sub msg
 
 
 
 -- MAIN
 
 
+main : Program () Model Msg
 main =
     Browser.document
         { init = init
@@ -64,21 +65,21 @@ type alias Model =
     }
 
 
+defaultModel =
+    { kanji = "X"
+    , keyword = "loading..."
+    , notes = "loading notes..."
+    , freq = []
+    , userMessage = Dict.empty
+    , history = []
+    }
+
+
 init : () -> ( Model, Cmd Msg )
 init _ =
-    let
-        model =
-            { kanji = "X"
-            , keyword = "loading..."
-            , notes = "loading notes..."
-            , freq = []
-            , userMessage = Dict.empty
-            , history = []
-            }
-    in
     -- update NextWorkElement model
     -- ( model, getWorkElements )
-    ( model, Cmd.none )
+    ( defaultModel, Cmd.none )
 
 
 
@@ -88,6 +89,27 @@ init _ =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     messageReceiver Recv
+
+
+portEncoder : Model -> E.Value
+portEncoder model =
+    E.object
+        [ ( "kanji", E.string model.kanji )
+        , ( "keyword", E.string model.keyword )
+        , ( "notes", E.string model.notes )
+        ]
+
+
+type alias MsgDecoded =
+    { keyword : String, kanji : String, notes : String }
+
+
+portDecoder : D.Decoder MsgDecoded
+portDecoder =
+    D.map3 MsgDecoded
+        (D.field "keyword" D.string)
+        (D.field "kanji" D.string)
+        (D.field "notes" D.string)
 
 
 
@@ -104,7 +126,7 @@ type Msg
       -- input/output?
     | NextWorkElement
       -- ports
-    | Recv String
+    | Recv D.Value
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -142,7 +164,7 @@ update msg model =
                     ( { model | userMessage = Dict.insert "KeywordSubmitReady" "Error submitting keyword. Details unknown." model.userMessage }, Cmd.none )
 
         NextWorkElement ->
-            ( model, sendMessage model.keyword )
+            ( model, sendMessage (portEncoder model) )
 
         KeywordInput word ->
             let
@@ -172,8 +194,13 @@ update msg model =
                 Err _ ->
                     ( { model | freq = [], userMessage = Dict.insert "KeywordCheckReady" "Error getting keyword frequency" model.userMessage }, Cmd.none )
 
-        Recv message ->
-            update (KeywordInput message) model
+        Recv jsonValue ->
+            case D.decodeValue portDecoder jsonValue of
+                Ok value ->
+                    update (KeywordInput value.keyword) { model | keyword = value.keyword, kanji = value.kanji, notes = value.notes }
+
+                Err _ ->
+                    update (KeywordInput defaultModel.keyword) defaultModel
 
 
 uniq : List a -> List a
@@ -206,12 +233,12 @@ getKeywordCheck kanji keyword =
         }
 
 
-keyCandidateDecoder : Decode.Decoder KeyCandidate
+keyCandidateDecoder : D.Decoder KeyCandidate
 keyCandidateDecoder =
-    Decode.map3 KeyCandidate
-        (Decode.field "word" Decode.string)
-        (Decode.field "metadata" Decode.string)
-        (Decode.field "freq" (Decode.list Decode.int))
+    D.map3 KeyCandidate
+        (D.field "word" D.string)
+        (D.field "metadata" D.string)
+        (D.field "freq" (D.list D.int))
 
 
 submitKeyword : Model -> Cmd Msg
@@ -223,12 +250,12 @@ submitKeyword model =
         }
 
 
-submitKeywordEncoder : Model -> Encode.Value
+submitKeywordEncoder : Model -> E.Value
 submitKeywordEncoder model =
-    Encode.object
-        [ ( "kanji", Encode.string model.kanji )
-        , ( "keyword", Encode.string model.keyword )
-        , ( "notes", Encode.string model.notes )
+    E.object
+        [ ( "kanji", E.string model.kanji )
+        , ( "keyword", E.string model.keyword )
+        , ( "notes", E.string model.notes )
         ]
 
 

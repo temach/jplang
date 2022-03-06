@@ -82,6 +82,12 @@ def db_init():
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Feature, run as "python main.py"')
+    parser.add_argument('port', type=int, help='port number')
+    args = parser.parse_args()
+
     db_needs_init = (not os.path.isfile(DB_PATH)) or (
         os.path.getsize(DB_PATH) == 0)
 
@@ -97,7 +103,6 @@ if __name__ == "__main__":
             name, url, notes = r
             print(r)
 
-    port = 9000
-    print("Running server on port {}".format(port))
+    print("Running server on port {}".format(args.port))
     import logging
-    uvicorn.run(app, host="0.0.0.0", port=port, debug=True)
+    uvicorn.run(app, host="0.0.0.0", port=args.port, debug=True)
