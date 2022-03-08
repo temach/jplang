@@ -184,7 +184,10 @@ function initGraph(container, toolbar, sidebar, status)
 		return !this.isSwimlane(cell);
 	}
 
-    graph.isClipping
+    // graph.isClipping
+    graph.setAutoSizeCells(true);
+    mxGraph.prototype.autoSizeCellsOnAdd = true;
+
 
     // Add graph elements
     addSidebarIcon(graph, sidebar,
@@ -231,8 +234,8 @@ function initGraph(container, toolbar, sidebar, status)
 
     // Set minWidth and minHeight for cells
     var cellStyle = graph.getStylesheet().getDefaultVertexStyle();
-    cellStyle['minWidth'] = 50;
-    cellStyle['minHeight'] = 40;
+    cellStyle['minWidth'] = 250;
+    cellStyle['minHeight'] = 200;
 
     var graphGetPreferredSizeForCell = graph.getPreferredSizeForCell;
     graph.getPreferredSizeForCell = function(cell)
@@ -246,7 +249,7 @@ function initGraph(container, toolbar, sidebar, status)
       }
       if (thisCellStyle['minHeight'] > 0)
       {
-        result.width = Math.max(thisCellStyle['minHeight'], result.height);
+        result.height = Math.max(thisCellStyle['minHeight'], result.height);
       }
     
       return result;
