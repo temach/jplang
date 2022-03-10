@@ -181,17 +181,110 @@ function initGraph(container, toolbar, sidebar, status)
 	// See also: configureStylesheet.
 	graph.isHtmlLabel = function(cell)
 	{
-		return !this.isSwimlane(cell);
+		// return !this.isSwimlane(cell);
+		return true;
 	}
 
     // graph.isClipping
     graph.setAutoSizeCells(true);
     mxGraph.prototype.autoSizeCellsOnAdd = true;
 
+    graph.addListener(mxEvent.CELLS_RESIZED, function(sender, evt)
+    {
+      var cells = evt.getProperty('cells');
+      
+      if (cells != null)
+      {
+        for (var i = 0; i < cells.length; i++)
+        {
+          let cell = cells[i];
+          let geo = graph.getCellGeometry(cell);
+          cell.value.style.width = (geo.width - 10) + "px";
+          cell.value.style.height = (geo.height - 10) + "px";
+
+          // cell.value.height = 
+          // if (
+          // if (graph.getModel().getChildCount(cells[i]) > 0)
+          // {
+          //   var geo = graph.getCellGeometry(cells[i]);
+          //   
+          //   if (geo != null)
+          //   {
+          //     var children = graph.getChildCells(cells[i], true, true);
+          //     var bounds = graph.getBoundingBoxFromGeometry(children, true);
+          //     
+          //     geo = geo.clone();
+          //     geo.width = Math.max(geo.width, bounds.width);
+          //     geo.height = Math.max(geo.height, bounds.height);
+          //     
+          //     graph.getModel().setGeometry(cells[i], geo);
+          //   }
+          // }
+        }
+      }
+    });
+
+    // var mxCellRendererRedrawLabel = mxCellRenderer.prototype.redrawLabel;
+    // mxCellRenderer.prototype.redrawLabel = function(state, forced)
+    // {
+    //     var value = this.graph.model.getValue(state.cell)
+    //     if (value.nodeName !== "iframe")
+    //     {
+    //         // works because there is a variable called "this.graph" in the scope, which is critical
+    //         return mxCellRendererRedrawLabel.apply(this, arguments);
+    //     }
+    // };
+
+
+    var mxGraphConvertValueToString = mxGraph.prototype.convertValueToString;
+    graph.convertValueToString = function(cell)
+    {
+        if (mxUtils.isNode(cell.value) && cell.value.nodeName.toLowerCase() == 'iframe')
+        {
+            // Returns a DOM for the label
+            return iframe;
+        } else {
+            return mxGraphConvertValueToString.apply(this, arguments);
+        }
+    }
+
+
+    // graph.addListener(mxEvent.RESIZE_CELLS, function(sender, evt)
+    // {
+    //   var cells = evt.getProperty('cells');
+    //   // for (var i = 0; i < cells.length; i++)
+    //   // {
+    //   //   this.view.removeState(cells[i]);
+    //   // }
+    // });
+
+    // graph.convertValueToString = function(cell)
+    // {
+    //   if (mxUtils.isNode(cell.value))
+    //   {
+    //     return cell.getAttribute('label', '')
+    //   }
+    // };
+    // 
+    // var cellLabelChanged = graph.cellLabelChanged;
+    // graph.cellLabelChanged = function(cell, newValue, autoSize)
+    // {
+    //   if (mxUtils.isNode(cell.value))
+    //   {
+    //     // Clones the value for correct undo/redo
+    //     // var elt = cell.value.cloneNode(true);
+    //     cell.value.setAttribute('label', newValue);
+    //     newValue = cell.value;
+    //   }
+    //   
+    //   cellLabelChanged.apply(this, arguments);
+    // };
+
+    let iframe = document.createElement("iframe");
+    iframe.src = "temp.html";
 
     // Add graph elements
-    addSidebarIcon(graph, sidebar,
-        '<iframe src="temp.html">',
+    addSidebarIcon(graph, sidebar, iframe,
         'images/icons48/table.png');
     addSidebarIcon(graph, sidebar,
         '<h1 style="margin:0px;">Website</h1><br>'+
@@ -283,8 +376,10 @@ function initGraph(container, toolbar, sidebar, status)
         {
             var start = this.bends[0];
             var startDist = sqrtDist(me.getGraphX(), me.getGraphY(), start.bounds.getCenterX(), start.bounds.getCenterY());
+
             var end = this.bends[this.bends.length - 1];
             var endDist = sqrtDist(me.getGraphX(), me.getGraphY(), end.bounds.getCenterX(), end.bounds.getCenterY());
+
             if (startDist < endDist) {
                 return 0;
             } else {
@@ -394,19 +489,19 @@ function initGraph(container, toolbar, sidebar, status)
     var parent = graph.getDefaultParent();
                     
     // Adds cells to the model in a single step
-    graph.getModel().beginUpdate();
-    try
-    {
-        var v1 = graph.insertVertex(parent, null, 'Hello,', 120, 120, 80, 30);
-        var v2 = graph.insertVertex(parent, null, 'World!', 400, 250, 80, 30);
-        var e1 = graph.insertEdge(parent, null, '', v1, v2, 'edgeStyle=orthogonalEdgeStyle;');
-        var e2 = graph.insertEdge(parent, null, '', v2, v1, 'edgeStyle=orthogonalEdgeStyle;');
-    }
-    finally
-    {
-        // Updates the display
-        graph.getModel().endUpdate();
-    }
+    // graph.getModel().beginUpdate();
+    // try
+    // {
+    //     var v1 = graph.insertVertex(parent, null, 'Hello,', 120, 120, 80, 30);
+    //     var v2 = graph.insertVertex(parent, null, 'World!', 400, 250, 80, 30);
+    //     var e1 = graph.insertEdge(parent, null, '', v1, v2, 'edgeStyle=orthogonalEdgeStyle;');
+    //     var e2 = graph.insertEdge(parent, null, '', v2, v1, 'edgeStyle=orthogonalEdgeStyle;');
+    // }
+    // finally
+    // {
+    //     // Updates the display
+    //     graph.getModel().endUpdate();
+    // }
 
 };
 
