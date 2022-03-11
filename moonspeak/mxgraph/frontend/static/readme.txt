@@ -16,3 +16,5 @@ Then the event will be processed by the 5th listener: mxPanningHandler
 
 ===================
 
+Reparent IFrame within a DOM without loosing state: http://crisal.io/tmp/iframe-slot.html
+This is an old question: https://github.com/whatwg/html/issues/5484
