@@ -143,45 +143,9 @@ function initGraph(container, toolbar, sidebar, status)
 		return !this.isCellLocked(cell);
 	};
 
-	// Returns a shorter label if the cell is collapsed and no
-	// label for expanded groups
-	graph.getLabel = function(cell)
-	{
-		var tmp = mxGraph.prototype.getLabel.apply(this, arguments); // "supercall"
-		
-		if (this.isCellLocked(cell))
-		{
-			// Returns an empty label but makes sure an HTML
-			// element is created for the label (for event
-			// processing wrt the parent label)
-			return '';
-		}
-		else if (this.isCellCollapsed(cell))
-		{
-			var index = tmp.indexOf('</h1>');
-			
-			if (index > 0)
-			{
-				tmp = tmp.substring(0, index+5);
-			}
-		}
-		
-		return tmp;
-	}
-
-	// Disables HTML labels for swimlanes to avoid conflict
-	// for the event processing on the child cells. HTML
-	// labels consume events before underlying cells get the
-	// chance to process those events.
-	//
-	// NOTE: Use of HTML labels is only recommended if the specific
-	// features of such labels are required, such as special label
-	// styles or interactive form fields. Otherwise non-HTML labels
-	// should be used by not overidding the following function.
-	// See also: configureStylesheet.
+	// Everything is an HTML label now
 	graph.isHtmlLabel = function(cell)
 	{
-		// return !this.isSwimlane(cell);
 		return true;
 	}
 
@@ -201,25 +165,6 @@ function initGraph(container, toolbar, sidebar, status)
           let geo = graph.getCellGeometry(cell);
           cell.value.style.width = (geo.width - 10) + "px";
           cell.value.style.height = (geo.height - 10) + "px";
-
-          // cell.value.height = 
-          // if (
-          // if (graph.getModel().getChildCount(cells[i]) > 0)
-          // {
-          //   var geo = graph.getCellGeometry(cells[i]);
-          //   
-          //   if (geo != null)
-          //   {
-          //     var children = graph.getChildCells(cells[i], true, true);
-          //     var bounds = graph.getBoundingBoxFromGeometry(children, true);
-          //     
-          //     geo = geo.clone();
-          //     geo.width = Math.max(geo.width, bounds.width);
-          //     geo.height = Math.max(geo.height, bounds.height);
-          //     
-          //     graph.getModel().setGeometry(cells[i], geo);
-          //   }
-          // }
         }
       }
     });
@@ -236,88 +181,41 @@ function initGraph(container, toolbar, sidebar, status)
     // };
 
 
+    let iframe = document.createElement("iframe");
+    iframe.src = "temp.html";
+
     var mxGraphConvertValueToString = mxGraph.prototype.convertValueToString;
     graph.convertValueToString = function(cell)
     {
-        if (mxUtils.isNode(cell.value) && cell.value.nodeName.toLowerCase() == 'iframe')
-        {
+        if (cell.iframe != null) {
+            return cell.iframe;
+        } else if (mxUtils.isNode(cell.value) && cell.value.nodeName.toLowerCase() == 'iframe') {
             // Returns a DOM for the label
+            cell.iframe = iframe;
             return iframe;
         } else {
             return mxGraphConvertValueToString.apply(this, arguments);
         }
     }
 
-
-    // graph.addListener(mxEvent.RESIZE_CELLS, function(sender, evt)
-    // {
-    //   var cells = evt.getProperty('cells');
-    //   // for (var i = 0; i < cells.length; i++)
-    //   // {
-    //   //   this.view.removeState(cells[i]);
-    //   // }
-    // });
-
-    // graph.convertValueToString = function(cell)
-    // {
-    //   if (mxUtils.isNode(cell.value))
-    //   {
-    //     return cell.getAttribute('label', '')
-    //   }
-    // };
+    // Ignores cached label in codec
+    // mxCodecRegistry.getCodec(mxCell).exclude.push('iframe');
     // 
-    // var cellLabelChanged = graph.cellLabelChanged;
-    // graph.cellLabelChanged = function(cell, newValue, autoSize)
+    // // Invalidates cached labels
+    // graph.model.setValue = function(cell, value)
     // {
-    //   if (mxUtils.isNode(cell.value))
-    //   {
-    //     // Clones the value for correct undo/redo
-    //     // var elt = cell.value.cloneNode(true);
-    //     cell.value.setAttribute('label', newValue);
-    //     newValue = cell.value;
-    //   }
-    //   
-    //   cellLabelChanged.apply(this, arguments);
+    //     cell.div = null;
+    //     mxGraphModel.prototype.setValue.apply(this, arguments);
     // };
 
-    let iframe = document.createElement("iframe");
-    iframe.src = "temp.html";
 
     // Add graph elements
-    addSidebarIcon(graph, sidebar, iframe,
-        'images/icons48/table.png');
-    addSidebarIcon(graph, sidebar,
-        '<h1 style="margin:0px;">Website</h1><br>'+
-        '<img src="images/icons48/earth.png" width="48" height="48">'+
-        '<br>'+
-        '<a href="http://www.jgraph.com" target="_blank">Browse</a>',
-        'images/icons48/earth.png');
-    addSidebarIcon(graph, sidebar,
-        '<h1 style="margin:0px;">Process</h1><br>'+
-        '<img src="images/icons48/gear.png" width="48" height="48">'+
-        '<br><select><option>Value1</option><option>Value2</option></select><br>',
-        'images/icons48/gear.png');
-    addSidebarIcon(graph, sidebar,
-        '<h1 style="margin:0px;">Keys</h1><br>'+
-        '<img src="images/icons48/keys.png" width="48" height="48">'+
-        '<br>'+
-        '<button onclick="mxUtils.alert(\'generate\');">Generate</button>',
-        'images/icons48/keys.png');
-    addSidebarIcon(graph, sidebar,
-        '<h1 style="margin:0px;">New Mail</h1><br>'+
-        '<img src="images/icons48/mail_new.png" width="48" height="48">'+
-        '<br><input type="checkbox"/>CC Archive',
-        'images/icons48/mail_new.png');
-    addSidebarIcon(graph, sidebar,
-        '<h1 style="margin:0px;">Server</h1><br>'+
-        '<img src="images/icons48/server.png" width="48" height="48">'+
-        '<br>'+
-        '<input type="text" size="12" value="127.0.0.1"/>',
-        'images/icons48/server.png');
-
-    // Defines an icon for creating new connections in the connection handler.
-    // This will automatically disable the highlighting of the source vertex.
-    // mxConnectionHandler.prototype.connectImage = new mxImage('images/connector.gif', 16, 16);
+    addSidebarIcon(graph, sidebar, iframe, 'images/icons48/table.png');
+    addSidebarIcon(graph, sidebar, iframe, 'images/icons48/earth.png');
+    addSidebarIcon(graph, sidebar, iframe, 'images/icons48/gear.png');
+    addSidebarIcon(graph, sidebar, iframe, 'images/icons48/keys.png');
+    addSidebarIcon(graph, sidebar, iframe, 'images/icons48/mail_new.png');
+    addSidebarIcon(graph, sidebar, iframe, 'images/icons48/server.png');
 
     // Configures: tooltips, new connections and panning
     graph.setPanning(true);
@@ -391,61 +289,6 @@ function initGraph(container, toolbar, sidebar, status)
     };
 
 
-    // Adds zoom buttons in top, left corner
-    var buttons = document.createElement('div');
-    buttons.style.position = 'absolute';
-    buttons.style.overflow = 'visible';
-
-    var bs = graph.getBorderSizes();
-    buttons.style.top = (container.offsetTop + bs.y) + 'px';
-    buttons.style.left = (container.offsetLeft + bs.x) + 'px';
-    
-    var left = 0;
-    var bw = 16;
-    var bh = 16;
-    
-    if (mxClient.IS_QUIRKS)
-    {
-        bw -= 1;
-        bh -= 1;
-    }
-    
-    function addButton(label, funct)
-    {
-        var btn = document.createElement('div');
-        mxUtils.write(btn, label);
-        btn.style.position = 'absolute';
-        btn.style.backgroundColor = 'transparent';
-        btn.style.border = '1px solid gray';
-        btn.style.textAlign = 'center';
-        btn.style.fontSize = '10px';
-        btn.style.cursor = 'hand';
-        btn.style.width = bw + 'px';
-        btn.style.height = bh + 'px';
-        btn.style.left = left + 'px';
-        btn.style.top = '0px';
-        
-        mxEvent.addListener(btn, 'click', function(evt)
-        {
-            funct();
-            mxEvent.consume(evt);
-        });
-        
-        left += bw;
-        
-        buttons.appendChild(btn);
-    };
-    
-    addButton('+', function()
-    {
-        graph.zoomIn();
-    });
-    
-    addButton('-', function()
-    {
-        graph.zoomOut();
-    });
-
     // Creates a new DIV that is used as a toolbar and adds
     // toolbar buttons.
     var spacer = document.createElement('div');
@@ -483,26 +326,6 @@ function initGraph(container, toolbar, sidebar, status)
     mxUtils.writeln(hints, '- Click and drag a table to move and connect');
     mxUtils.writeln(hints, '- Shift- or Rightclick to show a popup menu');
     document.body.appendChild(hints);
-
-    // Gets the default parent for inserting new cells. This
-    // is normally the first child of the root (ie. layer 0).
-    var parent = graph.getDefaultParent();
-                    
-    // Adds cells to the model in a single step
-    // graph.getModel().beginUpdate();
-    // try
-    // {
-    //     var v1 = graph.insertVertex(parent, null, 'Hello,', 120, 120, 80, 30);
-    //     var v2 = graph.insertVertex(parent, null, 'World!', 400, 250, 80, 30);
-    //     var e1 = graph.insertEdge(parent, null, '', v1, v2, 'edgeStyle=orthogonalEdgeStyle;');
-    //     var e2 = graph.insertEdge(parent, null, '', v2, v1, 'edgeStyle=orthogonalEdgeStyle;');
-    // }
-    // finally
-    // {
-    //     // Updates the display
-    //     graph.getModel().endUpdate();
-    // }
-
 };
 
 function addSidebarIcon(graph, sidebar, label, image)
@@ -525,27 +348,9 @@ function addSidebarIcon(graph, sidebar, label, image)
 			// as follows: v1 = graph.insertVertex(parent, null, label,
 			// pt.x, pt.y, 120, 120, 'image=' + image);
 			v1 = graph.insertVertex(parent, null, label, x, y, 120, 120);
-			// v1.setConnectable(false);
 			
 			// Presets the collapsed size
 			v1.geometry.alternateBounds = new mxRectangle(0, 0, 120, 40);
-								
-			//// Adds the ports at various relative locations
-			//var port = graph.insertVertex(v1, null, 'Trigger', 0, 0.25, 16, 16,
-			//		'port;image=editors/images/overlays/flash.png;align=right;imageAlign=right;spacingRight=18', true);
-			//port.geometry.offset = new mxPoint(-6, -8);
-
-			//var port = graph.insertVertex(v1, null, 'Input', 0, 0.75, 16, 16,
-			//		'port;image=editors/images/overlays/check.png;align=right;imageAlign=right;spacingRight=18', true);
-			//port.geometry.offset = new mxPoint(-6, -4);
-			//
-			//var port = graph.insertVertex(v1, null, 'Error', 1, 0.25, 16, 16,
-			//		'port;image=editors/images/overlays/error.png;spacingLeft=18', true);
-			//port.geometry.offset = new mxPoint(-8, -8);
-
-			//var port = graph.insertVertex(v1, null, 'Result', 1, 0.75, 16, 16,
-			//		'port;image=editors/images/overlays/information.png;spacingLeft=18', true);
-			//port.geometry.offset = new mxPoint(-8, -4);
 		}
 		finally
 		{
