@@ -21,7 +21,7 @@ function initGraph(container, toolbar, sidebar, status)
     container.style.background = 'url("images/grid.gif")';
 
     // mxGraph.prototype.allowDanglingEdges = false;
-    mxPanningHandler.prototype.ignoreCell = false;
+    // mxPanningHandler.prototype.ignoreCell = false;
 
     // Disable mxConnectionHandler initiating connections from the center of a shape
     // also disables border highlight when moving mouse over shape center
@@ -118,6 +118,7 @@ function initGraph(container, toolbar, sidebar, status)
             graphHandlerStart.apply(this, arguments);
         };
     }
+
     //================================================
     // Scroll graph using scroll bars
 	graph.setPanning(true);
@@ -452,6 +453,12 @@ function initGraph(container, toolbar, sidebar, status)
     addToolbarButton(editor, toolbar, 'undo', '', 'images/undo.png');
     addToolbarButton(editor, toolbar, 'redo', '', 'images/redo.png');
 
+    toolbar.appendChild(spacer.cloneNode(true));
+
+    addToolbarButton(editor, toolbar, 'zoomIn', '', 'images/zoom_in.png', true);
+    addToolbarButton(editor, toolbar, 'zoomOut', '', 'images/zoom_out.png', true);
+    addToolbarButton(editor, toolbar, 'fit', '', 'images/fit_to_size.png', true);
+
     // Displays useful hints in a small semi-transparent box.
     var hints = document.createElement('div');
     hints.style.position = 'absolute';
@@ -476,6 +483,16 @@ function initGraph(container, toolbar, sidebar, status)
     mxUtils.writeln(hints, '- Click and drag a table to move and connect');
     mxUtils.writeln(hints, '- Shift- or Rightclick to show a popup menu');
     document.body.appendChild(hints);
+
+    // Sets initial scrollbar positions
+    window.setTimeout(function()
+    {
+        var bounds = graph.getGraphBounds();
+        var width = Math.max(bounds.width, graph.scrollTileSize.width * graph.view.scale);
+        var height = Math.max(bounds.height, graph.scrollTileSize.height * graph.view.scale);
+        graph.container.scrollTop = Math.floor(Math.max(0, bounds.y - Math.max(20, (graph.container.clientHeight - height) / 4)));
+        graph.container.scrollLeft = Math.floor(Math.max(0, bounds.x - Math.max(0, (graph.container.clientWidth - width) / 2)));
+    }, 0);
 };
 
 function addSidebarIcon(graph, sidebar, label, image)
