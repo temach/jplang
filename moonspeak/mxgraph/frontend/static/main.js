@@ -21,50 +21,51 @@ function initGraph(container, toolbar, sidebar, status)
     container.style.background = 'url("images/grid.gif")';
 
     // mxGraph.prototype.allowDanglingEdges = false;
+    mxPanningHandler.prototype.ignoreCell = false;
 
     // Disable mxConnectionHandler initiating connections from the center of a shape
     // also disables border highlight when moving mouse over shape center
-    var mxGraphIsIgnoreTerminalEvent = mxGraph.prototype.isIgnoreTerminalEvent;
-    mxGraph.prototype.isIgnoreTerminalEvent = function(evt)
-    {
-        if (evt.buttons == 0) {
-            // just mousing over, ignore such events
-            return true;
-        }
-        return mxGraphIsIgnoreTerminalEvent.call(this, arguments);
-    };
+    // var mxGraphIsIgnoreTerminalEvent = mxGraph.prototype.isIgnoreTerminalEvent;
+    // mxGraph.prototype.isIgnoreTerminalEvent = function(evt)
+    // {
+    //     if (evt.buttons == 0) {
+    //         // just mousing over, ignore such events
+    //         return true;
+    //     }
+    //     return mxGraphIsIgnoreTerminalEvent.call(this, arguments);
+    // };
     
 
     // Adjust hanlders to make sure right click is only for panning
-    var mxSelectionCellsHandlerMouseDown = mxSelectionCellsHandler.prototype.mouseDown;
-    mxSelectionCellsHandler.prototype.mouseDown = function(sender, me)
-    {
-        if (me.evt.button !== 2)
-        {
-            // works because there is a variable called "this.graph" in the scope, which is critical
-            return mxSelectionCellsHandlerMouseDown.apply(this, arguments);
-        }
-    };
+    // var mxSelectionCellsHandlerMouseDown = mxSelectionCellsHandler.prototype.mouseDown;
+    // mxSelectionCellsHandler.prototype.mouseDown = function(sender, me)
+    // {
+    //     if (me.evt.button !== 2)
+    //     {
+    //         // works because there is a variable called "this.graph" in the scope, which is critical
+    //         return mxSelectionCellsHandlerMouseDown.apply(this, arguments);
+    //     }
+    // };
 
-    var mxConnectionHandlerMouseDown = mxConnectionHandler.prototype.mouseDown;
-    mxConnectionHandler.prototype.mouseDown = function(sender, me)
-    {
-        if (me.evt.button !== 2)
-        {
-            // works because there is a variable called "this.graph" in the scope, which is critical
-            return mxConnectionHandlerMouseDown.apply(this, arguments);
-        }
-    };
+    // var mxConnectionHandlerMouseDown = mxConnectionHandler.prototype.mouseDown;
+    // mxConnectionHandler.prototype.mouseDown = function(sender, me)
+    // {
+    //     if (me.evt.button !== 2)
+    //     {
+    //         // works because there is a variable called "this.graph" in the scope, which is critical
+    //         return mxConnectionHandlerMouseDown.apply(this, arguments);
+    //     }
+    // };
 
-    var mxGraphHandlerMouseDown = mxGraphHandler.prototype.mouseDown;
-    mxGraphHandler.prototype.mouseDown = function(sender, me)
-    {
-        if (me.evt.button !== 2)
-        {
-            // works because there is a variable called "this.graph" in the scope, which is critical
-            return mxGraphHandlerMouseDown.apply(this, arguments);
-        }
-    };
+    // var mxGraphHandlerMouseDown = mxGraphHandler.prototype.mouseDown;
+    // mxGraphHandler.prototype.mouseDown = function(sender, me)
+    // {
+    //     if (me.evt.button !== 2)
+    //     {
+    //         // works because there is a variable called "this.graph" in the scope, which is critical
+    //         return mxGraphHandlerMouseDown.apply(this, arguments);
+    //     }
+    // };
 
 
     // Constructs a new editor.  This function invokes the onInit callback upon completion.
@@ -81,7 +82,7 @@ function initGraph(container, toolbar, sidebar, status)
     // of the UI are custom in this example.
     var graph = editor.graph;
     var model = graph.model;
-    
+
     // Do not allow multiple edges between any two components, this is a DAG
     graph.setMultigraph(false);
     // Disables some global features
@@ -117,6 +118,163 @@ function initGraph(container, toolbar, sidebar, status)
             graphHandlerStart.apply(this, arguments);
         };
     }
+    //================================================
+    // Scroll graph using scroll bars
+	graph.setPanning(true);
+	
+	/**
+	 * Specifies the size of the size for "tiles" to be used for a graph with
+	 * scrollbars but no visible background page. A good value is large
+	 * enough to reduce the number of repaints that is caused for auto-
+	 * translation, which depends on this value, and small enough to give
+	 * a small empty buffer around the graph. Default is 400x400.
+	 */
+	graph.scrollTileSize = new mxRectangle(0, 0, 100, 100);
+	
+	/**
+	 * Returns the padding for pages in page view with scrollbars.
+	 */
+	graph.getPagePadding = function()
+	{
+		return new mxPoint(Math.max(0, Math.round(graph.container.offsetWidth - 34)),
+				Math.max(0, Math.round(graph.container.offsetHeight - 34)));
+	};
+	
+	/**
+	 * Returns the size of the page format scaled with the page size.
+	 */
+	graph.getPageSize = function()
+	{
+		return (this.pageVisible) ? new mxRectangle(0, 0, this.pageFormat.width * this.pageScale,
+				this.pageFormat.height * this.pageScale) : this.scrollTileSize;
+	};
+	
+	/**
+	 * Returns a rectangle describing the position and count of the
+	 * background pages, where x and y are the position of the top,
+	 * left page and width and height are the vertical and horizontal
+	 * page count.
+	 */
+	graph.getPageLayout = function()
+	{
+		var size = (this.pageVisible) ? this.getPageSize() : this.scrollTileSize;
+		var bounds = this.getGraphBounds();
+
+		if (bounds.width == 0 || bounds.height == 0)
+		{
+			return new mxRectangle(0, 0, 1, 1);
+		}
+		else
+		{
+			// Computes untransformed graph bounds
+			var x = Math.ceil(bounds.x / this.view.scale - this.view.translate.x);
+			var y = Math.ceil(bounds.y / this.view.scale - this.view.translate.y);
+			var w = Math.floor(bounds.width / this.view.scale);
+			var h = Math.floor(bounds.height / this.view.scale);
+			
+			var x0 = Math.floor(x / size.width);
+			var y0 = Math.floor(y / size.height);
+			var w0 = Math.ceil((x + w) / size.width) - x0;
+			var h0 = Math.ceil((y + h) / size.height) - y0;
+			
+			return new mxRectangle(x0, y0, w0, h0);
+		}
+	};
+
+	// Fits the number of background pages to the graph
+	graph.view.getBackgroundPageBounds = function()
+	{
+		var layout = this.graph.getPageLayout();
+		var page = this.graph.getPageSize();
+		
+		return new mxRectangle(this.scale * (this.translate.x + layout.x * page.width),
+				this.scale * (this.translate.y + layout.y * page.height),
+				this.scale * layout.width * page.width,
+				this.scale * layout.height * page.height);
+	};
+	
+	graph.getPreferredPageSize = function(bounds, width, height)
+	{
+		var pages = this.getPageLayout();
+		var size = this.getPageSize();
+		
+		return new mxRectangle(0, 0, pages.width * size.width, pages.height * size.height);
+	};
+	
+	/**
+	 * Guesses autoTranslate to avoid another repaint (see below).
+	 * Works if only the scale of the graph changes or if pages
+	 * are visible and the visible pages do not change.
+	 */
+	var graphViewValidate = graph.view.validate;
+	graph.view.validate = function()
+	{
+		if (this.graph.container != null && mxUtils.hasScrollbars(this.graph.container))
+		{
+			var pad = this.graph.getPagePadding();
+			var size = this.graph.getPageSize();
+			
+			// Updating scrollbars here causes flickering in quirks and is not needed
+			// if zoom method is always used to set the current scale on the graph.
+			var tx = this.translate.x;
+			var ty = this.translate.y;
+			this.translate.x = pad.x / this.scale - (this.x0 || 0) * size.width;
+			this.translate.y = pad.y / this.scale - (this.y0 || 0) * size.height;
+		}
+		
+		graphViewValidate.apply(this, arguments);
+	};
+	
+	var graphSizeDidChange = graph.sizeDidChange;
+	graph.sizeDidChange = function()
+	{
+		if (this.container != null && mxUtils.hasScrollbars(this.container))
+		{
+			var pages = this.getPageLayout();
+			var pad = this.getPagePadding();
+			var size = this.getPageSize();
+			
+			// Updates the minimum graph size
+			var minw = Math.ceil(2 * pad.x / this.view.scale + pages.width * size.width);
+			var minh = Math.ceil(2 * pad.y / this.view.scale + pages.height * size.height);
+			
+			var min = graph.minimumGraphSize;
+			
+			// LATER: Fix flicker of scrollbar size in IE quirks mode
+			// after delayed call in window.resize event handler
+			if (min == null || min.width != minw || min.height != minh)
+			{
+				graph.minimumGraphSize = new mxRectangle(0, 0, minw, minh);
+			}
+			
+			// Updates auto-translate to include padding and graph size
+			var dx = pad.x / this.view.scale - pages.x * size.width;
+			var dy = pad.y / this.view.scale - pages.y * size.height;
+			
+			if (!this.autoTranslate && (this.view.translate.x != dx || this.view.translate.y != dy))
+			{
+				this.autoTranslate = true;
+				this.view.x0 = pages.x;
+				this.view.y0 = pages.y;
+
+				// NOTE: THIS INVOKES THIS METHOD AGAIN. UNFORTUNATELY THERE IS NO WAY AROUND THIS SINCE THE
+				// BOUNDS ARE KNOWN AFTER THE VALIDATION AND SETTING THE TRANSLATE TRIGGERS A REVALIDATION.
+				// SHOULD MOVE TRANSLATE/SCALE TO VIEW.
+				var tx = graph.view.translate.x;
+				var ty = graph.view.translate.y;
+
+				graph.view.setTranslate(dx, dy);
+				graph.container.scrollLeft += (dx - tx) * graph.view.scale;
+				graph.container.scrollTop += (dy - ty) * graph.view.scale;
+
+				this.autoTranslate = false;
+				return;
+			}
+
+			graphSizeDidChange.apply(this, arguments);
+		}
+	};
+
 
     //================================================
     // Disable highlight of cells when dragging from toolbar
@@ -181,44 +339,36 @@ function initGraph(container, toolbar, sidebar, status)
     // };
 
 
-    let iframe = document.createElement("iframe");
-    iframe.src = "temp.html";
+
+
+    // let shadowHost = document.createElement("div");
+    // let shadowRoot = shadowHost.attachShadow({mode: 'open'});
+    // shadowRoot.appendChild(iframe);
 
     var mxGraphConvertValueToString = mxGraph.prototype.convertValueToString;
     graph.convertValueToString = function(cell)
     {
-        if (cell.iframe != null) {
-            return cell.iframe;
+        if (cell.div != null) {
+            return cell.div;
         } else if (mxUtils.isNode(cell.value) && cell.value.nodeName.toLowerCase() == 'iframe') {
             // Returns a DOM for the label
-            cell.iframe = iframe;
-            return iframe;
+            cell.div = cell.value;
+            return cell.div;
         } else {
             return mxGraphConvertValueToString.apply(this, arguments);
         }
     }
 
-    // Ignores cached label in codec
-    // mxCodecRegistry.getCodec(mxCell).exclude.push('iframe');
-    // 
-    // // Invalidates cached labels
-    // graph.model.setValue = function(cell, value)
-    // {
-    //     cell.div = null;
-    //     mxGraphModel.prototype.setValue.apply(this, arguments);
-    // };
-
-
     // Add graph elements
-    addSidebarIcon(graph, sidebar, iframe, 'images/icons48/table.png');
-    addSidebarIcon(graph, sidebar, iframe, 'images/icons48/earth.png');
-    addSidebarIcon(graph, sidebar, iframe, 'images/icons48/gear.png');
-    addSidebarIcon(graph, sidebar, iframe, 'images/icons48/keys.png');
-    addSidebarIcon(graph, sidebar, iframe, 'images/icons48/mail_new.png');
-    addSidebarIcon(graph, sidebar, iframe, 'images/icons48/server.png');
+    addSidebarIcon(graph, sidebar, "temp.html", 'images/icons48/table.png');
+    // addSidebarIcon(graph, sidebar, shadowHost, 'images/icons48/earth.png');
+    // addSidebarIcon(graph, sidebar, shadowHost, 'images/icons48/gear.png');
+    // addSidebarIcon(graph, sidebar, shadowHost, 'images/icons48/keys.png');
+    // addSidebarIcon(graph, sidebar, shadowHost, 'images/icons48/mail_new.png');
+    // addSidebarIcon(graph, sidebar, shadowHost, 'images/icons48/server.png');
 
     // Configures: tooltips, new connections and panning
-    graph.setPanning(true);
+    // graph.setPanning(true);
     // graph.panningHandler.useLeftButtonForPanning = true;
     graph.setTooltips(false);
     graph.setConnectable(true);
@@ -343,14 +493,16 @@ function addSidebarIcon(graph, sidebar, label, image)
 		model.beginUpdate();
 		try
 		{
+
+            let iframe = document.createElement("iframe");
+            iframe.src = label;
+
 			// NOTE: For non-HTML labels the image must be displayed via the style
 			// rather than the label markup, so use 'image=' + image for the style.
 			// as follows: v1 = graph.insertVertex(parent, null, label,
 			// pt.x, pt.y, 120, 120, 'image=' + image);
-			v1 = graph.insertVertex(parent, null, label, x, y, 120, 120);
-			
-			// Presets the collapsed size
-			v1.geometry.alternateBounds = new mxRectangle(0, 0, 120, 40);
+			// v1 = graph.insertVertex(parent, null, label, x, y, 120, 120);
+			v1 = graph.insertVertex(parent, null, iframe, x, y, 120, 120);
 		}
 		finally
 		{
