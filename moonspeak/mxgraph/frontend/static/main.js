@@ -362,6 +362,9 @@ function initGraph(container, toolbar, sidebar, status)
 
     // Add graph elements
     addSidebarIcon(graph, sidebar, "temp.html", 'images/icons48/table.png');
+    addSidebarIcon(graph, sidebar, "temp.html", 'images/icons48/earth.png');
+    addSidebarIcon(graph, sidebar, "temp.html", 'images/icons48/gear.png');
+    addSidebarIcon(graph, sidebar, "temp.html", 'images/icons48/server.png');
     // addSidebarIcon(graph, sidebar, shadowHost, 'images/icons48/earth.png');
     // addSidebarIcon(graph, sidebar, shadowHost, 'images/icons48/gear.png');
     // addSidebarIcon(graph, sidebar, shadowHost, 'images/icons48/keys.png');
