@@ -54,7 +54,7 @@ body, html {
 </style>
 </head>
 
-<body onload="getData()">
+<body onload="getDataRaw()">
 
 
 
@@ -73,6 +73,23 @@ body, html {
 
 <script>
 
+async function getDataRaw() {
+    let urls = [
+        "frame_background",
+        "frame_question",
+        "frame_plus",
+    ];
+
+    for (const name of urls) {
+        let elemRef = document.getElementById(name);
+        let response = await fetch(name + ".html");
+        let htmlText = await response.text()
+        elemRef.innerHTML = htmlText;
+        nodeScriptReplace(elemRef);
+    };
+}
+
+
 async function getData() {
     let urls = [
         "frame_background",
@@ -84,13 +101,13 @@ async function getData() {
 
     for (const name of urls) {
         let elemRef = document.getElementById(name);
-        // elemRef.attachShadow({mode: 'open'});
+        elemRef.attachShadow({mode: 'open'});
         let response = await fetch(name + ".html");
         let htmlText = await response.text()
-        elemRef.innerHTML = htmlText;
+        elemRef.shadowRoot.innerHTML = htmlText;
         // elemRef.classList.add("colored");
         // console.log(elemRef);
-        nodeScriptReplace(elemRef);
+        nodeScriptReplace(elemRef.shadowRoot);
 
         // let html = parser.parseFromString(htmlText, 'text/html');
         // nodeScriptReplace(html);
