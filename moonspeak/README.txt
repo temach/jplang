@@ -11,3 +11,7 @@ Passing events through layers:
 https://stackoverflow.com/questions/1009753/pass-mouse-events-through-absolutely-positioned-element
 
 https://developer.mozilla.org/en-US/docs/Web/Events/Creating_and_triggering_events
+
+
+Elm running in shadow-root also has the problem of "document" being undefined:
+https://discourse.elm-lang.org/t/shadowroots-and-browser-dom/7791/3
