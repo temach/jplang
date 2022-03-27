@@ -69,6 +69,7 @@ body, html {
     <div id="frame_background"></div>
     <div id="frame_plus"></div>
     <div id="frame_question"></div>
+    <div id="frame_alert"></div>
 </div>
 
 <script>
@@ -78,6 +79,7 @@ async function getDataRaw() {
         "frame_background",
         "frame_question",
         "frame_plus",
+        "frame_alert",
     ];
 
     for (const name of urls) {
@@ -89,6 +91,25 @@ async function getDataRaw() {
     };
 }
 
+async function getDataShadow() {
+    let urls = [
+        "frame_background",
+        "frame_question",
+        "frame_plus",
+    ];
+
+    for (const name of urls) {
+        let elemRef = document.getElementById(name);
+        elemRef.attachShadow({mode: 'open'});
+        let response = await fetch(name + ".html");
+        let htmlText = await response.text()
+        elemRef.shadowRoot.innerHTML = htmlText;
+
+        let html = parser.parseFromString(htmlText, 'text/html');
+        let htmlScripts = html.querySelectorAll('script');
+        nodeScriptReplace(elemRef.shadowRoot);
+    };
+}
 
 async function getData() {
     let urls = [
