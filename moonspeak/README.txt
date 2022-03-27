@@ -1,0 +1,13 @@
+https://stackoverflow.com/questions/13993398/click-through-sticky-transparent-iframe
+
+https://stackoverflow.com/questions/15080222/add-click-event-to-iframe
+
+We can make each iframe check if they received mouse click that did not touch anything, if it did not touch anything, then they pass it on to next iframe.
+
+https://developer.mozilla.org/en-US/docs/Web/CSS/pointer-events#values
+
+
+Passing events through layers:
+https://stackoverflow.com/questions/1009753/pass-mouse-events-through-absolutely-positioned-element
+
+https://developer.mozilla.org/en-US/docs/Web/Events/Creating_and_triggering_events
