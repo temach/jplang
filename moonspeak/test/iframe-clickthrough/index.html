@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100vw; 
+    height: 100vh;
+}
+
+.colored {
+    background-color: red;
+}
+
+.featuresContainer {
+    padding: 0;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.fullscreen {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    border: none;
+    /*
+    background-color: transparent;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    */
+}
+
+/*
+.fullscreen[data-z-index]::after {
+    content: '';
+    z-index: attr(data-z-index);
+
+}
+
+.fullscreen[data-z-index]:active {
+    pointer-events: none;
+}
+*/
+
+.hidden {
+    display: none;
+}
+
+</style>
+</head>
+
+<body onload="getData()">
+
+
+
+<div class="featuresContainer">
+    <!-- <iframe id="frame_background" data-z-index="10" class="fullscreen" src="./frame_background.html"></iframe> -->
+    <!-- <iframe id="frame_plus" data-z-index="11" class="fullscreen" src="./frame_plus.html"></iframe> -->
+    <!-- <iframe id="frame_question" data-z-index="12" class="fullscreen" src="./frame_question.html"></iframe> -->
+
+    <!-- <div class="fullscreen" id="frame_plus"></div> -->
+    <!-- <div class="fullscreen" id="frame_question"></div> -->
+    <!-- <div class="fullscreen" id="frame_background"></div> -->
+    <div id="frame_background"></div>
+    <div id="frame_plus"></div>
+    <div id="frame_question"></div>
+</div>
+
+<script>
+
+async function getData() {
+    let urls = [
+        "frame_background",
+        "frame_question",
+        "frame_plus",
+    ];
+
+    // let parser = new DOMParser();
+
+    for (const name of urls) {
+        let elemRef = document.getElementById(name);
+        // elemRef.attachShadow({mode: 'open'});
+        let response = await fetch(name + ".html");
+        let htmlText = await response.text()
+        elemRef.innerHTML = htmlText;
+        // elemRef.classList.add("colored");
+        // console.log(elemRef);
+        nodeScriptReplace(elemRef);
+
+        // let html = parser.parseFromString(htmlText, 'text/html');
+        // nodeScriptReplace(html);
+        // // html.
+        // // elemRef.shadowRoot.innerHTML = html;
+        // let htmlScripts = html.querySelectorAll('script');
+        // htmlScripts.forEach((element) => {
+        //     elemRef.appendChild
+        // });
+        // elemRef.appendChild(
+    };
+}
+
+
+function nodeScriptReplace(node) {
+        if ( nodeScriptIs(node) === true ) {
+                node.parentNode.replaceChild( nodeScriptClone(node) , node );
+        }
+        else {
+                var i = -1, children = node.childNodes;
+                while ( ++i < children.length ) {
+                      nodeScriptReplace( children[i] );
+                }
+        }
+
+        return node;
+}
+
+function nodeScriptClone(node){
+        var script  = document.createElement("script");
+        script.text = node.innerHTML;
+
+        var i = -1, attrs = node.attributes, attr;
+        while ( ++i < attrs.length ) {                                    
+              script.setAttribute( (attr = attrs[i]).name, attr.value );
+        }
+        return script;
+}
+
+function nodeScriptIs(node) {
+        return node.tagName === 'SCRIPT';
+}
+
+
+</script>
+
+</body>
+</html>
