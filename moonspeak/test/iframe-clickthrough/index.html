@@ -18,11 +18,16 @@ body, html {
     width: 100vw;
     height: 100vh;
     border: none;
-    background-color: transparent;
     left: 0;
     right: 0;
     top: 0;
     bottom: 0;
+    background-color: transparent;
+    pointer-events: none;
+}
+
+.active {
+    pointer-events: auto;
 }
 
 /*
@@ -65,9 +70,9 @@ body, html {
     <!--    <iframe id="frame_alert" data-z-index="13" class="fullscreen" src="./frame_alert.html"></iframe> -->
 
 <div id="featuresContainer">
-    <iframe id="frame_background" src="./frame_background.html"></iframe>
+    <iframe class="fullscreen" id="frame_background" src="./frame_background.html"></iframe>
 </div>
-<div id="eventTrap" class="fullscreen colored"></div>
+<div id="eventTrap" class="active fullscreen"></div>
 
 <script>
 
@@ -95,7 +100,7 @@ async function getDataIFrame() {
     let eventTrap = document.getElementById("eventTrap");
 
     let pointerHandler = (e) => {
-        let evt = new PointerEvent(e.type, e);
+        let evt = new MouseEvent(e.type, e);
         evt.moonspeakEventState = STATE_PROPOGATING;
         for (const child of fullscreenFrames) {
                 if (evt.moonspeakEventState === STATE_HANDLED) {
@@ -109,26 +114,37 @@ async function getDataIFrame() {
         };
     }
 
-    eventTrap.addEventListener('pointerover', pointerHandler, true);
-    eventTrap.addEventListener('pointerenter', pointerHandler, true);
-    eventTrap.addEventListener('pointerdown', pointerHandler, true);
-    eventTrap.addEventListener('pointermove', pointerHandler, true);
-    eventTrap.addEventListener('pointerup', pointerHandler, true);
-    eventTrap.addEventListener('pointercancel', pointerHandler, true);
-    eventTrap.addEventListener('pointerout', pointerHandler, true);
-    eventTrap.addEventListener('pointerleave', pointerHandler, true);
-    eventTrap.addEventListener('gotpointercapture', pointerHandler, true);
-    eventTrap.addEventListener('lostpointercapture', pointerHandler, true);
+    eventTrap.addEventListener('click', pointerHandler, true);
+    // eventTrap.addEventListener('hover', pointerHandler, true);
+    // eventTrap.addEventListener('pointerdown', pointerHandler, true);
+    // eventTrap.addEventListener('pointermove', pointerHandler, true);
+    // eventTrap.addEventListener('pointerup', pointerHandler, true);
+    // eventTrap.addEventListener('pointercancel', pointerHandler, true);
+    // eventTrap.addEventListener('pointerout', pointerHandler, true);
+    // eventTrap.addEventListener('pointerleave', pointerHandler, true);
+    // eventTrap.addEventListener('gotpointercapture', pointerHandler, true);
+    // eventTrap.addEventListener('lostpointercapture', pointerHandler, true);
 
     for (const name of urls) {
         let elemRef = document.getElementById(name);
         let iframeHtml = elemRef.contentWindow.document.documentElement;
         iframeHtml.addEventListener('click', (e) => {
-            if (e.currentTarget !== iframeHtml) {
+            if (e.target !== iframeHtml) {
                 // if the first element with event handler is NOT document.html tag
                 // means there is a lower click event handler, so event was handled
-                console.log(e);
                 e.moonspeakEventState = STATE_HANDLED;
+
+                // make this element active
+                eventTrap.classList.remove('active');
+                elemRef.classList.add('active');
+
+            } else if (elemRef.classList.contains('active')) {
+
+                // this element should stop being active
+                elemRef.classList.remove('active');
+                eventTrap.classList.add('active');
+                let evt = new MouseEvent('click', e);
+                eventTrap.dispatchEvent(evt);
             }
         });
     };
