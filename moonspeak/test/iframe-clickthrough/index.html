@@ -54,7 +54,7 @@ body, html {
 </style>
 </head>
 
-<body onload="getDataRaw()">
+<body onload="getDataShadow()">
 
 
 
@@ -93,10 +93,13 @@ async function getDataRaw() {
 
 async function getDataShadow() {
     let urls = [
-        "frame_background",
+        // "frame_background",
         "frame_question",
         "frame_plus",
+        "frame_alert",
     ];
+
+    let parser = new DOMParser();
 
     for (const name of urls) {
         let elemRef = document.getElementById(name);
@@ -105,11 +108,36 @@ async function getDataShadow() {
         let htmlText = await response.text()
         elemRef.shadowRoot.innerHTML = htmlText;
 
+        // now attach script tags
+
+        let ancor = document.createElement("div");
+        ancor.id = "appRootElement";
+        elemRef.shadowRoot.appendChild(ancor);
+        let bootstrap =  'var appRoot = appRootElement.getRootNode();'
+        new Function('appRootElement', bootstrap).call(this, elemRef.shadowRoot.getElementById('appRootElement'));
+
         let html = parser.parseFromString(htmlText, 'text/html');
         let htmlScripts = html.querySelectorAll('script');
-        nodeScriptReplace(elemRef.shadowRoot);
+
+        for (const s of htmlScripts) {
+            let scriptTag = document.createElement( 'script' );
+            // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace
+            // const reg = new RegExp('/\b(document)[.]/', 'g');
+            // let patched = s.innerHTML.replace(reg, "$`appRoot.");
+            scriptTag.textContent = patched;
+
+            var i = -1, attrs = s.attributes, attr;
+            while ( ++i < attrs.length ) {                                    
+                scriptTag.setAttribute( (attr = attrs[i]).name, attr.value );
+            }
+            elemRef.shadowRoot.appendChild(scriptTag);
+        }
+
+        console.log(elemRef);
+        // nodeScriptReplace(elemRef.shadowRoot);
     };
 }
+
 
 async function getData() {
     let urls = [
