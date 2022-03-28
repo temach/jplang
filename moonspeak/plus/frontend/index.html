@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="static/main.css">
+</head>
+
+<body>
+
+<div class="hidden" id="feature-list">
+    <div class="featureListContainer">
+
+        <img src="static/images/icons48/table.png" class="featureIcon" 
+            onclick="request_feature('http://0.0.0.0:9020')">
+
+        <img src="static/images/icons48/earth.png" class="featureIcon"
+            onclick="request_feature('http://0.0.0.0:9021')">
+
+        <img src="static/images/icons48/gear.png" class="featureIcon"
+            onclick="request_feature('http://0.0.0.0:9022')">
+
+        <img src="static/images/icons48/server.png" class="featureIcon"
+            onclick="request_feature('http://0.0.0.0:9023')">
+
+        <img src="static/images/icons48/table.png" class="featureIcon" 
+            onclick="request_feature('http://0.0.0.0:9024')">
+
+    </div>
+</div>
+
+<button class="addFeature" onclick="document.getElementById('feature-list').classList.toggle('hidden')">
+    +
+</button>
+
+<script src="static/main.js"></script>
+</body>
+</html>
