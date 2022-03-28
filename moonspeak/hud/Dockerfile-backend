@@ -14,4 +14,4 @@ COPY frontend/index.html frontend/index.html
 COPY backend/main.py backend/main.py
 
 WORKDIR /opt/ms/backend
-CMD ["python", "main.py"]
+CMD ["python", "main.py", "9000"]

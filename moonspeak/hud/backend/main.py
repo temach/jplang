@@ -84,7 +84,7 @@ def db_init():
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description='Feature, run as "python main.py"')
+    parser = argparse.ArgumentParser(description='Run as "python main.py"')
     parser.add_argument('port', type=int, help='port number')
     args = parser.parse_args()
 
