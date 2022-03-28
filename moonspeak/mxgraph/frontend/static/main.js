@@ -1,7 +1,7 @@
 // Program starts here. Creates a sample graph in the
 // DOM node with the specified ID. This function is invoked
 // from the onLoad event handler of the document (see below).
-function initGraph(container, toolbar, sidebar, status)
+function initGraph(container, toolbar)
 {
     // Checks if the browser is supported
     if (!mxClient.isBrowserSupported())
@@ -361,10 +361,10 @@ function initGraph(container, toolbar, sidebar, status)
     }
 
     // Add graph elements
-    addSidebarIcon(graph, sidebar, "temp.html", 'images/icons48/table.png');
-    addSidebarIcon(graph, sidebar, "temp.html", 'images/icons48/earth.png');
-    addSidebarIcon(graph, sidebar, "temp.html", 'images/icons48/gear.png');
-    addSidebarIcon(graph, sidebar, "temp.html", 'images/icons48/server.png');
+    // addSidebarIcon(graph, sidebar, "temp.html", 'images/icons48/table.png');
+    // addSidebarIcon(graph, sidebar, "temp.html", 'images/icons48/earth.png');
+    // addSidebarIcon(graph, sidebar, "temp.html", 'images/icons48/gear.png');
+    // addSidebarIcon(graph, sidebar, "temp.html", 'images/icons48/server.png');
     // addSidebarIcon(graph, sidebar, shadowHost, 'images/icons48/earth.png');
     // addSidebarIcon(graph, sidebar, shadowHost, 'images/icons48/gear.png');
     // addSidebarIcon(graph, sidebar, shadowHost, 'images/icons48/keys.png');
@@ -461,31 +461,6 @@ function initGraph(container, toolbar, sidebar, status)
     addToolbarButton(editor, toolbar, 'zoomIn', '', 'images/zoom_in.png', true);
     addToolbarButton(editor, toolbar, 'zoomOut', '', 'images/zoom_out.png', true);
     addToolbarButton(editor, toolbar, 'fit', '', 'images/fit_to_size.png', true);
-
-    // Displays useful hints in a small semi-transparent box.
-    var hints = document.createElement('div');
-    hints.style.position = 'absolute';
-    hints.style.overflow = 'hidden';
-    hints.style.width = '230px';
-    hints.style.bottom = '56px';
-    hints.style.height = '86px';
-    hints.style.right = '20px';
-    
-    hints.style.background = 'black';
-    hints.style.color = 'white';
-    hints.style.fontFamily = 'Arial';
-    hints.style.fontSize = '10px';
-    hints.style.padding = '4px';
-
-    mxUtils.setOpacity(hints, 50);
-    
-    mxUtils.writeln(hints, '- Drag an image from the sidebar to the graph');
-    mxUtils.writeln(hints, '- Doubleclick on a table or column to edit');
-    mxUtils.writeln(hints, '- Shift- or Rightclick and drag for panning');
-    mxUtils.writeln(hints, '- Move the mouse over a cell to see a tooltip');
-    mxUtils.writeln(hints, '- Click and drag a table to move and connect');
-    mxUtils.writeln(hints, '- Shift- or Rightclick to show a popup menu');
-    document.body.appendChild(hints);
 
     // Sets initial scrollbar positions
     window.setTimeout(function()
