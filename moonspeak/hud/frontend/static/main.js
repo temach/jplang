@@ -14,8 +14,8 @@ async function get_feature(feature_url) {
 async function loadHudFeatures() {
     let urls = [
         "http://0.0.0.0:9010",
-        "http://0.0.0.0:9011",
         "http://0.0.0.0:9012",
+        "http://0.0.0.0:9011",
     ];
 
     let container = document.getElementById("featuresContainer");
@@ -40,7 +40,7 @@ async function loadHudFeatures() {
 
 }
 
-async function setupHandlers(fullscreenFrames) {
+function setupHandlers(fullscreenFrames) {
     let STATE_PROPOGATING = "propogating";
     let STATE_HANDLED = "handled";
 
