@@ -10,8 +10,7 @@
         float: left;
       }
       
-      html:after {
-          content: "";
+      .bottomleft {
           position: absolute;
           left: 1vmin;
           bottom: 1vmin;
@@ -21,16 +20,27 @@
           background-color: red;
       }
 
-      html:before {
-          content: "";
+      .bottomright {
           position: absolute;
           right: 1vmin;
           bottom: 1vmin;
           border-radius: 10%;
-          color: green;
           width: 15vmin;
           height: 15vmin;
           background-color: red;
+      }
+
+      .topleft {
+          position: absolute;
+          left: 1vmin;
+          top: 1vmin;
+          border-radius: 10%;
+          width: 15vmin;
+          height: 15vmin;
+          background-color: red;
+      }
+
+      .deadzone {
       }
 
       body {
@@ -60,6 +70,10 @@
      <div class="tile"></div>
      <div class="tile"></div>
    </div>
+
+   <div class="topleft deadzone"></div>
+   <div class="bottomright deadzone"></div>
+   <div class="bottomleft deadzone"></div>
 
     <script>
       function random(number) {

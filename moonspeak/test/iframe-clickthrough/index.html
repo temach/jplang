@@ -65,7 +65,7 @@ let STATE_HANDLED = "handled";
 
 
 async function getDataIFrame() {
-    let urls = [
+    let ids = [
         "frame_background",
         "frame_question",
         "frame_plus",
@@ -75,7 +75,7 @@ async function getDataIFrame() {
 
     let eventTrap = document.getElementById("eventTrap");
 
-    let pointerHandler = (e) => {
+    let handler = (e) => {
         let evt = new MouseEvent(e.type, e);
         evt.moonspeakEventState = STATE_PROPOGATING;
         for (const child of fullscreenFrames) {
@@ -90,134 +90,26 @@ async function getDataIFrame() {
         };
     }
 
-    eventTrap.addEventListener('click', pointerHandler, true);
-    // eventTrap.addEventListener('hover', pointerHandler, true);
-    // eventTrap.addEventListener('pointerdown', pointerHandler, true);
-    // eventTrap.addEventListener('pointermove', pointerHandler, true);
-    // eventTrap.addEventListener('pointerup', pointerHandler, true);
-    // eventTrap.addEventListener('pointercancel', pointerHandler, true);
-    // eventTrap.addEventListener('pointerout', pointerHandler, true);
-    // eventTrap.addEventListener('pointerleave', pointerHandler, true);
-    // eventTrap.addEventListener('gotpointercapture', pointerHandler, true);
-    // eventTrap.addEventListener('lostpointercapture', pointerHandler, true);
+    eventTrap.addEventListener('click', handler, true);
 
-    for (const name of urls) {
-        let elemRef = document.getElementById(name);
-        let iframeHtml = elemRef.contentWindow.document.documentElement;
+    for (const name of ids) {
+        let iframeElem = document.getElementById(name);
+        let iframeHtml = iframeElem.contentWindow.document.documentElement;
         iframeHtml.addEventListener('click', (e) => {
-            if (e.target !== iframeHtml) {
-                // if the first element with event handler is NOT document.html tag
-                // means there is a lower click event handler, so event was handled
+            if (e.target !== iframeHtml && (! e.target.classList.contains('deadzone'))) {
+                // if target element: is not document.html tag and not deadzone css class
+                // means user clicked on something worthwhile (likely with a lower click event handler)
                 e.moonspeakEventState = STATE_HANDLED;
-
-                // make this element active
                 eventTrap.classList.remove('active');
-                elemRef.classList.add('active');
-
-            } else if (elemRef.classList.contains('active')) {
-
-                // this element should stop being active
-                elemRef.classList.remove('active');
+                iframeElem.classList.add('active');
+            } else if (iframeElem.classList.contains('active')) {
+                // user clicked on non-active element, so current iframe should stop being active
+                iframeElem.classList.remove('active');
                 eventTrap.classList.add('active');
                 let evt = new MouseEvent('click', e);
                 eventTrap.dispatchEvent(evt);
             }
         });
-    };
-}
-
-
-
-async function getDataRaw() {
-    let urls = [
-        "frame_background",
-        "frame_question",
-        "frame_plus",
-        "frame_alert",
-    ];
-
-    for (const name of urls) {
-        let elemRef = document.getElementById(name);
-        let response = await fetch(name + ".html");
-        let htmlText = await response.text()
-        elemRef.innerHTML = htmlText;
-        nodeScriptReplace(elemRef);
-    };
-}
-
-function nodeScriptReplace(node) {
-        if ( nodeScriptIs(node) === true ) {
-                node.parentNode.replaceChild( nodeScriptClone(node) , node );
-        }
-        else {
-                var i = -1, children = node.childNodes;
-                while ( ++i < children.length ) {
-                      nodeScriptReplace( children[i] );
-                }
-        }
-
-        return node;
-}
-
-function nodeScriptClone(node){
-        var script  = document.createElement("script");
-        script.text = node.innerHTML;
-
-        var i = -1, attrs = node.attributes, attr;
-        while ( ++i < attrs.length ) {                                    
-              script.setAttribute( (attr = attrs[i]).name, attr.value );
-        }
-        return script;
-}
-
-function nodeScriptIs(node) {
-        return node.tagName === 'SCRIPT';
-}
-
-async function getDataShadow() {
-    let urls = [
-        // "frame_background",
-        "frame_question",
-        "frame_plus",
-        "frame_alert",
-    ];
-
-    let parser = new DOMParser();
-
-    for (const name of urls) {
-        let elemRef = document.getElementById(name);
-        elemRef.attachShadow({mode: 'open'});
-        let response = await fetch(name + ".html");
-        let htmlText = await response.text()
-        elemRef.shadowRoot.innerHTML = htmlText;
-
-        // now attach script tags
-
-        let ancor = document.createElement("div");
-        ancor.id = "appRootElement";
-        elemRef.shadowRoot.appendChild(ancor);
-        let bootstrap =  'var appRoot = appRootElement.getRootNode();'
-        new Function('appRootElement', bootstrap).call(this, elemRef.shadowRoot.getElementById('appRootElement'));
-
-        let html = parser.parseFromString(htmlText, 'text/html');
-        let htmlScripts = html.querySelectorAll('script');
-
-        for (const s of htmlScripts) {
-            let scriptTag = document.createElement( 'script' );
-            // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace
-            // const reg = new RegExp('/\b(document)[.]/', 'g');
-            // let patched = s.innerHTML.replace(reg, "$`appRoot.");
-            scriptTag.textContent = patched;
-
-            var i = -1, attrs = s.attributes, attr;
-            while ( ++i < attrs.length ) {                                    
-                scriptTag.setAttribute( (attr = attrs[i]).name, attr.value );
-            }
-            elemRef.shadowRoot.appendChild(scriptTag);
-        }
-
-        console.log(elemRef);
-        // nodeScriptReplace(elemRef.shadowRoot);
     };
 }
 
