@@ -1,3 +1,4 @@
+const fullscreenFrames = new Array();
 
 async function get_feature(feature_url) {
     let backend = new URL("/api/getfeature", window.location);
@@ -42,7 +43,6 @@ async function initHud() {
         "http://0.0.0.0:9010",
     ];
 
-    let fullscreenFrames = new Array();
 
     let eventTrap = document.getElementById("eventTrap");
     let handler = (e) => {
@@ -86,3 +86,22 @@ async function initHud() {
     }
 }
 
+// see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+window.addEventListener("message", (event) => {
+    if (event.origin !== window.parent.location.origin) {
+        // we only accept messages from the IFrames (must be on the same domain)
+        return;
+    }
+
+    console.log("hud received: ");
+    console.log(event.data);
+
+    // broadcast message to other fullscreen iframes
+    fullscreenFrames.forEach(function(currentFrame, index, array) {
+        let iframeWindow = (currentFrame.contentWindow || currentFrame.contentDocument);
+        if (iframeWindow !== event.source) {
+            iframeWindow.postMessage(event.data, window.parent.location.origin);
+        };
+    });
+
+});
