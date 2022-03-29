@@ -4,5 +4,5 @@ function request_feature(feature_url) {
     }
     console.log("Sending message:");
     console.log(message);
-    window.top.postMessage(message, window.top.location.origin);
+    window.parent.postMessage(message, window.parent.location.origin);
 }
