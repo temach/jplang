@@ -14,17 +14,21 @@
       });
 
         app.ports.sendMessage.subscribe(function(message) {
+            if (window === window.parent) {
+                // dont post message if the parent is yourself
+                return;
+            }
             // message from elm for javascript
-            // broadcast it to top window
+            // broadcast it to parent window
             // also: enforce same origin
             console.log("workelements posted: ");
             console.log(message);
-            window.top.postMessage(message, window.top.location.origin);
+            window.parent.postMessage(message, window.parent.location.origin);
         });
 
         // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
         window.addEventListener("message", (event) => {
-            if (event.origin !== window.top.location.origin) {
+            if (event.origin !== window.parent.location.origin) {
                 // we only accept messages from the IFrames (must be on the same domain)
                 return;
             }
