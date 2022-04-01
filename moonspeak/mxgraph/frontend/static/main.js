@@ -1,3 +1,6 @@
+var FEATURES = new Map();
+var EDITOR = null;
+
 // Program starts here. Creates a sample graph in the
 // DOM node with the specified ID. This function is invoked
 // from the onLoad event handler of the document (see below).
@@ -70,17 +73,17 @@ function initGraph(container, toolbar)
 
     // Constructs a new editor.  This function invokes the onInit callback upon completion.
     // var config = mxUtils.load('config/uiconfig.xml').getDocumentElement();
-    var editor = new mxEditor();
+    EDITOR = new mxEditor();
 
     // Sets the graph container and configures the editor
-    editor.setGraphContainer(container);
+    EDITOR.setGraphContainer(container);
     // var config = mxUtils.load('config/uiconfig.xml').getDocumentElement();
     var config = mxUtils.load('config/keyhandler-minimal.xml').getDocumentElement();
-    editor.configure(config);
+    EDITOR.configure(config);
 
     // graph, such as the rubberband selection, but most parts
     // of the UI are custom in this example.
-    var graph = editor.graph;
+    var graph = EDITOR.graph;
     var model = graph.model;
 
     // Do not allow multiple edges between any two components, this is a DAG
@@ -449,18 +452,18 @@ function initGraph(container, toolbar)
     spacer.style.display = 'inline';
     spacer.style.padding = '8px';
 
-    addToolbarButton(editor, toolbar, 'delete', 'Delete', 'images/delete2.png');
+    addToolbarButton(EDITOR, toolbar, 'delete', 'Delete', 'images/delete2.png');
 
     toolbar.appendChild(spacer.cloneNode(true));
 
-    addToolbarButton(editor, toolbar, 'undo', '', 'images/undo.png');
-    addToolbarButton(editor, toolbar, 'redo', '', 'images/redo.png');
+    addToolbarButton(EDITOR, toolbar, 'undo', '', 'images/undo.png');
+    addToolbarButton(EDITOR, toolbar, 'redo', '', 'images/redo.png');
 
     toolbar.appendChild(spacer.cloneNode(true));
 
-    addToolbarButton(editor, toolbar, 'zoomIn', '', 'images/zoom_in.png', true);
-    addToolbarButton(editor, toolbar, 'zoomOut', '', 'images/zoom_out.png', true);
-    addToolbarButton(editor, toolbar, 'fit', '', 'images/fit_to_size.png', true);
+    addToolbarButton(EDITOR, toolbar, 'zoomIn', '', 'images/zoom_in.png', true);
+    addToolbarButton(EDITOR, toolbar, 'zoomOut', '', 'images/zoom_out.png', true);
+    addToolbarButton(EDITOR, toolbar, 'fit', '', 'images/fit_to_size.png', true);
 
     // Sets initial scrollbar positions
     window.setTimeout(function()
@@ -564,3 +567,70 @@ function sqrtDist(ax, ay, bx, by)
     return tmp;
 };
 
+
+function addIframe(iframe_url, graph, x, y) {
+    var parent = graph.getDefaultParent();
+    var model = graph.getModel();
+    
+    var v1 = null;
+
+    x = 100;
+    y = 200;
+    
+    var iframe = null;
+    model.beginUpdate();
+    try
+    {
+        iframe = document.createElement("iframe");
+        iframe.src = iframe_url;
+        v1 = graph.insertVertex(parent, null, iframe, x, y, 120, 120);
+    }
+    finally
+    {
+        model.endUpdate();
+    }
+    
+    graph.setSelectionCell(v1);
+    return {
+        "iframe": iframe,
+        "vertex": v1,
+    };
+}
+
+function broadcastMessage(event, features) {
+    features.forEach((value, key, map) => {
+        var iframeWindow = (key.contentWindow || key.contentDocument);
+        if (iframeWindow !== event.source) {
+            iframeWindow.postMessage(event.data, window.parent.location.origin);
+        };
+    });
+}
+
+
+// see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+window.addEventListener("message", (event) => {
+    if (event.origin !== window.parent.location.origin) {
+        // we only accept messages from the IFrames (must be on the same domain)
+        return;
+    }
+
+    console.log("hud received: ");
+    console.log(event.data);
+
+    if (! ("info" in event.data)) {
+        console.log("Unknown message");
+        return;
+    }
+
+    if (event.data["info"].includes("new feature")) {
+        var result = addIframe(event.data["url"], EDITOR.graph, 100, 100)
+        if (result["iframe"] !== null) {
+            FEATURES.set(result["iframe"], result["v1"]);
+        }
+    } else if (event.data["info"].includes("broadcast")) {
+        broadcastMessage(event, FEATURES);
+    } else {
+        console.log("Can not understand message info:" + event.data["info"]);
+        return;
+    }
+});
