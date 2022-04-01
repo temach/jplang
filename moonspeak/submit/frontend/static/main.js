@@ -10718,9 +10718,14 @@ var $author$project$Main$init = function (_v0) {
 var $author$project$Main$Recv = function (a) {
 	return {$: 'Recv', a: a};
 };
+var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $author$project$Main$messageReceiver = _Platform_incomingPort('messageReceiver', $elm$json$Json$Decode$value);
-var $author$project$Main$subscriptions = function (_v0) {
-	return $author$project$Main$messageReceiver($author$project$Main$Recv);
+var $author$project$Main$subscriptions = function (model) {
+	return $elm$core$Platform$Sub$batch(
+		_List_fromArray(
+			[
+				$author$project$Main$messageReceiver($author$project$Main$Recv)
+			]));
 };
 var $author$project$Main$KeywordInput = function (a) {
 	return {$: 'KeywordInput', a: a};

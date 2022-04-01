@@ -17,16 +17,6 @@ import Url.Builder exposing (relative)
 
 
 
--- PORTS
-
-
-port sendMessage : E.Value -> Cmd msg
-
-
-port messageReceiver : (D.Value -> msg) -> Sub msg
-
-
-
 -- MAIN
 
 
@@ -83,12 +73,22 @@ init _ =
 
 
 
+-- PORTS
+
+
+port sendMessage : E.Value -> Cmd msg
+
+
+port messageReceiver : (D.Value -> msg) -> Sub msg
+
+
+
 -- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-    messageReceiver Recv
+subscriptions model =
+    Sub.batch [ messageReceiver Recv ]
 
 
 portEncoder : Model -> E.Value

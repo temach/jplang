@@ -7,7 +7,7 @@ services:
       context: ./
       dockerfile: ./Dockerfile-backend 
     ports:
-      - "9002:9000"
+      - "9008:9000"
     volumes:
       - db_data:/opt/ms/tmp
     
