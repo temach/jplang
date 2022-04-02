@@ -581,8 +581,13 @@ function addIframe(iframe_url, graph, x, y) {
     model.beginUpdate();
     try
     {
+        // see: https://stackoverflow.com/questions/486896/adding-a-parameter-to-the-url-with-javascript
+        let url = new URL(iframe_url);
+        // pass parent origin to child
+        url.searchParams.set('parentOrigin', window.location.origin);
+
         iframe = document.createElement("iframe");
-        iframe.src = iframe_url;
+        iframe.src = url.toString();
         v1 = graph.insertVertex(parent, null, iframe, x, y, 120, 120);
     }
     finally
@@ -601,7 +606,7 @@ function broadcastMessage(event, features) {
     features.forEach((value, key, map) => {
         var iframeWindow = (key.contentWindow || key.contentDocument);
         if (iframeWindow !== event.source) {
-            iframeWindow.postMessage(event.data, window.parent.location.origin);
+            iframeWindow.postMessage(event.data, '*');
         };
     });
 }
@@ -609,12 +614,12 @@ function broadcastMessage(event, features) {
 
 // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 window.addEventListener("message", (event) => {
-    if (event.origin !== window.parent.location.origin) {
+    if (event.origin !== window.location.origin) {
         // we only accept messages from the IFrames (must be on the same domain)
         return;
     }
 
-    console.log("hud received: ");
+    console.log("mxgraph received: ");
     console.log(event.data);
 
     if (! ("info" in event.data)) {

@@ -19,13 +19,14 @@
             // also: enforce same origin
             console.log("submit posted: ")
             console.log(message);
-            window.top.postMessage(message, window.top.location.origin);
+            window.parent.postMessage(message, window.parent.location);
         });
 
         // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
         window.addEventListener("message", (event) => {
-            if (event.origin !== window.top.location.origin) {
-                // we only accept messages from the IFrames (must be on the same domain)
+            if (event.origin !== window.location || event.source === window) {
+                // accept only messages for your domain
+                // and drop self-messages
                 return;
             }
             console.log("submit received: ")
