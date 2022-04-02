@@ -15,3 +15,7 @@ https://developer.mozilla.org/en-US/docs/Web/Events/Creating_and_triggering_even
 
 Elm running in shadow-root also has the problem of "document" being undefined:
 https://discourse.elm-lang.org/t/shadowroots-and-browser-dom/7791/3
+
+
+Only limited info is shared between windows:
+https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy
