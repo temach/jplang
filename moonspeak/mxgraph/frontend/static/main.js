@@ -1,5 +1,11 @@
+
+
+
 var FEATURES = new Map();
 var EDITOR = null;
+
+
+
 
 // Program starts here. Creates a sample graph in the
 // DOM node with the specified ID. This function is invoked
@@ -568,7 +574,7 @@ function sqrtDist(ax, ay, bx, by)
 };
 
 
-function addIframe(iframe_url, graph, x, y) {
+function addIframe(iframeElem, graph, x, y) {
     var parent = graph.getDefaultParent();
     var model = graph.getModel();
     
@@ -581,14 +587,7 @@ function addIframe(iframe_url, graph, x, y) {
     model.beginUpdate();
     try
     {
-        // see: https://stackoverflow.com/questions/486896/adding-a-parameter-to-the-url-with-javascript
-        let url = new URL(iframe_url);
-        // pass parent origin to child
-        url.searchParams.set('parentOrigin', window.location.origin);
-
-        iframe = document.createElement("iframe");
-        iframe.src = url.toString();
-        v1 = graph.insertVertex(parent, null, iframe, x, y, 120, 120);
+        v1 = graph.insertVertex(parent, null, iframeElem, x, y, 120, 120);
     }
     finally
     {
@@ -599,14 +598,15 @@ function addIframe(iframe_url, graph, x, y) {
     return {
         "iframe": iframe,
         "vertex": v1,
-    };
+    }
 }
 
-function broadcastMessage(event, features) {
-    features.forEach((value, key, map) => {
-        var iframeWindow = (key.contentWindow || key.contentDocument);
+
+function mapBroadcast(event, map) {
+    map.forEach((featureExtraInfo, featureIFrameElem, m) => {
+        let iframeWindow = (featureIFrameElem.contentWindow || featureIFrameElem.contentDocument);
         if (iframeWindow !== event.source) {
-            iframeWindow.postMessage(event.data, '*');
+            iframeWindow.postMessage(event.data, window.top.location.origin);
         };
     });
 }
@@ -614,7 +614,7 @@ function broadcastMessage(event, features) {
 
 // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 window.addEventListener("message", (event) => {
-    if (event.origin !== window.location.origin) {
+    if (event.origin !== window.top.location.origin) {
         // we only accept messages from the IFrames (must be on the same domain)
         return;
     }
@@ -623,17 +623,24 @@ window.addEventListener("message", (event) => {
     console.log(event.data);
 
     if (! ("info" in event.data)) {
-        console.log("Unknown message");
+        console.log("No 'info' field in message, skipping");
         return;
     }
 
-    if (event.data["info"].includes("new feature")) {
-        var result = addIframe(event.data["url"], EDITOR.graph, 100, 100)
-        if (result["iframe"] !== null) {
-            FEATURES.set(result["iframe"], result["v1"]);
+    if (event.data["info"].includes("created feature")) {
+        let iframe = document.createElement("iframe");
+        // if iframe src and srcdoc are specified, srcdoc takes priority
+        // iframe.src = window.top.location.origin;
+        iframe.srcdoc = event.data["srcdoc"];
+        let result = addIframe(iframe, EDITOR.graph, 100, 100)
+        if (result !== null) {
+            let featureExtraInfo = {};
+            FEATURES.set(iframe, featureExtraInfo);
         }
+
     } else if (event.data["info"].includes("broadcast")) {
-        broadcastMessage(event, FEATURES);
+        mapBroadcast(event, FEATURES);
+
     } else {
         console.log("Can not understand message info:" + event.data["info"]);
         return;

@@ -19,12 +19,13 @@
             // also: enforce same origin
             console.log("submit posted: ")
             console.log(message);
-            window.parent.postMessage(message, window.parent.location);
+            message["info"] = "broadcast";
+            window.parent.postMessage(message, window.top.location.origin);
         });
 
         // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
         window.addEventListener("message", (event) => {
-            if (event.origin !== window.location || event.source === window) {
+            if (event.origin !== window.top.location.origin || event.source === window) {
                 // accept only messages for your domain
                 // and drop self-messages
                 return;

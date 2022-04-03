@@ -14,24 +14,20 @@
       });
 
         app.ports.sendMessage.subscribe(function(message) {
-            if (window.parent !== window) {
-                // do not send self-messages
-                return;
-            }
             // message from elm for javascript
             // send it to parent window
             // also: enforce parent's origin/location
             console.log("workelements posted: ");
             console.log(message);
-            // let params = new URL(document.location).searchParams;
-            // window.parent.postMessage(message, params.get('parentOrigin'));
-            window.parent.postMessage(message, 'http://moonspeak.ru');
+            message["info"] = "broadcast";
+            window.parent.postMessage(message, window.top.location.origin);
         });
 
         // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
         window.addEventListener("message", (event) => {
-            if (event.origin !== window.location) {
+            if (event.origin !== window.top.location.origin || event.source === window ) {
                 // accept only messages for your domain
+                // do not accept self-messages
                 return;
             }
             console.log("workelements received: ")
