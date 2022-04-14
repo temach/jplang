@@ -110,21 +110,16 @@ async function getFeatureSrc(feature_url) {
     return feature_json;
 }
 
-// function mapBroadcast(event, map) {
-//     map.forEach((featureExtraInfo, featureIFrameElem, m) => {
-//         let iframeWindow = (featureIFrameElem.contentWindow || featureIFrameElem.contentDocument);
-//         if (iframeWindow !== event.source) {
-//             iframeWindow.postMessage(event.data, window.location.origin);
-//         };
-//     });
-// }
-
-function arrayBroadcast(event, array) {
+function arrayBroadcast(eventSource, eventData, array) {
     array.forEach((featureIFrameElem, index, arr) => {
         let iframeWindow = (featureIFrameElem.contentWindow || featureIFrameElem.contentDocument);
-        if (iframeWindow && iframeWindow !== event.source) {
-            iframeWindow.postMessage(event.data, window.location.origin);
+        if (! iframeWindow) {
+            return;
+        }
+        if (eventSource && iframeWindow === eventSource) {
+            return;
         };
+        iframeWindow.postMessage(eventData, window.location.origin);
     });
 }
 
@@ -145,42 +140,19 @@ async function onMessage(event) {
     if (event.data["info"].includes("new feature")) {
         try {
             let featureJson = await getFeatureSrc(event.data["url"]);
-            // dublicate requests is a known bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1464344
-            // let iframe = document.createElement("iframe");
-            // iframe.srcdoc = featureJson["text"];
-            // let featureExtraInfo = {};
-            // FEATURES.set(iframe, featureExtraInfo);
-
-            // let msg = {
-            //     "info": "created feature",
-            //     "feature": iframe.outerHTML,
-            // };
-            // let fakeEvent = {
-            //     "source": "*",
-            //     "data": msg,
-            // }
-            // // make sure every fullscreen feature knows that a new on-demand feature was added
-            // arrayBroadcast(fakeEvent, fullscreenFrames);
             let msg = {
                 "info": "created feature",
                 "srcdoc": featureJson["text"],
                 "src": featureJson["src"],
             };
-            let fakeEvent = {
-                "source": "xxx",
-                "data": msg,
-            }
             // make sure every fullscreen feature knows that a new on-demand feature was added
-            arrayBroadcast(fakeEvent, fullscreenFrames);
+            arrayBroadcast(null, msg, fullscreenFrames);
         } catch (error) {
-            console.log("HTTP error:" + error.message);
+            console.log("getting new feature failed with error:" + error.message);
         };
 
-//     } else if (event.data["info"].includes("small broadcast")) {
-//         mapBroadcast(event, FEATURES);
-// 
     } else if (event.data["info"].includes("broadcast")) {
-        arrayBroadcast(event, fullscreenFrames);
+        arrayBroadcast(event.source, event.data, fullscreenFrames);
 
     } else {
         console.log("Can not understand message info:" + event.data["info"]);
