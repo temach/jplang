@@ -11,16 +11,23 @@ function addInnerHtmlEventListener(frame, trap, state_handled) {
             // if target element: is not document.html tag and not deadzone css class
             // means user clicked on something worthwhile (likely with a lower click event handler)
             e.moonspeakEventState = state_handled;
-            trap.classList.remove('active');
-            frame.classList.add('active');
-        } else if (frame.classList.contains('active')) {
+            trap.classList.remove('acceptevents');
+            if (! frame.classList.contains('acceptevents')) {
+                // this frame becomes active, but it was not active before
+                // i.e. repeat the first event this frame gets when it becomes active
+                frame.classList.add('acceptevents');
+                // let evt = new MouseEvent(e.type, e);
+                // e.target.dispatchEvent(evt);
+            }
+        } else if (frame.classList.contains('acceptevents')) {
             // user clicked on non-active element, so current frame should stop being active
-            frame.classList.remove('active');
-            trap.classList.add('active');
-            let evt = new MouseEvent('click', e);
+            frame.classList.remove('acceptevents');
+            trap.classList.add('acceptevents');
+            let evt = new MouseEvent(e.type, e);
             trap.dispatchEvent(evt);
         }
     };
+    // iframeHtml.addEventListener('mouseover', adjustFocus, true);
     iframeHtml.addEventListener('click', adjustFocus, true);
 }
 
@@ -29,9 +36,10 @@ async function initHud() {
     const STATE_HANDLED = "handled";
 
     // order affects event check, element 0 is checked first
+    // background should be the last element
     const URLS = [
         // "http://0.0.0.0:9012",
-        // "http://0.0.0.0:9011",
+        "http://0.0.0.0:9011",
         "http://0.0.0.0:9010",
     ];
 
@@ -51,6 +59,7 @@ async function initHud() {
                 }
         };
     }
+    // eventTrap.addEventListener('mouseover', handler, true);
     eventTrap.addEventListener('click', handler, true);
 
     for (const url of URLS) {
@@ -59,7 +68,10 @@ async function initHud() {
             // dublicate requests is a known bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1464344
             let iframe = document.createElement("iframe");
             iframe.classList.add("fullscreen");
-            iframe.srcdoc = feature_json["text"];
+            // let srcUrl = new URL()
+            // iframe.src = btoa(
+            iframe.src = feature_json["src"];
+            // iframe.srcdoc = feature_json["text"];
             iframe.onload = () => {
                 addInnerHtmlEventListener(iframe, eventTrap, STATE_HANDLED);
             };
@@ -109,7 +121,7 @@ async function getFeatureSrc(feature_url) {
 function arrayBroadcast(event, array) {
     array.forEach((featureIFrameElem, index, arr) => {
         let iframeWindow = (featureIFrameElem.contentWindow || featureIFrameElem.contentDocument);
-        if (iframeWindow !== event.source) {
+        if (iframeWindow && iframeWindow !== event.source) {
             iframeWindow.postMessage(event.data, window.location.origin);
         };
     });
@@ -151,6 +163,7 @@ async function onMessage(event) {
             let msg = {
                 "info": "created feature",
                 "srcdoc": featureJson["text"],
+                "src": featureJson["src"],
             };
             let fakeEvent = {
                 "source": "xxx",

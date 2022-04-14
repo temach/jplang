@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 from fastapi import FastAPI
 from fastapi.requests import Request
-from fastapi.responses import Response, FileResponse
+from fastapi.responses import Response, FileResponse, RedirectResponse
 import uvicorn
 import requests
 
@@ -27,6 +27,11 @@ async def routing(request: Request, fid, furl: str):
     url = feature_root_url + furl
     r = requests.request(request.method, url, headers=request.headers, data=await request.body())
     print(f'Requested {r.url}')
+    if not furl:
+        # modify returned content if we were requesting root doc, delete content-lenght so it will get recalculated
+        new_content = modify_root_doc(r.text, fid)
+        del r.headers["content-length"]
+        return Response(content=new_content, status_code=r.status_code, headers=r.headers)
     return Response(content=r.content, status_code=r.status_code, headers=r.headers)
 
 
@@ -48,25 +53,41 @@ def static(path):
         return Response(status_code=404)
 
 
-@app.get("/api/getfeature")
-def feature(feature_url: str):
-    # feature_url gets automatically inferred as url query parameter by FastAPI
-    r = requests.get(feature_url)
-
+def modify_root_doc(doc_text, fid):
     from bs4 import BeautifulSoup
-    soup = BeautifulSoup(r.text, 'html.parser')
-
-    fid = str(uuid.uuid4())
+    soup = BeautifulSoup(doc_text, 'html.parser')
     base_tag = soup.new_tag("base", href="http://localhost:9000/api/routing/{}/".format(fid))
     soup.head.insert(0, base_tag)
+    return str(soup)
 
-    # unify url representation
+
+# def get_modified_root_doc(fid, feature_root_url):
+#     r = requests.get(feature_root_url)
+# 
+#     from bs4 import BeautifulSoup
+#     soup = BeautifulSoup(r.text, 'html.parser')
+# 
+#     base_tag = soup.new_tag("base", href="http://localhost:9000/api/routing/{}/".format(fid))
+#     soup.head.insert(0, base_tag)
+# 
+#     resp = {
+#         "text": str(soup),
+#         "soup": soup,
+#     }
+#     return resp
+
+
+@app.get("/api/getfeature")
+def feature(feature_url: str):
+    # add mapping with unified url representation
+    fid = str(uuid.uuid4())
     MAPPING[fid] = urlparse(feature_url).geturl()
 
-    resp = {
-        "text": str(soup),
+    # return root URL for this feature
+    return { 
+        "src" : "http://localhost:9000/api/routing/{}/".format(fid),
+        "text" : "use src",
     }
-    return resp
 
 
 def db_init():
