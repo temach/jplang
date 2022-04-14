@@ -6,6 +6,10 @@
     .deadzone {
     }
 
+    .deadzone:hover {
+        background-color: yellow;
+    }
+
     .bottomleft {
         position: absolute;
         left: 1vmin;
@@ -13,7 +17,8 @@
         border-radius: 10%;
         width: 15vmin;
         height: 15vmin;
-        background-color: transparent;
+        background-color: red;
+        z-index: 100;
     }
 
     .bottomright {
@@ -23,25 +28,42 @@
         border-radius: 10%;
         width: 15vmin;
         height: 15vmin;
-        background-color: transparent;
+        background-color: red;
+        z-index: 100;
     }
 
+    #toolbarContainer {
+        position: absolute;
+        white-space: nowrap;
+        overflow: hidden;
+        top: 0px;
+        left: 0px;
+        max-height: 24px;
+        height: 36px;
+        right: 0px;
+        padding: 6px;
+        background-image: url('images/toolbar_bg.gif');
+    }
+
+    #graphContainer {
+        position: absolute;
+        overflow: auto;
+        top: 36px;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        z-index: 5;
+    }
     </style>
 </head>
 
-<body onload="initGraph(document.getElementById('graphContainer'),
-		 	document.getElementById('toolbarContainer'),
-			document.getElementById('statusContainer'));">
+<body onload="initGraph(document.getElementById('graphContainer'), document.getElementById('toolbarContainer'));">
 
     <!-- Creates a container for the sidebar -->
-    <div id="toolbarContainer"
-            style="position:absolute;white-space:nowrap;overflow:hidden;top:0px;left:0px;max-height:24px;height:36px;right:0px;padding:6px;background-image:url('images/toolbar_bg.gif');">
-    </div>
+    <div id="toolbarContainer" style=""></div>
 
     <!-- Creates a container for the graph -->
-    <div id="graphContainer"
-            style="position:absolute;overflow:auto;top:36px;left:0;bottom:0;right:0;">
-    </div>
+    <div id="graphContainer" style=""></div>
 
     <div class="bottomright deadzone"></div>
     <div class="bottomleft deadzone"></div>

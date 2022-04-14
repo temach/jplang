@@ -629,9 +629,7 @@ window.addEventListener("message", (event) => {
 
     if (event.data["info"].includes("created feature")) {
         let iframe = document.createElement("iframe");
-        // if iframe src and srcdoc are specified, srcdoc takes priority
-        // iframe.src = window.top.location.origin;
-        iframe.srcdoc = event.data["srcdoc"];
+        iframe.src = event.data["src"];
         let result = addIframe(iframe, EDITOR.graph, 100, 100)
         if (result !== null) {
             let featureExtraInfo = {};
