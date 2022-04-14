@@ -4,20 +4,19 @@
 //
 const fullscreenFrames = new Array();
 
-function addInnerHtmlEventListener(frame, trap, yieldFunc) {
+function addInnerHtmlEventListener(frame, yieldFunc) {
     let iframeHtml = frame.contentWindow.document.documentElement;
     let checkYield = (e) => {
         if (e.target === iframeHtml || e.target.classList.contains('deadzone')) {
+            frame.classList.remove('acceptevents');
             yieldFunc(e);
         };
     };
 
     // capture the down event in bubbling phase
-    iframeHtml.addEventListener('click', checkYield, false);
-    // iframeHtml.addEventListener('pointerdown', checkYield, false);
-    // iframeHtml.addEventListener('pointerup', checkYield, false);
-    // iframeHtml.addEventListener('click', checkYield, false);
-    // iframeHtml.addEventListener('mouseover', checkYield, false);
+    iframeHtml.addEventListener('pointerdown', checkYield, true);
+    iframeHtml.addEventListener('pointerup', checkYield, true);
+    iframeHtml.addEventListener('click', checkYield, true);
 }
 
 async function initHud() {
@@ -29,49 +28,43 @@ async function initHud() {
         "http://0.0.0.0:9010",
     ];
 
-
     let eventTrap = document.getElementById("eventTrap");
-    let handler = (e) => {
+
+    let yieldFunc = (e) => {
         // events get here after some frame has yielded (as a result of yielding)
         // or its the very-very first event ever
-        eventTrap.classList.add('acceptevents');
+        let frame = false;
 
         for (const child of fullscreenFrames) {
-            child.classList.remove('acceptevents');
+            let innerEl = child.contentWindow.document.elementFromPoint(e.clientX, e.clientY);
+            let iframeHtml = child.contentWindow.document.documentElement;
+            if (! innerEl 
+                || innerEl === iframeHtml 
+                || innerEl.classList.contains('deadzone')
+            ) {
+                // this child does not have elem to activate
+                continue;
+            }
+
+            let repeat = new PointerEvent(e.type, e);
+            innerEl.dispatchEvent(repeat);
+
+            frame = child;
+            break;
         }
 
-        for (const child of fullscreenFrames) {
-                let innerEl = child.contentWindow.document.elementFromPoint(e.clientX, e.clientY);
-                let iframeHtml = child.contentWindow.document.documentElement;
-                if (! innerEl 
-                    || innerEl === iframeHtml 
-                    || innerEl.classList.contains('deadzone')
-                ) {
-                    // if this child does not have any active
-                    child.classList.remove('acceptevents');
-                    continue;
-                }
-
-                eventTrap.classList.remove('acceptevents');
-                child.classList.add('acceptevents');
-
-                // so we do not block the thread
-                let repeat = new MouseEvent(e.type, e);
-                innerEl.dispatchEvent(repeat);
-
-                break;
-        };
+        if (frame) {
+            eventTrap.classList.remove('acceptevents');
+            frame.classList.add('acceptevents');
+        } else {
+            // no frame was activated so activate the eventTrap
+            eventTrap.classList.add('acceptevents');
+        }
     };
 
-    // Object.keys(eventTrap).forEach(key => {
-    //     if (/^onpointer/.test(key)) {
-    //         eventTrap.addEventListener(key.slice(2), handler, true);
-    //     }
-    // });
-
-    eventTrap.addEventListener('click', handler, false);
-
-    // eventTrap.addEventListener('pointerup', handler, true);
+    eventTrap.addEventListener('pointerdown', yieldFunc, true);
+    eventTrap.addEventListener('pointerup', yieldFunc, true);
+    eventTrap.addEventListener('click', yieldFunc, true);
 
     for (const url of URLS) {
         try {
@@ -79,12 +72,9 @@ async function initHud() {
             // dublicate requests is a known bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1464344
             let iframe = document.createElement("iframe");
             iframe.classList.add("fullscreen");
-            // let srcUrl = new URL()
-            // iframe.src = btoa(
             iframe.src = feature_json["src"];
-            // iframe.srcdoc = feature_json["text"];
             iframe.onload = () => {
-                addInnerHtmlEventListener(iframe, eventTrap, handler);
+                addInnerHtmlEventListener(iframe, yieldFunc);
             };
             fullscreenFrames.push(iframe);
         } catch (error) {
