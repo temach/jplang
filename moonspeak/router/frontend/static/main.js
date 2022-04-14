@@ -4,37 +4,23 @@
 //
 const fullscreenFrames = new Array();
 
-function addInnerHtmlEventListener(frame, trap, state_handled) {
+function addInnerHtmlEventListener(frame, trap, yieldFunc) {
     let iframeHtml = frame.contentWindow.document.documentElement;
-    let adjustFocus = (e) => {
-        if (e.target !== iframeHtml && (! e.target.classList.contains('deadzone'))) {
-            // if target element: is not document.html tag and not deadzone css class
-            // means user clicked on something worthwhile (likely with a lower click event handler)
-            e.moonspeakEventState = state_handled;
-            trap.classList.remove('acceptevents');
-            if (! frame.classList.contains('acceptevents')) {
-                // this frame becomes active, but it was not active before
-                // i.e. repeat the first event this frame gets when it becomes active
-                frame.classList.add('acceptevents');
-                // let evt = new MouseEvent(e.type, e);
-                // e.target.dispatchEvent(evt);
-            }
-        } else if (frame.classList.contains('acceptevents')) {
-            // user clicked on non-active element, so current frame should stop being active
-            frame.classList.remove('acceptevents');
-            trap.classList.add('acceptevents');
-            let evt = new MouseEvent(e.type, e);
-            trap.dispatchEvent(evt);
-        }
+    let checkYield = (e) => {
+        if (e.target === iframeHtml || e.target.classList.contains('deadzone')) {
+            yieldFunc(e);
+        };
     };
-    // iframeHtml.addEventListener('mouseover', adjustFocus, true);
-    iframeHtml.addEventListener('click', adjustFocus, true);
+
+    // capture the down event in bubbling phase
+    iframeHtml.addEventListener('click', checkYield, false);
+    // iframeHtml.addEventListener('pointerdown', checkYield, false);
+    // iframeHtml.addEventListener('pointerup', checkYield, false);
+    // iframeHtml.addEventListener('click', checkYield, false);
+    // iframeHtml.addEventListener('mouseover', checkYield, false);
 }
 
 async function initHud() {
-    const STATE_PROPOGATING = "propogating";
-    const STATE_HANDLED = "handled";
-
     // order affects event check, element 0 is checked first
     // background should be the last element
     const URLS = [
@@ -46,21 +32,46 @@ async function initHud() {
 
     let eventTrap = document.getElementById("eventTrap");
     let handler = (e) => {
-        let evt = new MouseEvent(e.type, e);
-        evt.moonspeakEventState = STATE_PROPOGATING;
+        // events get here after some frame has yielded (as a result of yielding)
+        // or its the very-very first event ever
+        eventTrap.classList.add('acceptevents');
+
         for (const child of fullscreenFrames) {
-                if (evt.moonspeakEventState === STATE_HANDLED) {
-                    // stop early if event was handled
-                    break; 
-                }
+            child.classList.remove('acceptevents');
+        }
+
+        for (const child of fullscreenFrames) {
                 let innerEl = child.contentWindow.document.elementFromPoint(e.clientX, e.clientY);
-                if (innerEl) {
-                    innerEl.dispatchEvent(evt);
+                let iframeHtml = child.contentWindow.document.documentElement;
+                if (! innerEl 
+                    || innerEl === iframeHtml 
+                    || innerEl.classList.contains('deadzone')
+                ) {
+                    // if this child does not have any active
+                    child.classList.remove('acceptevents');
+                    continue;
                 }
+
+                eventTrap.classList.remove('acceptevents');
+                child.classList.add('acceptevents');
+
+                // so we do not block the thread
+                let repeat = new MouseEvent(e.type, e);
+                innerEl.dispatchEvent(repeat);
+
+                break;
         };
-    }
-    // eventTrap.addEventListener('mouseover', handler, true);
-    eventTrap.addEventListener('click', handler, true);
+    };
+
+    // Object.keys(eventTrap).forEach(key => {
+    //     if (/^onpointer/.test(key)) {
+    //         eventTrap.addEventListener(key.slice(2), handler, true);
+    //     }
+    // });
+
+    eventTrap.addEventListener('click', handler, false);
+
+    // eventTrap.addEventListener('pointerup', handler, true);
 
     for (const url of URLS) {
         try {
@@ -73,7 +84,7 @@ async function initHud() {
             iframe.src = feature_json["src"];
             // iframe.srcdoc = feature_json["text"];
             iframe.onload = () => {
-                addInnerHtmlEventListener(iframe, eventTrap, STATE_HANDLED);
+                addInnerHtmlEventListener(iframe, eventTrap, handler);
             };
             fullscreenFrames.push(iframe);
         } catch (error) {
