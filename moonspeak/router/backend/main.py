@@ -18,14 +18,22 @@ MAPPING = {}
 
 app = FastAPI()
 
+MY_HOSTNAME = None
 
 @app.api_route("/api/routing/{fid}/{furl:path}", methods=["GET", "HEAD", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"])
 async def routing(request: Request, fid, furl: str):
-    print(f'Request {furl} of feature {fid}')
     feature_root_url = MAPPING[fid]
     url = feature_root_url + furl
-    r = requests.request(request.method, url, headers=request.headers, data=await request.body())
-    print(f'Requested {r.url}')
+
+    print(f"Requesting {url}")
+
+    # delete host field to force re-evaluation when proxying the request
+    headers = request.headers.mutablecopy()
+    del headers["host"]
+
+    r = requests.request(request.method, url, headers=headers, data=await request.body())
+
+    print(f'requested with headers: {r.request.headers}')
     if not furl:
         # modify returned content if we were requesting root doc, delete content-lenght so it will get recalculated
         new_content = modify_root_doc(r.text, fid)
@@ -35,7 +43,19 @@ async def routing(request: Request, fid, furl: str):
 
 
 @app.get("/")
-def index():
+def index(request: Request):
+
+    # this is a hack to enforce <base> tag with a single origin
+    # right now there is no code to support different <base> tags per request (i.e. per different HOST header)
+    # so fail loudly if we notice that someone whants our functionallity under a different hostname  
+    global MY_HOSTNAME
+    user_header = request.headers.get('host').split(":")[0]
+    if not MY_HOSTNAME:
+        MY_HOSTNAME = user_header
+        print("Setting MY_HOSTNAME header: __{}__".format(MY_HOSTNAME))
+    else:
+        assert user_header == MY_HOSTNAME, "This resource is known under two different names: {} and {}".format(MY_HOSTNAME, user_header)
+
     return static("index.html")
 
 
@@ -55,26 +75,9 @@ def static(path):
 def modify_root_doc(doc_text, fid):
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(doc_text, 'html.parser')
-    base_tag = soup.new_tag("base", href="http://localhost:9000/api/routing/{}/".format(fid))
+    base_tag = soup.new_tag("base", href="http://{}/api/routing/{}/".format(MY_HOSTNAME, fid))
     soup.head.insert(0, base_tag)
     return str(soup)
-
-
-# def get_modified_root_doc(fid, feature_root_url):
-#     r = requests.get(feature_root_url)
-# 
-#     from bs4 import BeautifulSoup
-#     soup = BeautifulSoup(r.text, 'html.parser')
-# 
-#     base_tag = soup.new_tag("base", href="http://localhost:9000/api/routing/{}/".format(fid))
-#     soup.head.insert(0, base_tag)
-# 
-#     resp = {
-#         "text": str(soup),
-#         "soup": soup,
-#     }
-#     return resp
-
 
 @app.get("/api/getfeature")
 def feature(feature_url: str):
@@ -84,7 +87,7 @@ def feature(feature_url: str):
 
     # return root URL for this feature
     return { 
-        "src" : "http://localhost:9000/api/routing/{}/".format(fid),
+        "src" : "http://{}/api/routing/{}/".format(MY_HOSTNAME, fid),
         "text" : "use src",
     }
 

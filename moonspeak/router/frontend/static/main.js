@@ -23,9 +23,9 @@ async function initHud() {
     // order affects event check, element 0 is checked first
     // background should be the last element
     const URLS = [
-        // "http://0.0.0.0:9012",
-        "http://0.0.0.0:9011",
-        "http://0.0.0.0:9010",
+        // "http://f-help.test",
+        "http://f-plus.test",
+        "http://manager-grid2.test",
     ];
 
     let eventTrap = document.getElementById("eventTrap");
