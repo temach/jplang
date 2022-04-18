@@ -3,7 +3,6 @@ import os
 import json
 import sqlite3
 import re
-import uuid
 from urllib.parse import urlparse
 
 from fastapi import FastAPI
@@ -79,8 +78,8 @@ def modify_root_doc(doc_text, fid):
 
 @app.get("/api/getfeature")
 def feature(feature_url: str):
+    fid = re.sub(r'[\\/*?:"<>|+=.& ]', "_", feature_url)
     # add mapping with unified url representation
-    fid = str(uuid.uuid4())
     MAPPING[fid] = urlparse(feature_url).geturl()
 
     # return root URL for this feature
