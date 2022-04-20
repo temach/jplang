@@ -1,0 +1,11 @@
+version: "3.9"
+    
+services:
+  backend:
+    image: nginx:latest
+    build:
+      context: ./
+      dockerfile: ./Dockerfile-backend 
+    ports:
+      - "9010:80"
+    
