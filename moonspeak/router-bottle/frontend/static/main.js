@@ -71,8 +71,7 @@ async function initHud() {
             // dublicate requests is a known bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1464344
             let iframe = document.createElement("iframe");
             iframe.classList.add("fullscreen");
-            let encodedUrl = encodeURIComponent(url)
-            iframe.src = window.location.origin + "/api/routing/" + encodedUrl;
+            iframe.src = buildFeatureUrl(url);
             iframe.onload = () => {
                 addInnerHtmlEventListener(iframe, yieldFunc);
             };
@@ -96,6 +95,11 @@ async function initHud() {
 // Code related to small features that are loaded on user request
 //
 // const FEATURES = new Map();
+
+function buildFeatureUrl(rawUrl) {
+    let encodedUrl = encodeURIComponent(rawUrl);
+    return window.top.location.origin + "/api/routing/" + encodedUrl;
+}
 
 function arrayBroadcast(eventSource, eventData, array) {
     array.forEach((featureIFrameElem, index, arr) => {
@@ -126,11 +130,9 @@ async function onMessage(event) {
 
     if (event.data["info"].includes("new feature")) {
         try {
-            let featureJson = await getFeatureSrc(event.data["url"]);
             let msg = {
                 "info": "created feature",
-                "srcdoc": featureJson["text"],
-                "src": featureJson["src"],
+                "src": buildFeatureUrl(event.data["url"]),
             };
             // make sure every fullscreen feature knows that a new on-demand feature was added
             arrayBroadcast(null, msg, fullscreenFrames);
