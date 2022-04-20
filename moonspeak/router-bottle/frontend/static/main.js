@@ -68,7 +68,6 @@ async function initHud() {
 
     for (const url of URLS) {
         try {
-            // let feature_json = await getFeatureSrc(url);
             // dublicate requests is a known bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1464344
             let iframe = document.createElement("iframe");
             iframe.classList.add("fullscreen");
@@ -97,19 +96,6 @@ async function initHud() {
 // Code related to small features that are loaded on user request
 //
 // const FEATURES = new Map();
-
-
-async function getFeatureSrc(feature_url) {
-    let backend = new URL("/api/getfeature", window.location);
-    backend.searchParams.set('feature_url', new URL(feature_url));
-
-    let response = await fetch(backend);
-    if (!response.ok) {
-        throw new Error("HTTP error, status = " + response.status);
-    }
-    let feature_json = await response.json();
-    return feature_json;
-}
 
 function arrayBroadcast(eventSource, eventData, array) {
     array.forEach((featureIFrameElem, index, arr) => {
