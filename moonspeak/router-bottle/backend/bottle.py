@@ -469,11 +469,7 @@ class Router(object):
     def match(self, environ):
         """ Return a (target, url_args) tuple or raise HTTPError(400/404/405). """
         verb = environ['REQUEST_METHOD'].upper()
-        path = environ['PATH_INFO'] or '/'
-        raw_path = environ['RAW_PATH_INFO'] or None
-        if raw_path:
-            path = raw_path
-            print("Routing will use RAW_PATH_INFO: __{}__ instead of PATH_INFO __{}__".format(raw_path, path))
+        path = environ['RAW_PATH_INFO'] or environ['PATH_INFO'] or '/'
 
         methods = ('PROXY', 'HEAD', 'GET', 'ANY') if verb == 'HEAD' else ('PROXY', verb, 'ANY')
 
