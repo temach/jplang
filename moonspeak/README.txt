@@ -1,3 +1,14 @@
+Some folders are alternative implementations of the same functionallity.
+
+Some are obsoleted, here is the relationship:
+getter          -> router-bottle
+hud             -> router-bottle
+router          -> router-bottle
+router-flask    -> router-bottle
+mxgraph         -> grapheditor
+
+
+
 https://stackoverflow.com/questions/13993398/click-through-sticky-transparent-iframe
 
 https://stackoverflow.com/questions/15080222/add-click-event-to-iframe
