@@ -8,12 +8,15 @@ router-flask    -> router-bottle
 mxgraph         -> grapheditor
 
 When making a new feature:
-- All frontend requests are relative
+- All URLs must be relative (because we forcefully insert absolute <base> tag to all root pages)
 - Add url link to plus feature
 - Add server_name to nginx config
 - If on localhost add server_name to /etc/hosts
+
 - For graph feature port number choose 902X where X is incremented by one
 - For fullscreen feature port numebr choose 901X where X is incremented by one
+- To talk: window.parent.postMessage to talk, ensure that (window != window.top) before sending to avoid infinite loop when running solo
+- To listen: add onMessage event handler
 
 
 Handling switching between iframes: 
