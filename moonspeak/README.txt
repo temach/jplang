@@ -7,8 +7,16 @@ router          -> router-bottle
 router-flask    -> router-bottle
 mxgraph         -> grapheditor
 
+When making a new feature:
+- All frontend requests are relative
+- Add url link to plus feature
+- Add server_name to nginx config
+- If on localhost add server_name to /etc/hosts
+- For graph feature port number choose 902X where X is incremented by one
+- For fullscreen feature port numebr choose 901X where X is incremented by one
 
 
+Handling switching between iframes: 
 https://stackoverflow.com/questions/13993398/click-through-sticky-transparent-iframe
 
 https://stackoverflow.com/questions/15080222/add-click-event-to-iframe
@@ -30,3 +38,6 @@ https://discourse.elm-lang.org/t/shadowroots-and-browser-dom/7791/3
 
 Only limited info is shared between windows:
 https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy
+
+
+
