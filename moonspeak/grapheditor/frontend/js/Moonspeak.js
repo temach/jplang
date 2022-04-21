@@ -35,6 +35,9 @@ MoonspeakEditor.prototype.preinit = function()
     // scrollbars must be enabled at all times so iframes do not reload
     Graph.prototype.defaultScrollbars = true;
 
+    // fix some default styling issues
+    Graph.prototype.defaultEdgeStyle = {'edgeStyle': 'orthogonalEdgeStyle', 'rounded': '1', 'jettySize': 'auto', 'orthogonalLoop': '1'};
+
     // this function must be overriden to retain thin scrollbar styling
 	let mxGraphView_validateBackgroundStyles = mxGraphView.prototype.validateBackgroundStyles;
     mxGraphView.prototype.validateBackgroundStyles = function()
@@ -122,6 +125,21 @@ MoonspeakEditor.prototype.init = function()
     // hide the left sidebar
     this.editorUi.hsplitPosition = 0;
     this.editorUi.refresh();
+
+    // style fixes 
+    var stylesheet = graph.getStylesheet();
+
+    var vertexStyle = stylesheet.getDefaultVertexStyle();
+    // vertexStyle[mxConstants.STYLE_ROUNDED] = true;
+
+    var edgeStyle = stylesheet.getDefaultEdgeStyle();
+	edgeStyle[mxConstants.STYLE_ENDARROW] = mxConstants.NONE;
+	edgeStyle[mxConstants.STYLE_STARTARROW] = mxConstants.NONE;
+    // some things can only be forced if we pre-define graph.defaultEdgeStyle in preinit()
+    // edgeStyle[mxConstants.STYLE_EDGE] = mxEdgeStyle.EntityRelation;
+    // edgeStyle[mxConstants.STYLE_EDGE] = mxConstants.EDGESTYLE_ELBOW;
+    // edgeStyle[mxConstants.STYLE_ROUNDED] = 1;
+    // graph.currentEdgeStyle = mxUtils.clone(graph.defaultEdgeStyle);
 
     // Resize IFrame and Rectangle together
     let iframeRectanglePadding = 20;
