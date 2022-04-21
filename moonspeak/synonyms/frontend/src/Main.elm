@@ -288,7 +288,8 @@ render model =
         [ style "background-color" "rgb(190, 190, 190)"
         , style "overflow" "auto"
         ]
-        [ div
+        [ renderUserMessages model
+        , div
             [ style "display" "flex" ]
             [ span
                 [ style "flex" "10 1 calc(2rem + 2rem + 6rem)"
