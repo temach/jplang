@@ -17,20 +17,22 @@
             // message from elm for javascript
             // broadcast it to top window
             // also: enforce same origin
-            console.log("submit posted: ")
-            console.log(message);
+            console.log(window.location + " posted:");
             message["info"] = "broadcast";
-            window.parent.postMessage(message, window.top.location.origin);
+            console.log(message);
+            if (window !== window.parent) {
+                window.parent.postMessage(message, window.location.origin);
+            }
         });
 
         // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
         window.addEventListener("message", (event) => {
-            if (event.origin !== window.top.location.origin || event.source === window) {
+            if (event.origin !== window.location.origin) {
                 // accept only messages for your domain
                 // and drop self-messages
                 return;
             }
-            console.log("submit received: ")
+            console.log(window.location + " received:");
             console.log(event.data);
             app.ports.messageReceiver.send(event.data);
         });
