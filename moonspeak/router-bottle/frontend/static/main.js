@@ -94,7 +94,6 @@ async function initHud() {
 //=============================================================
 // Code related to small features that are loaded on user request
 //
-// const FEATURES = new Map();
 
 function buildFeatureUrl(rawUrl) {
     let encodedUrl = encodeURIComponent(rawUrl);
@@ -114,13 +113,13 @@ function arrayBroadcast(eventSource, eventData, array) {
     });
 }
 
-async function onMessage(event) {
+function onMessage(event) {
     if (event.origin !== window.top.location.origin) {
         // accept only messages for your domain
         return;
     }
 
-    console.log("hud received: ");
+    console.log(window.location + " received:");
     console.log(event.data);
 
     if (! ("info" in event.data)) {
@@ -128,21 +127,9 @@ async function onMessage(event) {
         return;
     }
 
-    if (event.data["info"].includes("new feature")) {
-        try {
-            let msg = {
-                "info": "created feature",
-                "src": buildFeatureUrl(event.data["url"]),
-            };
-            // make sure every fullscreen feature knows that a new on-demand feature was added
-            arrayBroadcast(null, msg, fullscreenFrames);
-        } catch (error) {
-            console.log("getting new feature failed with error:" + error.message);
-        };
-
-    } else if (event.data["info"].includes("broadcast")) {
+    if (event.data["info"].includes("please feature")) {
+        event.data["src"] = buildFeatureUrl(event.data["url"]);
         arrayBroadcast(event.source, event.data, fullscreenFrames);
-
     } else {
         console.log("Can not understand message info:" + event.data["info"]);
         return;
@@ -152,6 +139,3 @@ async function onMessage(event) {
 
 // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 window.addEventListener("message", onMessage);
-
-
-

@@ -1,9 +1,11 @@
 function request_feature(feature_url) {
     let message = {
-        "info": "new feature",
+        "info": "please feature",
         "url": feature_url,
     }
-    console.log("plus posted:");
+    console.log(window.location + " posted:");
     console.log(message);
-    window.parent.postMessage(message, window.top.location.origin);
+    if (window !== window.parent) {
+        window.parent.postMessage(message, window.location.origin);
+    }
 }

@@ -63,18 +63,18 @@ MoonspeakEditor.prototype.preinit = function()
     var mxGraphConvertValueToString = mxGraph.prototype.convertValueToString;
     mxGraph.prototype.convertValueToString = function(cell)
     {
-        if (cell.div != null) {
-            return cell.div;
+        if (cell.iframe != null) {
+            return cell.iframe;
         } else if (mxUtils.isNode(cell.value) && cell.value.nodeName.toLowerCase() == 'iframe') {
             // Returns a DOM for the label
-            cell.div = cell.value;
-            return cell.div;
+            cell.iframe = cell.value;
+            return cell.iframe;
         } else {
             return mxGraphConvertValueToString.apply(this, arguments);
         }
     }
 
-    // easier selection of edges 
+    // easier selection of edges
     let sqrtDist = function(ax, ay, bx, by)
     {
         var dx = ax - bx;
@@ -88,7 +88,7 @@ MoonspeakEditor.prototype.preinit = function()
     {
         // call the original
         var handle = mxEdgeHandlerGetHandleForEvent.apply(this, arguments);
- 
+
         // if handle is null, meaning the edge line was clicked, not any specific marker on the edge
         // then force select one of the end markers (either start or end port)
         if (handle == null && this.bends != null && me.state != null && me.state.cell == this.state.cell)
@@ -105,7 +105,7 @@ MoonspeakEditor.prototype.preinit = function()
                 return this.bends.length - 1;
             }
         }
- 
+
         return handle;
     };
 
@@ -126,7 +126,7 @@ MoonspeakEditor.prototype.init = function()
     this.editorUi.hsplitPosition = 0;
     this.editorUi.refresh();
 
-    // style fixes 
+    // style fixes
     var stylesheet = graph.getStylesheet();
 
     var vertexStyle = stylesheet.getDefaultVertexStyle();
@@ -146,7 +146,7 @@ MoonspeakEditor.prototype.init = function()
     graph.addListener(mxEvent.CELLS_RESIZED, function(sender, evt)
     {
       var cells = evt.getProperty('cells');
-      
+
       if (cells != null)
       {
         for (var i = 0; i < cells.length; i++)
@@ -187,16 +187,33 @@ MoonspeakEditor.prototype.init = function()
 
     // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
     // handle message events
-    this.features = new Map();
+    let iframe2info = new Map();
 
-    window.addEventListener("message", (event) => 
+    graph.connectionHandler.addListener(mxEvent.CONNECT, function(sender, evt)
+    {
+        var edge = evt.getProperty('cell');
+        var source = graph.getModel().getTerminal(edge, true);
+        var target = graph.getModel().getTerminal(edge, false);
+
+        var style = graph.getCellStyle(edge);
+        var sourcePortId = style[mxConstants.STYLE_SOURCE_PORT];
+        var targetPortId = style[mxConstants.STYLE_TARGET_PORT];
+
+        // interconnect the two things
+        let infoSource = iframe2info.get(source.iframe);
+        infoSource.connectedIFrames.add(target.iframe);
+        let infoTarget = iframe2info.get(target.iframe);
+        infoTarget.connectedIFrames.add(source.iframe);
+    });
+
+    window.addEventListener("message", (event) =>
     {
         if (event.origin !== window.top.location.origin) {
             // we only accept messages from the IFrames (must be on the same domain)
             return;
         }
 
-        console.log("mxgraph received: ");
+        console.log(window.location + " received:");
         console.log(event.data);
 
         if (! ("info" in event.data)) {
@@ -204,18 +221,21 @@ MoonspeakEditor.prototype.init = function()
             return;
         }
 
-        if (event.data["info"].includes("created feature")) {
+        if (event.data["info"].includes("please feature")) {
             let iframe = document.createElement("iframe");
             iframe.src = event.data["src"];
-            let result = this.addIframe(iframe)
-            if (result !== null) {
-                let featureExtraInfo = {};
-                this.features.set(iframe, featureExtraInfo);
-            }
-
+            let result = this.addIframe(iframe);
+            let info = {
+                "connectedIFrames": new Set(),
+            };
+            iframe2info.set(iframe, info);
         } else if (event.data["info"].includes("broadcast")) {
-            this.mapBroadcast(event, this.features);
-
+            // this is a message between the sub-iframes
+            let info = iframe2info.get(event.source.frameElement);
+            for (const connectedIFrame of info.connectedIFrames) {
+                let iframeWindow = (connectedIFrame.contentWindow || connectedIFrame.contentDocument);
+                iframeWindow.postMessage(event.data, window.location.origin);
+            }
         } else {
             console.log("Can not understand message info:" + event.data["info"]);
             return;
@@ -241,7 +261,7 @@ MoonspeakEditor.prototype.addIframe = function(iframeElem)
     let graph = this.editorUi.editor.graph;
     var parent = graph.getDefaultParent();
     var model = graph.getModel();
-    
+
     var v1 = null;
     var pt = graph.getCenterInsertPoint();
 
@@ -260,6 +280,7 @@ MoonspeakEditor.prototype.addIframe = function(iframeElem)
     }
 
     graph.setSelectionCell(v1);
+
     return {
         "iframe": iframeElem,
         "vertex": v1,
@@ -268,7 +289,7 @@ MoonspeakEditor.prototype.addIframe = function(iframeElem)
 
 
 // Function to communicate between embedded iframes
-MoonspeakEditor.prototype.mapBroadcast = function(event, map) 
+MoonspeakEditor.prototype.mapBroadcast = function(event, map)
 {
     map.forEach((featureExtraInfo, featureIFrameElem, m) => {
         let iframeWindow = (featureIFrameElem.contentWindow || featureIFrameElem.contentDocument);
