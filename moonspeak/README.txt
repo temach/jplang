@@ -18,6 +18,13 @@ When making a new feature:
 - To talk: window.parent.postMessage to talk, ensure that (window != window.top) before sending to avoid infinite loop when running solo
 - To listen: add onMessage event handler
 
+Adding javascript code to send message in the context of iframe:
+https://stackoverflow.com/questions/45993415/run-code-in-context-of-frame-window
+
+Get the iframe from event:
+event.source.frameElement
+https://developer.mozilla.org/en-US/docs/Web/API/Window/frameElement
+
 
 Handling switching between iframes: 
 https://stackoverflow.com/questions/13993398/click-through-sticky-transparent-iframe
