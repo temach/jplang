@@ -135,6 +135,9 @@ MoonspeakEditor.prototype.init = function()
     var edgeStyle = stylesheet.getDefaultEdgeStyle();
 	edgeStyle[mxConstants.STYLE_ENDARROW] = mxConstants.NONE;
 	edgeStyle[mxConstants.STYLE_STARTARROW] = mxConstants.NONE;
+    // When moving the edge, snap and move the start or end port
+    // becasue rigidly moving the whole edge is not useful
+    edgeStyle[mxConstants.STYLE_MOVABLE] = false;
     // some things can only be forced if we pre-define graph.defaultEdgeStyle in preinit()
     // edgeStyle[mxConstants.STYLE_EDGE] = mxEdgeStyle.EntityRelation;
     // edgeStyle[mxConstants.STYLE_EDGE] = mxConstants.EDGESTYLE_ELBOW;
@@ -189,6 +192,9 @@ MoonspeakEditor.prototype.init = function()
     // handle message events
     let iframe2info = new Map();
 
+    // do not allow dangling edges, so the only way to break connection is to delete the edge
+    graph.setAllowDanglingEdges(false);
+
     graph.connectionHandler.addListener(mxEvent.CONNECT, function(sender, evt)
     {
         var edge = evt.getProperty('cell');
@@ -204,6 +210,20 @@ MoonspeakEditor.prototype.init = function()
         infoSource.connectedIFrames.add(target.iframe);
         let infoTarget = iframe2info.get(target.iframe);
         infoTarget.connectedIFrames.add(source.iframe);
+    });
+
+    graph.addListener(mxEvent.CELLS_REMOVED, function(sender, evt)
+    {
+        for (const cell of evt.properties.cells) {
+            if (!cell.edge) {
+                continue;
+            }
+            // delete the connection between two iframes
+            let infoSource = iframe2info.get(cell.source.iframe);
+            infoSource.connectedIFrames.delete(cell.target.iframe);
+            let infoTarget = iframe2info.get(cell.target.iframe);
+            infoTarget.connectedIFrames.delete(cell.source.iframe);
+        }
     });
 
     window.addEventListener("message", (event) =>
