@@ -8,8 +8,7 @@ router-flask    -> router-bottle
 mxgraph         -> grapheditor
 
 When making a new feature:
-- provide moonspeakConnect function that takes an iframe on new connection and decides if extra observer hacks need to be installed
-- provide moonspeakInstallObserver function that takes a description and an installer func to execute. The observers are your guests. Care for them.
+- handle "iframe connect" message by trying to install relevant observer hacks. The observers are your guests. Care for them.
 - All URLs must be relative (because we forcefully insert absolute <base> tag to all root pages)
 - Add url link to plus feature
 - Add server_name to nginx config
