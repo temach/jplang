@@ -173,8 +173,29 @@ update msg model =
             case Decode.decodeValue portDecoder jsonValue of
                 Ok value ->
                     let
+                        newKeyword =
+                            if String.length value.keyword > 0 then
+                                value.keyword
+
+                            else
+                                model.keyword
+
+                        newKanji =
+                            if String.length value.kanji > 0 then
+                                value.kanji
+
+                            else
+                                model.kanji
+
+                        newNotes =
+                            if String.length value.notes > 0 then
+                                value.notes
+
+                            else
+                                model.notes
+
                         newModel =
-                            { model | keyword = value.keyword, kanji = value.kanji, notes = value.notes }
+                            { model | keyword = newKeyword, kanji = newKanji, notes = newNotes }
                     in
                     ( newModel, Cmd.batch [ getSynonyms newModel.keyword ] )
 

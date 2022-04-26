@@ -195,21 +195,32 @@ MoonspeakEditor.prototype.init = function()
     // do not allow dangling edges, so the only way to break connection is to delete the edge
     graph.setAllowDanglingEdges(false);
 
+    let connectIframes = (s, t) => {
+        let info = iframe2info.get(s.iframe);
+        info.connectedIFrames.add(t.iframe);
+        let message = {
+            "info": "iframe connect",
+            "name": t.iframe.name,
+        }
+        s.iframe.contentWindow.postMessage(message, window.location.origin);
+    }
+
+    let disconnectIframes = (s, t) => {
+        let info = iframe2info.get(s.iframe);
+        info.connectedIFrames.delete(t.iframe);
+        // disconnect happens without postMessage
+        // because its too hard to undo a javascript "install"
+    }
+
     graph.connectionHandler.addListener(mxEvent.CONNECT, function(sender, evt)
     {
         var edge = evt.getProperty('cell');
         var source = graph.getModel().getTerminal(edge, true);
         var target = graph.getModel().getTerminal(edge, false);
 
-        var style = graph.getCellStyle(edge);
-        var sourcePortId = style[mxConstants.STYLE_SOURCE_PORT];
-        var targetPortId = style[mxConstants.STYLE_TARGET_PORT];
-
-        // interconnect the two things
-        let infoSource = iframe2info.get(source.iframe);
-        infoSource.connectedIFrames.add(target.iframe);
-        let infoTarget = iframe2info.get(target.iframe);
-        infoTarget.connectedIFrames.add(source.iframe);
+        // interconnect them both ways
+        connectIframes(source, target);
+        connectIframes(target, source);
     });
 
     graph.addListener(mxEvent.CELLS_REMOVED, function(sender, evt)
@@ -219,10 +230,8 @@ MoonspeakEditor.prototype.init = function()
                 continue;
             }
             // delete the connection between two iframes
-            let infoSource = iframe2info.get(cell.source.iframe);
-            infoSource.connectedIFrames.delete(cell.target.iframe);
-            let infoTarget = iframe2info.get(cell.target.iframe);
-            infoTarget.connectedIFrames.delete(cell.source.iframe);
+            disconnectIframes(cell.source, cell.target);
+            disconnectIframes(cell.target, cell.source);
         }
     });
 
@@ -241,9 +250,10 @@ MoonspeakEditor.prototype.init = function()
             return;
         }
 
-        if (event.data["info"].includes("please feature")) {
+        if (event.data["info"].includes("please register")) {
             let iframe = document.createElement("iframe");
             iframe.src = event.data["src"];
+            iframe.name = event.data["name"];
             let result = this.addIframe(iframe);
             let info = {
                 "connectedIFrames": new Set(),

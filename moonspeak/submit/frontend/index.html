@@ -34,7 +34,17 @@
             }
             console.log(window.location + " received:");
             console.log(event.data);
-            app.ports.messageReceiver.send(event.data);
+            if (event.data["info"].includes("iframe connect")) {
+                let script = document.createElement("script");
+                script.type = "text/javascript";
+                script.src = "static/installers/" + event.data["name"] + ".js";
+                document.body.appendChild(script);
+            // } else if (event.data["info"].includes("iframe disconnect")) {
+            //     let script = document.querySelector('script[src="static/installers/' + event.data["name"] + '.js"]');
+            //     document.body.removeChild(script);
+            } else {
+                app.ports.messageReceiver.send(event.data);
+            }
         });
     </script>
   </body>

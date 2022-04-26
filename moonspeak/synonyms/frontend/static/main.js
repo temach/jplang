@@ -11192,9 +11192,12 @@ var $author$project$Main$update = F2(
 				var _v2 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$portDecoder, jsonValue);
 				if (_v2.$ === 'Ok') {
 					var value = _v2.a;
+					var newNotes = ($elm$core$String$length(value.notes) > 0) ? value.notes : model.notes;
+					var newKeyword = ($elm$core$String$length(value.keyword) > 0) ? value.keyword : model.keyword;
+					var newKanji = ($elm$core$String$length(value.kanji) > 0) ? value.kanji : model.kanji;
 					var newModel = _Utils_update(
 						model,
-						{kanji: value.kanji, keyword: value.keyword, notes: value.notes});
+						{kanji: newKanji, keyword: newKeyword, notes: newNotes});
 					return _Utils_Tuple2(
 						newModel,
 						$elm$core$Platform$Cmd$batch(
@@ -11338,6 +11341,19 @@ var $author$project$Main$renderSynonyms = function (model) {
 			]),
 		A2($elm$core$List$indexedMap, partial, model.synonyms));
 };
+var $author$project$Main$renderUserMessages = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				$elm$html$Html$text(
+				A2(
+					$elm$core$String$join,
+					'!',
+					$elm$core$Dict$values(model.userMessage)))
+			]));
+};
 var $author$project$Main$render = function (model) {
 	return A2(
 		$elm$html$Html$div,
@@ -11348,6 +11364,7 @@ var $author$project$Main$render = function (model) {
 			]),
 		_List_fromArray(
 			[
+				$author$project$Main$renderUserMessages(model),
 				A2(
 				$elm$html$Html$div,
 				_List_fromArray(

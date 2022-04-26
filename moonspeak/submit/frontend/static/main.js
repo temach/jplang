@@ -10730,7 +10730,6 @@ var $author$project$Main$subscriptions = function (model) {
 var $author$project$Main$KeywordInput = function (a) {
 	return {$: 'KeywordInput', a: a};
 };
-var $author$project$Main$NextWorkElement = {$: 'NextWorkElement'};
 var $author$project$Main$KeywordCheckReady = function (a) {
 	return {$: 'KeywordCheckReady', a: a};
 };
@@ -11170,25 +11169,18 @@ var $author$project$Main$update = F2(
 					var result = msg.a;
 					if (result.$ === 'Ok') {
 						var body = result.a;
-						var newModel = model;
-						var newElement = {kanji: model.kanji, keyword: model.keyword, notes: model.notes};
-						if ($elm$core$String$length(body) > 0) {
-							return _Utils_Tuple2(
-								_Utils_update(
-									model,
-									{
-										userMessage: A3($elm$core$Dict$insert, 'KeywordSubmitReady', 'Error submitting keyword. Details:' + body, model.userMessage)
-									}),
-								$elm$core$Platform$Cmd$none);
-						} else {
-							var $temp$msg = $author$project$Main$NextWorkElement,
-								$temp$model = _Utils_update(
-								newModel,
-								{userMessage: $elm$core$Dict$empty});
-							msg = $temp$msg;
-							model = $temp$model;
-							continue update;
-						}
+						return ($elm$core$String$length(body) > 0) ? _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									userMessage: A3($elm$core$Dict$insert, 'KeywordSubmitReady', 'Error submitting keyword. Details:' + body, model.userMessage)
+								}),
+							$elm$core$Platform$Cmd$none) : _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{userMessage: $elm$core$Dict$empty}),
+							$author$project$Main$sendMessage(
+								$author$project$Main$portEncoder(model)));
 					} else {
 						return _Utils_Tuple2(
 							_Utils_update(
@@ -11198,11 +11190,6 @@ var $author$project$Main$update = F2(
 								}),
 							$elm$core$Platform$Cmd$none);
 					}
-				case 'NextWorkElement':
-					return _Utils_Tuple2(
-						model,
-						$author$project$Main$sendMessage(
-							$author$project$Main$portEncoder(model)));
 				case 'KeywordInput':
 					var word = msg.a;
 					var newCandidateHistory = _Utils_ap(
@@ -11256,10 +11243,14 @@ var $author$project$Main$update = F2(
 					var _v3 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$portDecoder, jsonValue);
 					if (_v3.$ === 'Ok') {
 						var value = _v3.a;
-						var $temp$msg = $author$project$Main$KeywordInput(value.keyword),
-							$temp$model = _Utils_update(
+						var newNotes = ($elm$core$String$length(value.notes) > 0) ? value.notes : model.notes;
+						var newKeyword = ($elm$core$String$length(value.keyword) > 0) ? value.keyword : model.keyword;
+						var newKanji = ($elm$core$String$length(value.kanji) > 0) ? value.kanji : model.kanji;
+						var newModel = _Utils_update(
 							model,
-							{kanji: value.kanji, keyword: value.keyword, notes: value.notes});
+							{kanji: newKanji, keyword: newKeyword, notes: newNotes});
+						var $temp$msg = $author$project$Main$KeywordInput(value.keyword),
+							$temp$model = newModel;
 						msg = $temp$msg;
 						model = $temp$model;
 						continue update;
@@ -11445,4 +11436,4 @@ var $author$project$Main$view = function (model) {
 var $author$project$Main$main = $elm$browser$Browser$document(
 	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
-	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.KeyCandidate":{"args":[],"type":"{ word : String.String, metadata : String.String, freq : List.List Basics.Int }"},"Json.Decode.Value":{"args":[],"type":"Json.Encode.Value"}},"unions":{"Main.Msg":{"args":[],"tags":{"KeywordInput":["String.String"],"NotesInput":["String.String"],"KeywordSubmitClick":[],"KeywordSubmitReady":["Result.Result Http.Error String.String"],"KeywordCheckReady":["Result.Result Http.Error Main.KeyCandidate"],"NextWorkElement":[],"Recv":["Json.Decode.Value"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Json.Encode.Value":{"args":[],"tags":{"Value":[]}}}}})}});}(this));
+	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.KeyCandidate":{"args":[],"type":"{ word : String.String, metadata : String.String, freq : List.List Basics.Int }"},"Json.Decode.Value":{"args":[],"type":"Json.Encode.Value"}},"unions":{"Main.Msg":{"args":[],"tags":{"KeywordInput":["String.String"],"NotesInput":["String.String"],"KeywordSubmitClick":[],"KeywordSubmitReady":["Result.Result Http.Error String.String"],"KeywordCheckReady":["Result.Result Http.Error Main.KeyCandidate"],"Recv":["Json.Decode.Value"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Json.Encode.Value":{"args":[],"tags":{"Value":[]}}}}})}});}(this));

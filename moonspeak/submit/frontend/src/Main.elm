@@ -67,8 +67,6 @@ defaultModel =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    -- update NextWorkElement model
-    -- ( model, getWorkElements )
     ( defaultModel, Cmd.none )
 
 
@@ -123,8 +121,6 @@ type Msg
       -- Http responses
     | KeywordSubmitReady (Result Http.Error String)
     | KeywordCheckReady (Result Http.Error KeyCandidate)
-      -- input/output?
-    | NextWorkElement
       -- ports
     | Recv D.Value
 
@@ -142,29 +138,14 @@ update msg model =
         KeywordSubmitReady result ->
             case result of
                 Ok body ->
-                    let
-                        newElement =
-                            { kanji = model.kanji
-                            , keyword = model.keyword
-                            , notes = model.notes
-                            }
-
-                        -- newWork =
-                        --     updateWorkElement model.currentWorkIndex newElement model.workElements
-                        newModel =
-                            model
-                    in
                     if String.length body > 0 then
                         ( { model | userMessage = Dict.insert "KeywordSubmitReady" ("Error submitting keyword. Details:" ++ body) model.userMessage }, Cmd.none )
 
                     else
-                        update NextWorkElement { newModel | userMessage = Dict.empty }
+                        ( { model | userMessage = Dict.empty }, sendMessage (portEncoder model) )
 
                 Err _ ->
                     ( { model | userMessage = Dict.insert "KeywordSubmitReady" "Error submitting keyword. Details unknown." model.userMessage }, Cmd.none )
-
-        NextWorkElement ->
-            ( model, sendMessage (portEncoder model) )
 
         KeywordInput word ->
             let
@@ -197,7 +178,32 @@ update msg model =
         Recv jsonValue ->
             case D.decodeValue portDecoder jsonValue of
                 Ok value ->
-                    update (KeywordInput value.keyword) { model | keyword = value.keyword, kanji = value.kanji, notes = value.notes }
+                    let
+                        newKeyword =
+                            if String.length value.keyword > 0 then
+                                value.keyword
+
+                            else
+                                model.keyword
+
+                        newKanji =
+                            if String.length value.kanji > 0 then
+                                value.kanji
+
+                            else
+                                model.kanji
+
+                        newNotes =
+                            if String.length value.notes > 0 then
+                                value.notes
+
+                            else
+                                model.notes
+
+                        newModel =
+                            { model | keyword = newKeyword, kanji = newKanji, notes = newNotes }
+                    in
+                    update (KeywordInput value.keyword) newModel
 
                 Err _ ->
                     update (KeywordInput defaultModel.keyword) defaultModel

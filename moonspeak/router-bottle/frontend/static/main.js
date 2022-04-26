@@ -100,6 +100,11 @@ function buildFeatureUrl(rawUrl) {
     return window.top.location.origin + "/api/routing/" + encodedUrl;
 }
 
+function getFeatureName(rawUrl) {
+    let url = new URL(rawUrl);
+    return url.hostname;
+}
+
 function arrayBroadcast(eventSource, eventData, array) {
     array.forEach((featureIFrameElem, index, arr) => {
         let iframeWindow = (featureIFrameElem.contentWindow || featureIFrameElem.contentDocument);
@@ -128,8 +133,12 @@ function onMessage(event) {
     }
 
     if (event.data["info"].includes("please feature")) {
-        event.data["src"] = buildFeatureUrl(event.data["url"]);
-        arrayBroadcast(event.source, event.data, fullscreenFrames);
+        let message = {
+            "info": "please register",
+            "src": buildFeatureUrl(event.data["url"]),
+            "name": getFeatureName(event.data["url"]),
+        }
+        arrayBroadcast(event.source, message, fullscreenFrames);
     } else {
         console.log("Can not understand message info:" + event.data["info"]);
         return;

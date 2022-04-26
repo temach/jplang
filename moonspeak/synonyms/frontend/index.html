@@ -8,6 +8,7 @@
     <div id="elm-app"></div>
     <script src="static/main.js"></script>
     <script>
+
       var app = Elm.Main.init({
         node: document.getElementById("elm-app")
       });
@@ -33,7 +34,13 @@
             }
             console.log(window.location + " received:");
             console.log(event.data);
-            app.ports.messageReceiver.send(event.data);
+            if (event.data["keyword"] && event.data["typing"]) {
+                event.data["kanji"] = "";
+                event.data["notes"] = "";
+                app.ports.messageReceiver.send(event.data);
+            } else {
+                app.ports.messageReceiver.send(event.data);
+            }
         });
     </script>
   </body>
