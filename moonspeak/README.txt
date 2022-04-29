@@ -8,7 +8,8 @@ router-flask    -> router-bottle
 mxgraph         -> grapheditor
 
 When making a new feature:
-- handle "iframe connect" message by trying to install relevant observer hacks. The observers are your guests. Care for them.
+- optionally provide moonspeakConnect function if this iframe wants to install plugins into other iframes (place the plugin in /plugins/ dir in top level router)
+- handle "iframe connect" message by trying to install a js plugin by url. The plugins are your guests. Care for them.
 - All URLs must be relative (because we forcefully insert absolute <base> tag to all root pages)
 - Add url link to plus feature
 - Add server_name to nginx config
