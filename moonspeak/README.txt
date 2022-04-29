@@ -19,6 +19,10 @@ When making a new feature:
 - To talk: window.parent.postMessage to talk, ensure that (window != window.top) before sending to avoid infinite loop when running solo
 - To listen: add onMessage event handler
 
+
+Writing plugins that observe when element's value is changed:
+https://stackoverflow.com/questions/42427606/event-when-input-value-is-changed-by-javascript
+
 Adding javascript code to send message in the context of iframe:
 https://stackoverflow.com/questions/45993415/run-code-in-context-of-frame-window
 
