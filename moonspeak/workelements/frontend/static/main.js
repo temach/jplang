@@ -11279,11 +11279,7 @@ var $author$project$Main$update = F2(
 						model = $temp$model;
 						continue update;
 					} else {
-						var $temp$msg = $author$project$Main$UpdateWorkElement($author$project$Main$defaultModel.currentWork),
-							$temp$model = $author$project$Main$defaultModel;
-						msg = $temp$msg;
-						model = $temp$model;
-						continue update;
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 					}
 			}
 		}

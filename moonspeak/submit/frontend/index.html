@@ -8,44 +8,6 @@
     <div id="elm-app"></div>
     <script src="static/custom_elements.js"></script>
     <script src="static/main.js"></script>
-    <script>
-      var app = Elm.Main.init({
-        node: document.getElementById("elm-app")
-      });
-
-        app.ports.sendMessage.subscribe(function(message) {
-            // message from elm for javascript
-            // broadcast it to top window
-            // also: enforce same origin
-            console.log(window.location + " posted:");
-            message["info"] = "broadcast";
-            console.log(message);
-            if (window !== window.parent) {
-                window.parent.postMessage(message, window.location.origin);
-            }
-        });
-
-        // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
-        window.addEventListener("message", (event) => {
-            if (event.origin !== window.location.origin) {
-                // accept only messages for your domain
-                // and drop self-messages
-                return;
-            }
-            console.log(window.location + " received:");
-            console.log(event.data);
-            if (event.data["info"].includes("iframe connect")) {
-                let script = document.createElement("script");
-                script.type = "text/javascript";
-                script.src = "static/installers/" + event.data["name"] + ".js";
-                document.body.appendChild(script);
-            // } else if (event.data["info"].includes("iframe disconnect")) {
-            //     let script = document.querySelector('script[src="static/installers/' + event.data["name"] + '.js"]');
-            //     document.body.removeChild(script);
-            } else {
-                app.ports.messageReceiver.send(event.data);
-            }
-        });
-    </script>
+    <script src="static/init.js"></script>
   </body>
 </html>

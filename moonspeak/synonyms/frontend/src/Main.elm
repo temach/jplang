@@ -52,20 +52,14 @@ type alias Frequency =
 
 
 type alias Model =
-    { kanji : String
-    , keyword : String
-    , notes : String
-    , freq : List Int
+    { keyword : String
     , userMessage : Dict String String
     , synonyms : List KeyCandidate
     }
 
 
 defaultModel =
-    { kanji = "X"
-    , keyword = "loading..."
-    , notes = "loading notes..."
-    , freq = []
+    { keyword = "loading..."
     , userMessage = Dict.empty
     , synonyms = []
     }
@@ -99,22 +93,20 @@ subscriptions model =
 portEncoder : Model -> Encode.Value
 portEncoder model =
     Encode.object
-        [ ( "kanji", Encode.string model.kanji )
+        [ ( "kanji", Encode.string "" )
         , ( "keyword", Encode.string model.keyword )
-        , ( "notes", Encode.string model.notes )
+        , ( "notes", Encode.string "" )
         ]
 
 
 type alias MsgDecoded =
-    { keyword : String, kanji : String, notes : String }
+    { keyword : String }
 
 
 portDecoder : Decode.Decoder MsgDecoded
 portDecoder =
-    Decode.map3 MsgDecoded
+    Decode.map MsgDecoded
         (Decode.field "keyword" Decode.string)
-        (Decode.field "kanji" Decode.string)
-        (Decode.field "notes" Decode.string)
 
 
 
@@ -180,22 +172,8 @@ update msg model =
                             else
                                 model.keyword
 
-                        newKanji =
-                            if String.length value.kanji > 0 then
-                                value.kanji
-
-                            else
-                                model.kanji
-
-                        newNotes =
-                            if String.length value.notes > 0 then
-                                value.notes
-
-                            else
-                                model.notes
-
                         newModel =
-                            { model | keyword = newKeyword, kanji = newKanji, notes = newNotes }
+                            { model | keyword = newKeyword }
                     in
                     ( newModel, Cmd.batch [ getSynonyms newModel.keyword ] )
 

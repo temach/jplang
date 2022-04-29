@@ -179,7 +179,7 @@ update msg model =
                     update (UpdateWorkElement newElement) model
 
                 Err _ ->
-                    update (UpdateWorkElement defaultModel.currentWork) defaultModel
+                    ( model, Cmd.none )
 
 
 getWorkElements : Cmd Msg

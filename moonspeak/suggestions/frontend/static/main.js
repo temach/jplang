@@ -10711,7 +10711,7 @@ var $elm$core$Basics$never = function (_v0) {
 	}
 };
 var $elm$browser$Browser$document = _Browser_document;
-var $author$project$Main$defaultModel = {freq: _List_Nil, kanji: 'X', keyword: 'loading...', notes: 'loading notes...', suggestions: _List_Nil, userMessage: $elm$core$Dict$empty};
+var $author$project$Main$defaultModel = {kanji: 'X', keyword: 'loading...', suggestions: _List_Nil, userMessage: $elm$core$Dict$empty};
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Main$defaultModel, $elm$core$Platform$Cmd$none);
 };
@@ -11077,16 +11077,13 @@ var $author$project$Main$getSuggestions = function (kanji) {
 				_List_Nil)
 		});
 };
-var $author$project$Main$MsgDecoded = F3(
-	function (keyword, kanji, notes) {
-		return {kanji: kanji, keyword: keyword, notes: notes};
-	});
-var $author$project$Main$portDecoder = A4(
-	$elm$json$Json$Decode$map3,
+var $author$project$Main$MsgDecoded = function (kanji) {
+	return {kanji: kanji};
+};
+var $author$project$Main$portDecoder = A2(
+	$elm$json$Json$Decode$map,
 	$author$project$Main$MsgDecoded,
-	A2($elm$json$Json$Decode$field, 'keyword', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'kanji', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'notes', $elm$json$Json$Decode$string));
+	A2($elm$json$Json$Decode$field, 'kanji', $elm$json$Json$Decode$string));
 var $author$project$Main$portEncoder = function (model) {
 	return $elm$json$Json$Encode$object(
 		_List_fromArray(
@@ -11099,7 +11096,7 @@ var $author$project$Main$portEncoder = function (model) {
 				$elm$json$Json$Encode$string(model.keyword)),
 				_Utils_Tuple2(
 				'notes',
-				$elm$json$Json$Encode$string(model.notes))
+				$elm$json$Json$Encode$string(''))
 			]));
 };
 var $author$project$Main$sendMessage = _Platform_outgoingPort('sendMessage', $elm$core$Basics$identity);
@@ -11179,9 +11176,10 @@ var $author$project$Main$update = F2(
 						if (_Utils_eq(value.kanji, model.kanji)) {
 							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 						} else {
+							var newKanji = ($elm$core$String$length(value.kanji) > 0) ? value.kanji : model.kanji;
 							var newModel = _Utils_update(
 								model,
-								{kanji: value.kanji, keyword: value.keyword, notes: value.notes});
+								{kanji: newKanji});
 							return _Utils_Tuple2(
 								newModel,
 								$elm$core$Platform$Cmd$batch(

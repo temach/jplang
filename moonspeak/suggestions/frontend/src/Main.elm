@@ -54,8 +54,6 @@ type alias Frequency =
 type alias Model =
     { kanji : String
     , keyword : String
-    , notes : String
-    , freq : List Int
     , userMessage : Dict String String
     , suggestions : List KeyCandidate
     }
@@ -64,8 +62,6 @@ type alias Model =
 defaultModel =
     { kanji = "X"
     , keyword = "loading..."
-    , notes = "loading notes..."
-    , freq = []
     , userMessage = Dict.empty
     , suggestions = []
     }
@@ -101,20 +97,18 @@ portEncoder model =
     Encode.object
         [ ( "kanji", Encode.string model.kanji )
         , ( "keyword", Encode.string model.keyword )
-        , ( "notes", Encode.string model.notes )
+        , ( "notes", Encode.string "" )
         ]
 
 
 type alias MsgDecoded =
-    { keyword : String, kanji : String, notes : String }
+    { kanji : String }
 
 
 portDecoder : Decode.Decoder MsgDecoded
 portDecoder =
-    Decode.map3 MsgDecoded
-        (Decode.field "keyword" Decode.string)
+    Decode.map MsgDecoded
         (Decode.field "kanji" Decode.string)
-        (Decode.field "notes" Decode.string)
 
 
 
@@ -172,8 +166,15 @@ update msg model =
 
                     else
                         let
+                            newKanji =
+                                if String.length value.kanji > 0 then
+                                    value.kanji
+
+                                else
+                                    model.kanji
+
                             newModel =
-                                { model | keyword = value.keyword, kanji = value.kanji, notes = value.notes }
+                                { model | kanji = newKanji }
                         in
                         ( newModel, Cmd.batch [ getSuggestions newModel.kanji ] )
 

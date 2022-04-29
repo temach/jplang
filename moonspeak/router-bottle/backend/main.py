@@ -18,7 +18,11 @@ def modify_root_doc(doc_text, fid):
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(doc_text, 'html.parser')
     base_tag = soup.new_tag("base", href="http://{}/api/routing/{}/".format(MY_HOSTNAME, fid))
-    soup.head.insert(0, base_tag)
+    try:
+        soup.head.insert(0, base_tag)
+    except AttributeError as e:
+        print("Starting debugger becasue of exception: {}".format(e))
+        import pdb; pdb.set_trace()
     return str(soup)
 
 
@@ -81,6 +85,9 @@ def index():
 def static(filepath):
     return static_file(filepath, root="../frontend/static/")
 
+@get("/plugins/<filepath:re:.*\.(css|js)>")
+def static(filepath):
+    return static_file(filepath, root="../frontend/plugins/")
 
 def db_init():
     c = DB.cursor()

@@ -7,41 +7,6 @@
   <body>
     <div id="elm-app"></div>
     <script src="static/main.js"></script>
-    <script>
-
-      var app = Elm.Main.init({
-        node: document.getElementById("elm-app")
-      });
-
-        app.ports.sendMessage.subscribe(function(message) {
-            // message from elm for javascript
-            // send it to parent window
-            // also: enforce parent's origin/location
-            console.log(window.location + " posted:");
-            message["info"] = "broadcast";
-            console.log(message);
-            if (window !== window.parent) {
-                window.parent.postMessage(message, window.location.origin);
-            }
-        });
-
-        // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
-        window.addEventListener("message", (event) => {
-            if (event.origin !== window.location.origin) {
-                // accept only messages for your domain
-                // do not accept self-messages
-                return;
-            }
-            console.log(window.location + " received:");
-            console.log(event.data);
-            if (event.data["keyword"] && event.data["typing"]) {
-                event.data["kanji"] = "";
-                event.data["notes"] = "";
-                app.ports.messageReceiver.send(event.data);
-            } else {
-                app.ports.messageReceiver.send(event.data);
-            }
-        });
-    </script>
+    <script src="static/init.js"></script>
   </body>
 </html>

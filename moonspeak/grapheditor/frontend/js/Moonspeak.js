@@ -198,11 +198,26 @@ MoonspeakEditor.prototype.init = function()
     let connectIframes = (s, t) => {
         let info = iframe2info.get(s.iframe);
         info.connectedIFrames.add(t.iframe);
+
+        // handle "source" iframe asking the target iframe to load a plugin
+        if (! s.iframe.contentWindow.moonspeakConnect) {
+            return;
+        }
+        let pluginName = null;
+        try {
+            pluginName = s.iframe.contentWindow.moonspeakConnect(t.iframe.contentWindow.document);
+        } catch (error) {
+            console.log("Error connecting from" + s.iframe.src + " to " + t.iframe.src);
+        }
+        if (! pluginName) {
+            return;
+        }
         let message = {
             "info": "iframe connect",
-            "name": t.iframe.name,
+            "pluginUrl": "/plugins/" + pluginName,
         }
-        s.iframe.contentWindow.postMessage(message, window.location.origin);
+        // tell the target iframe that "source" iframe wants to connect and install a plugin
+        t.iframe.contentWindow.postMessage(message, window.location.origin);
     }
 
     let disconnectIframes = (s, t) => {
@@ -253,7 +268,6 @@ MoonspeakEditor.prototype.init = function()
         if (event.data["info"].includes("please register")) {
             let iframe = document.createElement("iframe");
             iframe.src = event.data["src"];
-            iframe.name = event.data["name"];
             let result = this.addIframe(iframe);
             let info = {
                 "connectedIFrames": new Set(),
