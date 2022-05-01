@@ -11081,12 +11081,24 @@ var $author$project$Main$MsgDecoded = F3(
 	function (keyword, kanji, notes) {
 		return {kanji: kanji, keyword: keyword, notes: notes};
 	});
+var $elm$json$Json$Decode$oneOf = _Json_oneOf;
+var $elm$json$Json$Decode$maybe = function (decoder) {
+	return $elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder),
+				$elm$json$Json$Decode$succeed($elm$core$Maybe$Nothing)
+			]));
+};
 var $author$project$Main$portDecoder = A4(
 	$elm$json$Json$Decode$map3,
 	$author$project$Main$MsgDecoded,
-	A2($elm$json$Json$Decode$field, 'keyword', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'kanji', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'notes', $elm$json$Json$Decode$string));
+	$elm$json$Json$Decode$maybe(
+		A2($elm$json$Json$Decode$field, 'keyword', $elm$json$Json$Decode$string)),
+	$elm$json$Json$Decode$maybe(
+		A2($elm$json$Json$Decode$field, 'kanji', $elm$json$Json$Decode$string)),
+	$elm$json$Json$Decode$maybe(
+		A2($elm$json$Json$Decode$field, 'notes', $elm$json$Json$Decode$string)));
 var $author$project$Main$portEncoder = function (model) {
 	return $elm$json$Json$Encode$object(
 		_List_fromArray(
@@ -11243,23 +11255,43 @@ var $author$project$Main$update = F2(
 					var _v3 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$portDecoder, jsonValue);
 					if (_v3.$ === 'Ok') {
 						var value = _v3.a;
-						var newNotes = ($elm$core$String$length(value.notes) > 0) ? value.notes : model.notes;
-						var newKeyword = ($elm$core$String$length(value.keyword) > 0) ? value.keyword : model.keyword;
-						var newKanji = ($elm$core$String$length(value.kanji) > 0) ? value.kanji : model.kanji;
+						var newNotes = function () {
+							var _v6 = value.notes;
+							if (_v6.$ === 'Just') {
+								var str = _v6.a;
+								return str;
+							} else {
+								return model.notes;
+							}
+						}();
+						var newKeyword = function () {
+							var _v5 = value.keyword;
+							if (_v5.$ === 'Just') {
+								var str = _v5.a;
+								return str;
+							} else {
+								return model.keyword;
+							}
+						}();
+						var newKanji = function () {
+							var _v4 = value.kanji;
+							if (_v4.$ === 'Just') {
+								var str = _v4.a;
+								return str;
+							} else {
+								return model.kanji;
+							}
+						}();
 						var newModel = _Utils_update(
 							model,
 							{kanji: newKanji, keyword: newKeyword, notes: newNotes});
-						var $temp$msg = $author$project$Main$KeywordInput(value.keyword),
+						var $temp$msg = $author$project$Main$KeywordInput(newKeyword),
 							$temp$model = newModel;
 						msg = $temp$msg;
 						model = $temp$model;
 						continue update;
 					} else {
-						var $temp$msg = $author$project$Main$KeywordInput($author$project$Main$defaultModel.keyword),
-							$temp$model = $author$project$Main$defaultModel;
-						msg = $temp$msg;
-						model = $temp$model;
-						continue update;
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 					}
 			}
 		}

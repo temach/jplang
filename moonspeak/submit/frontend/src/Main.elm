@@ -99,15 +99,15 @@ portEncoder model =
 
 
 type alias MsgDecoded =
-    { keyword : String, kanji : String, notes : String }
+    { keyword : Maybe String, kanji : Maybe String, notes : Maybe String }
 
 
 portDecoder : D.Decoder MsgDecoded
 portDecoder =
     D.map3 MsgDecoded
-        (D.field "keyword" D.string)
-        (D.field "kanji" D.string)
-        (D.field "notes" D.string)
+        (D.maybe (D.field "keyword" D.string))
+        (D.maybe (D.field "kanji" D.string))
+        (D.maybe (D.field "notes" D.string))
 
 
 
@@ -180,33 +180,36 @@ update msg model =
                 Ok value ->
                     let
                         newKeyword =
-                            if String.length value.keyword > 0 then
-                                value.keyword
+                            case value.keyword of
+                                Just str ->
+                                    str
 
-                            else
-                                model.keyword
+                                Nothing ->
+                                    model.keyword
 
                         newKanji =
-                            if String.length value.kanji > 0 then
-                                value.kanji
+                            case value.kanji of
+                                Just str ->
+                                    str
 
-                            else
-                                model.kanji
+                                Nothing ->
+                                    model.kanji
 
                         newNotes =
-                            if String.length value.notes > 0 then
-                                value.notes
+                            case value.notes of
+                                Just str ->
+                                    str
 
-                            else
-                                model.notes
+                                Nothing ->
+                                    model.notes
 
                         newModel =
                             { model | keyword = newKeyword, kanji = newKanji, notes = newNotes }
                     in
-                    update (KeywordInput value.keyword) newModel
+                    update (KeywordInput newKeyword) newModel
 
                 Err _ ->
-                    update (KeywordInput defaultModel.keyword) defaultModel
+                    ( model, Cmd.none )
 
 
 uniq : List a -> List a
