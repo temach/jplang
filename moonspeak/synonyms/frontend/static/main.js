@@ -11088,14 +11088,8 @@ var $author$project$Main$portEncoder = function (model) {
 		_List_fromArray(
 			[
 				_Utils_Tuple2(
-				'kanji',
-				$elm$json$Json$Encode$string('')),
-				_Utils_Tuple2(
 				'keyword',
-				$elm$json$Json$Encode$string(model.keyword)),
-				_Utils_Tuple2(
-				'notes',
-				$elm$json$Json$Encode$string(''))
+				$elm$json$Json$Encode$string(model.keyword))
 			]));
 };
 var $author$project$Main$sendMessage = _Platform_outgoingPort('sendMessage', $elm$core$Basics$identity);

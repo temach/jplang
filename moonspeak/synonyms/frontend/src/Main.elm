@@ -33,13 +33,6 @@ main =
 -- MODEL
 
 
-type alias WorkElement =
-    { kanji : String
-    , keyword : String
-    , notes : String
-    }
-
-
 type alias KeyCandidate =
     { word : String
     , metadata : String
@@ -93,9 +86,7 @@ subscriptions model =
 portEncoder : Model -> Encode.Value
 portEncoder model =
     Encode.object
-        [ ( "kanji", Encode.string "" )
-        , ( "keyword", Encode.string model.keyword )
-        , ( "notes", Encode.string "" )
+        [ ( "keyword", Encode.string model.keyword )
         ]
 
 

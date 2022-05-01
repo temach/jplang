@@ -11183,7 +11183,7 @@ var $author$project$Main$update = F2(
 										])));
 						}
 					} else {
-						return _Utils_Tuple2($author$project$Main$defaultModel, $elm$core$Platform$Cmd$none);
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 					}
 			}
 		}
