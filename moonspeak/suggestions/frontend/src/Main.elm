@@ -33,13 +33,6 @@ main =
 -- MODEL
 
 
-type alias WorkElement =
-    { kanji : String
-    , keyword : String
-    , notes : String
-    }
-
-
 type alias KeyCandidate =
     { word : String
     , metadata : String
@@ -95,9 +88,7 @@ subscriptions model =
 portEncoder : Model -> Encode.Value
 portEncoder model =
     Encode.object
-        [ ( "kanji", Encode.string model.kanji )
-        , ( "keyword", Encode.string model.keyword )
-        , ( "notes", Encode.string "" )
+        [ ( "keyword", Encode.string model.keyword )
         ]
 
 
@@ -179,7 +170,7 @@ update msg model =
                         ( newModel, Cmd.batch [ getSuggestions newModel.kanji ] )
 
                 Err _ ->
-                    ( defaultModel, Cmd.none )
+                    ( model, Cmd.none )
 
 
 compareKeyCandidates : KeyCandidate -> KeyCandidate -> Order
