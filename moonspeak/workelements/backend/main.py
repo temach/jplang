@@ -33,6 +33,29 @@ def work():
     payload = [e for e in data.values()]
     return json.dumps(payload, ensure_ascii=False)
 
+@post("/api/submit")
+def submit():
+    payload = request.json
+
+    try:
+        c = DB.cursor()
+        # https://www.sqlite.org/lang_replace.html
+        # https://www.sqlite.org/lang_UPSERT.html
+        c.execute("""INSERT OR ABORT INTO kanjikeywords VALUES (?, ?, ?)
+                ON CONFLICT(kanji) DO UPDATE SET keyword=excluded.keyword, notes=excluded.notes;
+                """,
+                  (payload["kanji"], payload["keyword"], payload["notes"]))
+        DB.commit()
+    except Exception as e:
+        # return 2xx response because too lazy to unwrap errors in Elm
+        body = json.dumps({
+            "exception": str(e),
+            "payload": payload,
+        }, ensure_ascii=False)
+        return HTTPResponse(status=202, body=body)
+
+    # return a fake body because too lazy to unwrap properly in Elm
+    return HTTPResponse(status=200, body="")
 
 def db_init():
     c = DB.cursor()

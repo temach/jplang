@@ -10716,7 +10716,7 @@ var $author$project$Main$WorkElement = F3(
 		return {kanji: kanji, keyword: keyword, notes: notes};
 	});
 var $author$project$Main$defaultCurrentWork = A3($author$project$Main$WorkElement, '', '', '');
-var $author$project$Main$defaultModel = {currentHighlightWorkElementIndex: -1, currentWork: $author$project$Main$defaultCurrentWork, currentWorkIndex: -1, workElements: _List_Nil};
+var $author$project$Main$defaultModel = {currentWork: $author$project$Main$defaultCurrentWork, currentWorkIndex: 0, submitWorkIndex: 0, userMessages: $elm$core$Dict$empty, workElements: _List_Nil};
 var $author$project$Main$WorkElementsReady = function (a) {
 	return {$: 'WorkElementsReady', a: a};
 };
@@ -11009,19 +11009,32 @@ var $author$project$Main$getWorkElements = $elm$http$Http$get(
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Main$defaultModel, $author$project$Main$getWorkElements);
 };
-var $author$project$Main$Recv = function (a) {
-	return {$: 'Recv', a: a};
+var $author$project$Main$RecvNewElementValue = function (a) {
+	return {$: 'RecvNewElementValue', a: a};
 };
 var $author$project$Main$messageReceiver = _Platform_incomingPort('messageReceiver', $elm$json$Json$Decode$value);
 var $author$project$Main$subscriptions = function (_v0) {
-	return $author$project$Main$messageReceiver($author$project$Main$Recv);
+	return $author$project$Main$messageReceiver($author$project$Main$RecvNewElementValue);
 };
-var $author$project$Main$NextWorkElement = {$: 'NextWorkElement'};
 var $author$project$Main$SelectWorkElement = function (a) {
 	return {$: 'SelectWorkElement', a: a};
 };
-var $author$project$Main$UpdateWorkElement = function (a) {
-	return {$: 'UpdateWorkElement', a: a};
+var $author$project$Main$buildErrorMessage = function (httpError) {
+	switch (httpError.$) {
+		case 'BadUrl':
+			var message = httpError.a;
+			return message;
+		case 'Timeout':
+			return 'Server is taking too long to respond. Please try again later.';
+		case 'NetworkError':
+			return 'Unable to reach server.';
+		case 'BadStatus':
+			var statusCode = httpError.a;
+			return 'Request failed with status code: ' + $elm$core$String$fromInt(statusCode);
+		default:
+			var message = httpError.a;
+			return message;
+	}
 };
 var $elm$core$List$head = function (list) {
 	if (list.b) {
@@ -11216,28 +11229,80 @@ var $elm_community$list_extra$List$Extra$setAt = F2(
 			index,
 			$elm$core$Basics$always(value));
 	});
+var $author$project$Main$ElementSubmitReady = function (a) {
+	return {$: 'ElementSubmitReady', a: a};
+};
+var $elm$http$Http$expectString = function (toMsg) {
+	return A2(
+		$elm$http$Http$expectStringResponse,
+		toMsg,
+		$elm$http$Http$resolve($elm$core$Result$Ok));
+};
+var $elm$http$Http$jsonBody = function (value) {
+	return A2(
+		_Http_pair,
+		'application/json',
+		A2($elm$json$Json$Encode$encode, 0, value));
+};
+var $elm$http$Http$post = function (r) {
+	return $elm$http$Http$request(
+		{body: r.body, expect: r.expect, headers: _List_Nil, method: 'POST', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
+};
+var $author$project$Main$submitElementEncoder = function (element) {
+	return $elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'kanji',
+				$elm$json$Json$Encode$string(element.kanji)),
+				_Utils_Tuple2(
+				'keyword',
+				$elm$json$Json$Encode$string(element.keyword)),
+				_Utils_Tuple2(
+				'notes',
+				$elm$json$Json$Encode$string(element.notes))
+			]));
+};
+var $author$project$Main$submitElement = function (element) {
+	return $elm$http$Http$post(
+		{
+			body: $elm$http$Http$jsonBody(
+				$author$project$Main$submitElementEncoder(element)),
+			expect: $elm$http$Http$expectString($author$project$Main$ElementSubmitReady),
+			url: A2(
+				$elm$url$Url$Builder$relative,
+				_List_fromArray(
+					['api', 'submit']),
+				_List_Nil)
+		});
+};
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		update:
 		while (true) {
 			switch (msg.$) {
-				case 'UpdateWorkElement':
-					var newElement = msg.a;
-					var newWorkElements = A3($elm_community$list_extra$List$Extra$setAt, model.currentWorkIndex, newElement, model.workElements);
-					var newModel = _Utils_update(
-						model,
-						{workElements: newWorkElements});
-					var $temp$msg = $author$project$Main$NextWorkElement,
-						$temp$model = newModel;
-					msg = $temp$msg;
-					model = $temp$model;
-					continue update;
-				case 'NextWorkElement':
-					var $temp$msg = $author$project$Main$SelectWorkElement(model.currentWorkIndex + 1),
-						$temp$model = model;
-					msg = $temp$msg;
-					model = $temp$model;
-					continue update;
+				case 'WorkElementsReady':
+					var result = msg.a;
+					if (result.$ === 'Ok') {
+						var elements = result.a;
+						var newModel = _Utils_update(
+							model,
+							{workElements: elements});
+						var $temp$msg = $author$project$Main$SelectWorkElement(newModel.currentWorkIndex),
+							$temp$model = newModel;
+						msg = $temp$msg;
+						model = $temp$model;
+						continue update;
+					} else {
+						var httpError = result.a;
+						var message = $author$project$Main$buildErrorMessage(httpError);
+						var newUserMessages = A3($elm$core$Dict$insert, 'WorkElementsReady', message, model.userMessages);
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{userMessages: newUserMessages}),
+							$elm$core$Platform$Cmd$none);
+					}
 				case 'SelectWorkElement':
 					var index = msg.a;
 					var selected = A2(
@@ -11251,35 +11316,59 @@ var $author$project$Main$update = F2(
 						newModel,
 						$author$project$Main$sendMessage(
 							$author$project$Main$portEncoder(newModel.currentWork)));
-				case 'WorkElementsReady':
-					var result = msg.a;
-					if (result.$ === 'Ok') {
-						var elements = result.a;
-						var newModel = _Utils_update(
-							model,
-							{workElements: elements});
-						var $temp$msg = $author$project$Main$NextWorkElement,
-							$temp$model = newModel;
-						msg = $temp$msg;
-						model = $temp$model;
-						continue update;
-					} else {
-						var message = result.a;
-						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-					}
-				default:
+				case 'RecvNewElementValue':
 					var jsonValue = msg.a;
 					var _v2 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$portDecoder, jsonValue);
 					if (_v2.$ === 'Ok') {
 						var value = _v2.a;
-						var newElement = A3($author$project$Main$WorkElement, value.kanji, value.keyword, value.notes);
-						var $temp$msg = $author$project$Main$UpdateWorkElement(newElement),
-							$temp$model = model;
-						msg = $temp$msg;
-						model = $temp$model;
-						continue update;
+						var updatedElement = A3($author$project$Main$WorkElement, value.kanji, value.keyword, value.notes);
+						var updatedWorkElements = A3($elm_community$list_extra$List$Extra$setAt, model.currentWorkIndex, updatedElement, model.workElements);
+						var index = model.currentWorkIndex + 1;
+						var currentElement = A2(
+							$elm$core$Maybe$withDefault,
+							A3($author$project$Main$WorkElement, 'X', 'Error', 'An error occurred'),
+							A2($elm_community$list_extra$List$Extra$getAt, index, model.workElements));
+						var newModel = _Utils_update(
+							model,
+							{currentWork: currentElement, currentWorkIndex: index, submitWorkIndex: model.currentWorkIndex, workElements: updatedWorkElements});
+						return _Utils_Tuple2(
+							newModel,
+							$elm$core$Platform$Cmd$batch(
+								_List_fromArray(
+									[
+										$author$project$Main$sendMessage(
+										$author$project$Main$portEncoder(currentElement)),
+										$author$project$Main$submitElement(updatedElement)
+									])));
 					} else {
 						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					}
+				default:
+					var result = msg.a;
+					if (result.$ === 'Ok') {
+						var body = result.a;
+						if ($elm$core$String$length(body) > 0) {
+							var message = 'Error submitting keyword. Details:' + body;
+							var newUserMessages = A3($elm$core$Dict$insert, 'ElementSubmitReady', message, model.userMessages);
+							var newModel = _Utils_update(
+								model,
+								{currentWorkIndex: model.submitWorkIndex, userMessages: newUserMessages});
+							return _Utils_Tuple2(newModel, $author$project$Main$getWorkElements);
+						} else {
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{userMessages: $elm$core$Dict$empty}),
+								$elm$core$Platform$Cmd$none);
+						}
+					} else {
+						var httpError = result.a;
+						var message = $author$project$Main$buildErrorMessage(httpError);
+						var newUserMessages = A3($elm$core$Dict$insert, 'ElementSubmitReady', message, model.userMessages);
+						var newModel = _Utils_update(
+							model,
+							{currentWorkIndex: model.submitWorkIndex, userMessages: newUserMessages});
+						return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
 					}
 			}
 		}
@@ -11288,6 +11377,19 @@ var $elm$browser$Browser$Document = F2(
 	function (title, body) {
 		return {body: body, title: title};
 	});
+var $author$project$Main$renderUserMessages = function (model) {
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				$elm$html$Html$text(
+				A2(
+					$elm$core$String$join,
+					'!',
+					$elm$core$Dict$values(model.userMessages)))
+			]));
+};
 var $author$project$Main$renderSingleWorkElement = F3(
 	function (model, index, elem) {
 		return A2(
@@ -11404,6 +11506,7 @@ var $author$project$Main$render = function (model) {
 			]),
 		_List_fromArray(
 			[
+				$author$project$Main$renderUserMessages(model),
 				A2(
 				$elm$html$Html$div,
 				_List_Nil,
@@ -11426,4 +11529,4 @@ var $author$project$Main$view = function (model) {
 var $author$project$Main$main = $elm$browser$Browser$document(
 	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
-	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Json.Decode.Value":{"args":[],"type":"Json.Encode.Value"},"Main.WorkElement":{"args":[],"type":"{ kanji : String.String, keyword : String.String, notes : String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"UpdateWorkElement":["Main.WorkElement"],"NextWorkElement":[],"SelectWorkElement":["Basics.Int"],"WorkElementsReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"Recv":["Json.Decode.Value"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Json.Encode.Value":{"args":[],"tags":{"Value":[]}}}}})}});}(this));
+	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Json.Decode.Value":{"args":[],"type":"Json.Encode.Value"},"Main.WorkElement":{"args":[],"type":"{ kanji : String.String, keyword : String.String, notes : String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"WorkElementsReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"SelectWorkElement":["Basics.Int"],"ElementSubmitReady":["Result.Result Http.Error String.String"],"RecvNewElementValue":["Json.Decode.Value"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Json.Encode.Value":{"args":[],"tags":{"Value":[]}}}}})}});}(this));

@@ -54,7 +54,8 @@ type alias Model =
     { currentWork : WorkElement
     , workElements : List WorkElement
     , currentWorkIndex : Int
-    , currentHighlightWorkElementIndex : Int
+    , userMessages : Dict String String
+    , submitWorkIndex : Int
     }
 
 
@@ -69,8 +70,9 @@ brokenCurrentWork =
 defaultModel =
     { currentWork = defaultCurrentWork
     , workElements = []
-    , currentWorkIndex = -1
-    , currentHighlightWorkElementIndex = -1
+    , currentWorkIndex = 0
+    , userMessages = Dict.empty
+    , submitWorkIndex = 0
     }
 
 
@@ -80,7 +82,6 @@ defaultModelTwo =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    -- update NextWorkElement model
     -- ( model, Cmd.none )
     ( defaultModel, getWorkElements )
 
@@ -91,7 +92,7 @@ init _ =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    messageReceiver Recv
+    messageReceiver RecvNewElementValue
 
 
 portEncoder : WorkElement -> E.Value
@@ -120,30 +121,34 @@ portDecoder =
 
 
 type Msg
-    = UpdateWorkElement WorkElement
-    | NextWorkElement
+    = WorkElementsReady (Result Http.Error (List WorkElement))
     | SelectWorkElement Int
-    | WorkElementsReady (Result Http.Error (List WorkElement))
-      -- ports
-    | Recv D.Value
+    | ElementSubmitReady (Result Http.Error String)
+    | RecvNewElementValue D.Value
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        UpdateWorkElement newElement ->
-            let
-                newWorkElements =
-                    List.Extra.setAt model.currentWorkIndex newElement model.workElements
+        WorkElementsReady result ->
+            case result of
+                Ok elements ->
+                    let
+                        newModel =
+                            { model | workElements = elements }
+                    in
+                    update (SelectWorkElement newModel.currentWorkIndex) newModel
 
-                newModel =
-                    { model | workElements = newWorkElements }
-            in
-            -- after updating the element, move to next work element
-            update NextWorkElement newModel
+                Err httpError ->
+                    -- HTTP error: do nothing, just report
+                    let
+                        message =
+                            buildErrorMessage httpError
 
-        NextWorkElement ->
-            update (SelectWorkElement (model.currentWorkIndex + 1)) model
+                        newUserMessages =
+                            Dict.insert "WorkElementsReady" message model.userMessages
+                    in
+                    ( { model | userMessages = newUserMessages }, Cmd.none )
 
         SelectWorkElement index ->
             let
@@ -157,29 +162,92 @@ update msg model =
             in
             ( newModel, sendMessage (portEncoder newModel.currentWork) )
 
-        WorkElementsReady result ->
-            case result of
-                Ok elements ->
-                    let
-                        newModel =
-                            { model | workElements = elements }
-                    in
-                    update NextWorkElement newModel
-
-                Err message ->
-                    ( model, Cmd.none )
-
-        Recv jsonValue ->
+        RecvNewElementValue jsonValue ->
             case D.decodeValue portDecoder jsonValue of
                 Ok value ->
                     let
-                        newElement =
+                        -- update current element
+                        updatedElement =
                             WorkElement value.kanji value.keyword value.notes
+
+                        updatedWorkElements =
+                            List.Extra.setAt model.currentWorkIndex updatedElement model.workElements
+
+                        -- select the next work element to display
+                        index =
+                            model.currentWorkIndex + 1
+
+                        currentElement =
+                            Maybe.withDefault
+                                (WorkElement "X" "Error" "An error occurred")
+                                (List.Extra.getAt index model.workElements)
+
+                        newModel =
+                            { model
+                                | workElements = updatedWorkElements
+                                , currentWorkIndex = index
+                                , currentWork = currentElement
+                                , submitWorkIndex = model.currentWorkIndex
+                            }
                     in
-                    update (UpdateWorkElement newElement) model
+                    -- send message with next work element, and post to backend
+                    ( newModel, Cmd.batch [ sendMessage (portEncoder currentElement), submitElement updatedElement ] )
 
                 Err _ ->
                     ( model, Cmd.none )
+
+        ElementSubmitReady result ->
+            case result of
+                Ok body ->
+                    if String.length body > 0 then
+                        -- logical error: refresh all elements from db
+                        let
+                            message =
+                                "Error submitting keyword. Details:" ++ body
+
+                            newUserMessages =
+                                Dict.insert "ElementSubmitReady" message model.userMessages
+
+                            newModel =
+                                { model | userMessages = newUserMessages, currentWorkIndex = model.submitWorkIndex }
+                        in
+                        ( newModel, getWorkElements )
+
+                    else
+                        ( { model | userMessages = Dict.empty }, Cmd.none )
+
+                Err httpError ->
+                    -- HTTP error: do nothing, just report
+                    let
+                        message =
+                            buildErrorMessage httpError
+
+                        newUserMessages =
+                            Dict.insert "ElementSubmitReady" message model.userMessages
+
+                        newModel =
+                            { model | userMessages = newUserMessages, currentWorkIndex = model.submitWorkIndex }
+                    in
+                    ( newModel, Cmd.none )
+
+
+buildErrorMessage : Http.Error -> String
+buildErrorMessage httpError =
+    case httpError of
+        Http.BadUrl message ->
+            message
+
+        Http.Timeout ->
+            "Server is taking too long to respond. Please try again later."
+
+        Http.NetworkError ->
+            "Unable to reach server."
+
+        Http.BadStatus statusCode ->
+            "Request failed with status code: " ++ String.fromInt statusCode
+
+        Http.BadBody message ->
+            message
 
 
 getWorkElements : Cmd Msg
@@ -200,18 +268,21 @@ workElementsDecoder =
         )
 
 
-workElementEncoder : Model -> E.Value
-workElementEncoder model =
-    let
-        selected =
-            Maybe.withDefault
-                (WorkElement "X" "Error" "An error occurred")
-                (List.Extra.getAt model.currentWorkIndex model.workElements)
-    in
+submitElement : WorkElement -> Cmd Msg
+submitElement element =
+    Http.post
+        { url = relative [ "api", "submit" ] []
+        , body = Http.jsonBody (submitElementEncoder element)
+        , expect = Http.expectString ElementSubmitReady
+        }
+
+
+submitElementEncoder : WorkElement -> E.Value
+submitElementEncoder element =
     E.object
-        [ ( "kanji", E.string selected.kanji )
-        , ( "keyword", E.string selected.keyword )
-        , ( "notes", E.string selected.notes )
+        [ ( "kanji", E.string element.kanji )
+        , ( "keyword", E.string element.keyword )
+        , ( "notes", E.string element.notes )
         ]
 
 
@@ -263,6 +334,17 @@ renderSingleWorkElement model index elem =
         ]
 
 
+{-| Parse `event.target.selectedOptions` and return option values.
+targetSelectedOptions : Json.Decoder (List String)
+targetSelectedOptions =
+let
+options =
+Json.at [ "target", "selectedOptions" ] <|
+Json.keyValuePairs <|
+Json.field "value" Json.string
+in
+Json.map (List.map Tuple.second) options
+-}
 renderWorkElements : Model -> Html Msg
 renderWorkElements model =
     let
@@ -275,12 +357,18 @@ renderWorkElements model =
         (List.indexedMap partial model.workElements)
 
 
+renderUserMessages : Model -> Html Msg
+renderUserMessages model =
+    div [] [ text (String.join "!" (Dict.values model.userMessages)) ]
+
+
 render : Model -> Html Msg
 render model =
     div
         [ style "background-color" "rgb(210, 210, 210)"
         , style "overflow" "auto"
         ]
-        [ div [] [ text "Work Elements" ]
+        [ renderUserMessages model
+        , div [] [ text "Work Elements" ]
         , renderWorkElements model
         ]
