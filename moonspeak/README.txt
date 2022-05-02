@@ -56,6 +56,10 @@ Only limited info is shared between windows:
 https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy
 
 
+mxGraph api documentation:
+overview: https://jgraph.github.io/mxgraph/docs/tutorial.html
+javascript: https://jgraph.github.io/mxgraph/docs/js-api/files/index-txt.html
+
 
 
 
