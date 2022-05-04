@@ -41,7 +41,9 @@ def retrieve_url(url, req):
     # see: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection
     # see: https://datatracker.ietf.org/doc/html/rfc2616.html#section-13.5.1
     # list of hop-by-hop headers: https://github.com/python/cpython/blob/main/Lib/wsgiref/util.py#L151
-    del r.headers["connection"]
+    if "connection" in r.headers:
+        # happens with nginx as reverse-proxy
+        del r.headers["connection"]
 
     return r
 
@@ -105,7 +107,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Run as "python main.py"')
-    parser.add_argument('port', type=int, help='port number')
+    parser.add_argument('--port', type=int, default=80, help='port number')
     args = parser.parse_args()
 
     db_needs_init = (not os.path.isfile(DB_PATH)) or (

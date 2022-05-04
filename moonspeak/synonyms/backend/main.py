@@ -103,7 +103,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Feature, run as "python main.py"')
-    parser.add_argument('port', type=int, help='port number')
+    parser.add_argument('--port', default=80, type=int, help='port number')
     args = parser.parse_args()
 
     # english frequency
