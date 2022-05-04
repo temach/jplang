@@ -1,3 +1,4 @@
-bottle
+bottle==0.12.19
 typing
 typing-extensions
+nltk==3.7

@@ -11,6 +11,7 @@ COPY resources                  ./resources
 
 # code
 COPY frontend/index.html        ./frontend/
+COPY frontend/static/*          ./frontend/static/
 COPY backend/main.py            ./backend/
 
 # command

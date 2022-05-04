@@ -1,0 +1,114 @@
+version: "3.9"
+
+services:
+  # port definitions for services are for debug/development, except the "80:80" in router
+
+  # for debug/development define moonspeak.test in /etc/hosts 
+  # this service name is not hardcoded
+  router.test:
+    image: ms-router:latest
+    build:
+      context: ./router-bottle
+      dockerfile: Dockerfile-backend 
+    ports:
+      - "80:80"
+    volumes:
+      # anon volume
+      - /opt/ms/tmp
+    logging:
+      # driver: "none"
+      driver: "json-file"
+
+  #====================================
+  # feature manager
+
+  # this service name is hardcoded in router/frontend
+  manager-grid2.test:
+    image: ms-grapheditor:latest
+    build:
+      context: ./grapheditor
+      dockerfile: Dockerfile-backend 
+    volumes:
+      # anon volume
+      - /opt/ms/tmp
+    ports:
+      - "9010:80"
+    logging:
+      # driver: "none"
+      driver: "json-file"
+
+  # this service name is hardcoded in router/frontend
+  f-plus.test:
+    image: ms-plus:latest
+    build:
+      context: ./plus
+      dockerfile: Dockerfile-backend 
+    ports:
+      - "9011:80"
+    logging:
+      driver: "none"
+      # driver: "json-file"
+
+  #====================================
+  # features
+
+  # this service name is hardcoded in f-plus
+  f-submit.test:
+    image: ms-submit:latest
+    build:
+      context: ./submit
+      dockerfile: Dockerfile-backend 
+    volumes:
+      # anon volume
+      - /opt/ms/tmp
+    ports:
+      - "9020:80"
+    logging:
+      # driver: "none"
+      driver: "json-file"
+
+  # this service name is hardcoded in f-plus
+  f-workelements.test:
+    image: ms-workelements:latest
+    build:
+      context: ./workelements
+      dockerfile: Dockerfile-backend 
+    volumes:
+      # anon volume
+      - /opt/ms/tmp
+    ports:
+      - "9021:80"
+    logging:
+      driver: "none"
+      # driver: "json-file"
+
+  # this service name is hardcoded in f-plus
+  f-synonyms.test:
+    image: ms-synonyms:latest
+    build:
+      context: ./synonyms
+      dockerfile: Dockerfile
+    volumes:
+      # anon volume
+      - /opt/ms/tmp
+    ports:
+      - "9022:80"
+    logging:
+      # driver: "none"
+      driver: "json-file"
+
+  # this service name is hardcoded in f-plus
+  f-suggestions.test:
+    image: ms-suggestions:latest
+    build:
+      context: ./suggestions
+      dockerfile: Dockerfile
+    volumes:
+      # anon volume
+      - /opt/ms/tmp
+    ports:
+      - "9023:80"
+    logging:
+      # driver: "none"
+      driver: "json-file"
+

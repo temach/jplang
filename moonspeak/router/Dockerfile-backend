@@ -7,6 +7,9 @@ RUN mkdir backend
 COPY backend/requirements.txt ./
 RUN pip install -r ./requirements.txt
 
+RUN mkdir plugins
+COPY frontend/plugins/* frontend/plugins/
+
 RUN mkdir frontend
 COPY frontend/static frontend/static
 COPY frontend/index.html frontend/index.html
