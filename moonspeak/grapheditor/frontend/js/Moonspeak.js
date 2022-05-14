@@ -112,12 +112,9 @@ MoonspeakEditor.prototype.preinit = function()
     var mxGraphConvertValueToString = mxGraph.prototype.convertValueToString;
     mxGraph.prototype.convertValueToString = function(cell)
     {
-        if (cell.iframe != null) {
-            return cell.iframe;
-        } else if (mxUtils.isNode(cell.value) && cell.value.nodeName.toLowerCase() == 'iframe') {
-            // Returns a DOM for the label
-            cell.iframe = cell.value;
-            return cell.iframe;
+		var style = this.getCurrentCellStyle(cell);
+		if (style && style['iframe'] == '1') {
+            return cell.value;
         } else {
             return mxGraphConvertValueToString.apply(this, arguments);
         }
@@ -244,18 +241,18 @@ MoonspeakEditor.prototype.init = function()
     graph.setAllowDanglingEdges(false);
 
     let connectIframes = (s, t) => {
-        let info = iframe2info.get(s.iframe);
-        info.connectedIFrames.add(t.iframe);
+        let info = iframe2info.get(s.value);
+        info.connectedIFrames.add(t.value);
 
         // handle "source" iframe asking the target iframe to load a plugin
-        if (! s.iframe.contentWindow.moonspeakConnect) {
+        if (! s.value.contentWindow.moonspeakConnect) {
             return;
         }
         let pluginName = null;
         try {
-            pluginName = s.iframe.contentWindow.moonspeakConnect(t.iframe.contentWindow.document);
+            pluginName = s.value.contentWindow.moonspeakConnect(t.value.contentWindow.document);
         } catch (error) {
-            console.log("Error connecting from" + s.iframe.src + " to " + t.iframe.src);
+            console.log("Error connecting from" + s.value.src + " to " + t.value.src);
         }
         if (! pluginName) {
             return;
@@ -265,12 +262,12 @@ MoonspeakEditor.prototype.init = function()
             "pluginUrl": "/plugins/" + pluginName,
         }
         // tell the target iframe that "source" iframe wants to connect and install a plugin
-        t.iframe.contentWindow.postMessage(message, window.location.origin);
+        t.value.contentWindow.postMessage(message, window.location.origin);
     }
 
     let disconnectIframes = (s, t) => {
-        let info = iframe2info.get(s.iframe);
-        info.connectedIFrames.delete(t.iframe);
+        let info = iframe2info.get(s.value);
+        info.connectedIFrames.delete(t.value);
         // disconnect happens without postMessage
         // because its too hard to undo a javascript "install"
     }
@@ -308,11 +305,12 @@ MoonspeakEditor.prototype.init = function()
 
             for (var index in graph.model.cells) {
                 let cell = graph.model.cells[index];
-                if (cell.iframe) {
+                var style = graph.getCurrentCellStyle(cell);
+                if (style && style['iframe'] == '1') {
                     let info = {
                         "connectedIFrames": new Set(),
                     };
-                    iframe2info.set(cell.iframe, info);
+                    iframe2info.set(cell.value, info);
                 }
             }
 
