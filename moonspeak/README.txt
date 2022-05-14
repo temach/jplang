@@ -20,6 +20,61 @@ When making a new feature:
 - To talk: window.parent.postMessage to talk, ensure that (window != window.top) before sending to avoid infinite loop when running solo
 - To listen: add onMessage event handler
 
+mxGraph save/load diagram:
+ * Output:
+ * 
+ * To produce an XML representation for a diagram, the following code can be
+ * used.
+ * 
+ * (code)
+ * var enc = new mxCodec(mxUtils.createXmlDocument());
+ * var node = enc.encode(graph.getModel());
+ * (end)
+ * 
+ * This will produce an XML node than can be handled using the DOM API or
+ * turned into a string representation using the following code:
+ * 
+ * (code)
+ * var xml = mxUtils.getXml(node);
+ * (end)
+ * 
+ * To obtain a formatted string, mxUtils.getPrettyXml can be used instead.
+ * 
+ * This string can now be stored in a local persistent storage (for example
+ * using Google Gears) or it can be passed to a backend using mxUtils.post as
+ * follows. The url variable is the URL of the Java servlet, PHP page or HTTP
+ * handler, depending on the server.
+ * 
+ * (code)
+ * var xmlString = encodeURIComponent(mxUtils.getXml(node));
+ * mxUtils.post(url, 'xml='+xmlString, function(req)
+ * {
+ *   // Process server response using req of type mxXmlRequest
+ * });
+ * (end)
+ * 
+ * Input:
+ * 
+ * To load an XML representation of a diagram into an existing graph object
+ * mxUtils.load can be used as follows. The url variable is the URL of the Java
+ * servlet, PHP page or HTTP handler that produces the XML string.
+ * 
+ * (code)
+ * var xmlDoc = mxUtils.load(url).getXml();
+ * var node = xmlDoc.documentElement;
+ * var dec = new mxCodec(node.ownerDocument);
+ * dec.decode(node, graph.getModel());
+ * (end)
+ * 
+ * For creating a page that loads the client and a diagram using a single
+ * request please refer to the deployment examples in the backends.
+
+
+about the save/open thing:
+1) change how the SAVE action works, make it directly save the graph to xml (what the Backend.java example uses, see index.html in /java/)
+2) inherit Editor from mxEditor, but there is a problem, because then we should ignore mxEditor's constructor (it again calls createGraph func)
+3) add a few mxEditor methods to Editor, because Editor is kind of supposed to be a custom class
+4) just use directly mxEditor code, see the Backend.java example when running `ant web-example` in /java/ directory.
 
 Writing plugins that observe when element's value is changed:
 https://stackoverflow.com/questions/42427606/event-when-input-value-is-changed-by-javascript
