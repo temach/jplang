@@ -13,7 +13,9 @@ DB = sqlite3.connect(DB_PATH)
 
 @get("/open")
 def work():
-    import pdb; pdb.set_trace()
+    # set to return xml
+    response.set_header("Content-Type", "text/xml;charset=UTF-8")
+
     c = DB.cursor()
     c.execute("SELECT * FROM diagrams;")
     rows = c.fetchall()
@@ -23,14 +25,12 @@ def work():
             "diagram": r[1],
         }
 
-        # just return the first row
-        response.set_header("Content-Type", "text/xml;charset=UTF-8")
-
         # disable caching
         response.set_header("Pragma", "no-cache") # HTTP 1.0
         response.set_header("Cache-Control", "no-store")
         response.set_header("Expires", "0")
 
+        # just return the first row and be done
         return payload["diagram"]
 
     return '''<mxGraphModel><root><mxCell id="0"/><mxCell id="1" parent="0"/></root></mxGraphModel>'''
@@ -38,10 +38,9 @@ def work():
 
 @post("/save")
 def submit():
-    import pdb; pdb.set_trace()
     payload = request.params
 
-    user_id = "test"
+    user_id = "default"
     diagram = payload["xml"]
 
     try:
