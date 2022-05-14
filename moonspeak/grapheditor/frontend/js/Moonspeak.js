@@ -32,6 +32,9 @@ MoonspeakEditor.prototype.preinit = function()
     // hide the footer at bottom of page
     EditorUi.prototype.footerHeight = 0;
 
+    // hide the toolbar at the top of page
+    EditorUi.prototype.toolbarHeight = 0;
+
     // scrollbars must be enabled at all times so iframes do not reload
     Graph.prototype.defaultScrollbars = true;
 
@@ -53,6 +56,52 @@ MoonspeakEditor.prototype.preinit = function()
     {
         return null;
     }
+
+    // ==================================
+    // In order to save/open the graph we want to use the mxEditor's save
+    // where to post to save the graph
+    // mxEditor.prototype.urlPost = "save";
+
+    // // disable EditorUI custom save dialog
+    // EditorUi.prototype.saveFile = function(forceDialog) {
+    //     var name = 'default';
+    //     this.save(name);
+    // }
+
+    // // disable EditorUI custom save logic
+    // let mxEditorSave = mxEditor.prototype.save;
+    // EditorUi.prototype.save = function(name) {
+    //     mxEditorSave.apply(this.editorUi.editor, arguments);
+    // }
+
+	// this.addAction('save', function() { ui.saveFile(false); }, null, null, Editor.ctrlKey + '+S').isEnabled = isGraphEnabled;
+    // ==================================
+
+    // place some functions from top menubar into toolbar
+    // var toolbarInit = Toolbar.prototype.init;
+    // Toolbar.prototype.init = function()
+    // {
+    //     toolbarInit.apply(this);
+    //     var fileMenu = this.addMenu('', mxResources.get('insert') + ' (tooltip)', true, 'file', null, true);
+    //     this.addDropDownArrow(fileMenu, 'geSprite-plus', 38, 48, -4, -3, 36, -8);
+
+    //     // 	var formatMenu = this.addMenu('', mxResources.get('view') + ' (' + mxResources.get('panTooltip') + ')', true, 'viewPanels', null, true);
+    //     // 	this.addDropDownArrow(formatMenu, 'geSprite-formatpanel', 38, 50, -4, -3, 36, -8);
+
+    //     // var insertMenu = this.addMenu('', mxResources.get('insert') + ' (' + mxResources.get('doubleClickTooltip') + ')', true, 'insert', null, true);
+    //     // this.addDropDownArrow(insertMenu, 'geSprite-plus', 38, 48, -4, -3, 36, -8);
+
+
+    //     // 		this.edgeShapeMenu = this.addMenuFunction('', mxResources.get('connection'), false, mxUtils.bind(this, function(menu)
+    //     // 		{
+    //     // 			this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_SHAPE, 'width'], [null, null], 'geIcon geSprite geSprite-connection', null, true).setAttribute('title', mxResources.get('line'));
+    //     // 			this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_SHAPE, 'width'], ['link', null], 'geIcon geSprite geSprite-linkedge', null, true).setAttribute('title', mxResources.get('link'));
+    //     // 			this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_SHAPE, 'width'], ['flexArrow', null], 'geIcon geSprite geSprite-arrow', null, true).setAttribute('title', mxResources.get('arrow'));
+    //     // 			this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_SHAPE, 'width'], ['arrow', null], 'geIcon geSprite geSprite-simplearrow', null, true).setAttribute('title', mxResources.get('simpleArrow'));
+    //     // 		}));
+    //     // 
+    //     // 		this.addDropDownArrow(this.edgeShapeMenu, 'geSprite-connection', 44, 50, 0, 0, 22, -4);
+    // }
 
     // configure how background pages are displayed
     Graph.prototype.defaultPageVisible = false;
@@ -187,7 +236,6 @@ MoonspeakEditor.prototype.init = function()
     // disable tooltips
     graph.setTooltips(false);
 
-
     // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
     // handle message events
     let iframe2info = new Map();
@@ -250,6 +298,60 @@ MoonspeakEditor.prototype.init = function()
         }
     });
 
+    // Add OPEN action
+    let getGraph = (url, graph, id) => {
+        mxUtils.get(url + '?' + 'id=' + encodeURIComponent(id), function(req)
+        {
+            var node = req.getDocumentElement();
+            var dec = new mxCodec(node.ownerDocument);
+            dec.decode(node, graph.getModel());
+
+            for (var index in graph.model.cells) {
+                let cell = graph.model.cells[index];
+                if (cell.iframe) {
+                    let info = {
+                        "connectedIFrames": new Set(),
+                    };
+                    iframe2info.set(cell.iframe, info);
+                }
+            }
+
+            for (var index in graph.model.cells) {
+                let cell = graph.model.cells[index];
+                if (cell.edge) {
+                    let edge = cell;
+                    let source = graph.model.getTerminal(edge, true);
+                    let target = graph.model.getTerminal(edge, false);
+
+                    // interconnect them both ways
+                    connectIframes(source, target);
+                    connectIframes(target, source);
+                }
+            }
+
+            // Stores ID for saving
+            graph.id = id;
+        });
+    }
+	this.editorUi.actions.addAction('open', function() { getGraph(OPEN_URL, graph, 'default')  });
+
+    // Add SAVE action
+    let postGraph = (url, graph) => {
+        var enc = new mxCodec();
+        var node = enc.encode(graph.getModel());
+        var xml = mxUtils.getXml(node);
+        
+        mxUtils.post(url + '?' + 'id=' + encodeURIComponent(graph.id), 'xml=' + encodeURIComponent(xml), function()
+        {
+            mxUtils.alert('Saved');
+        }, function()
+        {
+            mxUtils.alert('Error');
+        });
+    }
+	this.editorUi.actions.addAction('save', function() { postGraph(SAVE_URL, graph)  }, null, null, Editor.ctrlKey + '+S');
+
+
     window.addEventListener("message", (event) =>
     {
         if (event.origin !== window.top.location.origin) {
@@ -280,6 +382,10 @@ MoonspeakEditor.prototype.init = function()
                 let iframeWindow = (connectedIFrame.contentWindow || connectedIFrame.contentDocument);
                 iframeWindow.postMessage(event.data, window.location.origin);
             }
+        } else if (event.data["info"].includes("manager action")) {
+            let action_name = event.data["action_name"];
+            let action = this.editorUi.actions.get(action_name);
+			action.funct();
         } else {
             console.log("Can not understand message info:" + event.data["info"]);
             return;
