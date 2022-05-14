@@ -57,52 +57,6 @@ MoonspeakEditor.prototype.preinit = function()
         return null;
     }
 
-    // ==================================
-    // In order to save/open the graph we want to use the mxEditor's save
-    // where to post to save the graph
-    // mxEditor.prototype.urlPost = "save";
-
-    // // disable EditorUI custom save dialog
-    // EditorUi.prototype.saveFile = function(forceDialog) {
-    //     var name = 'default';
-    //     this.save(name);
-    // }
-
-    // // disable EditorUI custom save logic
-    // let mxEditorSave = mxEditor.prototype.save;
-    // EditorUi.prototype.save = function(name) {
-    //     mxEditorSave.apply(this.editorUi.editor, arguments);
-    // }
-
-	// this.addAction('save', function() { ui.saveFile(false); }, null, null, Editor.ctrlKey + '+S').isEnabled = isGraphEnabled;
-    // ==================================
-
-    // place some functions from top menubar into toolbar
-    // var toolbarInit = Toolbar.prototype.init;
-    // Toolbar.prototype.init = function()
-    // {
-    //     toolbarInit.apply(this);
-    //     var fileMenu = this.addMenu('', mxResources.get('insert') + ' (tooltip)', true, 'file', null, true);
-    //     this.addDropDownArrow(fileMenu, 'geSprite-plus', 38, 48, -4, -3, 36, -8);
-
-    //     // 	var formatMenu = this.addMenu('', mxResources.get('view') + ' (' + mxResources.get('panTooltip') + ')', true, 'viewPanels', null, true);
-    //     // 	this.addDropDownArrow(formatMenu, 'geSprite-formatpanel', 38, 50, -4, -3, 36, -8);
-
-    //     // var insertMenu = this.addMenu('', mxResources.get('insert') + ' (' + mxResources.get('doubleClickTooltip') + ')', true, 'insert', null, true);
-    //     // this.addDropDownArrow(insertMenu, 'geSprite-plus', 38, 48, -4, -3, 36, -8);
-
-
-    //     // 		this.edgeShapeMenu = this.addMenuFunction('', mxResources.get('connection'), false, mxUtils.bind(this, function(menu)
-    //     // 		{
-    //     // 			this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_SHAPE, 'width'], [null, null], 'geIcon geSprite geSprite-connection', null, true).setAttribute('title', mxResources.get('line'));
-    //     // 			this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_SHAPE, 'width'], ['link', null], 'geIcon geSprite geSprite-linkedge', null, true).setAttribute('title', mxResources.get('link'));
-    //     // 			this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_SHAPE, 'width'], ['flexArrow', null], 'geIcon geSprite geSprite-arrow', null, true).setAttribute('title', mxResources.get('arrow'));
-    //     // 			this.editorUi.menus.edgeStyleChange(menu, '', [mxConstants.STYLE_SHAPE, 'width'], ['arrow', null], 'geIcon geSprite geSprite-simplearrow', null, true).setAttribute('title', mxResources.get('simpleArrow'));
-    //     // 		}));
-    //     // 
-    //     // 		this.addDropDownArrow(this.edgeShapeMenu, 'geSprite-connection', 44, 50, 0, 0, 22, -4);
-    // }
-
     // configure how background pages are displayed
     Graph.prototype.defaultPageVisible = false;
     EditorUi.prototype.wheelZoomDelay = 80;
@@ -184,11 +138,6 @@ MoonspeakEditor.prototype.init = function()
     // When moving the edge, snap and move the start or end port
     // becasue rigidly moving the whole edge is not useful
     edgeStyle[mxConstants.STYLE_MOVABLE] = false;
-    // some things can only be forced if we pre-define graph.defaultEdgeStyle in preinit()
-    // edgeStyle[mxConstants.STYLE_EDGE] = mxEdgeStyle.EntityRelation;
-    // edgeStyle[mxConstants.STYLE_EDGE] = mxConstants.EDGESTYLE_ELBOW;
-    // edgeStyle[mxConstants.STYLE_ROUNDED] = 1;
-    // graph.currentEdgeStyle = mxUtils.clone(graph.defaultEdgeStyle);
 
     // Resize IFrame and Rectangle together
     let iframeRectanglePadding = 20;
