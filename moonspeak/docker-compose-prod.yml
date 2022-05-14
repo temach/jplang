@@ -15,9 +15,6 @@ services:
     volumes:
       # anon volume
       - /opt/ms/tmp
-    logging:
-      # driver: "none"
-      driver: "json-file"
 
   #====================================
   # feature manager
@@ -25,19 +22,12 @@ services:
   # this service name is hardcoded in router/frontend
   manager-grid2.test:
     image: ms-grapheditor:latest
-    stdin_open: true  # docker run -i
-    tty: true         # docker run -t
     build:
       context: ./grapheditor
       dockerfile: Dockerfile-backend 
     volumes:
       # anon volume
       - /opt/ms/tmp
-    ports:
-      - "9010:80"
-    logging:
-      # driver: "none"
-      driver: "json-file"
 
   # this service name is hardcoded in router/frontend
   f-plus.test:
@@ -45,11 +35,6 @@ services:
     build:
       context: ./plus
       dockerfile: Dockerfile-backend 
-    ports:
-      - "9011:80"
-    logging:
-      driver: "none"
-      # driver: "json-file"
 
   #====================================
   # features
@@ -63,11 +48,6 @@ services:
     volumes:
       # anon volume
       - /opt/ms/tmp
-    ports:
-      - "9020:80"
-    logging:
-      # driver: "none"
-      driver: "json-file"
 
   # this service name is hardcoded in f-plus
   f-workelements.test:
@@ -78,11 +58,6 @@ services:
     volumes:
       # anon volume
       - /opt/ms/tmp
-    ports:
-      - "9021:80"
-    logging:
-      driver: "none"
-      # driver: "json-file"
 
   # this service name is hardcoded in f-plus
   f-synonyms.test:
@@ -93,11 +68,6 @@ services:
     volumes:
       # anon volume
       - /opt/ms/tmp
-    ports:
-      - "9022:80"
-    logging:
-      driver: "none"
-      # driver: "json-file"
 
   # this service name is hardcoded in f-plus
   f-suggestions.test:
@@ -108,9 +78,3 @@ services:
     volumes:
       # anon volume
       - /opt/ms/tmp
-    ports:
-      - "9023:80"
-    logging:
-      driver: "none"
-      # driver: "json-file"
-
