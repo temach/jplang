@@ -9,6 +9,7 @@ from bottle import response, request, post, get, route, run, template, HTTPRespo
 VERSION = "0.1"
 DB_PATH = "../tmp/kanji-grapheditor.db"
 DB = sqlite3.connect(DB_PATH)
+DB.row_factory = sqlite3.Row
 
 
 @get("/open")
@@ -16,45 +17,33 @@ def work():
     # set to return xml
     response.set_header("Content-Type", "text/xml;charset=UTF-8")
 
-    c = DB.cursor()
-    c.execute("SELECT * FROM diagrams;")
-    rows = c.fetchall()
-    for r in rows:
-        payload = {
-            "user_id": r[0],
-            "diagram": r[1],
-        }
+    # disable caching
+    response.set_header("Pragma", "no-cache") # HTTP 1.0
+    response.set_header("Cache-Control", "no-store")
+    response.set_header("Expires", "0")
 
-        # disable caching
-        response.set_header("Pragma", "no-cache") # HTTP 1.0
-        response.set_header("Cache-Control", "no-store")
-        response.set_header("Expires", "0")
-
-        # just return the first row and be done
-        return payload["diagram"]
-
+    try:
+        c = DB.cursor()
+        c.execute("SELECT * FROM diagrams where uuid = :uuid ;", dict(request.params))
+        row = c.fetchone()
+        return row["xml"]
+    except Exception as e:
+        print(f"Got exception {e}")
     return '''<mxGraphModel><root><mxCell id="0"/><mxCell id="1" parent="0"/></root></mxGraphModel>'''
 
 
 @post("/save")
 def submit():
-    payload = request.params
-
-    user_id = "default"
-    diagram = payload["xml"]
-
     try:
         c = DB.cursor()
         # https://www.sqlite.org/lang_replace.html
         # https://www.sqlite.org/lang_UPSERT.html
-        c.execute("""INSERT OR ABORT INTO diagrams VALUES (?, ?)
-                ON CONFLICT(user_id) DO UPDATE SET diagram=excluded.diagram;
-                """,
-                  (user_id, diagram))
+        c.execute("""INSERT OR ABORT INTO diagrams VALUES (:uuid, :xml)
+                ON CONFLICT(uuid) DO UPDATE SET xml=excluded.xml;
+                """, dict(request.params))
         DB.commit()
     except Exception as e:
-        # return 2xx response because too lazy to unwrap errors in Elm
-        return HTTPResponse(status=202, body="{}".format(e))
+        return HTTPResponse(status=500, body="{}".format(e))
 
     # return a fake body because too lazy to unwrap properly in Elm
     return HTTPResponse(status=200, body="")
@@ -75,9 +64,9 @@ def static(path):
 def db_init():
     c = DB.cursor()
     c.execute("""CREATE TABLE diagrams (
-            user_id TEXT NOT NULL UNIQUE
-            , diagram TEXT NOT NULL UNIQUE
-            , PRIMARY KEY (user_id)
+            uuid TEXT NOT NULL UNIQUE
+            , xml TEXT NOT NULL UNIQUE
+            , PRIMARY KEY (uuid)
         );
         """)
     DB.commit()

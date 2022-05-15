@@ -244,9 +244,12 @@ MoonspeakEditor.prototype.init = function()
         }
     });
 
+    // sets default uuid for OPEN/SAVE actions
+    graph.uuid = 'default';
+
     // Add OPEN action
-    let getGraph = (url, graph, id) => {
-        mxUtils.get(url + '?' + 'id=' + encodeURIComponent(id), function(req)
+    let getGraph = (url, graph, uuid) => {
+        mxUtils.get(url + '?' + 'uuid=' + encodeURIComponent(uuid), function(req)
         {
             var node = req.getDocumentElement();
             var dec = new mxCodec(node.ownerDocument);
@@ -277,18 +280,18 @@ MoonspeakEditor.prototype.init = function()
             }
 
             // Stores ID for saving
-            graph.id = id;
+            graph.uuid = uuid;
         });
     }
-	this.editorUi.actions.addAction('open', function() { getGraph(OPEN_URL, graph, 'default')  });
+	this.editorUi.actions.addAction('open', function() { getGraph(OPEN_URL, graph, graph.uuid)  });
 
     // Add SAVE action
     let postGraph = (url, graph) => {
         var enc = new mxCodec();
         var node = enc.encode(graph.getModel());
         var xml = mxUtils.getXml(node);
-        
-        mxUtils.post(url + '?' + 'id=' + encodeURIComponent(graph.id), 'xml=' + encodeURIComponent(xml), function()
+
+        mxUtils.post(url + '?' + 'uuid=' + encodeURIComponent(graph.uuid), 'xml=' + encodeURIComponent(xml), function()
         {
             mxUtils.alert('Saved');
         }, function()
