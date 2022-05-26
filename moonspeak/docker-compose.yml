@@ -24,7 +24,6 @@ services:
     image: ms-gateway:latest
     build:
       context: ./gateway-nginx
-      dockerfile: Dockerfile
     ports:
       - "80:80"
     networks:
@@ -37,9 +36,6 @@ services:
     hostname: moonspeak.test
     build:
       context: ./forwarder
-      dockerfile: Dockerfile
-    ports:
-      - "9001:80"
     volumes:
       - /opt/ms/tmp
     networks:
@@ -51,9 +47,6 @@ services:
     image: ms-landing:latest
     build:
       context: ./landing
-      dockerfile: Dockerfile
-    ports:
-      - "9010:80"
     networks:
       - moonspeak-static
 
@@ -61,11 +54,8 @@ services:
     image: ms-synonyms:latest
     build:
       context: ./synonyms
-      dockerfile: Dockerfile
     volumes:
       - /opt/ms/tmp
-    ports:
-      - "9011:80"
     networks:
       - moonspeak-static
 
@@ -73,11 +63,8 @@ services:
     image: ms-suggestions:latest
     build:
       context: ./suggestions
-      dockerfile: Dockerfile
     volumes:
       - /opt/ms/tmp
-    ports:
-      - "9012:80"
     networks:
       - moonspeak-static
 
@@ -85,9 +72,6 @@ services:
     image: ms-plugins:latest
     build:
       context: ./plugins
-      dockerfile: Dockerfile
-    ports:
-      - "9013:80"
     networks:
       - moonspeak-static
 
@@ -95,8 +79,6 @@ services:
     image: ms-plus:latest
     build:
       context: ./plus
-    ports:
-      - "9014:80"
     networks:
       - moonspeak-static
 
@@ -106,7 +88,6 @@ services:
     image: ms-hud:latest
     build:
       context: ./hud
-      dockerfile: Dockerfile-backend
     volumes:
       - /opt/ms/tmp
       - type: bind
@@ -115,12 +96,10 @@ services:
     networks:
       - moonspeak-dynamic
 
-
   grapheditor-bbb.moonspeak.test:
     image: ms-grapheditor:latest
     build:
       context: ./grapheditor
-      dockerfile: Dockerfile-backend 
     volumes:
       - /opt/ms/tmp
     networks:
@@ -130,7 +109,6 @@ services:
     image: ms-submit:latest
     build:
       context: ./submit
-      dockerfile: Dockerfile-backend 
     volumes:
       - /opt/ms/tmp
     networks:
@@ -140,7 +118,6 @@ services:
     image: ms-workelements:latest
     build:
       context: ./workelements
-      dockerfile: Dockerfile-backend 
     volumes:
       - /opt/ms/tmp
     networks:
