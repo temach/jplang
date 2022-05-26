@@ -1,0 +1,83 @@
+# Notes:
+#
+# port definitions for services are for debug/development, except the "80:80"
+# for debug/development define moonspeak.test in /etc/hosts 
+#
+# For pdb debug add to service definition:
+#   stdin_open: true  # docker run -i
+#   tty: true         # docker run -t
+# and run "docker attach CONTAINER_NAME"
+#
+#
+version: "3.9"
+
+networks:
+  moonspeak-static:
+    name: moonspeak-static
+  moonspeak-dynamic:
+    name: moonspeak-dynamic
+
+services:
+  #===================================
+  # this service name is not hardcoded
+  gateway:
+    image: ms-gateway:latest
+    build:
+      context: ./gateway-nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    networks:
+      - moonspeak-static
+
+  router.moonspeak.ru:
+    image: ms-router:latest
+    hostname: moonspeak.ru
+    build:
+      context: ./forwarder
+      dockerfile: Dockerfile
+    ports:
+      - "9001:80"
+    volumes:
+      # anon volume
+      - /opt/ms/tmp
+    networks:
+      - moonspeak-static
+      - moonspeak-dynamic
+
+  #===================================
+  landing.moonspeak.ru:
+    image: ms-landing:latest
+    build:
+      context: ./landing
+      dockerfile: Dockerfile
+    ports:
+      - "9010:80"
+    networks:
+      - moonspeak-static
+
+  synonyms.moonspeak.ru:
+    image: ms-synonyms:latest
+    build:
+      context: ./synonyms
+      dockerfile: Dockerfile
+    volumes:
+      # anon volume
+      - /opt/ms/tmp
+    ports:
+      - "9011:80"
+    networks:
+      - moonspeak-static
+
+  suggestions.moonspeak.ru:
+    image: ms-suggestions:latest
+    build:
+      context: ./suggestions
+      dockerfile: Dockerfile
+    volumes:
+      # anon volume
+      - /opt/ms/tmp
+    ports:
+      - "9012:80"
+    networks:
+      - moonspeak-static
