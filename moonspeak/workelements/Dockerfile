@@ -1,4 +1,4 @@
-FROM python:buster
+FROM python:alpine
 WORKDIR /opt/ms/
 
 RUN mkdir tmp

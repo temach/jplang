@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 import os
 import json
-import sqlite3
 import re
-from urllib.parse import unquote_plus
 
 from bottle import route, run, get, static_file, request, HTTPResponse
-import requests
 
 VERSION = "0.1"
 
