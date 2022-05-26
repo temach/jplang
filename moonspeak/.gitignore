@@ -1,0 +1,7 @@
+elm-stuff/
+.idea/
+.mypy_cache
+tmp
+.venv
+venv
+node_modules/
