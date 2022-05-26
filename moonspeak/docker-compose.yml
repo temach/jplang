@@ -1,7 +1,28 @@
 version: "3.9"
 
 services:
-  # port definitions for services are for debug/development, except the "80:80" in router
+  # port definitions for services are for debug/development, except the "80:80"
+
+  # for debug/development define moonspeak.test in /etc/hosts 
+  # this service name is not hardcoded
+  gateway.test:
+    image: ms-gateway:latest
+    build:
+      context: ./gateway-nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+
+  landing.test:
+    image: ms-landing:latest
+    build:
+      context: ./landing
+      dockerfile: Dockerfile
+    ports:
+      - "9001:80"
+    logging:
+      # driver: "none"
+      driver: "json-file"
 
   # for debug/development define moonspeak.test in /etc/hosts 
   # this service name is not hardcoded
@@ -11,7 +32,7 @@ services:
       context: ./router-bottle
       dockerfile: Dockerfile-backend 
     ports:
-      - "80:80"
+      - "9002:80"
     volumes:
       # anon volume
       - /opt/ms/tmp
@@ -39,6 +60,9 @@ services:
       # driver: "none"
       driver: "json-file"
 
+  #====================================
+  # features
+
   # this service name is hardcoded in router/frontend
   f-plus.test:
     image: ms-plus:latest
@@ -50,9 +74,6 @@ services:
     logging:
       driver: "none"
       # driver: "json-file"
-
-  #====================================
-  # features
 
   # this service name is hardcoded in f-plus
   f-submit.test:
