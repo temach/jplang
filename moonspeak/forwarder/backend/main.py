@@ -14,9 +14,9 @@ VERSION = "0.1"
 MY_HOSTNAME = socket.gethostname()
 
 
-def modify_root_doc(doc_text, fname):
+def modify_root_doc(doc_text, node, service):
     soup = BeautifulSoup(doc_text, 'html.parser')
-    base_tag = soup.new_tag("base", href="http://{}/router/{}/".format(MY_HOSTNAME, fname))
+    base_tag = soup.new_tag("base", href="http://{}/router/{}/{}/".format(MY_HOSTNAME, node, service))
     try:
         soup.head.insert(0, base_tag)
     except AttributeError as e:
@@ -47,22 +47,24 @@ def retrieve_url(url, req):
     return r
 
 
-@route("/router/<fname>", method=["GET"])
-def router_root(fname):
-    url = "http://{}.{}".format(unquote_plus(fname), MY_HOSTNAME)
+@route("/router/<node>/<service>", method=["GET"])
+def router_root(node, service):
+    # url = "http://{}.{}/{}".format(node, MY_HOSTNAME, service)
+    url = "http://{}.{}".format(service, MY_HOSTNAME)
     r = retrieve_url(url, request)
 
     # modify returned content because we are requesting root doc
-    new_content = modify_root_doc(r.content, fname)
+    new_content = modify_root_doc(r.content, node, service)
     # delete content-lenght so it will get recalculated
     del r.headers["content-length"]
 
     return HTTPResponse(body=new_content, status=r.status_code, headers=r.headers.items())
 
 
-@route("/router/<fname>/<furl:re:.*>", method=["GET", "HEAD", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"])
-def router(fname, furl):
-    url = "http://{}.{}/{}".format(unquote_plus(fname), MY_HOSTNAME, furl)
+@route("/router/<node>/<service>/<path:re:.*>", method=["GET", "HEAD", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"])
+def router(node, service, path):
+    # url = "http://{}.{}/{}/{}".format(node, MY_HOSTNAME, service, path)
+    url = "http://{}.{}/{}".format(service, MY_HOSTNAME, path)
     r = retrieve_url(url, request)
     return HTTPResponse(body=r.content, status=r.status_code, headers=r.headers.items())
 

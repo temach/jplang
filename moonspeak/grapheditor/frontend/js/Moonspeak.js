@@ -208,7 +208,9 @@ MoonspeakEditor.prototype.init = function()
         }
         let message = {
             "info": "iframe connect",
-            "pluginUrl": "/plugins/" + pluginName,
+
+            // Note: absolute root url
+            "pluginUrl": "/router/plugins/" + pluginName,
         }
         // tell the target iframe that "source" iframe wants to connect and install a plugin
         t.value.contentWindow.postMessage(message, window.location.origin);

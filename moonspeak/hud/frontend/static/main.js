@@ -1,75 +1,84 @@
+
+//=========================================================
+// Code related to fullscreen features that are loaded once at the start of app
+//
 const fullscreenFrames = new Array();
 
-async function get_feature(feature_url) {
-    let backend = new URL("/api/getfeature", window.location);
-    backend.searchParams.set('feature_url', new URL(feature_url));
-
-    let response = await fetch(backend);
-    if (!response.ok) {
-        throw new Error("HTTP error, status = " + response.status);
-    }
-    let feature_json = await response.json();
-    return feature_json;
-}
-
-function addInnerHtmlEventListener(frame, trap, state_handled) {
+function addInnerHtmlEventListener(frame, yieldFunc) {
     let iframeHtml = frame.contentWindow.document.documentElement;
-    let adjustFocus = (e) => {
-        if (e.target !== iframeHtml && (! e.target.classList.contains('deadzone'))) {
-            // if target element: is not document.html tag and not deadzone css class
-            // means user clicked on something worthwhile (likely with a lower click event handler)
-            e.moonspeakEventState = state_handled;
-            trap.classList.remove('active');
-            frame.classList.add('active');
-        } else if (frame.classList.contains('active')) {
-            // user clicked on non-active element, so current frame should stop being active
-            frame.classList.remove('active');
-            trap.classList.add('active');
-            let evt = new MouseEvent('click', e);
-            trap.dispatchEvent(evt);
-        }
+    let checkYield = (e) => {
+        if (e.target === iframeHtml || e.target.classList.contains('deadzone')) {
+            frame.classList.remove('acceptevents');
+            yieldFunc(e);
+        };
     };
-    iframeHtml.addEventListener('click', adjustFocus, true);
+
+    // capture the down event in bubbling phase
+    iframeHtml.addEventListener('pointerdown', checkYield, true);
+    iframeHtml.addEventListener('pointerup', checkYield, true);
+    iframeHtml.addEventListener('click', checkYield, true);
 }
 
 async function initHud() {
-    const STATE_PROPOGATING = "propogating";
-    const STATE_HANDLED = "handled";
+    let response = await fetch("hud_config.json");
+
+    if (! response.ok) {
+        console.log("HTTP-Error: " + response.status);
+        return;
+    }
+
+    let json = await response.json();
 
     // order affects event check, element 0 is checked first
-    const URLS = [
-        "http://0.0.0.0:9012",
-        "http://0.0.0.0:9011",
-        "http://0.0.0.0:9010",
-    ];
-
+    // background should be the last element
+    const URLS = json["urls"];
 
     let eventTrap = document.getElementById("eventTrap");
-    let handler = (e) => {
-        let evt = new MouseEvent(e.type, e);
-        evt.moonspeakEventState = STATE_PROPOGATING;
+
+    let yieldFunc = (e) => {
+        // events get here after some frame has yielded (as a result of yielding)
+        // or its the very-very first event ever
+        let frame = false;
+
         for (const child of fullscreenFrames) {
-                if (evt.moonspeakEventState === STATE_HANDLED) {
-                    // stop early if event was handled
-                    break; 
-                }
-                let innerEl = child.contentWindow.document.elementFromPoint(e.clientX, e.clientY);
-                if (innerEl) {
-                    innerEl.dispatchEvent(evt);
-                }
-        };
-    }
-    eventTrap.addEventListener('click', handler, true);
+            let innerEl = child.contentWindow.document.elementFromPoint(e.clientX, e.clientY);
+            let iframeHtml = child.contentWindow.document.documentElement;
+            if (! innerEl 
+                || innerEl === iframeHtml 
+                || innerEl.classList.contains('deadzone')
+            ) {
+                // this child does not have elem to activate
+                continue;
+            }
+
+            let repeat = new PointerEvent(e.type, e);
+            innerEl.dispatchEvent(repeat);
+
+            frame = child;
+            break;
+        }
+
+        if (frame) {
+            eventTrap.classList.remove('acceptevents');
+            frame.classList.add('acceptevents');
+        } else {
+            // no frame was activated so activate the eventTrap
+            eventTrap.classList.add('acceptevents');
+        }
+    };
+
+    eventTrap.addEventListener('pointerdown', yieldFunc, true);
+    eventTrap.addEventListener('pointerup', yieldFunc, true);
+    eventTrap.addEventListener('click', yieldFunc, true);
 
     for (const url of URLS) {
         try {
-            let feature_json = await get_feature(url);
             // dublicate requests is a known bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1464344
             let iframe = document.createElement("iframe");
             iframe.classList.add("fullscreen");
-            iframe.srcdoc = feature_json["text"];
+            iframe.src = url;
             iframe.onload = () => {
-                addInnerHtmlEventListener(iframe, eventTrap, STATE_HANDLED);
+                addInnerHtmlEventListener(iframe, yieldFunc);
             };
             fullscreenFrames.push(iframe);
         } catch (error) {
@@ -86,22 +95,61 @@ async function initHud() {
     }
 }
 
-// see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
-window.addEventListener("message", (event) => {
-    if (event.origin !== window.parent.location.origin) {
-        // we only accept messages from the IFrames (must be on the same domain)
+
+//=============================================================
+// Code related to small features that are loaded on user request
+//
+
+function buildFeatureUrl(rawUrl) {
+    let encodedUrl = encodeURIComponent(rawUrl);
+    return window.top.location.origin + "/router/" + encodedUrl;
+}
+
+function getFeatureName(rawUrl) {
+    let url = new URL(rawUrl);
+    return url.hostname;
+}
+
+function arrayBroadcast(eventSource, eventData, array) {
+    array.forEach((featureIFrameElem, index, arr) => {
+        let iframeWindow = (featureIFrameElem.contentWindow || featureIFrameElem.contentDocument);
+        if (! iframeWindow) {
+            return;
+        }
+        if (eventSource && iframeWindow === eventSource) {
+            return;
+        };
+        iframeWindow.postMessage(eventData, window.location.origin);
+    });
+}
+
+function onMessage(event) {
+    if (event.origin !== window.top.location.origin) {
+        // accept only messages for your domain
         return;
     }
 
-    console.log("hud received: ");
+    console.log(window.location + " received:");
     console.log(event.data);
 
-    // broadcast message to other fullscreen iframes
-    fullscreenFrames.forEach(function(currentFrame, index, array) {
-        let iframeWindow = (currentFrame.contentWindow || currentFrame.contentDocument);
-        if (iframeWindow !== event.source) {
-            iframeWindow.postMessage(event.data, window.parent.location.origin);
-        };
-    });
+    if (! ("info" in event.data)) {
+        console.log("No 'info' field in message, skipping");
+        return;
+    }
 
-});
+    if (event.data["info"].includes("please feature")) {
+        let message = {
+            "info": "please register",
+            "src": buildFeatureUrl(event.data["url"]),
+            "name": getFeatureName(event.data["url"]),
+        }
+        arrayBroadcast(event.source, message, fullscreenFrames);
+    } else {
+        console.log("Can not understand message info:" + event.data["info"]);
+        return;
+    }
+}
+
+
+// see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
+window.addEventListener("message", onMessage);
