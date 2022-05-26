@@ -1,2 +1,0 @@
-FROM nginx:latest
-COPY frontend/static /usr/share/nginx/html
