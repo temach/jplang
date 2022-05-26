@@ -95,7 +95,6 @@ services:
     image: ms-plus:latest
     build:
       context: ./plus
-      dockerfile: Dockerfile-backend
     ports:
       - "9014:80"
     networks:
