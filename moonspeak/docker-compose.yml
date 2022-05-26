@@ -82,6 +82,13 @@ services:
     networks:
       - moonspeak-static
 
+  help.moonspeak.test:
+    image: ms-help:latest
+    build:
+      context: ./help
+    networks:
+      - moonspeak-static
+
   #===================================
   # this is the user's unique access url
   hud-aaa.moonspeak.test:
