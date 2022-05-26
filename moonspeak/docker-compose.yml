@@ -1,137 +1,148 @@
+# Notes:
+#
+# port definitions for services are for debug/development, except the "80:80"
+# for debug/development define moonspeak.test in /etc/hosts 
+#
+# For pdb debug add to service definition:
+#   stdin_open: true  # docker run -i
+#   tty: true         # docker run -t
+# and run "docker attach CONTAINER_NAME"
+#
+#
 version: "3.9"
 
-services:
-  # port definitions for services are for debug/development, except the "80:80"
+networks:
+  moonspeak-static:
+    name: moonspeak-static
+  moonspeak-dynamic:
+    name: moonspeak-dynamic
 
-  # for debug/development define moonspeak.test in /etc/hosts 
+services:
+  #===================================
   # this service name is not hardcoded
-  gateway.test:
+  gateway.moonspeak.test:
     image: ms-gateway:latest
     build:
       context: ./gateway-nginx
       dockerfile: Dockerfile
     ports:
       - "80:80"
+    networks:
+      - moonspeak-static
+    depends_on:
+      - router.moonspeak.test
 
-  landing.test:
+  router.moonspeak.test:
+    image: ms-router:latest
+    hostname: moonspeak.test
+    build:
+      context: ./forwarder
+      dockerfile: Dockerfile
+    ports:
+      - "9001:80"
+    volumes:
+      - /opt/ms/tmp
+    networks:
+      - moonspeak-static
+      - moonspeak-dynamic
+
+  #===================================
+  landing.moonspeak.test:
     image: ms-landing:latest
     build:
       context: ./landing
       dockerfile: Dockerfile
     ports:
-      - "9001:80"
-    logging:
-      # driver: "none"
-      driver: "json-file"
-
-  # for debug/development define moonspeak.test in /etc/hosts 
-  # this service name is not hardcoded
-  router.test:
-    image: ms-router:latest
-    build:
-      context: ./router-bottle
-      dockerfile: Dockerfile-backend 
-    ports:
-      - "9002:80"
-    volumes:
-      # anon volume
-      - /opt/ms/tmp
-    logging:
-      # driver: "none"
-      driver: "json-file"
-
-  #====================================
-  # feature manager
-
-  # this service name is hardcoded in router/frontend
-  manager-grid2.test:
-    image: ms-grapheditor:latest
-    stdin_open: true  # docker run -i
-    tty: true         # docker run -t
-    build:
-      context: ./grapheditor
-      dockerfile: Dockerfile-backend 
-    volumes:
-      # anon volume
-      - /opt/ms/tmp
-    ports:
       - "9010:80"
-    logging:
-      # driver: "none"
-      driver: "json-file"
+    networks:
+      - moonspeak-static
 
-  #====================================
-  # features
-
-  # this service name is hardcoded in router/frontend
-  f-plus.test:
-    image: ms-plus:latest
-    build:
-      context: ./plus
-      dockerfile: Dockerfile-backend 
-    ports:
-      - "9011:80"
-    logging:
-      driver: "none"
-      # driver: "json-file"
-
-  # this service name is hardcoded in f-plus
-  f-submit.test:
-    image: ms-submit:latest
-    build:
-      context: ./submit
-      dockerfile: Dockerfile-backend 
-    volumes:
-      # anon volume
-      - /opt/ms/tmp
-    ports:
-      - "9020:80"
-    logging:
-      # driver: "none"
-      driver: "json-file"
-
-  # this service name is hardcoded in f-plus
-  f-workelements.test:
-    image: ms-workelements:latest
-    build:
-      context: ./workelements
-      dockerfile: Dockerfile-backend 
-    volumes:
-      # anon volume
-      - /opt/ms/tmp
-    ports:
-      - "9021:80"
-    logging:
-      driver: "none"
-      # driver: "json-file"
-
-  # this service name is hardcoded in f-plus
-  f-synonyms.test:
+  synonyms.moonspeak.test:
     image: ms-synonyms:latest
     build:
       context: ./synonyms
       dockerfile: Dockerfile
     volumes:
-      # anon volume
       - /opt/ms/tmp
     ports:
-      - "9022:80"
-    logging:
-      driver: "none"
-      # driver: "json-file"
+      - "9011:80"
+    networks:
+      - moonspeak-static
 
-  # this service name is hardcoded in f-plus
-  f-suggestions.test:
+  suggestions.moonspeak.test:
     image: ms-suggestions:latest
     build:
       context: ./suggestions
       dockerfile: Dockerfile
     volumes:
-      # anon volume
       - /opt/ms/tmp
     ports:
-      - "9023:80"
-    logging:
-      driver: "none"
-      # driver: "json-file"
+      - "9012:80"
+    networks:
+      - moonspeak-static
 
+  plugins.moonspeak.test:
+    image: ms-plugins:latest
+    build:
+      context: ./plugins
+      dockerfile: Dockerfile
+    ports:
+      - "9013:80"
+    networks:
+      - moonspeak-static
+
+  plus.moonspeak.test:
+    image: ms-plus:latest
+    build:
+      context: ./plus
+      dockerfile: Dockerfile-backend
+    ports:
+      - "9014:80"
+    networks:
+      - moonspeak-static
+
+  #===================================
+  # this is the user's unique access url
+  hud-aaa.moonspeak.test:
+    image: ms-hud:latest
+    build:
+      context: ./hud
+      dockerfile: Dockerfile-backend
+    volumes:
+      - /opt/ms/tmp
+      - type: bind
+        source: ./hud/tmp
+        target: /opt/ms/tmp
+    networks:
+      - moonspeak-dynamic
+
+
+  grapheditor-bbb.moonspeak.test:
+    image: ms-grapheditor:latest
+    build:
+      context: ./grapheditor
+      dockerfile: Dockerfile-backend 
+    volumes:
+      - /opt/ms/tmp
+    networks:
+      - moonspeak-dynamic
+
+  submit-ccc.moonspeak.test:
+    image: ms-submit:latest
+    build:
+      context: ./submit
+      dockerfile: Dockerfile-backend 
+    volumes:
+      - /opt/ms/tmp
+    networks:
+      - moonspeak-dynamic
+
+  workelements-ddd.moonspeak.test:
+    image: ms-workelements:latest
+    build:
+      context: ./workelements
+      dockerfile: Dockerfile-backend 
+    volumes:
+      - /opt/ms/tmp
+    networks:
+      - moonspeak-dynamic
