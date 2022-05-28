@@ -1,0 +1,31 @@
+---
+# These tasks create a deployment for single user 
+
+- name: Create a hud service
+  community.docker.docker_container:
+    name: mydata
+    image: busybox
+    volumes:
+      - /data
+
+- name: Install http and php etc
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+   - httpd
+   - php
+   - php-mysql
+   - git
+   - libsemanage-python
+   - libselinux-python
+
+- name: insert iptables rule for httpd
+  lineinfile:
+    dest: /etc/sysconfig/iptables
+    create: yes
+    state: present
+    regexp: "{{ httpd_port }}"
+    insertafter: "^:OUTPUT "
+    line: "-A INPUT -p tcp  --dport {{ httpd_port }} -j  ACCEPT"
+  notify: restart iptables
