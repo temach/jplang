@@ -1,0 +1,43 @@
+---
+# These tasks create a deployment for single user 
+- name: Create client services
+  hosts: localhost
+  vars:
+    tmpdir: /opt/moonspeak/tmp
+
+  tasks:
+  - name: Create {{ moonspeak_hud_service }} service
+    community.docker.docker_container:
+      state: started
+      name: "{{ moonspeak_hud_service }}.{{ moonspeak_domain }}"
+      image: moonspeak-hud:latest
+      env:
+        MOONSPEAK_HUD_CONFIG_JSON: "{{ moonspeak_hud_config_json | string }}"
+      volumes:
+        - "{{ moonspeak_hud_service }}:{{ tmpdir }}"
+
+  - name: Create {{ moonspeak_graph_service }} service
+    community.docker.docker_container:
+      state: started
+      name: "{{ moonspeak_graph_service }}.{{ moonspeak_domain }}"
+      image: moonspeak-graph:latest
+      env:
+        MOONSPEAK_GRAPH_INITIAL_XML: "{{ moonspeak_graph_initial_xml | string }}"
+      volumes:
+        - "{{ moonspeak_graph_service }}:{{ tmpdir }}"
+
+  - name: Create {{ moonspeak_submit_service }} service
+    community.docker.docker_container:
+      state: started
+      name: "{{ moonspeak_submit_service }}.{{ moonspeak_domain }}"
+      image: moonspeak-submit:latest
+      volumes:
+        - "{{ moonspeak_submit_service }}:{{ tmpdir }}"
+
+  - name: Create {{ moonspeak_workelements_service }} service
+    community.docker.docker_container:
+      state: started
+      name: "{{ moonspeak_workelements_service }}.{{ moonspeak_domain }}"
+      image: moonspeak-workelements:latest
+      volumes:
+        - "{{ moonspeak_workelements_service }}:{{ tmpdir }}"

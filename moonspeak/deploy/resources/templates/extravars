@@ -1,0 +1,10 @@
+---
+moonspeak_domain: "{ moonspeak_domain }"
+
+moonspeak_hud_service: "{ moonspeak_hud_service }"
+moonspeak_graph_service: "{ moonspeak_graph_service }"
+moonspeak_submit_service: "{ moonspeak_submit_service }"
+moonspeak_workelements_service: "{ moonspeak_workelements_service }"
+
+moonspeak_hud_config_json: "{ moonspeak_hud_config_json }"
+moonspeak_graph_initial_xml: "{ moonspeak_graph_initial_xml }"
