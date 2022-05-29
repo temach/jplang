@@ -27,44 +27,6 @@ app = FastAPI()
 
 LOGGER = logging.getLogger(__name__)
 
-HOSTNAME = socket.gethostname()
-
-def spin_up_containers(unique_id):
-    # read ansible and execute on localhost (uses /var/run/docker.sock)
-
-    os.environ["ANSIBLE_NOCOLOR"] = "1"
-    os.environ["ANSIBLE_NOCOWS"] = "1"
-
-    r = ansible_runner.run(
-        private_data_dir="../resources",
-        playbook="services.yml",
-        json_mode=False,         # well-known playbook output
-        quiet=True,         # no stdout here in runner
-    )
-
-    services = {
-        "hud"
-        "hud-{}",
-        "grapheditor-{}",
-        "submit-{}",
-        "workelements-{}",
-    }
-    services = [s.format(str(uuid4())) for s in services]
-
-    print("{}: {}".format(r.status, r.rc))
-    # successful: 0
-
-    for each_host_event in r.events:
-        print(each_host_event["event"])
-    print("Final status:")
-    print(r.stats)
-
-
-    # return the playbook run output
-    return open(r.stdout.name, "r").read()
-
-
-
 @app.get("/login")
 async def login(request: Request):
     # generate unique url, deploy services and redirect
@@ -76,18 +38,20 @@ async def login(request: Request):
         unique_id = "aaa"
 
         # ask to spin up personal containers for this user 
-        spin_up_containers()
+        deploy_url = "http://moonspeak.test/router/{}/deploy/new/{}".format(node, unique_id)
+        r = requests.post(deploy_url)
 
-        # return the url of root service 
-        unique_service = "hud-{}".format(unique_id)
-        user_unique_url = "/router/{}/{}".format(node, unique_service)
-        return RedirectResponse(user_unique_url)
+        if r.ok:
+            # return the url of root service 
+            unique_service = "hud-{}".format(unique_id)
+            user_unique_url = "/router/{}/{}".format(node, unique_service)
+            return RedirectResponse(user_unique_url)
+
     except Exception as e:
         print(f"Exception during login: {e}")
 
     # redirect to our error page
-    service_name = socket.gethostname()
-    service_error_page = "/{}/error".format(service_name)
+    service_error_page = "/login/error"
     return RedirectResponse(service_error_page)
 
 @app.get("/error")

@@ -1,0 +1,6 @@
+{
+    "urls": [
+        "http://{ moonspeak_domain }/plus/",
+        "http://{ moonspeak_domain }/router/{ moonspeak_node }/{ moonspeak_graph_service }"
+    ]
+}

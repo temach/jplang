@@ -1,3 +1,10 @@
 ---
-ansible_connection: local
-test: val
+moonspeak_domain: moonspeak.test
+
+moonspeak_hud_uuid: "asdad3"
+moonspeak_graph_uuid: "asd"
+moonspeak_submit_uuid: "asdads"
+moonspeak_workelements_uuid: "sfd"
+
+moonspeak_hud_config_json: "ads"
+moonspeak_graph_initial_xml: "asdasd"
