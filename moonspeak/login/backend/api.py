@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-
-# see: https://jpmens.net/2020/02/28/dial-a-for-ansible-and-r-for-runner/
-
 import os
 import logging
 import json
@@ -10,7 +7,6 @@ import socket
 from uuid import uuid4
 
 import requests
-import ansible_runner
 
 from fastapi import FastAPI
 from fastapi.requests import Request
@@ -26,6 +22,7 @@ app = FastAPI()
 # )
 
 LOGGER = logging.getLogger(__name__)
+DOMAIN = os.getenv("MOONSPEAK_DOMAIN")
 
 @app.get("/login")
 async def login(request: Request):
@@ -35,10 +32,10 @@ async def login(request: Request):
         node = "node1"
 
         # generate unique id
-        unique_id = "aaa"
+        unique_id = "xxxxx"
 
         # ask to spin up personal containers for this user 
-        deploy_url = "http://moonspeak.test/router/{}/deploy/new/{}".format(node, unique_id)
+        deploy_url = "http://{}/router/{}/deploy/new/{}".format(DOMAIN, node, unique_id)
         r = requests.post(deploy_url)
 
         if r.ok:
