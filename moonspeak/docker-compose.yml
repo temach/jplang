@@ -11,12 +11,6 @@
 #
 version: "3.9"
 
-networks:
-  moonspeak-static:
-    name: moonspeak-static
-  moonspeak-dynamic:
-    name: moonspeak-dynamic
-
 services:
   #===================================
   # this service name is not hardcoded
@@ -26,29 +20,47 @@ services:
       context: ./gateway-nginx
     ports:
       - "80:80"
-    networks:
-      - moonspeak-static
     depends_on:
       - router.moonspeak.test
 
   router.moonspeak.test:
     image: ms-router:latest
-    hostname: moonspeak.test
+    # the router inserts reference to hostname into each feature via <base> tag
+    # this supplies the correct name
+    env:
+      MOONSPEAK_DOMAIN: "moonspeak.test"
     build:
       context: ./forwarder
     volumes:
       - /opt/ms/tmp
-    networks:
-      - moonspeak-static
-      - moonspeak-dynamic
 
   #===================================
+  login.moonspeak.test:
+    image: ms-login:latest
+    # the login creates new user services with names under the hostname domain
+    # this supplies the correct domain name
+    env:
+      MOONSPEAK_DOMAIN: "moonspeak.test"
+    build:
+      context: ./login
+
+  deploy.moonspeak.test:
+    image: ms-deploy:latest
+    # the deploy writes configuration for graph and hud services which have absolute urls
+    # this supplies the correct domain and node names
+    env:
+    env:
+      MOONSPEAK_DOMAIN: "moonspeak.test"
+      MOONSPEAK_NODE: "node1"
+    build:
+      context: ./deploy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
   landing.moonspeak.test:
     image: ms-landing:latest
     build:
       context: ./landing
-    networks:
-      - moonspeak-static
 
   synonyms.moonspeak.test:
     image: ms-synonyms:latest
@@ -56,8 +68,6 @@ services:
       context: ./synonyms
     volumes:
       - /opt/ms/tmp
-    networks:
-      - moonspeak-static
 
   suggestions.moonspeak.test:
     image: ms-suggestions:latest
@@ -65,29 +75,21 @@ services:
       context: ./suggestions
     volumes:
       - /opt/ms/tmp
-    networks:
-      - moonspeak-static
 
   plugins.moonspeak.test:
     image: ms-plugins:latest
     build:
       context: ./plugins
-    networks:
-      - moonspeak-static
 
   plus.moonspeak.test:
     image: ms-plus:latest
     build:
       context: ./plus
-    networks:
-      - moonspeak-static
 
   help.moonspeak.test:
     image: ms-help:latest
     build:
       context: ./help
-    networks:
-      - moonspeak-static
 
   #===================================
   # this is the user's unique access url
@@ -100,8 +102,6 @@ services:
       - type: bind
         source: ./hud/tmp
         target: /opt/ms/tmp
-    networks:
-      - moonspeak-dynamic
 
   grapheditor-bbb.moonspeak.test:
     image: ms-grapheditor:latest
@@ -109,8 +109,6 @@ services:
       context: ./grapheditor
     volumes:
       - /opt/ms/tmp
-    networks:
-      - moonspeak-dynamic
 
   submit-ccc.moonspeak.test:
     image: ms-submit:latest
@@ -118,8 +116,6 @@ services:
       context: ./submit
     volumes:
       - /opt/ms/tmp
-    networks:
-      - moonspeak-dynamic
 
   workelements-ddd.moonspeak.test:
     image: ms-workelements:latest
@@ -127,5 +123,3 @@ services:
       context: ./workelements
     volumes:
       - /opt/ms/tmp
-    networks:
-      - moonspeak-dynamic
