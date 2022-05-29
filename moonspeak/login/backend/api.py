@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+
+# see: https://jpmens.net/2020/02/28/dial-a-for-ansible-and-r-for-runner/
+
 import os
 import logging
 import json
@@ -26,25 +29,21 @@ LOGGER = logging.getLogger(__name__)
 
 HOSTNAME = socket.gethostname()
 
-
 def spin_up_containers(unique_id):
-
     # read ansible and execute on localhost (uses /var/run/docker.sock)
-    r = ansible_runner.run(private_data_dir='../resources', playbook='services.yml')
-    print("{}: {}".format(r.status, r.rc))
-    # successful: 0
-    for each_host_event in r.events:
-        print(each_host_event['event'])
-    print("Final status:")
-    print(r.stats)
-    with open(config_path, "r") as yaml_config:
-        config = yaml.load(yaml_config, Loader=yaml.SafeLoader)
+
+    os.environ["ANSIBLE_NOCOLOR"] = "1"
+    os.environ["ANSIBLE_NOCOWS"] = "1"
+
+    r = ansible_runner.run(
+        private_data_dir="../resources",
+        playbook="services.yml",
+        json_mode=False,         # well-known playbook output
+        quiet=True,         # no stdout here in runner
+    )
 
     services = {
-        "hud": {
-
-
-        }
+        "hud"
         "hud-{}",
         "grapheditor-{}",
         "submit-{}",
@@ -52,20 +51,19 @@ def spin_up_containers(unique_id):
     }
     services = [s.format(str(uuid4())) for s in services]
 
-    for name in services:
-    build_args = {
-        "RAW_IMAGE_NAME": full_tag,
-        "WRAPPER_BINARY_PATH": str(wrapper_binary_path),
-    }
-    try:
-        image, logs = client.images.build(path=".", dockerfile="docker/Dockerfile_upgrade_wrapper.template", buildargs=build_args, tag=full_tag, pull=False)
-        for line in logs:
-            logger.debug(line)
-    except docker.errors.BuildError as e:
-        for line in e.build_log:
-            logger.error(line)
-        logger.exception(f"Could not build image {full_tag}")
-        continue
+    print("{}: {}".format(r.status, r.rc))
+    # successful: 0
+
+    for each_host_event in r.events:
+        print(each_host_event["event"])
+    print("Final status:")
+    print(r.stats)
+
+
+    # return the playbook run output
+    return open(r.stdout.name, "r").read()
+
+
 
 @app.get("/login")
 async def login(request: Request):
