@@ -11,7 +11,7 @@ import requests
 import socket
 
 VERSION = "0.1"
-MY_HOSTNAME = socket.gethostname()
+MY_HOSTNAME = os.getenv("MOONSPEAK_DOMAIN")
 
 
 def modify_root_doc(doc_text, node, service):
