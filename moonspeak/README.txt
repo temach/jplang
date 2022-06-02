@@ -1,11 +1,12 @@
-Some folders are alternative implementations of the same functionallity.
+Display containers with their labels:
+```
+docker container ls -a --format='{{println . }}'
+```
 
-Some are obsoleted, here is the relationship:
-getter          -> router-bottle
-hud             -> router-bottle
-router          -> router-bottle
-router-flask    -> router-bottle
-mxgraph         -> grapheditor
+To get the field names (but docker is quite slow in creating the json):
+```
+docker container ls -a --format='{{json . }}'
+```
 
 When making a new feature:
 - optionally provide moonspeakConnect function if this iframe wants to install plugins into other iframes (place the plugin in /plugins/ dir in top level router)
@@ -219,3 +220,46 @@ This trojan ought to sample the internal state, convert it to message and push w
 How to find where and what the onlooker has injected? 
 One approach: always-on app like smalltalk vm, where we can get into the current executing context and query the attached listeners
 Another approach: log whenever someone uses the injection mechanism (or just ask well behaived onlookers to log it)
+
+
+
+
+
+## Container sizes
+
+Python:alpine container with ansible and docker-python library:
+```
+artem@vivoarch ~> docker container commit -m "Test ansible+docker" fe3fc767e186
+sha256:b9a0b8053d511bfbaabfb508cd94983d58dc48d6ead7d2c2d34849aed33165d0
+artem@vivoarch ~> 
+artem@vivoarch ~> docker image ls
+REPOSITORY                                                                           TAG               IMAGE ID       CREATED          SIZE
+<none>                                                                               <none>            b9a0b8053d51   32 seconds ago   536MB
+moonspeak-deploy                                                                     latest            a1eddcbeab55   2 hours ago      890MB
+moonspeak-login                                                                      latest            da24e9fcdcfd   18 hours ago     135MB
+```
+
+Python:slim container with ansible and docker-python library:
+```
+artem@vivoarch jplang/moonspeak> docker container commit -m "Test python:slim ansible + docker" 3b17960d39f7 
+sha256:b0f4e91ec3ea3b379f783cf8c2b48c26bfeac42e91326eb6b27ce9b26ac25c4b
+artem@vivoarch jplang/moonspeak> docker image ls
+REPOSITORY                                                                           TAG               IMAGE ID       CREATED         SIZE
+<none>                                                                               <none>            b0f4e91ec3ea   2 hours ago     706MB
+<none>                                                                               <none>            b9a0b8053d51   2 hours ago     536MB
+moonspeak-deploy                                                                     latest            a1eddcbeab55   4 hours ago     890MB
+moonspeak-login                                                                      latest            da24e9fcdcfd   20 hours ago    135MB
+```
+
+Alpine:latest with manual python, pip ansible and docker-python
+```
+artem@vivoarch ~> docker commit -m "Raw alpine python + ansible + docker" fb1ce280a883
+sha256:13afc64988a1823db7bcdc6662506732904b29803a3e807f4fa36f5fa43f48b4
+artem@vivoarch ~> docker image ls
+REPOSITORY                                                                           TAG               IMAGE ID       CREATED          SIZE
+<none>                                                                               <none>            13afc64988a1   16 seconds ago   96MB
+<none>                                                                               <none>            b0f4e91ec3ea   23 hours ago     706MB
+<none>                                                                               <none>            b9a0b8053d51   23 hours ago     536MB
+moonspeak-deploy                                                                     latest            a1eddcbeab55   25 hours ago     890MB
+```
+
