@@ -3,7 +3,7 @@
 - name: Create client services
   hosts: localhost
   vars:
-    tmpdir: /opt/moonspeak/tmp
+    tmpdir: /opt/ms/tmp
 
   tasks:
   - name: Create {{ moonspeak_hud_service }} service

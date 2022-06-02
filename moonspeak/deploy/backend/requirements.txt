@@ -1,4 +1,4 @@
-fastapi
-uvicorn
-requests
+bottle
 ansible_runner
+jinja2
+docker

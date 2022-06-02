@@ -1,4 +1,5 @@
 ---
+# https://ansible-runner.readthedocs.io/en/latest/intro/#env-settings-settings-for-runner-itself
 idle_timeout: 600
 job_timeout: 3600
 pexpect_timeout: 10

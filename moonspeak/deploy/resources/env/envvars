@@ -1,2 +1,4 @@
 ---
-TESTVAR: aval
+# https://ansible-runner.readthedocs.io/en/latest/intro/#env-envvars
+ANSIBLE_NOCOLOR: "1"
+ANSIBLE_NOCOWS: "1"

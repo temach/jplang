@@ -1,10 +1,14 @@
----
-moonspeak_domain: moonspeak.test
+# for json watch out for double quotes in value string
+# for yaml watch out for colon in value string
+# choose your poison basically and json is simpler, so we go with that
+{
+    "moonspeak_domain": "moonspeak.test",
 
-moonspeak_hud_uuid: "asdad3"
-moonspeak_graph_uuid: "asd"
-moonspeak_submit_uuid: "asdads"
-moonspeak_workelements_uuid: "sfd"
+    "moonspeak_hud_service": "hud-xxxxx0",
+    "moonspeak_graph_service": "graph-323a418175a442da8285bf28bb64fe99",
+    "moonspeak_submit_service": "submit-313ce6a2a9754eef9b380410663c3e0b",
+    "moonspeak_workelements_service": "workelements-57da1f9d7c354c778808d432c738694d",
 
-moonspeak_hud_config_json: "ads"
-moonspeak_graph_initial_xml: "asdasd"
+    "moonspeak_hud_config_json": "{\"urls\":[\"/plus/\",\"/router/testnode/graph-323a418175a442da8285bf28bb64fe99\"]}",
+    "moonspeak_graph_initial_xml": "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/></root></mxGraphModel>"
+}
