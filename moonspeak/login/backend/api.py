@@ -10,7 +10,7 @@ import requests
 
 from fastapi import FastAPI
 from fastapi.requests import Request
-from fastapi.responses import Response, JSONResponse, RedirectResponse
+from fastapi.responses import Response, JSONResponse, RedirectResponse, HTMLResponse
 
 app = FastAPI()
 
@@ -23,40 +23,45 @@ app = FastAPI()
 
 LOGGER = logging.getLogger(__name__)
 DOMAIN = os.getenv("MOONSPEAK_DOMAIN")
+DEPLOY_SECRET = os.getenv("MOONSPEAK_DEPLOY_SECRET")
 
-@app.get("/login")
+ROW = [0,1,2,3,4,5,6,7]
+
+def nice_id():
+    return "xxxxx" + str(ROW.pop(0))
+
+@app.get("/new")
 async def login(request: Request):
-    # generate unique url, deploy services and redirect
+    # select the node on which to deploy
+    node = "node1"
+
+    # generate unique id
+    unique_id = nice_id()
+
+    # ask to spin up personal containers for this user 
+    deploy_url = f"http://{DOMAIN}/router/{node}/deploy/new/{DEPLOY_SECRET}/{unique_id}"
+
     try:
-        # select the node on which to deploy
-        node = "node1"
-
-        # generate unique id
-        unique_id = "xxxxx"
-
-        # ask to spin up personal containers for this user 
-        deploy_url = "http://{}/router/{}/deploy/new/{}".format(DOMAIN, node, unique_id)
-        r = requests.post(deploy_url)
+        # todo: change to post
+        r = requests.get(deploy_url)
 
         if r.ok:
+            data = r.json()
+            LOGGER.warn(data)
             # return the url of root service 
-            unique_service = "hud-{}".format(unique_id)
-            user_unique_url = "/router/{}/{}".format(node, unique_service)
-            return RedirectResponse(user_unique_url)
+            user_unique_url = data["url"]
+            html = """<h1>We are loading your session!</h1>
+                        <p>Please wait just a short while and <a href="{user_unique_url}">follow this link</a></p>
+                        <p>Meanwhile save this link somewhere safe and secret, its your personal access url.</p>
+                    """.format(user_unique_url)
+            return HTMLResponse(html, status_code=200)
 
-    except Exception as e:
-        print(f"Exception during login: {e}")
-
-    # redirect to our error page
-    service_error_page = "/login/error"
-    return RedirectResponse(service_error_page)
-
-@app.get("/error")
-async def login(request: Request):
-    return """<h1>We failed to load your session!</h1>
-                <p>Please wait 2 minutes and <a href="/login/login">try again</a></p>
-                <p>We registered this problem and will make sure it does not happen again.</p>
-            """
+    except requests.exceptions.ReadTimeout:
+        html = """<h1>We failed to load your session!</h1>
+                    <p>Please wait 2 minutes and <a href="/login/new">try again</a></p>
+                    <p>We registered this problem and will make sure it does not happen again.</p>
+                """
+        return HTMLResponse(html, status_code=500)
 
 # @app.post("/login")
 # async def login(request: Request):
