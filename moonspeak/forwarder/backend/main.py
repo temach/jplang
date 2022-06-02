@@ -3,6 +3,7 @@ import os
 import json
 import sqlite3
 import re
+import logging
 from urllib.parse import unquote_plus
 
 from bottle import route, run, get, static_file, request, HTTPResponse
@@ -12,6 +13,7 @@ import socket
 
 VERSION = "0.1"
 MY_HOSTNAME = os.getenv("MOONSPEAK_DOMAIN")
+logger = logging.getLogger(__name__)
 
 
 def modify_root_doc(doc_text, node, service):
@@ -20,13 +22,13 @@ def modify_root_doc(doc_text, node, service):
     try:
         soup.head.insert(0, base_tag)
     except AttributeError as e:
-        print("Starting debugger becasue of exception: {}".format(e))
-        import pdb; pdb.set_trace()
+        logger.critical("This response has no <head> tag: {}".format(doc_text))
+        # import pdb; pdb.set_trace()
     return str(soup)
 
 
 def retrieve_url(url, req):
-    print(f"Requesting {url}")
+    logger.warn(f"Requesting {url}")
 
     # in bottle request.headers is read-only so we create a new object to pass to requests
     # Host must be deleted so network transport can infer the correct Host header from url
@@ -77,5 +79,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("Running server on port {}".format(args.port))
-    import logging
     run(host="0.0.0.0", port=args.port, debug=True)
