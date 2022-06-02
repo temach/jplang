@@ -14,8 +14,8 @@ version: "3.9"
 services:
   #===================================
   # this service name is not hardcoded
-  gateway.moonspeak.test:
-    image: ms-gateway:latest
+  moonspeak.test:
+    image: moonspeak-gateway:latest
     build:
       context: ./gateway-nginx
     ports:
@@ -24,10 +24,10 @@ services:
       - router.moonspeak.test
 
   router.moonspeak.test:
-    image: ms-router:latest
+    image: moonspeak-router:latest
     # the router inserts reference to hostname into each feature via <base> tag
     # this supplies the correct name
-    env:
+    environment:
       MOONSPEAK_DOMAIN: "moonspeak.test"
     build:
       context: ./forwarder
@@ -36,90 +36,91 @@ services:
 
   #===================================
   login.moonspeak.test:
-    image: ms-login:latest
+    image: moonspeak-login:latest
     # the login creates new user services with names under the hostname domain
     # this supplies the correct domain name
-    env:
+    environment:
       MOONSPEAK_DOMAIN: "moonspeak.test"
+      MOONSPEAK_DEPLOY_SECRET: "same-for-login-and-deploy"
     build:
       context: ./login
 
   deploy.moonspeak.test:
-    image: ms-deploy:latest
+    image: moonspeak-deploy:latest
     # the deploy writes configuration for graph and hud services which have absolute urls
     # this supplies the correct domain and node names
-    env:
-    env:
+    environment:
       MOONSPEAK_DOMAIN: "moonspeak.test"
       MOONSPEAK_NODE: "node1"
+      MOONSPEAK_DEPLOY_SECRET: "same-for-login-and-deploy"
     build:
       context: ./deploy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
   landing.moonspeak.test:
-    image: ms-landing:latest
+    image: moonspeak-landing:latest
     build:
       context: ./landing
 
-  synonyms.moonspeak.test:
-    image: ms-synonyms:latest
-    build:
-      context: ./synonyms
-    volumes:
-      - /opt/ms/tmp
+  # synonyms.moonspeak.test:
+  #   image: moonspeak-synonyms:latest
+  #   build:
+  #     context: ./synonyms
+  #   volumes:
+  #     - /opt/ms/tmp
 
-  suggestions.moonspeak.test:
-    image: ms-suggestions:latest
-    build:
-      context: ./suggestions
-    volumes:
-      - /opt/ms/tmp
+  # suggestions.moonspeak.test:
+  #   image: moonspeak-suggestions:latest
+  #   build:
+  #     context: ./suggestions
+  #   volumes:
+  #     - /opt/ms/tmp
 
-  plugins.moonspeak.test:
-    image: ms-plugins:latest
-    build:
-      context: ./plugins
+  # plugins.moonspeak.test:
+  #   image: moonspeak-plugins:latest
+  #   build:
+  #     context: ./plugins
 
-  plus.moonspeak.test:
-    image: ms-plus:latest
-    build:
-      context: ./plus
+  # plus.moonspeak.test:
+  #   image: moonspeak-plus:latest
+  #   build:
+  #     context: ./plus
 
-  help.moonspeak.test:
-    image: ms-help:latest
-    build:
-      context: ./help
+  # help.moonspeak.test:
+  #   image: moonspeak-help:latest
+  #   build:
+  #     context: ./help
 
   #===================================
   # this is the user's unique access url
-  hud-aaa.moonspeak.test:
-    image: ms-hud:latest
-    build:
-      context: ./hud
-    volumes:
-      - /opt/ms/tmp
-      - type: bind
-        source: ./hud/tmp
-        target: /opt/ms/tmp
+  # hud-zzz-aaa.moonspeak.test:
+  #   image: moonspeak-hud:latest
+  #   build:
+  #     context: ./hud
+  #   volumes:
+  #     - /opt/ms/tmp
+  #     - type: bind
+  #       source: ./hud/tmp
+  #       target: /opt/ms/tmp
 
-  grapheditor-bbb.moonspeak.test:
-    image: ms-grapheditor:latest
-    build:
-      context: ./grapheditor
-    volumes:
-      - /opt/ms/tmp
+  # graph-zzz-bbb.moonspeak.test:
+  #   image: moonspeak-graph:latest
+  #   build:
+  #     context: ./grapheditor
+  #   volumes:
+  #     - /opt/ms/tmp
 
-  submit-ccc.moonspeak.test:
-    image: ms-submit:latest
-    build:
-      context: ./submit
-    volumes:
-      - /opt/ms/tmp
+  # submit-zzz-ccc.moonspeak.test:
+  #   image: moonspeak-submit:latest
+  #   build:
+  #     context: ./submit
+  #   volumes:
+  #     - /opt/ms/tmp
 
-  workelements-ddd.moonspeak.test:
-    image: ms-workelements:latest
-    build:
-      context: ./workelements
-    volumes:
-      - /opt/ms/tmp
+  # workelements-zzz-ddd.moonspeak.test:
+  #   image: moonspeak-workelements:latest
+  #   build:
+  #     context: ./workelements
+  #   volumes:
+  #     - /opt/ms/tmp
