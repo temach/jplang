@@ -1,3 +1,19 @@
+Setup for development:
+
+Add the following to your /etc/hosts
+```
+127.0.0.1	moonspeak.test
+127.0.0.2	deploy.moonspeak.test
+```
+
+Then run `docker-compose up`, and browse to `http://moonsspeak.test`
+
+Using different IPs in /etc/hosts for localhost:
+https://unix.stackexchange.com/questions/576835/display-webpage-with-unix-domain-socket
+
+
+Working with container labels:
+
 Display containers with their labels:
 ```
 docker container ls -a --format='{{println . }}'
