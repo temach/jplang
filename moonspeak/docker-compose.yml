@@ -13,21 +13,20 @@ version: "3.9"
 
 services:
   #===================================
-  # this service name is not hardcoded
   moonspeak.test:
     image: moonspeak-gateway:latest
     build:
       context: ./gateway-nginx
     ports:
-      - "80:80"
+      - "127.0.0.1:80:80"
     depends_on:
       - router.moonspeak.test
 
   router.moonspeak.test:
     image: moonspeak-router:latest
-    # the router inserts reference to hostname into each feature via <base> tag
-    # this supplies the correct name
     environment:
+      # the router inserts reference to hostname into each feature via <base> tag
+      # this supplies the correct name
       MOONSPEAK_DOMAIN: "moonspeak.test"
     build:
       context: ./forwarder
@@ -35,29 +34,6 @@ services:
       - /opt/ms/tmp
 
   #===================================
-  login.moonspeak.test:
-    image: moonspeak-login:latest
-    # the login creates new user services with names under the hostname domain
-    # this supplies the correct domain name
-    environment:
-      MOONSPEAK_DOMAIN: "moonspeak.test"
-      MOONSPEAK_DEPLOY_SECRET: "same-for-login-and-deploy"
-    build:
-      context: ./login
-
-  deploy.moonspeak.test:
-    image: moonspeak-deploy:latest
-    # the deploy writes configuration for graph and hud services which have absolute urls
-    # this supplies the correct domain and node names
-    environment:
-      MOONSPEAK_DOMAIN: "moonspeak.test"
-      MOONSPEAK_NODE: "node1"
-      MOONSPEAK_DEPLOY_SECRET: "same-for-login-and-deploy"
-    build:
-      context: ./deploy
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-
   landing.moonspeak.test:
     image: moonspeak-landing:latest
     build:
@@ -94,33 +70,53 @@ services:
 
   #===================================
   # this is the user's unique access url
-  # hud-zzz-aaa.moonspeak.test:
+  # hud-demouser-aaa.moonspeak.test:
   #   image: moonspeak-hud:latest
   #   build:
   #     context: ./hud
+  #   environment:
+  #     # this json lists urls that hud should load for the user
+  #     MOONSPEAK_HUD_CONFIG_JSON:  "{\"urls\":[\"/plus/\",\"/router/localhost/graph-demouser-bbb\"]}"
   #   volumes:
   #     - /opt/ms/tmp
-  #     - type: bind
-  #       source: ./hud/tmp
-  #       target: /opt/ms/tmp
 
-  # graph-zzz-bbb.moonspeak.test:
+  # graph-demouser-bbb.moonspeak.test:
   #   image: moonspeak-graph:latest
   #   build:
   #     context: ./grapheditor
+  #   environment:
+  #     # this xml sets default graph value
+  #     MOONSPEAK_GRAPH_INITIAL_XML: "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/></root></mxGraphModel>"
   #   volumes:
   #     - /opt/ms/tmp
 
-  # submit-zzz-ccc.moonspeak.test:
+  # submit-demouser-ccc.moonspeak.test:
   #   image: moonspeak-submit:latest
   #   build:
   #     context: ./submit
   #   volumes:
   #     - /opt/ms/tmp
 
-  # workelements-zzz-ddd.moonspeak.test:
+  # workelements-demouser-ddd.moonspeak.test:
   #   image: moonspeak-workelements:latest
   #   build:
   #     context: ./workelements
   #   volumes:
   #     - /opt/ms/tmp
+
+  #===================================
+  # Deploy is used in manual mode, see its source
+  # deploy.moonspeak.test:
+  #   image: moonspeak-deploy:latest
+  #   environment:
+  #     # the deploy writes configuration for graph and hud services which have absolute urls
+  #     # this supplies the correct domain
+  #     MOONSPEAK_DOMAIN: "moonspeak.test"
+  #     MOONSPEAK_DEPLOY_SECRET: "my_secret"
+  #   build:
+  #     context: ./deploy
+  #   ports:
+  #     - "127.0.0.20:80:80"
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+
