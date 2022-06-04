@@ -2,8 +2,8 @@ Setup for development:
 
 Add the following to your /etc/hosts
 ```
-127.0.0.1	moonspeak.test
-127.0.0.2	deploy.moonspeak.test
+127.0.0.10	moonspeak.test
+127.0.0.20	deploy.moonspeak.test
 ```
 
 Then run `docker-compose up`, and browse to `http://moonsspeak.test`
