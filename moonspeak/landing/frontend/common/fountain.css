@@ -1,0 +1,12 @@
+@font-face {
+    font-family: mochiy;
+    src: url('MochiyPopOne-Regular.ttf') format('truetype');
+}
+
+.particle {
+    -webkit-user-select: none;
+    font-family: mochiy, monospace;
+    pointer-events: none;
+    position: fixed;
+    overflow: hidden;
+}
