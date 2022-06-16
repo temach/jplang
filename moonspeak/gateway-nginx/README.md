@@ -38,7 +38,7 @@ Tweak nginx.conf to point listen directive to 127.0.0.1 host:
         listen       127.0.0.1:80 default_server;
 ```
 
-Works with .TEST domains due to config in ./test-upstreams.conf which hardcodes service IPs.
+Works with .TEST domains due to config in ./conf.d/test-upstreams.conf which hardcodes service IPs.
 
 To listen for incoming urls, run netcat in different terminals.
 Listening to what the nginx gateway sends to router.moonspeak.test:
