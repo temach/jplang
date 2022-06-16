@@ -4,7 +4,7 @@ import json
 import sqlite3
 import re
 import logging
-from urllib.parse import unquote_plus
+from urllib.parse import unquote_plus, urlparse
 
 from bottle import route, run, get, static_file, request, HTTPResponse
 from bs4 import BeautifulSoup
@@ -36,7 +36,7 @@ def retrieve_url(url, req):
     bad_headers = frozenset(('Host', 'Content-Length'))
     headers = {k: v for k,v in req.headers.items() if k not in bad_headers}
 
-    r = requests.request(req.method, url, headers=headers, data=req.body)
+    r = requests.request(req.method, url, headers=headers, data=req.body, allow_redirects=False)
 
     # remove hop-by-hop headers
     # see: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection
@@ -68,6 +68,19 @@ def router(node, service, path):
     # url = "http://{}.{}/{}/{}".format(node, MY_HOSTNAME, service, path)
     url = "http://{}.{}/{}".format(service, MY_HOSTNAME, path)
     r = retrieve_url(url, request)
+
+    # if r.status_code == 301:
+    #     location_url = urlparse(r.headers["location"])
+    #     # note: location_url.path already contains leading slash
+    #     new_location_url = location_url._replace(netloc=MY_HOSTNAME)._replace(path=f"{service}{location_url.path}").geturl()
+    #     r.headers["location"] = new_location_url
+
+    if r.headers["content-type"] == "text/html":
+        # modify returned content because we are requesting root doc
+        new_content = modify_root_doc(r.content, node, service)
+        # delete content-lenght so it will get recalculated
+        del r.headers["content-length"]
+
     return HTTPResponse(body=r.content, status=r.status_code, headers=r.headers.items())
 
 
@@ -75,8 +88,9 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Run as "python main.py"')
+    parser.add_argument('--host', type=str, default="0.0.0.0", help='Host interfaec on which to bind')
     parser.add_argument('--port', type=int, default=80, help='port number')
     args = parser.parse_args()
 
     print("Running server on port {}".format(args.port))
-    run(host="0.0.0.0", port=args.port, debug=True)
+    run(host=args.host, port=args.port, debug=True)
