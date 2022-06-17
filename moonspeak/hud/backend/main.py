@@ -6,6 +6,7 @@ import re
 from bottle import route, run, get, static_file, request, HTTPResponse
 
 VERSION = "0.1"
+HUD_CONFIG = os.getenv("MOONSPEAK_HUD_CONFIG_JSON", "{\"urls\":[\"/plus/\",\"/router/localhost/graph-demouser-bbb\"]}")
 
 @get("/")
 def index():
@@ -17,7 +18,7 @@ def static(filepath):
 
 @get("/hud_config.json")
 def static():
-    return static_file("hud_config.json", root="../tmp/")
+    return HUD_CONFIG
 
 if __name__ == "__main__":
     import argparse

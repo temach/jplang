@@ -1,8 +1,6 @@
 FROM python:alpine
 WORKDIR /opt/ms/
 
-RUN mkdir tmp
-
 RUN mkdir backend
 COPY backend/requirements.txt ./
 RUN pip install -r ./requirements.txt
