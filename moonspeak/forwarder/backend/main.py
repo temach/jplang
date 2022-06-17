@@ -5,6 +5,7 @@ import sqlite3
 import re
 import logging
 from urllib.parse import unquote_plus, urlparse
+import urllib3
 
 from bottle import route, run, get, static_file, request, HTTPResponse
 from bs4 import BeautifulSoup
@@ -12,7 +13,7 @@ import requests
 import socket
 
 VERSION = "0.1"
-MY_HOSTNAME = os.getenv("MOONSPEAK_DOMAIN")
+MY_HOSTNAME = os.getenv("MOONSPEAK_DOMAIN", "moonspeak.test")
 logger = logging.getLogger(__name__)
 
 
@@ -28,7 +29,7 @@ def modify_root_doc(doc_text, node, service):
 
 
 def retrieve_url(url, req):
-    logger.warn(f"Requesting {url}")
+    logger.warning(f"Requesting {url}")
 
     # in bottle request.headers is read-only so we create a new object to pass to requests
     # Host must be deleted so network transport can infer the correct Host header from url
@@ -49,25 +50,19 @@ def retrieve_url(url, req):
     return r
 
 
-@route("/router/<node>/<service>", method=["GET"])
-def router_root(node, service):
-    # url = "http://{}.{}/{}".format(node, MY_HOSTNAME, service)
-    url = "http://{}.{}".format(service, MY_HOSTNAME)
-    r = retrieve_url(url, request)
+def handle(node, service, path=""):
+    url = urlparse("")._replace(
+        scheme="http",
+        netloc="{}.{}".format(service, MY_HOSTNAME),
+        path=path,
+        query=request.urlparts.query,
+    ).geturl()
 
-    # modify returned content because we are requesting root doc
-    new_content = modify_root_doc(r.content, node, service)
-    # delete content-lenght so it will get recalculated
-    del r.headers["content-length"]
-
-    return HTTPResponse(body=new_content, status=r.status_code, headers=r.headers.items())
-
-
-@route("/router/<node>/<service>/<path:re:.*>", method=["GET", "HEAD", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"])
-def router(node, service, path):
-    # url = "http://{}.{}/{}/{}".format(node, MY_HOSTNAME, service, path)
-    url = "http://{}.{}/{}".format(service, MY_HOSTNAME, path)
-    r = retrieve_url(url, request)
+    try:
+        r = retrieve_url(url, request)
+    except urllib3.exceptions.NewConnectionError as e: 
+        msg = "{}: {}".format(str(e), url)
+        return HTTPResponse(body=msg, status=503)
 
     # if r.status_code == 301:
     #     location_url = urlparse(r.headers["location"])
@@ -82,6 +77,15 @@ def router(node, service, path):
         del r.headers["content-length"]
 
     return HTTPResponse(body=r.content, status=r.status_code, headers=r.headers.items())
+
+
+@route("/router/<node>/<service>", method=["GET", "HEAD", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"])
+def router_root(node, service):
+    return handle(node, service)
+
+@route("/router/<node>/<service>/<path:re:.*>", method=["GET", "HEAD", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"])
+def router(node, service, path):
+    return handle(node, service, path)
 
 
 if __name__ == "__main__":
