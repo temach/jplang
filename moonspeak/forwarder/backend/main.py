@@ -14,12 +14,13 @@ import socket
 
 VERSION = "0.1"
 MOONSPEAK_DOMAIN = os.getenv("MOONSPEAK_DOMAIN", "moonspeak.test")
+MOONSPEAK_DEBUG = os.getenv("MOONSPEAK_DEBUG", True)
 logger = logging.getLogger(__name__)
 
 
-def modify_root_doc(doc_text, node, service):
+def modify_root_doc(doc_text, root_url):
     soup = BeautifulSoup(doc_text, 'html.parser')
-    base_tag = soup.new_tag("base", href="http://{}/router/{}/{}/".format(MOONSPEAK_DOMAIN, node, service))
+    base_tag = soup.new_tag("base", href=root_url)
     try:
         soup.head.insert(0, base_tag)
     except AttributeError as e:
@@ -58,6 +59,16 @@ def handle(node, service, path=""):
         query=request.urlparts.query,
     ).geturl()
 
+    if MOONSPEAK_DEBUG and ":" in service:
+        # when running on localhost its nice to be able to specify the port too
+        # e.g. http://moonspeak.test/router/localhost/hud-demouser-aaa:8888/
+        # becomes: http://hud-demouser-aaa.moonspeak.test:8888/
+        service_name, service_port = service.split(":")
+        url = urlparse(url)._replace(
+            netloc="{}.{}:{}".format(service_name, MOONSPEAK_DOMAIN, service_port),
+        ).geturl()
+
+
     try:
         r = retrieve_url(url, request)
     except urllib3.exceptions.NewConnectionError as e: 
@@ -71,13 +82,20 @@ def handle(node, service, path=""):
     #     new_location_url = location_url._replace(netloc=MOONSPEAK_DOMAIN)._replace(path=f"{service}{location_url.path}").geturl()
     #     r.headers["location"] = new_location_url
 
-    if r.headers["content-type"] == "text/html":
+    body = r.content
+    if "text/html" in r.headers["content-type"]:
         # modify returned content because we are requesting root doc
-        new_content = modify_root_doc(r.content, node, service)
+        root_url = urlparse(url)._replace(
+            netloc=request.headers["host"],
+            path="/router/{}/{}/".format(node, service),
+            query="",
+        ).geturl()
+
+        body = modify_root_doc(r.content, root_url)
         # delete content-lenght so it will get recalculated
         del r.headers["content-length"]
 
-    return HTTPResponse(body=r.content, status=r.status_code, headers=r.headers.items())
+    return HTTPResponse(body=body, status=r.status_code, headers=r.headers.items())
 
 
 @route("/router/<node>/<service>", method=["GET", "HEAD", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"])
