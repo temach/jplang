@@ -58,10 +58,10 @@ services:
   #   build:
   #     context: ./plugins
 
-  # plus.moonspeak.test:
-  #   image: moonspeak-plus:latest
-  #   build:
-  #     context: ./plus
+  plus.moonspeak.test:
+    image: moonspeak-plus:latest
+    build:
+      context: ./plus
 
   # help.moonspeak.test:
   #   image: moonspeak-help:latest
@@ -70,25 +70,25 @@ services:
 
   #===================================
   # this is the user's unique access url
-  # hud-demouser-aaa.moonspeak.test:
-  #   image: moonspeak-hud:latest
-  #   build:
-  #     context: ./hud
-  #   environment:
-  #     # this json lists urls that hud should load for the user
-  #     MOONSPEAK_HUD_CONFIG_JSON:  "{\"urls\":[\"/plus/\",\"/router/localhost/graph-demouser-bbb\"]}"
-  #   volumes:
-  #     - /opt/ms/tmp
+  hud-demouser-aaa.moonspeak.test:
+    image: moonspeak-hud:latest
+    build:
+      context: ./hud
+    environment:
+      # this json lists urls that hud should load for the user
+      MOONSPEAK_HUD_CONFIG_JSON:  "{\"urls\":[\"/plus/\",\"/router/localhost/graph-demouser-bbb\"]}"
+    volumes:
+      - /opt/ms/tmp
 
-  # graph-demouser-bbb.moonspeak.test:
-  #   image: moonspeak-graph:latest
-  #   build:
-  #     context: ./grapheditor
-  #   environment:
-  #     # this xml sets default graph value
-  #     MOONSPEAK_GRAPH_INITIAL_XML: "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/></root></mxGraphModel>"
-  #   volumes:
-  #     - /opt/ms/tmp
+  graph-demouser-bbb.moonspeak.test:
+    image: moonspeak-graph:latest
+    build:
+      context: ./grapheditor
+    environment:
+      # this xml sets default graph value
+      MOONSPEAK_GRAPH_INITIAL_XML: "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/></root></mxGraphModel>"
+    volumes:
+      - /opt/ms/tmp
 
   # submit-demouser-ccc.moonspeak.test:
   #   image: moonspeak-submit:latest

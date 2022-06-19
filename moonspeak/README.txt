@@ -6,7 +6,7 @@ Add the following to your /etc/hosts
 127.0.0.20	deploy.moonspeak.test
 ```
 
-Then run `docker-compose up`, and browse to `http://moonsspeak.test`
+Then run `docker-compose up`, and browse to `http://moonspeak.test` or `http://moonspeak.test/router/localhost/hud-demouser-aaa`
 
 Using different IPs in /etc/hosts for localhost:
 https://unix.stackexchange.com/questions/576835/display-webpage-with-unix-domain-socket
