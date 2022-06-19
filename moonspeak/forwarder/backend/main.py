@@ -7,7 +7,7 @@ import logging
 from urllib.parse import unquote_plus, urlparse
 import urllib3
 
-from bottle import route, run, get, static_file, request, HTTPResponse
+from bottle import route, run, get, static_file, request, HTTPResponse, error
 from bs4 import BeautifulSoup
 import requests
 import socket
@@ -99,12 +99,27 @@ def handle(node, service, path=""):
 
 
 @route("/router/<node>/<service>", method=["GET", "HEAD", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"])
-def router_root(node, service):
+def forward_root(node, service):
     return handle(node, service)
 
 @route("/router/<node>/<service>/<path:re:.*>", method=["GET", "HEAD", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"])
-def router(node, service, path):
+def forward(node, service, path):
     return handle(node, service, path)
+
+
+# ONLY for debug/development
+# this is roughly equivalent to the gateway nginx configuration
+def handle_debug_routing(error):
+    assert MOONSPEAK_DEBUG, 'Only create debug routing when debugging/developing'
+
+    # remove leading and trailing whitespace and slashes
+    path = request.path.strip().strip("/")
+
+    # get the first parameter and all parameters except the first
+    service_name = path.split("/")[0]
+    service_path = "/".join( path.split("/")[1:] )
+
+    return handle('localhost', service_name, service_path)
 
 
 if __name__ == "__main__":
@@ -114,6 +129,9 @@ if __name__ == "__main__":
     parser.add_argument('--host', type=str, default="0.0.0.0", help='Host interfaec on which to bind')
     parser.add_argument('--port', type=int, default=80, help='port number')
     args = parser.parse_args()
+
+    if MOONSPEAK_DEBUG:
+        error(404)(handle_debug_routing)
 
     print("Running server on port {}".format(args.port))
     run(host=args.host, port=args.port, debug=True)
