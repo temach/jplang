@@ -1,0 +1,16 @@
+services:
+  #===================================
+  gateway:
+    container_name: moonspeak.ru
+    ports:
+      - "80:80"
+
+  forwarder:
+    container_name: router.moonspeak.ru
+    environment:
+      MOONSPEAK_DOMAIN: "moonspeak.ru"
+
+  #===================================
+  landing:
+    container_name: landing.moonspeak.ru
+
