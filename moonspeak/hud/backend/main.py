@@ -27,9 +27,10 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Run as "python main.py"')
+    parser.add_argument('--host', type=str, default="0.0.0.0", help='hostname, e.g. 127.0.0.1')
     parser.add_argument('--port', type=int, default=80, help='port number')
     args = parser.parse_args()
 
     print("Running server on port {}".format(args.port))
     import logging
-    run(host="0.0.0.0", port=args.port, debug=True)
+    run(host=args.host, port=args.port, debug=True)
