@@ -11,6 +11,10 @@ DB_PATH = "../tmp/kanji-grapheditor.db"
 DB = sqlite3.connect(DB_PATH)
 DB.row_factory = sqlite3.Row
 
+GRAPH_INITIAL_XML = os.getenv(
+    "MOONSPEAK_GRAPH_INITIAL_XML",
+    "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/></root></mxGraphModel>"
+)
 
 @get("/open")
 def work():
@@ -29,7 +33,7 @@ def work():
         return row["xml"]
     except Exception as e:
         print(f"Got exception {e}")
-    return '''<mxGraphModel><root><mxCell id="0"/><mxCell id="1" parent="0"/></root></mxGraphModel>'''
+    return GRAPH_INITIAL_XML
 
 
 @post("/save")
