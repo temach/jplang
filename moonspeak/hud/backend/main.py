@@ -6,7 +6,10 @@ import re
 from bottle import route, run, get, static_file, request, HTTPResponse
 
 VERSION = "0.1"
-HUD_CONFIG = os.getenv("MOONSPEAK_HUD_CONFIG_JSON", "{\"urls\":[\"/plus/\",\"/router/localhost/graph-demouser-bbb\"]}")
+HUD_CONFIG = os.getenv(
+    "MOONSPEAK_HUD_CONFIG_JSON",
+    "{\"urls\":[\"/plus/\",\"/router/localhost/graph-demouser-bbb\"]}"
+)
 
 @get("/")
 def index():
