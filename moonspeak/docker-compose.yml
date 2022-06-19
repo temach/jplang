@@ -15,7 +15,7 @@ services:
   #===================================
   gateway:
     container_name: moonspeak.test
-    image: moonspeak-gateway:latest
+    image: docker.io/temachpool/moonspeak-gateway:latest
     build:
       context: ./gateway-nginx
     ports:
@@ -23,7 +23,7 @@ services:
 
   forwarder:
     container_name: router.moonspeak.test
-    image: moonspeak-router:latest
+    image: docker.io/temachpool/moonspeak-router:latest
     environment:
       # the router inserts reference to hostname into each feature via <base> tag
       # this supplies the correct name
@@ -36,11 +36,12 @@ services:
   #===================================
   landing:
     container_name: landing.moonspeak.test
-    image: moonspeak-landing:latest
+    image: docker.io/temachpool/moonspeak-landing:latest
     build:
       context: ./landing
 
-  # synonyms.moonspeak.test:
+  # synonyms:
+  #   container_name: synonyms.moonspeak.test
   #   image: moonspeak-synonyms:latest
   #   build:
   #     context: ./synonyms
