@@ -3,7 +3,7 @@ import os
 import json
 import re
 
-from bottle import route, run, get, static_file, request, HTTPResponse
+from bottle import response, route, run, get, static_file, request, HTTPResponse
 
 VERSION = "0.1"
 HUD_CONFIG = os.getenv(
@@ -21,6 +21,7 @@ def static(filepath):
 
 @get("/hud_config.json")
 def static():
+    response.content_type = "application/json"
     return HUD_CONFIG
 
 if __name__ == "__main__":
