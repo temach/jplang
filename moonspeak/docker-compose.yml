@@ -19,8 +19,6 @@ services:
       context: ./gateway-nginx
     ports:
       - "127.0.0.1:80:80"
-    depends_on:
-      - router.moonspeak.test
 
   router.moonspeak.test:
     image: moonspeak-router:latest
