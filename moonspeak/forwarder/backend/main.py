@@ -13,13 +13,13 @@ import requests
 import socket
 
 VERSION = "0.1"
-MY_HOSTNAME = os.getenv("MOONSPEAK_DOMAIN", "moonspeak.test")
+MOONSPEAK_DOMAIN = os.getenv("MOONSPEAK_DOMAIN", "moonspeak.test")
 logger = logging.getLogger(__name__)
 
 
 def modify_root_doc(doc_text, node, service):
     soup = BeautifulSoup(doc_text, 'html.parser')
-    base_tag = soup.new_tag("base", href="http://{}/router/{}/{}/".format(MY_HOSTNAME, node, service))
+    base_tag = soup.new_tag("base", href="http://{}/router/{}/{}/".format(MOONSPEAK_DOMAIN, node, service))
     try:
         soup.head.insert(0, base_tag)
     except AttributeError as e:
@@ -53,7 +53,7 @@ def retrieve_url(url, req):
 def handle(node, service, path=""):
     url = urlparse("")._replace(
         scheme="http",
-        netloc="{}.{}".format(service, MY_HOSTNAME),
+        netloc="{}.{}".format(service, MOONSPEAK_DOMAIN),
         path=path,
         query=request.urlparts.query,
     ).geturl()
@@ -62,12 +62,13 @@ def handle(node, service, path=""):
         r = retrieve_url(url, request)
     except urllib3.exceptions.NewConnectionError as e: 
         msg = "{}: {}".format(str(e), url)
+        logger.exception(msg)
         return HTTPResponse(body=msg, status=503)
 
     # if r.status_code == 301:
     #     location_url = urlparse(r.headers["location"])
     #     # note: location_url.path already contains leading slash
-    #     new_location_url = location_url._replace(netloc=MY_HOSTNAME)._replace(path=f"{service}{location_url.path}").geturl()
+    #     new_location_url = location_url._replace(netloc=MOONSPEAK_DOMAIN)._replace(path=f"{service}{location_url.path}").geturl()
     #     r.headers["location"] = new_location_url
 
     if r.headers["content-type"] == "text/html":
