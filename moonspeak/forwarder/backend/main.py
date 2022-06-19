@@ -87,7 +87,8 @@ def handle(node, service, path=""):
         # modify returned content because we are requesting root doc
         root_url = urlparse(url)._replace(
             netloc=request.headers["host"],
-            path="/router/{}/{}/".format(node, service),
+            # must use the actual path as root_url, otherwise relative paths "../common/" break
+            path="/router/{}/{}/{}".format(node, service, path),
             query="",
         ).geturl()
 
