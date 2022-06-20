@@ -63,6 +63,7 @@ def handle(node, service, path=""):
         # when running on localhost its nice to be able to specify the port too
         # e.g. http://moonspeak.test/router/localhost/hud-demouser-aaa:8888/
         # becomes: http://hud-demouser-aaa.moonspeak.test:8888/
+        logger.warning("Adding debug routes, so you will never see 404 from router")
         service_name, service_port = service.split(":")
         url = urlparse(url)._replace(
             netloc="{}.{}:{}".format(service_name, MOONSPEAK_DOMAIN, service_port),

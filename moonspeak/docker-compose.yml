@@ -23,6 +23,8 @@ services:
       # the router inserts reference to hostname into each feature via <base> tag
       # this supplies the correct name
       MOONSPEAK_DOMAIN: "moonspeak.test"
+      # turn off debug features when running with docker-compose
+      MOONSPEAK_DEBUG: ""
 
   #===================================
   landing:
