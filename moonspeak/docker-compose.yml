@@ -8,37 +8,25 @@
 #   tty: true         # docker run -t
 # and run "docker attach CONTAINER_NAME"
 #
+# On having both IMAGE and BUILD per service: https://docs.docker.com/compose/compose-file/build/#consistency-with-image
 #
-version: "3.9"
+version: "3"
 
 services:
   #===================================
   gateway:
-    container_name: moonspeak.test
-    image: docker.io/temachpool/moonspeak-gateway:latest
-    build:
-      context: ./gateway-nginx
-    ports:
-      - "127.0.0.1:80:80"
+    image: temachpool/moonspeak-gateway:latest
 
   forwarder:
-    container_name: router.moonspeak.test
-    image: docker.io/temachpool/moonspeak-router:latest
+    image: temachpool/moonspeak-router:latest
     environment:
       # the router inserts reference to hostname into each feature via <base> tag
       # this supplies the correct name
       MOONSPEAK_DOMAIN: "moonspeak.test"
-    build:
-      context: ./forwarder
-    volumes:
-      - /opt/ms/tmp
 
   #===================================
   landing:
-    container_name: landing.moonspeak.test
-    image: docker.io/temachpool/moonspeak-landing:latest
-    build:
-      context: ./landing
+    image: temachpool/moonspeak-landing:latest
 
   # synonyms:
   #   container_name: synonyms.moonspeak.test

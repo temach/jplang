@@ -1,0 +1,21 @@
+version: "3"
+
+services:
+  #===================================
+  gateway:
+    container_name: moonspeak.ru
+    restart: always
+    ports:
+      - "80:80"
+
+  forwarder:
+    container_name: router.moonspeak.ru
+    restart: always
+    environment:
+      MOONSPEAK_DOMAIN: "moonspeak.ru"
+
+  #===================================
+  landing:
+    container_name: landing.moonspeak.ru
+    restart: always
+

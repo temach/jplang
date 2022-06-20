@@ -1,0 +1,21 @@
+version: "3"
+
+services:
+  #===================================
+  gateway:
+    container_name: moonspeak.uk
+    restart: always
+    ports:
+      - "80:80"
+
+  forwarder:
+    container_name: router.moonspeak.uk
+    restart: always
+    environment:
+      MOONSPEAK_DOMAIN: "moonspeak.uk"
+
+  #===================================
+  landing:
+    container_name: landing.moonspeak.uk
+    restart: always
+
