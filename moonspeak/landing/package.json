@@ -1,0 +1,21 @@
+{
+  "name": "landing",
+  "version": "1.0.0",
+  "description": "landing page",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "gulp": "^4.0.2",
+    "del": "^6.1.1",
+    "git-rev-sync": "^3.0.2",
+    "gulp-htmlhint": "^4.0.2",
+    "gulp-htmlmin": "^5.0.1",
+    "gulp-replace": "^1.1.3",
+    "gulp-streamify": "^1.0.2",
+    "replace": "^1.2.1"
+  }
+}
