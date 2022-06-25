@@ -1,39 +1,18 @@
 <!doctype html>
 <html>
-  <head>
-      <meta charset="utf-8">
-      <meta name="description" content="">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>Moonspeak - learn kanji</title>
+  <body>
+      <script src="../common/nunjucks.js"></script>
+      <script type="application/javascript">
+            fetch('signup.json')
+            .then(response => response.json())
+            .then(data => {
+                nunjucks.configure('../common', { autoescape: false, throwOnUndefined: true });
+                let rendered = nunjucks.render('signup.template', data);
 
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-      <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,400,600,700,800,900" rel="stylesheet">
-
-      <link rel="stylesheet" href="../common/scribbler-global.css">
-      <link rel="stylesheet" href="../common/scribbler-landing.css">
-      <link rel="author" href="humans.txt">
-
-      <script defer src="../common/scribbler.js"></script>
-
-      <!-- choose your font: https://www.freejapanesefont.com/tag/commercial-use-ok/page/2/ -->
-      <link rel="stylesheet" href="../common/fountain.css">
-      <script defer src="../common/fountain.js"></script>
-  </head>
-  <body id="fountain">
-    <nav>
-      <img class="logo" src="logo.png">
-      <ul class="menu">
-        <div class="menu__item toggle"><span></span></div>
-        <li class="menu__item"><a href="index.html" class="link link--dark"><i class="fa fa-home"></i> Home</a></li>
-        <li class="menu__item"><a href="doc.html" class="link link--dark"><i class="fa fa-book"></i> Documentation</a></li>
-        <li class="menu__item"><a href="https://github.com/temach/jplang/" class="link link--dark"><i class="fa fa-github"></i> Github</a></li>
-      </ul>
-    </nav>
-    <div class="hero">
-      <h1 class="hero__title">Launching soon!</h1>
-      <p class="hero__description"> We are in closed beta testing right now, follow us on Telegram for updates <a href="https://t.me/moonspeak_uk" target="_blank" class="link link--light">@moonspeak_uk</a></p>
-    </div>
-    <footer class="footer">Moonspeak is open source, help with development on <a href="https://github.com/temach/jplang" target="_blank" class="link link--light">Github</a>.</footer>
-    <script src="scribbler.js"></script>
+                document.open();
+                document.write(rendered);
+                document.close();
+            });
+      </script>
   </body>
 </html>

@@ -6,8 +6,26 @@ const htmlhint = require("gulp-htmlhint");
 const htmlmin = require('gulp-htmlmin');
 const git = require("git-rev-sync");
 const replace = require('gulp-replace');
+const nunjucks = require('gulp-nunjucks');
+const data = require('gulp-data');
+const path = require('path');
+const fs = require('fs');
+const mergejson = require('gulp-merge-json');
+const merge2 = require('merge2');
+const merge = require('merge-stream');
 
 const del = require('del');       //< see https://github.com/gulpjs/gulp/blob/master/docs/recipes/delete-files-folder.md
+
+function prepareTemplateVars(lang) {
+    return function(file) {
+        const language = JSON.parse(fs.readFileSync('./frontend/' + lang + '/' + file.stem + '.json'));
+        return {
+            ...language,
+            git_hash: git.long(),
+            git_date: git.date(),
+        }
+    }
+}
 
 // Minify html and fix links to CSS and JS
 function htmlTask() {
@@ -37,16 +55,23 @@ function htmlTask() {
         "head-script-disabled": true
     };
 
-    return gulp.src('./frontend/*/*.html')
-        .pipe(streamify(replace('{{git:hash}}', git.long())))
-        .pipe(streamify(replace('{{git:date}}', git.date())))
-        .pipe(htmlhint(htmlhintconfig))
-        .pipe(htmlhint.reporter())
-        // write unmangled to debug
-        .pipe(gulp.dest('./debug'))
-        // minify html
-        .pipe(htmlmin({collapseWhitespace:true}))
-        .pipe(gulp.dest('./dist'));
+    const result = merge();
+
+    for (lang of ["test", "ru", "uk", "kz"]) {
+        const render = gulp.src(["./frontend/common/signup.template"])
+                        .pipe(data(prepareTemplateVars(lang)))
+                        .pipe(nunjucks.compile({}, {autoescape: false, throwOnUndefined: true}))
+                        .pipe(htmlhint(htmlhintconfig))
+                        .pipe(htmlhint.reporter())
+                        // write unmangled to debug
+                        .pipe(gulp.dest('./debug/' + lang + '/'))
+                        // minify html
+                        .pipe(htmlmin({collapseWhitespace:true}))
+                        .pipe(gulp.dest('./dist/' + lang + '/'));
+        result.add(render, {end: false});
+    }
+
+    return result.end();
 }
 
 function cleanTask(cb) {
