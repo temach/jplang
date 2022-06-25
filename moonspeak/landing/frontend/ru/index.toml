@@ -4,10 +4,10 @@
       <meta charset="utf-8">
       <meta name="description" content="">
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>{{ title }}</title>
+      <title>Moonspeak - победим иероглифы</title>
 
       <!-- This meta tag holds version info for code, filled by gulp in html build task -->
-      <meta name="application-name" content="Moonspeak" data-git-hash="{{git_hash}}" data-date="{{git_date}}">
+      <meta name="application-name" content="Moonspeak" data-git-hash="{{git:hash}}" data-date="{{git:date}}">
 
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
       <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,400,600,700,800,900" rel="stylesheet">
@@ -29,48 +29,48 @@
       <img class="logo" src="logo.png">
       <ul class="menu">
         <div class="menu__item toggle"><span></span></div>
-        <li class="menu__item"><a href="doc.html" class="link link--dark"><i class="fa fa-book"></i> {{ menu__item__kanji }}</a></li>
-        <li class="menu__item"><a href="doc.html#Development" class="link link--dark"><i class="fa fa-book"></i> {{ menu__item__documentation }} </a></li>
+        <li class="menu__item"><a href="doc.html" class="link link--dark"><i class="fa fa-book"></i> Иероглифы</a></li>
+        <li class="menu__item"><a href="doc.html#Development" class="link link--dark"><i class="fa fa-book"></i> Документация</a></li>
         <li class="menu__item"><a href="https://github.com/temach/jplang/" class="link link--dark"><i class="fa fa-github"></i> Github</a></li>
       </ul>
     </nav>
     <div class="hero">
-        <h1 class="hero__title"> {{ hero__title }} </h1>
-        <p class="hero__description"> {{ hero__description }} </p>
+      <h1 class="hero__title">Moonspeak</h1>
+      <p class="hero__description">Победа над иероглифами!</p>
     </div>
     <div class="wrapper">
       <div class="callout">
-          <p>{{ start_callout }}</p>
-          <a href="signup.html" class="button--primary" target="_blank">{{ start_callout_button }}</a>
+        <p>Без регистрации</p>
+        <a href="signup.html" class="button--primary" target="_blank">Старт &#8594;</a>
       </div>
       <div class="feature">
         <div class="feature__item">
-            <h3 class="section__title">{{ feature_title_1 }} </h3>
-            <p>{{ feature_text_1 }}</p>
+          <h3 class="section__title">Личный список кандзи</h3>
+          <p>Загрузи субтитры или текст книги, чтобы постепенно пополнять личный список иероглифов</p>
         </div>
         <div class="feature__item">
-            <h3 class="section__title">{{feature_title_2}}</h3>
-            <p>{{feature_text_2}}</p>
+          <h3 class="section__title">Фразы мнемоники</h3>
+          <p>Поможем сочинить ЛИЧНУЮ фразу мнемонику для каждого иероглифа</p>
         </div>
         <div class="feature__item">
-            <h3 class="section__title">{{feature_title_3}}</h3>
-            <p>{{feature_text_3}}</p>
+          <h3 class="section__title">Личные границы</h3>
+          <p>Не требуем ни почты, ни телефона</p>
         </div>
         <div class="feature__item">
-            <h3 class="section__title">{{feature_title_4}}</h3>
-            <p>{{feature_text_4}}</p>
+          <h3 class="section__title">Без регистрации & без паролей</h3>
+          <p>Выдаем уникальную ссылку с которой ты можешь зайти с любого устройства, держи ее в секрете</p>
         </div>
         <div class="feature__item">
-            <h3 class="section__title">{{feature_title_5}}</h3>
-            <p>{{feature_text_5}}</p>
+          <h3 class="section__title">Многояз</h3>
+          <p>Словари, синонимы и выражения с иефоглифами сразу на нескольких языках</p>
         </div>
         <div class="feature__item">
-            <h3 class="section__title">{{feature_title_6}}</h3>
-            <p>{{feature_text_6}}</p>
+          <h3 class="section__title">Открытый исходный код</h3>
+          <p>Это открытый проект, участвуй в его развитии на <a href="https://github.com/temach/jplang" target="_blank" class="link link--light">Github</a></p>
         </div>
       </div>
       <div class="installation">
-          <h3 class="section__title">{{dev__title}}</h3>
+        <h3 class="section__title">Разработчикам</h3>
         <div class="tab__container">
           <ul class="tab__menu">
             <li class="tab active" data-tab="mac">mac</li>
@@ -85,13 +85,13 @@
         </div>
       </div>
       <div class="callout">
-          <p>{{doc_callout}}</p>
-          <a href="doc.html" class="button--primary">{{doc_callout_button}}</a>
+        <p>Факты о кандзи и проекте, а также тех. документация проекта</p>
+        <a href="doc.html" class="button--primary">Доки &#8594;</a>
       </div>
     </div>
     <div class="changelog">
       <div class="wrapper">
-          <h3 class="section__title">{{changelog__title}}</h3>
+        <h3 class="section__title">Изменения</h3>
         <div class="changelog__item">
           <div class="changelog__meta">
             <h4 class="changelog__title">v1.1</h4>
@@ -99,7 +99,7 @@
           </div>
           <div class="changelog__detail">
             <ul>
-                <li>{{changelog__detail_2}}</li>
+              <li>Лендинг</li>
             </ul>
           </div>
         </div>
@@ -110,15 +110,15 @@
           </div>
           <div class="changelog__detail">
             <ul>
-                <li>{{changelog__detail_1}}</li>
+              <li>Открылось тестирование</li>
             </ul>
           </div>
         </div>
         <div class="changelog__callout">
-            <a href="#" class="button--secondary">{{changelog__callout_button}}</a>
+          <a href="#" class="button--secondary">История изменений</a>
         </div>
       </div>
     </div>
-    <footer class="footer">{{footer}}</footer>
+    <footer class="footer">Мунспик это открытый проект, участвуй в его разработке на <a href="https://github.com/temach/jplang" target="_blank" class="link link--light">Github</a>.</footer>
   </body>
 </html>

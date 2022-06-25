@@ -11,8 +11,13 @@
             let response = await fetch(basename + '.toml');
             let text = await response.text();
             let data = TOML.parse(text);
-            nunjucks.configure('../common', { autoescape: false, throwOnUndefined: true });
-            let rendered = nunjucks.render(basename + '.template', data);
+            let dummy_data = {
+                ...data,
+                git_hash: "dummy",
+                git_date: "dummy",
+            }
+            nunjucks.configure('../templates', { autoescape: false, throwOnUndefined: true });
+            let rendered = nunjucks.render(basename + '.template', dummy_data);
 
             document.open();
             document.write(rendered);
@@ -21,6 +26,7 @@
 
         // e.g. from "/test/index.html" we get basename == "index"
         let basename = window.location.pathname.split("/").pop(0).split(".")[0];
+        console.log("Mashing template and data for: " + basename);
         main(basename);
       </script>
   </body>

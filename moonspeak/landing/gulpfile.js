@@ -13,12 +13,13 @@ const fs = require('fs');
 const mergejson = require('gulp-merge-json');
 const merge2 = require('merge2');
 const merge = require('merge-stream');
+const TOML = require('fast-toml');
 
 const del = require('del');       //< see https://github.com/gulpjs/gulp/blob/master/docs/recipes/delete-files-folder.md
 
 function prepareTemplateVars(lang) {
     return function(file) {
-        const language = JSON.parse(fs.readFileSync('./frontend/' + lang + '/' + file.stem + '.json'));
+        const language = TOML.parseFileSync('./frontend/' + lang + '/' + file.stem + '.toml')
         return {
             ...language,
             git_hash: git.long(),
@@ -58,7 +59,7 @@ function htmlTask() {
     const result = merge();
 
     for (lang of ["test", "ru", "uk", "kz"]) {
-        const render = gulp.src(["./frontend/common/signup.template"])
+        const render = gulp.src(["./frontend/templates/*.template"])
                         .pipe(data(prepareTemplateVars(lang)))
                         .pipe(nunjucks.compile({}, {autoescape: false, throwOnUndefined: true}))
                         .pipe(htmlhint(htmlhintconfig))
@@ -66,7 +67,7 @@ function htmlTask() {
                         // write unmangled to debug
                         .pipe(gulp.dest('./debug/' + lang + '/'))
                         // minify html
-                        .pipe(htmlmin({collapseWhitespace:true}))
+                        .pipe(htmlmin({collapseWhitespace:true, removeComments: true}))
                         .pipe(gulp.dest('./dist/' + lang + '/'));
         result.add(render, {end: false});
     }
@@ -74,7 +75,7 @@ function htmlTask() {
     return result.end();
 }
 
-function cleanTask(cb) {
+function preCleanTask(cb) {
     return del([
         './debug/**/*',
         './dist/**/*',
@@ -87,10 +88,25 @@ function copyTask(cb) {
         .pipe(gulp.dest('./dist/'));
 }
 
+function postCleanTask(cb) {
+    // remove files that are only used in development
+    return del([
+        './debug/test/*.toml',
+        './dist/test/*.toml',
+
+        './debug/templates',
+        './dist/templates',
+
+        './debug/README.md',
+        './dist/README.md',
+    ]);
+}
+
 // start by copying all files,
 // then gradually improve by overriding some of them with optimised versions
 exports.default = gulp.series(
-    cleanTask,
+    preCleanTask,
     copyTask,
-    htmlTask
+    htmlTask,
+    postCleanTask,
 );
