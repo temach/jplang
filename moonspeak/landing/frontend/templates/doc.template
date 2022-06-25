@@ -1,18 +1,22 @@
 <!doctype html>
-<html>
+<html lang="{{lang}}">
   <head>
-    <meta charset="utf-8">
-    <meta name="description" content="">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{title}}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,400,600,700,800,900" rel="stylesheet">
+      <meta charset="utf-8">
+      <meta name="description" content="">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>{{ title }}</title>
 
-    <link rel="stylesheet" href="../common/scribbler-global.css">
-    <link rel="stylesheet" href="../common/scribbler-doc.css">
-    <link rel="author" href="humans.txt">
+      <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" >
+      <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,400,600,700,800,900" rel="stylesheet">
 
-    <script defer src="../common/scribbler.js"></script>
+      <!-- This meta tag holds version info for code, filled by gulp in html build task -->
+      <meta name="application-name" content="Moonspeak" data-git-hash="{{git_hash}}" data-date="{{git_date}}">
+
+      <link href="../common/scribbler-global.css" rel="stylesheet">
+      <link href="../common/scribbler-landing.css" rel="stylesheet">
+      <link href="humans.txt" rel="author">
+
+      <link href="favicon.png" rel="icon">
   </head>
   <body>
     <div class="doc__bg"></div>
@@ -20,8 +24,8 @@
         <h1 class="logo">{{logo}}</h1>
       <ul class="menu">
         <div class="menu__item toggle"><span></span></div>
-        <li class="menu__item"><a href="index.html" class="link link--dark"><i class="fa fa-home"></i> {{menu__item__index_html}}</a></li>
-        <li class="menu__item"><a href="https://github.com/temach/jplang/" class="link link--dark"><i class="fa fa-github"></i> Github</a></li>
+        <li class="menu__item"><a class="link link--dark" href="index.html"><i class="fa fa-home"></i> {{ menu__item__index_html }} </a></li>
+        <li class="menu__item"><a class="link link--dark" ref="https://github.com/temach/jplang/"><i class="fa fa-github"></i> Github</a></li>
       </ul>
     </nav>
     <div class="wrapper">
@@ -35,32 +39,32 @@
       </aside>
       <article class="doc__content">
         <section class="js-section">
-          <h3 id="Intro" class="section__title"><a href="#Intro"> {{ doc__introduction__title}}  </a></h3>
+          <h3 class="section__title" id="Intro"><a href="#Intro"> {{ doc__introduction__title}}  </a></h3>
 
           <!-- Also: https://japaneseruleof7.com/why-you-must-learn-kanji/ -->
           {{ doc__introduction__html }}
 
-          <hr />
+          <hr>
         </section>
 
         <section class="js-section">
-            <h3 id="Project" class="section__title"><a href="#Project"> {{doc__project__title}}</a></h3>
+            <h3 class="section__title" id="Project"><a href="#Project"> {{doc__project__title}}</a></h3>
 
             {{ doc__project__html }}
 
-          <hr />
+          <hr>
         </section>
 
         <section class="js-section">
-            <h3 id="Development" class="section__title"><a href="#Development">{{doc__dev__title}}</a></h3>
+            <h3 class="section__title" id="Development"><a href="#Development">{{doc__dev__title}}</a></h3>
 
             {{doc__dev__html}}
 
-          <hr />
+          <hr>
         </section>
 
         <section class="js-section">
-            <h3 id="Feedback" class="section__title"><a href="#Feedback">{{doc__feedback__title}}</a></h3>
+            <h3 class="section__title" id="Feedback"><a href="#Feedback">{{doc__feedback__title}}</a></h3>
 
             {{doc__feedback__html}}
 
@@ -73,5 +77,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>
+    <script src="../common/scribbler.js" defer="defer"></script>
   </body>
 </html>

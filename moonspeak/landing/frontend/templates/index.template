@@ -1,37 +1,34 @@
 <!doctype html>
-<html>
+<html lang="{{lang}}">
   <head>
       <meta charset="utf-8">
       <meta name="description" content="">
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>{{ title }}</title>
 
+      <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" >
+      <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,400,600,700,800,900" rel="stylesheet">
+
       <!-- This meta tag holds version info for code, filled by gulp in html build task -->
       <meta name="application-name" content="Moonspeak" data-git-hash="{{git_hash}}" data-date="{{git_date}}">
 
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-      <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,400,600,700,800,900" rel="stylesheet">
-
-      <link rel="stylesheet" href="../common/scribbler-global.css">
-      <link rel="stylesheet" href="../common/scribbler-landing.css">
-      <link rel="author" href="humans.txt">
-
-      <script defer src="../common/scribbler.js"></script>
+      <link href="../common/scribbler-global.css" rel="stylesheet">
+      <link href="../common/scribbler-landing.css" rel="stylesheet">
+      <link href="humans.txt" rel="author">
 
       <!-- choose your font: https://www.freejapanesefont.com/tag/commercial-use-ok/page/2/ -->
-      <link rel="stylesheet" href="../common/fountain.css">
-      <script defer src="../common/fountain.js"></script>
+      <link href="../common/fountain.css" rel="stylesheet">
 
-      <link rel="icon" href="favicon.png">
+      <link href="favicon.png" rel="icon">
   </head>
   <body id="fountain">
     <nav>
-      <img class="logo" src="logo.png">
+      <img class="logo" src="logo.png" alt="Moonspeak project logo">
       <ul class="menu">
         <div class="menu__item toggle"><span></span></div>
-        <li class="menu__item"><a href="doc.html" class="link link--dark"><i class="fa fa-book"></i> {{ menu__item__kanji }}</a></li>
-        <li class="menu__item"><a href="doc.html#Development" class="link link--dark"><i class="fa fa-book"></i> {{ menu__item__documentation }} </a></li>
-        <li class="menu__item"><a href="https://github.com/temach/jplang/" class="link link--dark"><i class="fa fa-github"></i> Github</a></li>
+        <li class="menu__item"><a class="link link--dark" ref="doc.html"><i class="fa fa-book"></i> {{ menu__item__kanji }}</a></li>
+        <li class="menu__item"><a class="link link--dark" ref="doc.html#Development"><i class="fa fa-book"></i> {{ menu__item__documentation }} </a></li>
+        <li class="menu__item"><a class="link link--dark" ref="https://github.com/temach/jplang/"><i class="fa fa-github"></i> Github</a></li>
       </ul>
     </nav>
     <div class="hero">
@@ -41,7 +38,7 @@
     <div class="wrapper">
       <div class="callout">
           <p>{{ start_callout }}</p>
-          <a href="signup.html" class="button--primary" target="_blank">{{ start_callout_button }}</a>
+          <a class="button--primary" href="signup.html" target="_blank">{{ start_callout_button }}</a>
       </div>
       <div class="feature">
         <div class="feature__item">
@@ -86,7 +83,7 @@
       </div>
       <div class="callout">
           <p>{{doc_callout}}</p>
-          <a href="doc.html" class="button--primary">{{doc_callout_button}}</a>
+          <a class="button--primary" href="doc.html">{{doc_callout_button}}</a>
       </div>
     </div>
     <div class="changelog">
@@ -115,10 +112,12 @@
           </div>
         </div>
         <div class="changelog__callout">
-            <a href="#" class="button--secondary">{{changelog__callout_button}}</a>
+            <a class="button--secondary" href="#">{{changelog__callout_button}}</a>
         </div>
       </div>
     </div>
     <footer class="footer">{{footer}}</footer>
+    <script src="../common/scribbler.js" defer="defer"></script>
+    <script src="../common/fountain.js" defer="defer"></script>
   </body>
 </html>

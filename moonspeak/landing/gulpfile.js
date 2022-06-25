@@ -17,13 +17,14 @@ const TOML = require('fast-toml');
 
 const del = require('del');       //< see https://github.com/gulpjs/gulp/blob/master/docs/recipes/delete-files-folder.md
 
-function prepareTemplateVars(lang) {
+function findVariables(lang) {
     return function(file) {
         const language = TOML.parseFileSync('./frontend/' + lang + '/' + file.stem + '.toml')
         return {
             ...language,
             git_hash: git.long(),
             git_date: git.date(),
+            "lang": lang,
         }
     }
 }
@@ -45,9 +46,8 @@ function htmlTask() {
         "title-require": true,
         "alt-require": true,
         "doctype-html5": true,
-        "id-class-value": "underscore",
         "style-disabled": false,
-        "inline-style-disabled": false,
+        "inline-style-disabled": true,
         "inline-script-disabled": false,
         "space-tab-mixed-disabled": "space",
         "id-class-ad-disabled": false,
@@ -56,13 +56,59 @@ function htmlTask() {
         "head-script-disabled": true
     };
 
+
+    const htmlhintconfig2 = {
+        // doctype and head
+        "doctype-first": true,
+        "doctype-html5": true,
+        "html-lang-require": true,
+        "head-script-disabled": true,
+        "style-disabled": true,
+        "script-disabled": false,
+        "title-require": true,
+        // attributes
+        "attr-lowercase": true,
+        "attr-no-duplication": true,
+        "attr-no-unnecessary-whitespace": true,
+        "attr-unsafe-chars": true,
+        "attr-value-double-quotes": true,
+        "attr-value-single-quotes": false,
+        "attr-value-not-empty": true,
+        "attr-sorted": true,
+        "attr-whitespace": true,
+        "alt-require": true,
+        "input-requires-label": true,
+        // tags
+        "tags-check": false,
+        "tag-pair": true,
+        "tag-self-close": false,
+        "tagname-lowercase": true,
+        "tagname-specialchars": true,
+        "empty-tag-not-self-closed": true,
+        "src-not-empty": true,
+        "href-abs-or-rel": false,
+        // id
+        "id-class-ad-disabled": true,
+        "id-class-value": "underscore",
+        "id-unique": true,
+        // inline
+        "inline-script-disabled": true,
+        "inline-style-disabled": true,
+        // formatting
+        "space-tab-mixed-disabled": "space",
+        "spec-char-escape": true,
+    }
+
     const result = merge();
 
-    for (lang of ["test", "ru", "uk", "kz"]) {
+    for (lang of ["test", "ru", "en", "kk"]) {
+    // for (lang of ["test"]) {
         const render = gulp.src(["./frontend/templates/*.template"])
-                        .pipe(data(prepareTemplateVars(lang)))
+                        .pipe(htmlhint(htmlhintconfig2))
+                        .pipe(htmlhint.reporter())
+                        .pipe(data(findVariables(lang)))
                         .pipe(nunjucks.compile({}, {autoescape: false, throwOnUndefined: true}))
-                        .pipe(htmlhint(htmlhintconfig))
+                        .pipe(htmlhint(htmlhintconfig2))
                         .pipe(htmlhint.reporter())
                         // write unmangled to debug
                         .pipe(gulp.dest('./debug/' + lang + '/'))
@@ -91,8 +137,8 @@ function copyTask(cb) {
 function postCleanTask(cb) {
     // remove files that are only used in development
     return del([
-        './debug/test/*.toml',
-        './dist/test/*.toml',
+        './debug/*/*.toml',
+        './dist/*/*.toml',
 
         './debug/templates',
         './dist/templates',
