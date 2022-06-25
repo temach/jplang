@@ -34,6 +34,5 @@
       <p class="hero__description"> {{ hero__description }} </p>
     </div>
     <footer class="footer"> {{ footer }} </footer>
-    <script src="scribbler.js"></script>
   </body>
 </html>

@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@iarna/toml": "^2.2.5",
     "del": "^6.1.1",
     "git-rev-sync": "^3.0.2",
     "gulp": "^4.0.2",
