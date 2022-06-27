@@ -12,10 +12,15 @@ Add DNS records, append moonspeak.test to /etc/hosts
 
 Run nginx via docker. Execute the below command in the directory with README.
 
-Bind mount the HTML files and nginx.conf into the container.
 Expose port 80.
+Bind mount this config folder into the container.
+Bind mount /opt/moonspeak/ to reach unix sockets.
 ```
-# docker run -p 80:80 --mount type=bind,src=$(pwd)/frontend,dst=/etc/nginx/frontend --mount type=bind,src=$(pwd)/nginx.conf,dst=/etc/nginx/nginx.conf -it nginx:alpine
+# docker run -p 80:80 \
+    --mount type=bind,src=$(pwd)/frontend,dst=/etc/nginx/frontend \
+    --mount type=bind,src=$(pwd)/nginx.conf,dst=/etc/nginx/nginx.conf \
+    --mount type=bind,src=/opt/moonspeak/,dst=/opt/moonspeak/ \
+    -it nginx:alpine
 ```
 
 
@@ -29,5 +34,15 @@ Do not start daemon.
 Use the current user to avoid permission denied error, becasue nginx always does setuid/setguid when run as root.
 
 ```
-# sudo nginx -p $(pwd) -c $(pwd)/nginx.conf -g "daemon off; user $(whoami);"
+# sudo nginx -p $(pwd) -c $(pwd)/nginx.conf -g "daemon off; user $(whoami); error_log stderr debug;"
 ```
+
+### Optional step 3: send request
+
+Via unix sockets:
+```
+# curl --unix-socket /opt/moonspeak/landing.sock http://moonspeak.test/
+# curl --unix-socket /opt/moonspeak/landing.sock http://moonspeak.test/test/
+```
+
+Or visit http://moonspeak.test/test/ in browser.
