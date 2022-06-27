@@ -13,7 +13,7 @@ Add DNS records, append moonspeak.test to /etc/hosts
 Run nginx via docker. Execute the below command in the directory with README.
 
 Bind mount nginx.conf into the container.
-Expose port 80.
+Use host network mode so nginx resolves
 ```
 # docker run --network host --mount type=bind,src=$(pwd),dst=/etc/nginx/ -it nginx:alpine
 ```
