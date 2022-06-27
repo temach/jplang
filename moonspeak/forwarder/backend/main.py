@@ -14,7 +14,7 @@ import socket
 
 VERSION = "0.1"
 MOONSPEAK_DOMAIN = os.getenv("MOONSPEAK_DOMAIN", "moonspeak.test")
-MOONSPEAK_DEBUG = os.getenv("MOONSPEAK_DEBUG", True)
+MOONSPEAK_DEBUG = bool(os.getenv("MOONSPEAK_DEBUG", False))
 logger = logging.getLogger(__name__)
 
 
