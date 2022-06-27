@@ -12,10 +12,11 @@ Add DNS records, append moonspeak.test to /etc/hosts
 
 Run nginx via docker. Execute the below command in the directory with README.
 
-Bind mount nginx.conf into the container.
-Use host network mode so nginx resolves
+Expose port 80.
+Bind mount this config folder into the container.
+Bind mount /opt/moonspeak/ to reach unix sockets.
 ```
-# docker run --network host --mount type=bind,src=$(pwd),dst=/etc/nginx/ -it nginx:alpine
+# docker run -p 80:80 --mount type=bind,src=$(pwd),dst=/etc/nginx/ --mount type=bind,src=/opt/moonspeak/,dst=/opt/moonspeak/ -it nginx:alpine
 ```
 
 
@@ -33,20 +34,11 @@ Write to stderr with level of "debug".
 
 ### Optional Step 3: view/debug proxied connections
 
-Tweak nginx.conf to point listen directive to 127.0.0.1 host:
+Install socat utility and listen on the sockets (for router and deploy services):
+
 ```
-        listen       127.0.0.1:80 default_server;
+# sudo socat UNIX-LISTEN:/opt/moonspeak/router.sock,mode=766,fork stdout
+# sudo socat UNIX-LISTEN:/opt/moonspeak/deploy.sock,mode=766,fork stdout
 ```
 
-Works with .TEST domains due to config in ./conf.d/test-upstreams.conf which hardcodes service IPs.
-
-To listen for incoming urls, run netcat in different terminals.
-Listening to what the nginx gateway sends to router.moonspeak.test:
-```
-# sudo netcat -l -p 80 --source 127.0.0.21
-```
-
-Listening to what the nginx gateway sends to deploy.moonspeak.test:
-```
-# sudo netcat -l -p 80 --source 127.0.0.22
-```
+For more socat options, see: http://www.dest-unreach.org/socat/doc/socat.html#ADDRESS_OPTIONS

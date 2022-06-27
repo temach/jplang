@@ -1,8 +1,7 @@
 FROM nginx:alpine
 
-# for production build add:
-# --build-arg PROD_CONFIG="$(cat ./conf.d/prod*)"
-ARG PROD_CONFIG
-RUN echo $PROD_CONFIG > /etc/nginx/prod.conf
+# the certificates are overriden in production
+COPY fullchain.pem /etc/nginx/fullchain.pem
+COPY privkey.pem /etc/nginx/privkey.pem
 
 COPY nginx.conf /etc/nginx/nginx.conf
