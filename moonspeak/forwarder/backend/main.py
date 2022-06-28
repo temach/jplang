@@ -7,7 +7,7 @@ import logging
 from urllib.parse import unquote_plus, urlparse
 import urllib3
 
-from bottle import route, run, get, static_file, request, HTTPResponse, error
+from bottle import route, run, get, static_file, request, HTTPResponse, error, ServerAdapter
 from bs4 import BeautifulSoup
 import requests
 import socket
@@ -111,7 +111,8 @@ def forward(node, service, path):
 
 
 # ONLY for debug/development
-# this is roughly equivalent to the gateway nginx configuration
+# use this to avoid running nginx gateway component
+# this function makes the behaviour roughly equivalent
 def handle_debug_routing(error):
     assert MOONSPEAK_DEBUG, 'Only create debug routing when debugging/developing'
 
@@ -125,16 +126,53 @@ def handle_debug_routing(error):
     return handle('localhost', service_name, service_path)
 
 
+# Taken from bottle.py sources
+class GunicornServer(ServerAdapter):
+    """ Untested. See http://gunicorn.org/configure.html for options. """
+    def run(self, handler):
+        from gunicorn.app.base import Application
+
+        config = {'bind': "%s:%d" % (self.host, int(self.port))}
+        config.update(self.options)
+
+        class GunicornApplication(Application):
+            def init(self, parser, opts, args):
+                return config
+
+            def load(self):
+                return handler
+
+            def load_config(self):
+                # Override the default function from gunicorn because it
+                # tries to do parse_args and that is breaking our parse_args
+
+                config = {}
+                for key, value in self.init(None, None, None).items():
+                    if key in self.cfg.settings and value is not None:
+                        config[key] = value
+
+                for key, value in config.items():
+                    self.cfg.set(key.lower(), value)
+
+                # current directory might be changed by the config now
+                # set up import paths and follow symlinks
+                self.chdir()
+
+        GunicornApplication().run()
+
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Run as "python main.py"')
     parser.add_argument('--host', type=str, default="0.0.0.0", help='Host interfaec on which to bind')
     parser.add_argument('--port', type=int, default=80, help='port number')
+    parser.add_argument('--uds', type=str, default="/opt/moonspeak/unixsock/router.sock", help='Path to unix domain socket for binding')
     args = parser.parse_args()
 
     if MOONSPEAK_DEBUG:
+        # when debug is on, handle 404 by trying to route anyway
         error(404)(handle_debug_routing)
 
-    print("Running server on port {}".format(args.port))
-    run(host=args.host, port=args.port, debug=True)
+    bind_tcp = "{}:{}".format(args.host, args.port)
+    bind_uds = "unix:{}".format(args.uds)
+    run(host=args.host, port=args.port, debug=True, server=GunicornServer, bind=[bind_tcp, bind_uds])
