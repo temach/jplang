@@ -25,12 +25,17 @@ Bind mount /opt/moonspeak/ to reach unix sockets.
 
 ### Step 2: system install option
 
-Install nginx and just run the binary. Execute the below command in the directory with README.
+Install nginx. 
 
-Set config file path with `-c`.
-Do not start daemon.
-Write to stderr with level of "debug".
+Create directory for unix sockets:
+```
+# sudo mkdir -p /opt/moonspeak/unixsock/
+```
 
+Execute the below command in the directory with README:
+- Set config file path with `-c`.
+- Do not start daemon.
+- Write to stderr with level of "debug".
 ```
 # sudo nginx -c $(pwd)/nginx.conf -g "daemon off; error_log stderr debug;"
 ```
