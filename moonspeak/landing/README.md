@@ -26,18 +26,23 @@ Bind mount /opt/moonspeak/ to reach unix sockets.
 
 ### Step 2: system install option
 
-Install nginx and just run the binary. Execute the below command in the directory with README.
+Install nginx. 
 
-Set the prefix with `-p` to serve HTML.
-Set config file path with `-c`.
-Do not start daemon.
-Use the current user to avoid permission denied error, becasue nginx always does setuid/setguid when run as root.
+Create directory for unix sockets:
+```
+# sudo mkdir -p /opt/moonspeak/unixsock/
+```
 
+Execute the below command in the directory with README:
+- Set the prefix with `-p` to serve HTML.
+- Set config file path with `-c`.
+- Do not start daemon.
+- Use the current user to avoid permission denied error, becasue nginx always does setuid/setguid when run as root.
 ```
 # sudo nginx -p $(pwd) -c $(pwd)/nginx.conf -g "daemon off; user $(whoami); error_log stderr debug;"
 ```
 
-### Optional step 3: send request
+### step 3: Send a request
 
 Via unix sockets:
 ```
