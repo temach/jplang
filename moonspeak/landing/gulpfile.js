@@ -101,7 +101,7 @@ function htmlTask() {
 
     const result = merge();
 
-    for (lang of ["test", "ru", "en", "kk"]) {
+    for (lang of ["test", "ru", "en", "kz"]) {
     // for (lang of ["test"]) {
         const render = gulp.src(["./frontend/templates/*.template"])
                         .pipe(htmlhint(htmlhintconfig2))
