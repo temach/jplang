@@ -16,7 +16,10 @@ Expose port 80.
 Bind mount this config folder into the container.
 Bind mount /opt/moonspeak/ to reach unix sockets.
 ```
-# docker run -p 80:80 --mount type=bind,src=$(pwd),dst=/etc/nginx/ --mount type=bind,src=/opt/moonspeak/,dst=/opt/moonspeak/ -it nginx:alpine
+# docker run -p 80:80 \
+    --mount type=bind,src=$(pwd),dst=/etc/nginx/ \
+    --mount type=bind,src=/opt/moonspeak/,dst=/opt/moonspeak/ \
+    -it nginx:alpine
 ```
 
 

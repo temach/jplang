@@ -38,6 +38,7 @@ Execute the below command in the directory with README:
 - Set config file path with `-c`.
 - Do not start daemon.
 - Use the current user to avoid permission denied error, becasue nginx always does setuid/setguid when run as root.
+- Write to stderr with level of "debug".
 ```
 # sudo nginx -p $(pwd) -c $(pwd)/nginx.conf -g "daemon off; user $(whoami); error_log stderr debug;"
 ```
