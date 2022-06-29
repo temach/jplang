@@ -6,8 +6,8 @@ services:
     container_name: moonspeak.ru
     restart: always
     volumes:
-      - "/etc/letsencrypt/live/moonspeak.ru/fullchain.pem:/moonspeak/fullchain.pem:ro"
-      - "/etc/letsencrypt/live/moonspeak.ru/privkey.pem:/moonspeak/privkey.pem:ro"
+      - /etc/letsencrypt/live/moonspeak.ru/fullchain.pem:/etc/nginx/fullchain.pem:ro
+      - /etc/letsencrypt/live/moonspeak.ru/privkey.pem:/etc/nginx/privkey.pem:ro
     ports:
       - "443:443"
 
