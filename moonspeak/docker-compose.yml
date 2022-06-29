@@ -12,13 +12,21 @@
 #
 version: "3"
 
+volumes:
+  # used to share unix sockets
+  opt-moonspeak-unixsock:
+
 services:
   #===================================
   gateway:
     image: temachpool/moonspeak-gateway:latest
+    volumes:
+      - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
 
   forwarder:
     image: temachpool/moonspeak-router:latest
+    volumes:
+      - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
     environment:
       # the router inserts reference to hostname into each feature via <base> tag
       # this supplies the correct name
@@ -29,6 +37,8 @@ services:
   #===================================
   landing:
     image: temachpool/moonspeak-landing:latest
+    volumes:
+      - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
 
   # synonyms:
   #   container_name: synonyms.moonspeak.test
