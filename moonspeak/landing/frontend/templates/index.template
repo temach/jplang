@@ -38,7 +38,7 @@
     <div class="wrapper">
       <div class="callout">
           <p>{{ start_callout }}</p>
-          <a class="button--primary" href="signup.html" title="{{start_callout_button}}" target="_blank">{{ start_callout_button }}</a>
+          <a class="button--primary" href="signup.html" title="{{start_callout_button}}" target="_blank">{{{ start_callout_button }}}</a>
       </div>
       <div class="feature">
         <div class="feature__item">
@@ -83,7 +83,7 @@
       </div>
       <div class="callout">
           <p>{{doc_callout}}</p>
-          <a class="button--primary" href="doc.html" title="{{doc_callout_button}}">{{doc_callout_button}}</a>
+          <a class="button--primary" href="doc.html" title="{{doc_callout_button}}">{{{doc_callout_button}}}</a>
       </div>
     </div>
     <div class="changelog">
