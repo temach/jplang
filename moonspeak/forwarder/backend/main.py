@@ -31,7 +31,7 @@ def modify_root_doc(doc_text, root_url):
     return str(soup)
 
 
-def retrieve_url(url, req):
+def retrieve_url(url, req, opt_headers):
     logger.warning(f"Requesting {url}")
 
     # in bottle request.headers is read-only so we create a new object to pass to requests
@@ -39,6 +39,8 @@ def retrieve_url(url, req):
     # Content-Length must be deleted because bottle always includes it (in case of POST its set to '')
     bad_headers = frozenset(('Host', 'Content-Length'))
     headers = {k: v for k,v in req.headers.items() if k not in bad_headers}
+
+    headers.update(opt_headers)
 
     r = requests.request(req.method, url, headers=headers, data=req.body, allow_redirects=False)
 
@@ -54,20 +56,25 @@ def retrieve_url(url, req):
 
 
 def handle(node, service, path=""):
+    opt_headers = {}
+
     unixsock_path = f"/opt/moonspeak/unixsock/{service}.sock"
     if os.path.exists(unixsock_path):
         scheme = "http+unix"
         netloc = quote_plus(unixsock_path)
+        # pin the Host header, otherwise it becomes "localhost/".
+        # Then the service will know its name and can do relative redirects
+        opt_headers["Host"] = "{}.{}".format(service, MOONSPEAK_DOMAIN)
     else:
-        scheme="http",
-        netloc="{}.{}".format(service, MOONSPEAK_DOMAIN),
+        scheme="http"
+        netloc="{}.{}".format(service, MOONSPEAK_DOMAIN)
 
     url = urlparse("")._replace(
         scheme=scheme,
         netloc=netloc,
         path=path,
         query=request.urlparts.query,
-    ).geturl()
+    )
 
     if MOONSPEAK_DEBUG and ":" in service:
         # when running on localhost its nice to be able to specify the port too
@@ -75,13 +82,12 @@ def handle(node, service, path=""):
         # becomes: http://hud-demouser-aaa.moonspeak.test:8888/
         logger.warning("Adding debug routes, so you will never see 404 from router")
         service_name, service_port = service.split(":")
-        url = urlparse(url)._replace(
+        url = url._replace(
             netloc="{}.{}:{}".format(service_name, MOONSPEAK_DOMAIN, service_port),
-        ).geturl()
-
+        )
 
     try:
-        r = retrieve_url(url, request)
+        r = retrieve_url(url.geturl(), request, opt_headers)
     except urllib3.exceptions.NewConnectionError as e: 
         msg = "{}: {}".format(str(e), url)
         logger.exception(msg)
@@ -96,15 +102,15 @@ def handle(node, service, path=""):
     body = r.content
     if "text/html" in r.headers["content-type"]:
         # modify returned content because we are requesting root doc
-        root_url = urlparse(url)._replace(
+        root_url = url._replace(
             scheme="",
             netloc="",
             # must use the actual path as root_url, otherwise relative paths "../common/" break
             path="/router/{}/{}/{}".format(node, service, path),
             query="",
-        ).geturl()
+        )
 
-        body = modify_root_doc(r.content, root_url)
+        body = modify_root_doc(r.content, root_url.geturl())
         # delete content-lenght so it will get recalculated
         del r.headers["content-length"]
 
