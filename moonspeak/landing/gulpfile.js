@@ -138,9 +138,27 @@ function preCleanTask() {
 }
 
 function copyTask() {
-    return gulp.src('./frontend/common/*')
-        .pipe(gulp.dest('./dist/common/'));
+    return gulp.src([
+            './frontend/*/*', 
+            
+            // exclude these
+            '!./frontend/*/*.html',
+            '!./frontend/*/*.js',
+            '!./frontend/*/*.template',
+            '!./frontend/*/*.toml',
+        ])
+        .pipe(gulp.dest('./dist/'));
 }
+
+function postCleanTask(cb) {
+    // remove files that are only used in development
+    return del([
+        './dist/*/*.toml',
+        './dist/templates',
+        './dist/README.md',
+    ]);
+}
+
 
 // start by copying all files,
 // then gradually improve by overriding some of them with optimised versions
