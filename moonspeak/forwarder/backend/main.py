@@ -4,13 +4,15 @@ import json
 import sqlite3
 import re
 import logging
-from urllib.parse import unquote_plus, urlparse
+from pathlib import Path
+from urllib.parse import unquote_plus, urlparse, quote_plus
 import urllib3
 
 from bottle import route, run, get, static_file, request, HTTPResponse, error, ServerAdapter
 from bs4 import BeautifulSoup
+
 import requests
-import socket
+import requests_unixsocket
 
 VERSION = "0.1"
 MOONSPEAK_DOMAIN = os.getenv("MOONSPEAK_DOMAIN", "moonspeak.test")
@@ -52,9 +54,17 @@ def retrieve_url(url, req):
 
 
 def handle(node, service, path=""):
-    url = urlparse("")._replace(
+    unixsock_path = f"/opt/moonspeak/unixsock/{service}.sock"
+    if os.path.exists(unixsock_path):
+        scheme = "http+unix"
+        netloc = quote_plus(unixsock_path)
+    else:
         scheme="http",
         netloc="{}.{}".format(service, MOONSPEAK_DOMAIN),
+
+    url = urlparse("")._replace(
+        scheme=scheme,
+        netloc=netloc,
         path=path,
         query=request.urlparts.query,
     ).geturl()
@@ -168,6 +178,8 @@ if __name__ == "__main__":
     parser.add_argument('--port', type=int, default=80, help='port number')
     parser.add_argument('--uds', type=str, default="/opt/moonspeak/unixsock/router.sock", help='Path to unix domain socket for binding')
     args = parser.parse_args()
+
+    requests_unixsocket.monkeypatch()
 
     if MOONSPEAK_DEBUG:
         # when debug is on, handle 404 by trying to route anyway
