@@ -143,7 +143,6 @@ function copyTask() {
             
             // exclude these
             '!./frontend/*/*.html',
-            '!./frontend/*/*.js',
             '!./frontend/*/*.template',
             '!./frontend/*/*.toml',
         ])
