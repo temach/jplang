@@ -8,8 +8,15 @@ async function moonspeakRender(basename, languageTag) {
         git_date: "dummy",
         lang: languageTag,
     }
-    nunjucks.configure('../templates', { autoescape: false, throwOnUndefined: true });
-    let rendered = nunjucks.render(basename + '.template', dummy_data);
+    let resp = await fetch("../templates/" + basename + ".template");
+    let templateText = await resp.text();
+    let template = Handlebars.compile(templateText, {strict: true});
+
+    // execute the compiled template and print the output to the console
+    // console.log(template({ doesWhat: "rocks!" }));
+    // nunjucks.configure('../templates', { autoescape: false, throwOnUndefined: true });
+    // let rendered = nunjucks.render(basename + '.template', dummy_data);
+    let rendered = template(dummy_data);
 
     document.open();
     document.write(rendered);

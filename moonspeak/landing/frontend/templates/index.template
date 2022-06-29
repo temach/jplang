@@ -23,12 +23,12 @@
   </head>
   <body id="fountain">
     <nav>
-      <img class="logo" src="logo.png" alt="Moonspeak project logo">
+      <img class="logo" src="logo.png" title="Moonspeak project logo" alt="Moonspeak project logo"/>
       <ul class="menu">
         <div class="menu__item toggle"><span></span></div>
-        <li class="menu__item"><a class="link link--dark" ref="doc.html"><i class="fa fa-book"></i> {{ menu__item__kanji }}</a></li>
-        <li class="menu__item"><a class="link link--dark" ref="doc.html#Development"><i class="fa fa-book"></i> {{ menu__item__documentation }} </a></li>
-        <li class="menu__item"><a class="link link--dark" ref="https://github.com/temach/jplang/"><i class="fa fa-github"></i> Github</a></li>
+        <li class="menu__item"><a class="link link--dark" href="doc.html" title="{{menu__item__kanji}}"><i class="fa fa-book"></i> {{ menu__item__kanji }}</a></li>
+        <li class="menu__item"><a class="link link--dark" href="doc.html#Development" title="{{menu__item__documentation}}"><i class="fa fa-book"></i> {{ menu__item__documentation }} </a></li>
+        <li class="menu__item"><a class="link link--dark" href="https://github.com/temach/jplang/" title="Github"><i class="fa fa-github"></i> Github</a></li>
       </ul>
     </nav>
     <div class="hero">
@@ -38,32 +38,32 @@
     <div class="wrapper">
       <div class="callout">
           <p>{{ start_callout }}</p>
-          <a class="button--primary" href="signup.html" target="_blank">{{ start_callout_button }}</a>
+          <a class="button--primary" href="signup.html" title="{{start_callout_button}}" target="_blank">{{ start_callout_button }}</a>
       </div>
       <div class="feature">
         <div class="feature__item">
             <h3 class="section__title">{{ feature_title_1 }} </h3>
-            <p>{{ feature_text_1 }}</p>
+            <p>{{{ feature_html_1}}}</p>
         </div>
         <div class="feature__item">
             <h3 class="section__title">{{feature_title_2}}</h3>
-            <p>{{feature_text_2}}</p>
+            <p>{{{feature_html_2}}}</p>
         </div>
         <div class="feature__item">
             <h3 class="section__title">{{feature_title_3}}</h3>
-            <p>{{feature_text_3}}</p>
+            <p>{{{feature_html_3}}}</p>
         </div>
         <div class="feature__item">
             <h3 class="section__title">{{feature_title_4}}</h3>
-            <p>{{feature_text_4}}</p>
+            <p>{{{feature_html_4}}}</p>
         </div>
         <div class="feature__item">
             <h3 class="section__title">{{feature_title_5}}</h3>
-            <p>{{feature_text_5}}</p>
+            <p>{{{feature_html_5}}}</p>
         </div>
         <div class="feature__item">
             <h3 class="section__title">{{feature_title_6}}</h3>
-            <p>{{feature_text_6}}</p>
+            <p>{{{feature_html_6}}}</p>
         </div>
       </div>
       <div class="installation">
@@ -83,7 +83,7 @@
       </div>
       <div class="callout">
           <p>{{doc_callout}}</p>
-          <a class="button--primary" href="doc.html">{{doc_callout_button}}</a>
+          <a class="button--primary" href="doc.html" title="{{doc_callout_button}}">{{doc_callout_button}}</a>
       </div>
     </div>
     <div class="changelog">
@@ -112,11 +112,11 @@
           </div>
         </div>
         <div class="changelog__callout">
-            <a class="button--secondary" href="#">{{changelog__callout_button}}</a>
+            <a class="button--secondary" href="#" title="{{changelog__callout_button}}">{{changelog__callout_button}}</a>
         </div>
       </div>
     </div>
-    <footer class="footer">{{footer}}</footer>
+    <footer class="footer">{{{footer_html}}}</footer>
     <script src="../common/scribbler.js" defer="defer"></script>
     <script src="../common/fountain.js" defer="defer"></script>
   </body>

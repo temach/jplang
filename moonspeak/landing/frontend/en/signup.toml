@@ -3,10 +3,10 @@ menu__item__index_html = """Home"""
 menu__item__documentation = """Documentation"""
 hero__title = """Launching soon!"""
 
-hero__description = """
-We are in closed beta testing right now, follow us on Telegram for updates <a class="link link--light" href="https://t.me/moonspeak_uk" target="_blank">@moonspeak_uk</a>.
+hero__description_html = """
+We are in closed beta testing right now, follow us on Telegram for updates <a class="link link--light" href="https://t.me/moonspeak_uk" title="Moonspeak" target="_blank">@moonspeak_uk</a>.
 """
 
-footer = """
-Moonspeak is open source, help with development on <a class="link link--light" href="https://github.com/temach/jplang" target="_blank">Github</a>.
+footer_html = """
+Moonspeak is open source, help with development on <a class="link link--light" href="https://github.com/temach/jplang" title="Github" target="_blank">Github</a>.
 """
