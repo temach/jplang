@@ -52,21 +52,29 @@ doc__dev__html = """
 
 <p>Для запуска локально используется docker-compose.yaml файл с описанием всех сервисов.</p>
 
-<code>
-    $ git clone https://github.com/temach/jplang/ && cd jplang && docker-compose up 
-</code>
+<div class="code__block code__block--notabs">
+    <pre class="code code--block">
+        <code>
+            $ git clone https://github.com/temach/jplang/ && cd jplang && docker-compose up 
+        </code>
+    </pre>
+</div>
 
 <p>Также надо добавить запись в /etc/hosts чтобы направить moonspeak.test на адрес 0.0.0.0</p>
 
-<code>
-    $ cat /etc/hosts
-    # Static table lookup for hostnames.
-    # See hosts(5) for details.
-    127.0.0.1	localhost
+<div class="code__block code__block--notabs">
+    <pre class="code code--block">
+        <code>
+            $ cat /etc/hosts
+            # Static table lookup for hostnames.
+            # See hosts(5) for details.
+            127.0.0.1	localhost
 
-    # moonspeak test environment 
-    127.0.0.1	moonspeak.test
-</code>
+            # moonspeak test environment 
+            127.0.0.1	moonspeak.test
+        </code>
+    </pre>
+</div>
 
 <p>Наконец можно сделать запрос в браузере на <a class="link link--light" href="http://moonspeak.test" title="Moonspeak" target="_blank"><code>http://moonspeak.test</code></a></p>
 """

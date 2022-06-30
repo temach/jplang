@@ -54,21 +54,29 @@ doc__dev__html = """
 <p>Moonspeak uses a micro service architecture, each backend component comes with its own frontend, which integrate via iframe element in the browser.</p>
 <p>In order to run locally, use the docker-compose.yaml file, which describes all the services.</p>
 
-<code>
-    $ git clone https://github.com/temach/jplang/ && cd jplang && docker-compose up 
-</code>
+<div class="code__block code__block--notabs">
+    <pre class="code code--block">
+        <code>
+            $ git clone https://github.com/temach/jplang/ && cd jplang && docker-compose up 
+        </code>
+    </pre>
+</div>
 
 <p>You also need to a record to /etc/hosts to direct moonspeak.test to 0.0.0.0 ip address.</p>
 
-<code>
-    $ cat /etc/hosts
-    # Static table lookup for hostnames.
-    # See hosts(5) for details.
-    127.0.0.1	localhost
+<div class="code__block code__block--notabs">
+    <pre class="code code--block">
+        <code>
+            $ cat /etc/hosts
+            # Static table lookup for hostnames.
+            # See hosts(5) for details.
+            127.0.0.1	localhost
 
-    # moonspeak test environment 
-    127.0.0.1	moonspeak.test
-</code>
+            # moonspeak test environment 
+            127.0.0.1	moonspeak.test
+        </code>
+    </pre>
+</div>
 
 <p>Finally use the browser to request <a class="link link--light" href="http://moonspeak.test" title="Moonspeak test" target="_blank"><code>http://moonspeak.test</code></a></p>
 """
