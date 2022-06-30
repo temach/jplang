@@ -87,15 +87,21 @@ const htmlhintconfig = {
 function htmlTemplateLintTask() {
     return gulp.src(["./frontend/templates/*.template"])
                     .pipe(htmlhint(htmlhintconfig))
-                    .pipe(htmlhint.reporter());
+                    .pipe(htmlhint.reporter())
+                    .pipe(htmlhint.failOnError({suppress: true}));
 }
 
-function printNicerError(err) {
+function annotateError(err) {
     if (err.message.includes("not defined in [object Object]")) {
-        // this is an error about the templates
+        // this is an error about the templates compilation, it is critical
         let data = err.domainEmitter._transformState.writechunk.data.gulp_debug_data;
         let msg = "Error mashing " + data.toml + " with " + data.template + ". Template received null for this variable: " + err.message;
         log.error(c.bold.red(msg));
+    } 
+    else if (err.plugin === 'gulp-htmlhint') {
+        let msg = c.bold.red("HTMLHint reporting uses wrong filenames:\n")
+                + "For errors in " + c.bold.red("templates/ru/doc.html") + " find the actual error in " + c.bold.red("frontend/ru/doc.toml")
+        log.error(msg);
     }
 }
 
@@ -103,7 +109,7 @@ function printNicerError(err) {
 function htmlTask() {
     // use a nodejs domain to get more exact info for handling template errors
     const d = require('domain').create();
-    d.on('error', (err) => {printNicerError(err); throw err;});
+    d.on('error', (err) => {annotateError(err); throw err;});
     d.enter();
 
     const result = merge();
@@ -118,6 +124,7 @@ function htmlTask() {
                 }))
                 .pipe(htmlhint(htmlhintconfig))
                 .pipe(htmlhint.reporter())
+                .pipe(htmlhint.failOnError({ suppress: true }))
                 // minify html
                 .pipe(htmlmin({collapseWhitespace:true, removeComments: true}))
                 .pipe(gulp.dest('./dist/'));
