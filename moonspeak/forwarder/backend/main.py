@@ -100,7 +100,7 @@ def handle(node, service, path=""):
     #     r.headers["location"] = new_location_url
 
     body = r.content
-    if "text/html" in r.headers["content-type"]:
+    if ("content-type" in r.headers) and ("text/html" in r.headers["content-type"]):
         # modify returned content because we are requesting root doc
         root_url = url._replace(
             scheme="",
