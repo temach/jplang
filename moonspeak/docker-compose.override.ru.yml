@@ -11,7 +11,7 @@ services:
     ports:
       - "443:443"
 
-  forwarder:
+  router:
     container_name: router.moonspeak.ru
     restart: always
     environment:

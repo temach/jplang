@@ -23,7 +23,7 @@ services:
     volumes:
       - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
 
-  forwarder:
+  router:
     image: temachpool/moonspeak-router:latest
     volumes:
       - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
