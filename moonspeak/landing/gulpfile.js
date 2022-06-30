@@ -1,30 +1,24 @@
 const gulp = require('gulp');
 
-const streamify = require('gulp-streamify');
-
-const htmlhint = require("gulp-htmlhint");
-const htmlmin = require('gulp-htmlmin');
 const git = require("git-rev-sync");
-const replace = require('gulp-replace');
 const rename = require("gulp-rename");
-const log = require('fancy-log');
 const c = require('ansi-colors');
 
-const handlebars = require('gulp-compile-handlebars');
-
-const data = require('gulp-data');
-const path = require('path');
 const fs = require('fs');
-const mergejson = require('gulp-merge-json');
-const merge2 = require('merge2');
+const data = require('gulp-data');
 const merge = require('merge-stream');
-const TOML = require('fast-toml');
 
 const del = require('del');       //< see https://github.com/gulpjs/gulp/blob/master/docs/recipes/delete-files-folder.md
 
-//==================================================
+
+//===========================================
 // HTML
-//
+const htmlhint = require("gulp-htmlhint");
+const htmlmin = require('gulp-htmlmin');
+const TOML = require('fast-toml');
+const handlebars = require('gulp-compile-handlebars');
+
+
 function findVariables(lang) {
     return function(file) {
         const fp = './frontend/' + lang + '/' + file.stem + '.toml';
@@ -96,12 +90,12 @@ function annotateError(err) {
         // this is an error about the templates compilation, it is critical
         let data = err.domainEmitter._transformState.writechunk.data.gulp_debug_data;
         let msg = "Error mashing " + data.toml + " with " + data.template + ". Template received null for this variable: " + err.message;
-        log.error(c.bold.red(msg));
+        console.error(c.bold.red(msg));
     } 
     else if (err.plugin === 'gulp-htmlhint') {
         let msg = c.bold.red("HTMLHint reporting uses wrong filenames:\n")
                 + "For errors in " + c.bold.red("templates/ru/doc.html") + " find the actual error in " + c.bold.red("frontend/ru/doc.toml")
-        log.error(msg);
+        console.error(msg);
     }
 }
 
@@ -136,6 +130,39 @@ function htmlTask() {
     d.exit();
 
     return result.end();
+}
+
+
+//===========================================
+// Font minify
+const fontmin = require('gulp-fontmin');
+
+// takes the source files and fonts
+// writes the font files only for thouse characters
+// that we use in the source files
+function fontminFountainTask(force_gulp_serial_callback) {
+    let buffers = [];
+
+    gulp.src([
+        './frontend/common/fountain.js',
+    ])
+    .on('data', file => {
+        buffers.push(file.contents);
+    })
+    .on('end', function() {
+        // fontmin needs a ttf font source from which it generates all other fonts
+        let text = Buffer.concat(buffers).toString('utf-8');
+        gulp.src([
+            './frontend/common/MochiyPopOne-Regular.ttf',
+        ])
+        .pipe(fontmin({
+            text: text,
+            hinting: false,
+        }))
+        .pipe(gulp.dest('./dist/common/'))
+        // now we can finally call the callback to say that this task is done
+        .on('end', force_gulp_serial_callback);
+    });
 }
 
 function preCleanTask() {
@@ -176,6 +203,8 @@ exports.default = gulp.series(
     // html
     htmlTemplateLintTask,
     htmlTask,
+
+    fontminFountainTask,
 );
 
 exports.lint = gulp.series(
