@@ -9,6 +9,7 @@ services:
       - "/etc/letsencrypt/live/moonspeak.ru/fullchain.pem:/etc/nginx/fullchain.pem:ro"
       - "/etc/letsencrypt/live/moonspeak.ru/privkey.pem:/etc/nginx/privkey.pem:ro"
     ports:
+      - "80:80"
       - "443:443"
 
   router:

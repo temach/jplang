@@ -8,6 +8,7 @@ services:
       context: ./gateway-nginx
     ports:
       - "127.0.0.1:80:80"
+      - "127.0.0.1:443:443"
 
   router:
     container_name: router.moonspeak.test
