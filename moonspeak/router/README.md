@@ -38,3 +38,19 @@ curl -vvv http://moonspeak.test:8001/router/localhost/hud-demouser-aaa:8002/mypa
 The above request will result in router sending a request to: `http://hud-demouser-aaa.moonspeak.test:8005/mypath` 
 
 If HTML is returned as response it will be changed to include base tag linking to its root: `http://moonspeak.test:8001/router/localhost/hud-demouser-aaa:8002/mypath`
+
+
+
+Rewrite in rust:
+
+html5ever parsers take a TreeSink, they fill it up with data.
+
+kuichi also implements TreeSink:
+https://stackoverflow.com/a/35660699
+https://github.com/kuchiki-rs/kuchiki/issues/89
+A bit about rendering in more details: https://howtorecover.me/vyvod-osnovnoi-vetkoi-analiza-html-v-servo
+
+For XML: https://github.com/servo/html5ever/tree/master/xml5ever/examples
+
+
+kuichi implementation: https://github.com/kuchiki-rs/kuchiki/blob/master/src/parser.rs
