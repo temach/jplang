@@ -851,7 +851,7 @@ text/jcr-cnd					cnd;
 text/markdown					markdown md;
 text/mizar					miz;
 text/n3						n3;
-text/plain		txt asc text pm el c h cc hh cxx hxx f90 conf log;
+text/plain		txt asc text pm el c h cc hh cxx hxx f90 conf log toml;
 text/provenance-notation			provn;
 text/prs.fallenstein.rst			rst;
 text/prs.lines.tag				tag dsc;
