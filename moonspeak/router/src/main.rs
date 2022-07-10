@@ -3,13 +3,16 @@
 
 use serde::Serialize;
 
-use log::{debug, error, log_enabled, info, Level};
+use log::{debug, info, error};
 
 use std::env;
 
 use url::Url;
 
-use awc::{ClientBuilder, http::Uri};
+use awc::{ClientBuilder, Connector, http::Uri};
+use awc_uds::UdsConnector;
+
+use std::path;
 
 use actix_web::{web, App, HttpServer, HttpResponse, HttpRequest, middleware::Logger, HttpMessage};
 
@@ -25,15 +28,13 @@ use html5ever::{QualName, Namespace, LocalName, ns, namespace_url, namespace_pre
 use html5ever::tendril::TendrilSink;
 use std::str::FromStr;
 
+const BODY_LIMIT: usize =  5 * 1024 * 1024;
+const HTML_NS: Namespace = namespace_url!("http://www.w3.org/1999/xhtml");
+
 // This struct represents state
 struct AppState {
     domain: String,
     debug: bool,
-}
-
-#[derive(Serialize)]
-struct ErrorDetails {
-    message: String,
 }
 
 fn create_node(tagname: &str, attrs: Vec<(&str, String)>) -> NodeRef {
@@ -44,7 +45,6 @@ fn create_node(tagname: &str, attrs: Vec<(&str, String)>) -> NodeRef {
             Attribute { prefix: None, value: value }
         ));
     };
-    const HTML_NS : Namespace = namespace_url!("http://www.w3.org/1999/xhtml");
     let qualname = QualName::new(None, HTML_NS, LocalName::from(tagname));
     NodeRef::new_element(qualname, attributes)
 }
@@ -60,39 +60,70 @@ async fn router(
 ) -> HttpResponse {
     debug!("Request: {:?}", req);
 
-    // set scheme and netloc
     let scheme = "http";
 
+    // set netloc (also used to set Host header)
     let netloc = if service.contains(":") && appstate.debug {
-        let mut service_parts_iter = service.split(':');
-        let service_name = service_parts_iter.next().unwrap();
-        let service_port = service_parts_iter.next().unwrap();
+        let (service_name, service_port) = match service.split_once(':') {
+            Some(tuple) => tuple,
+            None => {
+                error!("Bad service name {:?}. Could not split into name:port tuple.", service);
+                return HttpResponse::build(actix_web::http::StatusCode::BAD_REQUEST).finish();
+            },
+        }; 
         format!("{}.{}:{}", service_name, &appstate.domain, service_port)
     } else {
         format!("{}.{}", service, &appstate.domain)
     };
 
     // Make target url
-    let base_str = format!("{}://{}", scheme, &netloc);
-    let mut url = Url::parse(&base_str).unwrap();
-    url.set_path(&path);
-    let s = req.query_string();
-    if !s.is_empty() {
-        url.set_query(Some(s));
-    }
+    let url = {
+        let base_str = format!("{}://{}", scheme, &netloc);
+        let mut url = match Url::parse(&base_str) {
+            Ok(u) => u,
+            Err(error) => {
+                error!("Error with request {:?}", error);
+                return HttpResponse::build(actix_web::http::StatusCode::BAD_REQUEST).finish();
+            },
+        };
+        url.set_path(&path);
+        let s = req.query_string();
+        if !s.is_empty() {
+            url.set_query(Some(s));
+        }
+        url
+    };
 
-    info!("Requesting line {} {:?}", req.method(), url.as_str());
+    let infoline = format!("{} {:?}", req.method(), url.as_str());
+    info!("Requesting line {}", infoline);
 
-    // create a new client using default builder
-    // uds sockets are added in client builder: https://docs.rs/awc-uds/0.1.1/awc_uds/
-    let client_builder = ClientBuilder::new().disable_redirects();
+    let client_req = {
+        let p = format!("/opt/moonspeak/unixsock/{}.sock", service);
+        let unixsock = path::Path::new(&p);
 
-    // make request from incoming request, copies method and headers
-    let client_req = client_builder.finish()
-        .request_from(url.as_str().parse::<Uri>().unwrap(), req.head())
-        .insert_header((actix_web::http::header::HOST, netloc.as_str()));
+        let builder = ClientBuilder::new().disable_redirects();
 
-    debug!("Requesting {:?}", client_req);
+        // select normal or uds client builder
+        let client = if unixsock.exists() {
+            // uds sockets via https://docs.rs/awc-uds/0.1.1/awc_uds/
+            let uds_connector = Connector::new().connector(UdsConnector::new(unixsock));
+            debug!("{} via unixsock {:?}", infoline, unixsock);
+            builder.connector(uds_connector).finish()
+        } else {
+            builder.finish()
+        };
+
+        // make request from incoming request, copies method and headers
+        let uri = Uri::from_str(url.as_str()).expect("This should never happen: could not parse a valid url");
+        let client_req = client
+            .request_from(uri, req.head())
+            .insert_header((actix_web::http::header::HOST, netloc.as_str()));
+
+        debug!("Requesting {:?}", client_req);
+
+        client_req
+    };
+
 
     let finalised = match body.len() {
         0 => client_req.send(),
@@ -102,17 +133,16 @@ async fn router(
     let mut client_resp = match finalised.await {
         Ok(r) => r,
         Err(error) => {
-            error!("Error requesting {:?} {:?}", url.as_str(), error);
+            error!("Error requesting {:?} : {:?}", infoline, error);
             return HttpResponse::build(actix_web::http::StatusCode::BAD_GATEWAY).finish();
         },
     };
 
     debug!("client resp {:?}", client_resp);
 
-    const BODY_LIMIT : usize =  5 * 1024 * 1024;
     let client_resp_raw_body = match client_resp.body().limit(BODY_LIMIT).await {
         Err(error) => {
-            error!("Could not read body from request: {:?}", error);
+            error!("Could not read body from request {} : {:?}", infoline, error);
             return HttpResponse::build(actix_web::http::StatusCode::INTERNAL_SERVER_ERROR).finish();
         },
         Ok(raw_bytes) =>
@@ -126,11 +156,8 @@ async fn router(
                 // run html5ever parser, to get back a kuchiki dom node
                 let dom :NodeRef = parser.one(utf8_body);
 
-                // case 1: landing/test
-                // case 2: landing/test/
-                // case 3: landing/test/index.html
-                let root_url = format!("/router/{}/{}/{}", node, service, path);
-                let base_node = create_node("base", vec![("href", root_url)]);
+                // create <base>, use the actual path as root_url, otherwise relative paths "../common/" break
+                let base_node = create_node("base", vec![("href", req.path().to_string())]);
 
                 debug!("base tag {:?}", base_node);
 
@@ -197,7 +224,7 @@ async fn handler3(
 #[actix_web::main] // or #[tokio::main]
 async fn main() -> std::io::Result<()> {
 
-    // configure the "log" crate to use "info" level for "default" env, i.e. everywhere
+    // configure the "log" crate to use this level for "default" env, i.e. everywhere
     env_logger::init_from_env(env_logger::Env::default().default_filter_or("debug"));
 
     info!("Appstate domain: {:?}", env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.test".to_string()));
