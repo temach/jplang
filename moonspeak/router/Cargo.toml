@@ -11,8 +11,8 @@ log = "0.4.0"
 env_logger = "0.8.4"
 url = "2.2.2"
 awc = "3"
+awc-uds = "0.1.1"
 serde = { version = "1", features = ["derive"] }
 html5ever = "0.25.2"
-# scraper = "0.13"
 kuchiki = "0.8"
-# markup5ever = "0.11"
+clap = { version = "3.2.8", features = ["derive"] }

@@ -45,12 +45,27 @@ Rewrite in rust:
 
 html5ever parsers take a TreeSink, they fill it up with data.
 
-kuichi also implements TreeSink:
+kuchiki also implements TreeSink:
 https://stackoverflow.com/a/35660699
 https://github.com/kuchiki-rs/kuchiki/issues/89
 A bit about rendering in more details: https://howtorecover.me/vyvod-osnovnoi-vetkoi-analiza-html-v-servo
 
 For XML: https://github.com/servo/html5ever/tree/master/xml5ever/examples
 
+kuchiki implementation: https://github.com/kuchiki-rs/kuchiki/blob/master/src/parser.rs
 
-kuichi implementation: https://github.com/kuchiki-rs/kuchiki/blob/master/src/parser.rs
+
+kuchiki has a bug: https://github.com/kuchiki-rs/kuchiki/issues/94 
+Which means to create a new html element we need to use html5ever that is exactly the same as the one kuchiki uses.
+
+
+
+
+# Handling base href correctly
+```
+GET /landing                 -> base="/router/node/landing/"       (nginx redirects this to 307 /landing/test/
+GET /landing/                -> base="/router/node/landing/"
+GET /landing/test            -> base="/router/node/landing/test/"  (nginx redirects this to 301 /landing/test/)
+GET /landing/test/           -> base="/router/node/landing/test/"
+GET /landing/test/index.html -> base="/router/node/landing/test/index.html"
+```

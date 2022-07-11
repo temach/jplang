@@ -1,28 +1,19 @@
-// #[macro_use]
-// extern crate log;
-
-use serde::Serialize;
-
-use log::{debug, info, error};
-
 use std::env;
-
-use url::Url;
-
-use awc::{ClientBuilder, Connector, http::Uri};
-use awc_uds::UdsConnector;
-
 use std::path;
 
 use actix_web::{web, App, HttpServer, HttpResponse, HttpRequest, middleware::Logger, HttpMessage};
+use awc::{ClientBuilder, Connector, http::Uri};
+use awc_uds::UdsConnector;
+use url::Url;
 
+use html5ever::{QualName, Namespace, LocalName, ns, namespace_url};
 use kuchiki::parse_html;
 use kuchiki::NodeRef;
-use kuchiki::NodeData;
 use kuchiki::ExpandedName;
 use kuchiki::Attribute;
 
-use html5ever::{QualName, Namespace, LocalName, ns, namespace_url, namespace_prefix};
+use log::{debug, info, error};
+use clap::Parser;
 
 // Some traits must be included to be used silently
 use html5ever::tendril::TendrilSink;
@@ -31,7 +22,7 @@ use std::str::FromStr;
 const BODY_LIMIT: usize =  5 * 1024 * 1024;
 const HTML_NS: Namespace = namespace_url!("http://www.w3.org/1999/xhtml");
 
-// This struct represents state
+// state struct for actix-web
 struct AppState {
     domain: String,
     debug: bool,
@@ -220,6 +211,24 @@ async fn handler3(
     router(req, node, service, path, appstate, body).await
 }
 
+/// Router component of moonspeak.
+/// A reverse proxy that sets correct <base> tag in proxied HTML responses
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct RouterArgs {
+    /// Path to unix domain socket for binding
+    #[clap(long, value_parser, default_value_t = String::from("/opt/moonspeak/unixsock/router.sock"))]
+    uds: String,
+
+    /// TCP hostname interface on which to bind
+    #[clap(long, value_parser, default_value_t = String::from("0.0.0.0"))]
+    host: String,
+
+    /// TCP port number on which to bind
+    #[clap(long, value_parser, default_value_t = 80)]
+    port: u16,
+}
+
 
 #[actix_web::main] // or #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -227,6 +236,9 @@ async fn main() -> std::io::Result<()> {
     // configure the "log" crate to use this level for "default" env, i.e. everywhere
     env_logger::init_from_env(env_logger::Env::default().default_filter_or("debug"));
 
+    let args = RouterArgs::parse();
+
+    info!("CLI arguments: {:?}", args);
     info!("Appstate domain: {:?}", env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.test".to_string()));
     info!("Appstate debug: {:?}", env::var("MOONSPEAK_DEBUG").unwrap_or(String::new()).len() > 0);
 
@@ -240,9 +252,8 @@ async fn main() -> std::io::Result<()> {
             .route("/router/{node}/{service}", web::to(handler2))
             .route("/router/{node}/{service}/{path:.*}", web::to(handler3))
     })
-    .bind(("0.0.0.0", 8080))?
-    .bind_uds("./here.sock")?
-    .workers(1)
+    .bind((args.host, args.port))?
+    .bind_uds(args.uds)?
     .run()
     .await
 }

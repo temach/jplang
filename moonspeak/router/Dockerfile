@@ -1,11 +1,30 @@
-FROM python:alpine
-WORKDIR /opt/ms/
+# Build via creating a fake project because cargo has no option to download only dependencies:
+# - https://github.com/rust-lang/cargo/issues/2644
+# - https://stackoverflow.com/questions/42130132/can-cargo-download-and-build-dependencies-without-also-building-the-application
+#
+# alternative (brittle) solution with buildkit: https://vsupalov.com/buildkit-cache-mount-dockerfile/
 
-RUN mkdir backend
-COPY backend/requirements.txt ./
-RUN pip install -r ./requirements.txt
+FROM rust as builder
 
-COPY backend/main.py backend/main.py
+RUN rustup target add x86_64-unknown-linux-musl
 
-WORKDIR /opt/ms/backend
-CMD ["python", "main.py"]
+RUN apt-get update
+RUN apt-get install musl musl-dev musl-tools && ld-musl-config
+
+WORKDIR /opt/ms/router
+
+# create fake project to build only dependencies, allows docker caching
+RUN cargo init .
+COPY Cargo.lock ./
+COPY Cargo.toml ./
+RUN cargo build --target=x86_64-unknown-linux-musl --release
+
+# buld this project, COPY does not update timestamp so must touch at least src/main.rs to trigger re-compile
+COPY src/ src/
+RUN touch src/main.rs
+RUN cargo build --target=x86_64-unknown-linux-musl --release 
+
+FROM alpine
+WORKDIR /opt/ms
+COPY --from=builder /opt/ms/router/target/x86_64-unknown-linux-musl/release/router ./
+CMD ["/opt/ms/router"]
