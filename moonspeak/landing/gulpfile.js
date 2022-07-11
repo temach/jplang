@@ -188,6 +188,16 @@ function postCleanTask(cb) {
         './dist/*/*.toml',
         './dist/templates',
         './dist/README.md',
+        // unused fonts 
+        './dist/common/MochiyPopOne-Regular.eot',
+        './dist/common/MochiyPopOne-Regular.css',
+        './dist/common/MochiyPopOne-Regular.svg',
+        './dist/common/MochiyPopOne-Regular.woff',
+        // dynamic libs
+        './dist/common/fast-toml.js',
+        './dist/common/nunjucks.min.js',
+        './dist/common/handlebars.js',
+        './dist/common/boot.js',
     ]);
 }
 
@@ -204,6 +214,7 @@ exports.default = gulp.series(
     htmlTask,
 
     fontminFountainTask,
+    postCleanTask,
 );
 
 exports.lint = gulp.series(
