@@ -1,5 +1,7 @@
 use std::env;
 use std::path;
+use std::os::unix::net::UnixListener;
+use std::fs;
 
 use actix_web::{web, App, HttpServer, HttpResponse, HttpRequest, middleware::Logger, HttpMessage};
 use awc::{ClientBuilder, Connector, http::Uri};
@@ -17,6 +19,7 @@ use clap::Parser;
 
 // Some traits must be included to be used silently
 use html5ever::tendril::TendrilSink;
+use std::os::unix::fs::PermissionsExt;
 use std::str::FromStr;
 
 const BODY_LIMIT: usize =  5 * 1024 * 1024;
@@ -156,7 +159,7 @@ async fn router(
                 let head = match dom.select_first("head") {
                     Ok(h) => h,
                     Err(error) => {
-                        error!("No <head> found in text/html body response for {:?}, error {:?}", url.as_str(), error);
+                        error!("No <head> found in text/html body response for {}, error {:?}", infoline, error);
                         return HttpResponse::build(actix_web::http::StatusCode::INTERNAL_SERVER_ERROR).finish();
                     },
                 };
@@ -164,10 +167,15 @@ async fn router(
                 let head_node = head.as_node();
                 head_node.prepend(base_node);
 
-                // serialize the new body
+                // serialize the new body, add a few bytes to capacity to accomodate modified HTML
                 let mut utf8_body_modified = Vec::with_capacity(raw_bytes.len() + 200);
-                let result = dom.serialize(&mut utf8_body_modified);
-                utf8_body_modified
+                match dom.serialize(&mut utf8_body_modified) {
+                    Ok(_) => utf8_body_modified,
+                    Err(error) => {
+                        error!("Error serialising HTML for {} after modification: {:?}", infoline, error);
+                        return HttpResponse::build(actix_web::http::StatusCode::INTERNAL_SERVER_ERROR).finish();
+                    }
+                }
             } else {
                 raw_bytes.to_vec()
             }
@@ -242,6 +250,11 @@ async fn main() -> std::io::Result<()> {
     info!("Appstate domain: {:?}", env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.test".to_string()));
     info!("Appstate debug: {:?}", env::var("MOONSPEAK_DEBUG").unwrap_or(String::new()).len() > 0);
 
+    let listener = UnixListener::bind(args.uds.clone())?;
+
+    // allow anyone to write to socket, by default allows only self
+    fs::set_permissions(args.uds.clone(), fs::Permissions::from_mode(0o666))?;
+
     HttpServer::new(|| {
         App::new()
             .app_data(web::Data::new(AppState {
@@ -253,7 +266,7 @@ async fn main() -> std::io::Result<()> {
             .route("/router/{node}/{service}/{path:.*}", web::to(handler3))
     })
     .bind((args.host, args.port))?
-    .bind_uds(args.uds)?
+    .listen_uds(listener)?
     .run()
     .await
 }
