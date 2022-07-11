@@ -88,23 +88,23 @@ async fn router(
         url
     };
 
-    let infoline = format!("{} {:?}", req.method(), url.as_str());
-    info!("Requesting line {}", infoline);
+    let infoline = format!("{} {}", req.method(), url.as_str());
+    debug!("Requesting line {}", infoline);
 
-    let client_req = {
+    let (client_req, is_unixsock) = {
         let p = format!("/opt/moonspeak/unixsock/{}.sock", service);
         let unixsock = path::Path::new(&p);
 
         let builder = ClientBuilder::new().disable_redirects();
 
         // select normal or uds client builder
-        let client = if unixsock.exists() {
+        let (client, is_unixsock) = if unixsock.exists() {
             // uds sockets via https://docs.rs/awc-uds/0.1.1/awc_uds/
             let uds_connector = Connector::new().connector(UdsConnector::new(unixsock));
             debug!("{} via unixsock {:?}", infoline, unixsock);
-            builder.connector(uds_connector).finish()
+            (builder.connector(uds_connector).finish(), true)
         } else {
-            builder.finish()
+            (builder.finish(), false)
         };
 
         // make request from incoming request, copies method and headers
@@ -115,7 +115,7 @@ async fn router(
 
         debug!("Requesting {:?}", client_req);
 
-        client_req
+        (client_req, is_unixsock)
     };
 
 
@@ -195,6 +195,17 @@ async fn router(
     };
 
     debug!("responding {:?}", finalised);
+    info!(
+        r#"{} "{} {}" -> "{}" {}"#, 
+        match is_unixsock {
+            true => "unix ",
+            false => "",
+        },
+        // req.method(), req.uri().path_and_query().unwrap_or(&actix_web::http::uri::PathAndQuery::from_static("/")),
+        req.method(), req.uri(),
+        infoline,
+        finalised.status()
+    );
     finalised
 }
 
