@@ -10,7 +10,7 @@
       <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,400,600,700,800,900" rel="stylesheet">
 
       <!-- This meta tag holds version info for code, filled by gulp in html build task -->
-      <meta name="application-name" content="Moonspeak" data-git-hash="{{git_hash}}" data-date="{{git_date}}">
+      <meta name="application-name" content="Moonspeak" data-date="{{build_date}}">
 
       <link href="../common/scribbler-global.css" rel="stylesheet">
       <link href="../common/scribbler-landing.css" rel="stylesheet">

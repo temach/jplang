@@ -25,8 +25,7 @@ function findVariables(lang) {
         const language = TOML.parseFileSync(fp)
         return {
             ...language,
-            git_hash: git.long(),
-            git_date: git.date(),
+            build_date: Date(),
             "lang": lang,
             gulp_debug_data: {
                 template: file.basename,
@@ -103,7 +102,7 @@ function annotateError(err) {
 function htmlTask() {
     // use a nodejs domain to get more exact info for handling template errors
     const d = require('domain').create();
-    d.on('error', (err) => {annotateError(err); throw err;});
+    d.on('error', (err) => {try {annotateError(err)} finally {throw err}});
     d.enter();
 
     const result = merge();

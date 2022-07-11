@@ -4,8 +4,7 @@ async function moonspeakRender(basename, languageTag) {
     let data = TOML.parse(text);
     let dummy_data = {
         ...data,
-        git_hash: "dummy",
-        git_date: "dummy",
+        build_date: Date(),
         lang: languageTag,
     }
     let resp = await fetch("../templates/" + basename + ".template");
