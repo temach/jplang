@@ -19,12 +19,12 @@ volumes:
 services:
   #===================================
   gateway:
-    image: temachpool/moonspeak-gateway:latest
+    image: temachpool/moonspeak-gateway:${TAG:-latest}
     volumes:
       - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
 
   router:
-    image: temachpool/moonspeak-router:latest
+    image: temachpool/moonspeak-router:${TAG:-latest}
     volumes:
       - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
     environment:
@@ -33,10 +33,11 @@ services:
       MOONSPEAK_DOMAIN: "moonspeak.test"
       # turn off debug features when running with docker-compose
       MOONSPEAK_DEBUG: ""
+      RUST_LOG: "router=info"
 
   #===================================
   landing:
-    image: temachpool/moonspeak-landing:latest
+    image: temachpool/moonspeak-landing:${TAG:-latest}
     volumes:
       - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
 
