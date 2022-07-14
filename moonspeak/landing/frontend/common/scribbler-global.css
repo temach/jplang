@@ -171,8 +171,8 @@ hr {
 
 /* menu */
 nav {
-  display: grid;
-  grid-template-columns: 70px auto;
+  display: flex;
+  justify-content: space-between;
 }
 
 .menu {
@@ -263,10 +263,6 @@ table td:first-child {
 }
 
 @media screen and (max-width: 600px) {
-  nav {
-    grid-template-columns: 70px auto;
-  }
-
   .menu__item{
     display: none;
   }
