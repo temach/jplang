@@ -78,7 +78,7 @@ const htmlhintconfig = {
 }
 
 function htmlTemplateLintTask() {
-    return gulp.src(["./frontend/templates/*.template"])
+    return gulp.src(["./frontend/templates/*.html"])
                     .pipe(htmlhint(htmlhintconfig))
                     .pipe(htmlhint.reporter())
                     .pipe(htmlhint.failOnError({suppress: true}));
@@ -93,7 +93,7 @@ function annotateError(err) {
     } 
     else if (err.plugin === 'gulp-htmlhint') {
         let msg = c.bold.red("HTMLHint reporting uses wrong filenames:\n")
-                + "For errors in " + c.bold.red("templates/ru/doc.html") + " find the actual error in " + c.bold.red("frontend/ru/doc.toml")
+                + "Example: for errors in " + c.bold.red("templates/ru/doc.html") + " find the actual error in " + c.bold.red("frontend/ru/doc.toml")
         console.error(msg);
     }
 }
@@ -107,7 +107,7 @@ function htmlTask() {
 
     const result = merge();
     for (const lang of ["test", "ru", "en", "kz"]) {
-        const r = gulp.src(["./frontend/templates/*.template"])
+        const r = gulp.src(["./frontend/templates/*.html"])
                 .pipe(data(findVariables(lang)))
                 .pipe(handlebars({}, {compile: {strict:true}}))
                 // becasue we sourced *.template we need to fix names here
@@ -176,7 +176,7 @@ function copyTask() {
             
             // exclude these
             '!./frontend/*/*.html',
-            '!./frontend/*/*.template',
+            '!./frontend/templates/*.html',
             '!./frontend/*/*.toml',
         ])
         .pipe(gulp.dest('./dist/'));
