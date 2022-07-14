@@ -7,7 +7,7 @@ async function moonspeakRender(basename, languageTag) {
         build_date: Date(),
         lang: languageTag,
     }
-    let resp = await fetch("../templates/" + basename + ".template");
+    let resp = await fetch("../templates/" + basename + ".html");
     let templateText = await resp.text();
     let template = Handlebars.compile(templateText, {strict: true});
 
