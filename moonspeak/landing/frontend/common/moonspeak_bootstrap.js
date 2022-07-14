@@ -37,7 +37,7 @@ function moonspeakBasename() {
 }
 
 // This is the entry point
-function moonspeakBoot(languageTag) {
+function moonspeakBootstrap(languageTag) {
     let basename = moonspeakBasename();
     console.log("Mashing template and data for: " + basename);
     moonspeakRender(basename, languageTag);
