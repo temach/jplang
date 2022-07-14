@@ -17,7 +17,7 @@ Install python 3 and in the directory with this README run:
 python -m http.server 8080
 ```
 
-Then navigate to `http://127.0.0.1:8080/test`
+Then navigate to `http://127.0.0.1:8080/frontend/test`
 
 This is enough to test .toml translations and see how different languages actually display.
 
