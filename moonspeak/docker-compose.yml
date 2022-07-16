@@ -20,11 +20,15 @@ services:
   #===================================
   gateway:
     image: "temachpool/moonspeak-gateway:${TAG:-latest}"
+    build:
+      context: ./gateway-nginx
     volumes:
       - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
 
   router:
     image: "temachpool/moonspeak-router:${TAG:-latest}"
+    build:
+      context: ./router
     volumes:
       - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
     environment:
@@ -38,6 +42,8 @@ services:
   #===================================
   landing:
     image: "temachpool/moonspeak-landing:${TAG:-latest}"
+    build:
+      context: ./landing
     volumes:
       - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
 
