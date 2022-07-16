@@ -11,4 +11,4 @@ cat docker-compose.override.ru.yml
 cat docker-compose.yml 
 
 docker-compose pull
-docker-compose -f docker-compose.yml -f docker-compose.override.ru.yml up -d
+docker-compose -f docker-compose.yml -f docker-compose.override.ru.yml up -d --no-build
