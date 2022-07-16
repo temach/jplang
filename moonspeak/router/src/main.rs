@@ -69,6 +69,7 @@ async fn router(
     } else {
         format!("{}.{}", service, &appstate.domain)
     };
+    debug!("Netloc: {:?}", netloc);
 
     // Make target url
     let url = {
@@ -230,6 +231,56 @@ async fn handler3(
     router(req, node, service, path, appstate, body).await
 }
 
+// Supports the following:
+// curl 'http://moonspeak.test:8080/plus'
+// curl 'http://moonspeak.test:8080/plus/'
+// curl 'http://moonspeak.test:8080/plus' 
+// curl 'http://moonspeak.test:8080/plus?q=1'
+// curl 'http://moonspeak.test:8080/plus/x/y/z' 
+// curl 'http://moonspeak.test:8080/plus/x/y/z?q=1'
+// curl 'http://moonspeak.test:8080/plus/x/y/z/?q=1'
+//
+async fn handler_dev(
+    req: HttpRequest,
+    body: web::Bytes,
+    appstate: web::Data<AppState>
+) -> HttpResponse {
+    // remove leading whitespace and slashes
+    // so they dont affect .split_once() later
+    let trimmed_path = req.uri().path()
+        .trim().trim_start_matches("/");
+
+
+    let (service_name, service_path) = if trimmed_path.contains("/") {
+        // there was a full path e.g. moonspeak.test/plus/x/y/z?q=1
+        // get the first segment and all segments except the first
+        match trimmed_path.split_once('/') {
+            Some(tuple) => tuple,
+            None => {
+                error!("Dev mode: bad path {:?}. Could not split into name:path tuple.", trimmed_path);
+                return HttpResponse::build(actix_web::http::StatusCode::BAD_REQUEST).finish();
+            }
+        }
+    } else if trimmed_path.contains("?") {
+        // there was no trailing slash but a query e.g. moonspeak.test/plus?q=1
+        // get the first segment and all of query
+        match trimmed_path.split_once('?') {
+            Some(tuple) => tuple,
+            None => {
+                error!("Dev mode: bad path {:?}. Could not split into name:path tuple.", trimmed_path);
+                return HttpResponse::build(actix_web::http::StatusCode::BAD_REQUEST).finish();
+            }
+        }
+    } else {
+        // there was no trailing slash, e.g. moonspeak.test/plus
+        (trimmed_path, "")
+    };
+
+    let s_service_name = String::from(service_name);
+    let s_service_path = String::from(service_path);
+    router(req, String::from("localhost"), s_service_name, s_service_path, appstate, body).await
+}
+
 /// Router component of moonspeak.
 /// A reverse proxy that sets correct <base> tag in proxied HTML responses
 #[derive(Parser, Debug)]
@@ -267,14 +318,22 @@ async fn main() -> std::io::Result<()> {
     fs::set_permissions(args.uds.clone(), fs::Permissions::from_mode(0o666))?;
 
     HttpServer::new(|| {
-        App::new()
+        let moonspeak_debug = env::var("MOONSPEAK_DEBUG").unwrap_or(String::new()).len() > 0;
+
+        let app_base = App::new()
             .app_data(web::Data::new(AppState {
                 domain: env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.test".to_string()),
-                debug: env::var("MOONSPEAK_DEBUG").unwrap_or(String::new()).len() > 0,
+                debug: moonspeak_debug,
             }))
             .wrap(Logger::default())
             .route("/router/{node}/{service}", web::to(handler2))
-            .route("/router/{node}/{service}/{path:.*}", web::to(handler3))
+            .route("/router/{node}/{service}/{path:.*}", web::to(handler3));
+
+        if moonspeak_debug {
+            app_base.default_service(web::to(handler_dev))
+        } else {
+            app_base
+        }
     })
     .bind((args.host, args.port))?
     .listen_uds(listener)?
