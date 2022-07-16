@@ -4,6 +4,8 @@ services:
   #===================================
   gateway:
     container_name: moonspeak.test
+    build:
+      context: ./gateway-nginx
     ports:
       - "127.0.0.1:8443:8443"
       - "127.0.0.1:443:443"
@@ -11,9 +13,13 @@ services:
 
   router:
     container_name: router.moonspeak.test
+    build:
+      context: ./router
     environment:
       MOONSPEAK_DOMAIN: "moonspeak.test"
 
   #===================================
   landing:
     container_name: landing.moonspeak.test
+    build:
+      context: ./landing
