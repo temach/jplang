@@ -14,7 +14,7 @@ use kuchiki::NodeRef;
 use kuchiki::ExpandedName;
 use kuchiki::Attribute;
 
-use log::{debug, info, error};
+use log::{debug, info, warn, error};
 use clap::Parser;
 
 // Some traits must be included to be used silently
@@ -23,12 +23,13 @@ use std::os::unix::fs::PermissionsExt;
 use std::str::FromStr;
 
 const BODY_LIMIT: usize =  5 * 1024 * 1024;
+
 const HTML_NS: Namespace = namespace_url!("http://www.w3.org/1999/xhtml");
 
 // state struct for actix-web
 struct AppState {
     domain: String,
-    debug: bool,
+    dev_mode: bool,
 }
 
 fn create_node(tagname: &str, attrs: Vec<(&str, String)>) -> NodeRef {
@@ -57,7 +58,7 @@ async fn router(
     let scheme = "http";
 
     // set netloc (also used to set Host header)
-    let netloc = if service.contains(":") && appstate.debug {
+    let netloc = if service.contains(":") && appstate.dev_mode {
         let (service_name, service_port) = match service.split_once(':') {
             Some(tuple) => tuple,
             None => {
@@ -281,6 +282,17 @@ async fn handler_dev(
     router(req, String::from("localhost"), s_service_name, s_service_path, appstate, body).await
 }
 
+fn make_uds(args_uds: String) -> std::io::Result<UnixListener> { 
+    let listener = UnixListener::bind(args_uds.clone())?;
+    // allow anyone to write to socket, by default allows only self
+    fs::set_permissions(args_uds.clone(), fs::Permissions::from_mode(0o666))?;
+    Ok(listener)
+}
+
+fn is_dev_mode() -> bool {
+    env::var("MOONSPEAK_DEV_MODE").unwrap_or(String::new()).len() > 0
+}
+
 /// Router component of moonspeak.
 /// A reverse proxy that sets correct <base> tag in proxied HTML responses
 #[derive(Parser, Debug)]
@@ -307,36 +319,53 @@ async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::default().default_filter_or("debug"));
 
     let args = RouterArgs::parse();
-
     info!("CLI arguments: {:?}", args);
     info!("Appstate domain: {:?}", env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.test".to_string()));
-    info!("Appstate debug: {:?}", env::var("MOONSPEAK_DEBUG").unwrap_or(String::new()).len() > 0);
+    info!("Appstate dev_mode: {:?}", is_dev_mode());
 
-    let listener = UnixListener::bind(args.uds.clone())?;
+    if is_dev_mode() {
 
-    // allow anyone to write to socket, by default allows only self
-    fs::set_permissions(args.uds.clone(), fs::Permissions::from_mode(0o666))?;
+        // dev configuration
+        let server = HttpServer::new(|| {
+            App::new()
+                .app_data(web::Data::new(AppState {
+                    domain: env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.test".to_string()),
+                    dev_mode: is_dev_mode(),
+                }))
+                .wrap(Logger::default())
+                .route("/router/{node}/{service}", web::to(handler2))
+                .route("/router/{node}/{service}/{path:.*}", web::to(handler3))
+                .default_service(web::to(handler_dev))
+        })
+        .bind((args.host, args.port))?;
 
-    HttpServer::new(|| {
-        let moonspeak_debug = env::var("MOONSPEAK_DEBUG").unwrap_or(String::new()).len() > 0;
+        let server = match make_uds(args.uds.clone()) {
+            Ok(uds) => server.listen_uds(uds)?,
+            Err(e) => {
+                warn!("Dev mode: skipping bind to unix socket {:?} due to error {:?}", args.uds, e);
+                server
+            }
+        };
 
-        let app_base = App::new()
-            .app_data(web::Data::new(AppState {
-                domain: env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.test".to_string()),
-                debug: moonspeak_debug,
-            }))
-            .wrap(Logger::default())
-            .route("/router/{node}/{service}", web::to(handler2))
-            .route("/router/{node}/{service}/{path:.*}", web::to(handler3));
+        server.run().await
 
-        if moonspeak_debug {
-            app_base.default_service(web::to(handler_dev))
-        } else {
-            app_base
-        }
-    })
-    .bind((args.host, args.port))?
-    .listen_uds(listener)?
-    .run()
-    .await
+    } else {
+
+        // prod configuration
+        let uds = make_uds(args.uds.clone())?;
+        HttpServer::new(|| {
+            App::new()
+                .app_data(web::Data::new(AppState {
+                    domain: env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.test".to_string()),
+                    dev_mode: is_dev_mode(),
+                }))
+                .wrap(Logger::default())
+                .route("/router/{node}/{service}", web::to(handler2))
+                .route("/router/{node}/{service}/{path:.*}", web::to(handler3))
+        })
+        .bind((args.host, args.port))?
+        .listen_uds(uds)?
+        .run()
+        .await
+    }
 }
