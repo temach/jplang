@@ -306,7 +306,8 @@ MoonspeakEditor.prototype.init = function()
 
     window.addEventListener("message", (event) =>
     {
-        if (event.origin !== window.top.location.origin) {
+        let eventUrl = new URL(event.origin);
+        if (eventUrl.hostname !== window.location.hostname) {
             // we only accept messages from the IFrames (must be on the same domain)
             return;
         }

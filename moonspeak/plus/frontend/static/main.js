@@ -6,6 +6,6 @@ function request_feature(feature_url) {
     console.log(window.location + " posted:");
     console.log(message);
     if (window !== window.parent) {
-        window.parent.postMessage(message, window.location.origin);
+        window.parent.postMessage(message, window.parent.location.origin);
     }
 }

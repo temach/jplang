@@ -124,7 +124,8 @@ function arrayBroadcast(eventSource, eventData, array) {
 }
 
 function onMessage(event) {
-    if (event.origin !== window.top.location.origin) {
+    let eventUrl = new URL(event.origin);
+    if (eventUrl.hostname !== window.location.hostname) {
         // accept only messages for your domain
         return;
     }
