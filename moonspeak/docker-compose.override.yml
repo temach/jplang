@@ -1,3 +1,23 @@
+# This file is applied automatically by docker-compose
+# see: https://docs.docker.com/compose/extends/
+#
+#
+# port definitions for services are for debug/development, except the gateway service 
+# which is exposed to the internet
+#
+#
+# for debug/development define moonspeak.test in /etc/hosts 
+#
+#
+# For pdb debug add to service definition:
+#   stdin_open: true  # docker run -i
+#   tty: true         # docker run -t
+# and run "docker attach CONTAINER_NAME"
+#
+#
+# On having both IMAGE and BUILD per service: https://docs.docker.com/compose/compose-file/build/#consistency-with-image
+#
+#
 version: "3"
 
 services:
@@ -19,9 +39,56 @@ services:
       MOONSPEAK_DOMAIN: "moonspeak.test"
       MOONSPEAK_DEV_MODE: "true"
       RUST_LOG: "router=info"
+    ports:
+        - "127.0.0.1:8000:80"
 
   #===================================
   landing:
     container_name: landing.moonspeak.test
     build:
       context: ./landing
+
+  #===================================
+  # Services for dev mode only
+  plus.moonspeak.test:
+    container_name: plus.moonspeak.test
+    image: moonspeak-plus:latest
+    build:
+      context: ./plus
+
+  #===================================
+  # this is the user's unique access url
+  hud-demo:
+    container_name: hud-demouser-aaa.moonspeak.test
+    image: moonspeak-hud:latest
+    build:
+      context: ./hud
+    environment:
+      # this json lists urls that hud should load for the user
+      MOONSPEAK_HUD_CONFIG_JSON:  "{\"urls\":[\"/plus/\",\"/router/localhost/graph-demouser-bbb\"]}"
+    volumes:
+      - /opt/ms/tmp
+
+  # graph-demouser-bbb.moonspeak.test:
+  #   image: moonspeak-graph:latest
+  #   build:
+  #     context: ./grapheditor
+  #   environment:
+  #     # this xml sets default graph value
+  #     MOONSPEAK_GRAPH_INITIAL_XML: "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/></root></mxGraphModel>"
+  #   volumes:
+  #     - /opt/ms/tmp
+
+  # submit-demouser-ccc.moonspeak.test:
+  #   image: moonspeak-submit:latest
+  #   build:
+  #     context: ./submit
+  #   volumes:
+  #     - /opt/ms/tmp
+
+  # workelements-demouser-ddd.moonspeak.test:
+  #   image: moonspeak-workelements:latest
+  #   build:
+  #     context: ./workelements
+  #   volumes:
+  #     - /opt/ms/tmp
