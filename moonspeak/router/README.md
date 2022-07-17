@@ -1,29 +1,31 @@
 # Getting started
 
-# Step 1
+
+## Running the router
+
+### Step 1
 
 Add moonspeak.test record to your /etc/hosts:
 ```
 127.0.0.1	moonspeak.test
 ```
 
-# Step 2
+### Step 2
 
-Run router:
+Run router with cargo:
 ```
-cd ./backend/
-MOONSPEAK_DEBUG=True python main.py --port 8001
+MOONSPEAK_DEV_MODE="true" cargo run -- --port=8001
 ```
 
-# Step 3
+### Step 3
 
 Check that router does the routing correctly:
 ```
-curl -vvv http://moonspeak.test:8001/router/localhost/some_service_name
+curl -vvv http://moonspeak.test:8001/router/node/some_service_name
 ```
 
 
-# Optional step 4: add your service
+### Optional step 4: add your service
 
 First add a record for any service you want to reach on you localhost machine:
 ```
@@ -40,8 +42,22 @@ The above request will result in router sending a request to: `http://hud-demous
 If HTML is returned as response it will be changed to include base tag linking to its root: `http://moonspeak.test:8001/router/localhost/hud-demouser-aaa:8002/mypath`
 
 
+# Development
 
-Rewrite in rust:
+## Handling base href correctly
+
+This is the mapping between request and the added <base> tag:
+
+```
+GET /landing                 -> base="/router/node/landing/"       (nginx redirects this to 307 /landing/test/
+GET /landing/                -> base="/router/node/landing/"
+GET /landing/test            -> base="/router/node/landing/test/"  (nginx redirects this to 301 /landing/test/)
+GET /landing/test/           -> base="/router/node/landing/test/"
+GET /landing/test/index.html -> base="/router/node/landing/test/index.html"
+```
+
+
+## Rewrite in rust notes
 
 html5ever parsers take a TreeSink, they fill it up with data.
 
@@ -54,18 +70,7 @@ For XML: https://github.com/servo/html5ever/tree/master/xml5ever/examples
 
 kuchiki implementation: https://github.com/kuchiki-rs/kuchiki/blob/master/src/parser.rs
 
-
 kuchiki has a bug: https://github.com/kuchiki-rs/kuchiki/issues/94 
 Which means to create a new html element we need to use html5ever that is exactly the same as the one kuchiki uses.
 
 
-
-
-# Handling base href correctly
-```
-GET /landing                 -> base="/router/node/landing/"       (nginx redirects this to 307 /landing/test/
-GET /landing/                -> base="/router/node/landing/"
-GET /landing/test            -> base="/router/node/landing/test/"  (nginx redirects this to 301 /landing/test/)
-GET /landing/test/           -> base="/router/node/landing/test/"
-GET /landing/test/index.html -> base="/router/node/landing/test/index.html"
-```
