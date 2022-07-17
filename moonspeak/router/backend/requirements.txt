@@ -1,6 +1,0 @@
-requests
-bottle
-beautifulsoup4
-rpdb
-gunicorn
-requests_unixsocket
