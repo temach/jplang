@@ -1,7 +1,7 @@
 function request_feature(feature_url) {
     let message = {
         "info": "please feature",
-        "url": feature_url,
+        "src": feature_url,
     }
     console.log(window.location + " posted:");
     console.log(message);

@@ -213,7 +213,7 @@ MoonspeakEditor.prototype.init = function()
             "pluginUrl": "/router/plugins/" + pluginName,
         }
         // tell the target iframe that "source" iframe wants to connect and install a plugin
-        t.value.contentWindow.postMessage(message, window.location.origin);
+        t.value.contentWindow.postMessage(message, t.value.contentWindow.location.origin);
     }
 
     let disconnectIframes = (s, t) => {
@@ -320,7 +320,7 @@ MoonspeakEditor.prototype.init = function()
             return;
         }
 
-        if (event.data["info"].includes("please register")) {
+        if (event.data["info"].includes("please feature")) {
             let iframe = document.createElement("iframe");
             iframe.src = event.data["src"];
             let result = this.addIframe(iframe);
@@ -333,7 +333,7 @@ MoonspeakEditor.prototype.init = function()
             let info = iframe2info.get(event.source.frameElement);
             for (const connectedIFrame of info.connectedIFrames) {
                 let iframeWindow = (connectedIFrame.contentWindow || connectedIFrame.contentDocument);
-                iframeWindow.postMessage(event.data, window.location.origin);
+                iframeWindow.postMessage(event.data, iframeWindow.location.origin);
             }
         } else if (event.data["info"].includes("manager action")) {
             let action_name = event.data["action_name"];
@@ -397,7 +397,7 @@ MoonspeakEditor.prototype.mapBroadcast = function(event, map)
     map.forEach((featureExtraInfo, featureIFrameElem, m) => {
         let iframeWindow = (featureIFrameElem.contentWindow || featureIFrameElem.contentDocument);
         if (iframeWindow !== event.source) {
-            iframeWindow.postMessage(event.data, window.top.location.origin);
+            iframeWindow.postMessage(event.data, iframeWindow.location.origin);
         };
     });
 }

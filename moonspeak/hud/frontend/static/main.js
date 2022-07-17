@@ -100,15 +100,15 @@ async function initHud() {
 // Code related to small features that are loaded on user request
 //
 
-function buildFeatureUrl(rawUrl) {
-    let encodedUrl = encodeURIComponent(rawUrl);
-    return window.top.location.origin + "/router/" + encodedUrl;
-}
-
-function getFeatureName(rawUrl) {
-    let url = new URL(rawUrl);
-    return url.hostname;
-}
+// function buildFeatureUrl(rawUrl) {
+//     let encodedUrl = encodeURIComponent(rawUrl);
+//     return window.top.location.origin + "/router/" + encodedUrl;
+// }
+// 
+// function getFeatureName(rawUrl) {
+//     let url = new URL(rawUrl);
+//     return url.hostname;
+// }
 
 function arrayBroadcast(eventSource, eventData, array) {
     array.forEach((featureIFrameElem, index, arr) => {
@@ -119,7 +119,7 @@ function arrayBroadcast(eventSource, eventData, array) {
         if (eventSource && iframeWindow === eventSource) {
             return;
         };
-        iframeWindow.postMessage(eventData, window.location.origin);
+        iframeWindow.postMessage(eventData, iframeWindow.location.origin);
     });
 }
 
@@ -140,9 +140,10 @@ function onMessage(event) {
 
     if (event.data["info"].includes("please feature")) {
         let message = {
-            "info": "please register",
-            "src": buildFeatureUrl(event.data["url"]),
-            "name": getFeatureName(event.data["url"]),
+            ...event.data,
+            // "info": "please register",
+            // "src": buildFeatureUrl(event.data["url"]),
+            // "name": getFeatureName(event.data["url"]),
         }
         arrayBroadcast(event.source, message, fullscreenFrames);
     } else {
