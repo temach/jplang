@@ -17,6 +17,8 @@ services:
       context: ./router
     environment:
       MOONSPEAK_DOMAIN: "moonspeak.test"
+      MOONSPEAK_DEV_MODE: "true"
+      RUST_LOG: "router=info"
 
   #===================================
   landing:

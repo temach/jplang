@@ -32,7 +32,7 @@ services:
       # this supplies the correct name
       MOONSPEAK_DOMAIN: "moonspeak.test"
       # turn off debug features when running with docker-compose
-      MOONSPEAK_DEBUG: ""
+      MOONSPEAK_DEV_MODE: ""
       RUST_LOG: "router=info"
 
   #===================================
