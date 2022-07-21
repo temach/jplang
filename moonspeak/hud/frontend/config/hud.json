@@ -1,0 +1,6 @@
+{
+    "urls": [
+        "http://moonspeak.test:8010",
+        "http://moonspeak.test:8011"
+    ]
+}

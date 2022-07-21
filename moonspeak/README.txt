@@ -134,6 +134,62 @@ javascript: https://jgraph.github.io/mxgraph/docs/js-api/files/index-txt.html
 
 
 
+## Inteacting between iframes when running on different ports:
+
+To send post message properly you need to get window object and know its origin.
+
+The simple way to overcome the necessity of knowing the origin: serve everything from the same domain.
+
+Then child windows can access window.parent.location.origin when sending the message.
+For cross-origin iframes window.parent.location is SET only, (really it is WRITE only, no reading).
+
+This is a problem when developing locally and running say the graph editor and multiple services on different ports.
+Because ports are part of origin, and since they are different means the sending window actually has to know who is who's port numebr exactly.
+
+
+Right now in every index.html we include the script dev_mode.js which force sets document.domain = location.hostname, this also sets domain port to null.
+With this the iframes and their parent can be made same domain.
+Then children can read parent's window.parent.location.origin to portMessage correctly like this:
+```
+    if (window !== window.parent) {
+        window.parent.postMessage(message, window.parent.location.origin);
+    }
+```
+
+However for the message receiver, the event.origin is still set by the browser correctly (ignores document.domain setting), so the check for incoming
+messages must be relaxed to be just on the hostname, ignoring the port:
+```
+    let eventUrl = new URL(event.origin);
+    if (eventUrl.hostname !== window.location.hostname) {
+        // accept only messages for your domain
+        return;
+    }
+```
+ 
+How do we deal with services that are end user microservices? Because we dont want to embed dev_mode.js into then.
+Its not cool to embed dev_mode.js into them becasue they might be using very different build systems (e.g. webpack)
+and then each developer must instruct such system to drop dev_mode.js when building for prod. A nuisance.
+
+However at least this nuisance is easy to explain: since you are running on different ports the origins are different
+so for development it helps to include a script that erases the domains and of course you dont need this on prod 
+So there we are.
+To reiterate: same domain gives full access between iframes, so they can read each other's origins.
+Also you dont need dev_mode.js if running with "router" service or with default docker-compose.
+
+
+Another alternative is to add to all services that can be parents (hud and graph) 
+a debug feature to route to other services (the functionallity from router).
+
+
+Another way is to hardcode "moonspeak.test"? Then how would we handle prod? 
+Maybe each iframe can extract the hostname part from its location and postMessage with it,
+expecting that the parent was run on port 80? Then this introduces a hard requirement on parent, if your
+dont start it on default http port, things will brake. This is a strange requirement. 
+
+
+
+
+## Observable behaviour and managing interactions
 
 think about this: After some time ANY observable behaivour of your system becomes a part of your API because someone depends on it.
 
@@ -251,8 +307,6 @@ artem@vivoarch ~>
 artem@vivoarch ~> docker image ls
 REPOSITORY                                                                           TAG               IMAGE ID       CREATED          SIZE
 <none>                                                                               <none>            b9a0b8053d51   32 seconds ago   536MB
-moonspeak-deploy                                                                     latest            a1eddcbeab55   2 hours ago      890MB
-moonspeak-login                                                                      latest            da24e9fcdcfd   18 hours ago     135MB
 ```
 
 Python:slim container with ansible and docker-python library:
@@ -263,8 +317,6 @@ artem@vivoarch jplang/moonspeak> docker image ls
 REPOSITORY                                                                           TAG               IMAGE ID       CREATED         SIZE
 <none>                                                                               <none>            b0f4e91ec3ea   2 hours ago     706MB
 <none>                                                                               <none>            b9a0b8053d51   2 hours ago     536MB
-moonspeak-deploy                                                                     latest            a1eddcbeab55   4 hours ago     890MB
-moonspeak-login                                                                      latest            da24e9fcdcfd   20 hours ago    135MB
 ```
 
 Alpine:latest with manual python, pip ansible and docker-python
@@ -276,6 +328,5 @@ REPOSITORY                                                                      
 <none>                                                                               <none>            13afc64988a1   16 seconds ago   96MB
 <none>                                                                               <none>            b0f4e91ec3ea   23 hours ago     706MB
 <none>                                                                               <none>            b9a0b8053d51   23 hours ago     536MB
-moonspeak-deploy                                                                     latest            a1eddcbeab55   25 hours ago     890MB
 ```
 

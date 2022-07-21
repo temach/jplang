@@ -10,25 +10,18 @@
 
 <body>
 
-<div class="hidden" id="feature-list">
-    <div class="featureListContainer">
+<div class="hidden" id="feature_list_container">
+    <div class="featureListContainer" id="feature_list">
 
-        <img src="static/images/icons48/table.png" class="featureIcon" 
-            onclick="request_feature('http://moonspeak.test:8040')">
-
-        <img src="static/images/icons48/earth.png" class="featureIcon"
-            onclick="request_feature('http://moonspeak.test:80s41')">
-
-        <img src="static/images/icons48/gear.png" class="featureIcon"
-            onclick="request_feature('http://moonspeak.test:8042')">
-
-        <img src="static/images/icons48/keys.png" class="featureIcon"
-            onclick="request_feature('http://moonspeak.test:8043')">
+        <img title="workelements" id="workelements" src="static/images/icons48/table.png" class="featureIcon">
+        <img title="suggestions" id="suggestions" src="static/images/icons48/gear.png" class="featureIcon">
+        <img title="synonyms" id="synonyms" src="static/images/icons48/keys.png" class="featureIcon">
+        <img title="submit" id="submit" src="static/images/icons48/earth.png" class="featureIcon">
 
     </div>
 </div>
 
-<button class="addFeature" onclick="document.getElementById('feature-list').classList.toggle('hidden')">
+<button class="addFeature" onclick="document.getElementById('feature_list_container').classList.toggle('hidden')">
     +
 </button>
 

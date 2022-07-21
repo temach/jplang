@@ -20,7 +20,7 @@ function addInnerHtmlEventListener(frame, yieldFunc) {
 }
 
 async function initHud() {
-    let response = await fetch("hud_config.json");
+    let response = await fetch("config/hud.json");
 
     if (! response.ok) {
         console.log("HTTP-Error: " + response.status);

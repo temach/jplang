@@ -345,7 +345,6 @@ MoonspeakEditor.prototype.init = function()
         }
     });
 
-
     // becasue editor initialisations use document.body.appendChild
     // the two deadzones must be added AFTER everyone has initialised
     var divRight = document.createElement('div');
@@ -355,6 +354,10 @@ MoonspeakEditor.prototype.init = function()
     var divLeft = document.createElement('div');
     divLeft.className = "bottomleft deadzone";
     document.body.appendChild(divLeft);
+
+    // trigger loading of saved graph from backend
+    let action = this.editorUi.actions.get("open");
+    action.funct();
 };
 
 

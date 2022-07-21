@@ -3,6 +3,7 @@ import os
 import json
 import sqlite3
 import re
+import urllib
 
 from bottle import response, request, post, get, route, run, template, HTTPResponse, static_file  # type: ignore
 
@@ -11,10 +12,7 @@ DB_PATH = "../tmp/kanji-grapheditor.db"
 DB = sqlite3.connect(DB_PATH)
 DB.row_factory = sqlite3.Row
 
-GRAPH_INITIAL_XML = os.getenv(
-    "MOONSPEAK_GRAPH_INITIAL_XML",
-    "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/></root></mxGraphModel>"
-)
+GRAPH_INITIAL_XML = os.getenv("MOONSPEAK_GRAPH_INITIAL_XML", None)
 
 @get("/open")
 def work():
@@ -33,18 +31,25 @@ def work():
         return row["xml"]
     except Exception as e:
         print(f"Got exception {e}")
-    return GRAPH_INITIAL_XML
+    return static_file("graph.xml", root="../config/")
 
 
 @post("/save")
 def submit():
+    params = dict(request.params)
+
+    if "uuid" not in params:
+        params["uuid"] = "default"
+
+    params["xml"] = urllib.parse.unquote(params["xml"], encoding='utf-8', errors='replace')
+
     try:
         c = DB.cursor()
         # https://www.sqlite.org/lang_replace.html
         # https://www.sqlite.org/lang_UPSERT.html
         c.execute("""INSERT OR ABORT INTO diagrams VALUES (:uuid, :xml)
                 ON CONFLICT(uuid) DO UPDATE SET xml=excluded.xml;
-                """, dict(request.params))
+                """, params)
         DB.commit()
     except Exception as e:
         return HTTPResponse(status=500, body="{}".format(e))

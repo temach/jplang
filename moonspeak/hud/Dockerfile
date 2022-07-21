@@ -1,16 +1,5 @@
-FROM python:alpine
-WORKDIR /opt/ms/
-
-RUN mkdir backend
-COPY backend/requirements.txt ./
-RUN pip install -r ./requirements.txt
-
-RUN mkdir frontend
-
-COPY frontend/static frontend/static
-COPY frontend/index.html frontend/index.html
-
-COPY backend/main.py backend/main.py
-
-WORKDIR /opt/ms/backend
-CMD ["python", "main.py"]
+FROM sebp/lighttpd:latest
+ENV PORT=80
+WORKDIR /etc/lighttpd/
+COPY lighttpd.conf lighttpd.conf
+COPY frontend/ frontend/

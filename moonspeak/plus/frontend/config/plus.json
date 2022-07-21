@@ -1,0 +1,20 @@
+{
+    "services": [
+        {
+            "name": "workelements",
+            "url": "http://moonspeak.test:8040"
+        },
+        {
+            "name": "synonyms",
+            "url": "http://moonspeak.test:8041"
+        },
+        {
+            "name": "suggestions",
+            "url": "http://moonspeak.test:8042"
+        },
+        {
+            "name": "submit",
+            "url": "http://moonspeak.test:8043"
+        }
+    ]
+}

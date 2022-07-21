@@ -1,0 +1,35 @@
+<mxGraphModel>
+    <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <iframe
+            xmlns="http://www.w3.org/1999/xhtml" src="http://moonspeak.test:8040" id="2">
+            <mxCell
+                xmlns="" style="iframe=1;" vertex="1" parent="1">
+                <mxGeometry x="320" y="310" width="320" height="170" as="geometry"/>
+            </mxCell>
+        </iframe>
+        <iframe
+            xmlns="http://www.w3.org/1999/xhtml" src="http://moonspeak.test:8041" id="3">
+            <mxCell
+                xmlns="" style="iframe=1;" vertex="1" parent="1">
+                <mxGeometry x="820" y="400" width="320" height="170" as="geometry"/>
+            </mxCell>
+        </iframe>
+        <iframe
+            xmlns="http://www.w3.org/1999/xhtml" src="http://moonspeak.test:8042" id="4">
+            <mxCell
+                xmlns="" style="iframe=1;" vertex="1" parent="1">
+                <mxGeometry x="1010" y="130" width="320" height="170" as="geometry"/>
+            </mxCell>
+        </iframe>
+        <iframe
+            xmlns="http://www.w3.org/1999/xhtml" src="http://moonspeak.test:8043" id="5">
+            <mxCell
+                xmlns="" style="iframe=1;" vertex="1" parent="1">
+                <mxGeometry x="540" y="10" width="320" height="170" as="geometry"/>
+            </mxCell>
+        </iframe>
+    </root>
+</mxGraphModel>
+

@@ -1,3 +1,5 @@
-FROM nginx:alpine
-COPY frontend /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/nginx.conf
+FROM sebp/lighttpd:latest
+ENV PORT=80
+WORKDIR /etc/lighttpd/
+COPY lighttpd.conf lighttpd.conf
+COPY frontend/ frontend/
