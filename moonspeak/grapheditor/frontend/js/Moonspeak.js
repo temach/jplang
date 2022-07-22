@@ -186,66 +186,6 @@ MoonspeakEditor.prototype.init = function()
     // handle message events
     let iframe2info = new Map();
 
-    // do not allow dangling edges, so the only way to break connection is to delete the edge
-    graph.setAllowDanglingEdges(false);
-
-    let connectIframes = (s, t) => {
-        let info = iframe2info.get(s.value);
-        info.connectedIFrames.add(t.value);
-
-        // handle "source" iframe asking the target iframe to load a plugin
-        if (! s.value.contentWindow.moonspeakConnect) {
-            return;
-        }
-        let pluginName = null;
-        try {
-            pluginName = s.value.contentWindow.moonspeakConnect(t.value.contentWindow.document);
-        } catch (error) {
-            console.log("Error connecting from" + s.value.src + " to " + t.value.src);
-        }
-        if (! pluginName) {
-            return;
-        }
-        let message = {
-            "info": "iframe connect",
-
-            // Note: absolute root url
-            "pluginUrl": "/router/plugins/" + pluginName,
-        }
-        // tell the target iframe that "source" iframe wants to connect and install a plugin
-        t.value.contentWindow.postMessage(message, t.value.contentWindow.location.origin);
-    }
-
-    let disconnectIframes = (s, t) => {
-        let info = iframe2info.get(s.value);
-        info.connectedIFrames.delete(t.value);
-        // disconnect happens without postMessage
-        // because its too hard to undo a javascript "install"
-    }
-
-    graph.connectionHandler.addListener(mxEvent.CONNECT, function(sender, evt)
-    {
-        var edge = evt.getProperty('cell');
-        var source = graph.getModel().getTerminal(edge, true);
-        var target = graph.getModel().getTerminal(edge, false);
-
-        // interconnect them both ways
-        connectIframes(source, target);
-        connectIframes(target, source);
-    });
-
-    graph.addListener(mxEvent.CELLS_REMOVED, function(sender, evt)
-    {
-        for (const cell of evt.properties.cells) {
-            if (!cell.edge) {
-                continue;
-            }
-            // delete the connection between two iframes
-            disconnectIframes(cell.source, cell.target);
-            disconnectIframes(cell.target, cell.source);
-        }
-    });
-
     // sets default uuid for OPEN/SAVE actions
     graph.uuid = 'default';
 
@@ -303,16 +243,76 @@ MoonspeakEditor.prototype.init = function()
     }
 	this.editorUi.actions.addAction('save', function() { postGraph(SAVE_URL, graph)  }, null, null, Editor.ctrlKey + '+S');
 
+    // do not allow dangling edges, so the only way to break connection is to delete the edge
+    graph.setAllowDanglingEdges(false);
+
+    let disconnectIframes = (s, t) => {
+        let info = iframe2info.get(s.value);
+        info.connectedIFrames.delete(t.value);
+        // disconnect happens without postMessage
+        // because its too hard to undo a javascript "install"
+    }
+
+    graph.addListener(mxEvent.CELLS_REMOVED, function(sender, evt)
+    {
+        for (const cell of evt.properties.cells) {
+            if (!cell.edge) {
+                continue;
+            }
+            // delete the connection between two iframes
+            disconnectIframes(cell.source, cell.target);
+            disconnectIframes(cell.target, cell.source);
+        }
+    });
+
+    let connectIframes = (s, t) => {
+        let info = iframe2info.get(s.value);
+        info.connectedIFrames.add(t.value);
+
+        // handle "source" iframe asking the target iframe to load a plugin
+        if (! s.value.contentWindow.moonspeakConnect) {
+            return;
+        }
+        let pluginName = null;
+        try {
+            pluginName = s.value.contentWindow.moonspeakConnect(t.value.contentWindow.document);
+        } catch (error) {
+            console.log("Error connecting from" + s.value.src + " to " + t.value.src);
+        }
+        if (! pluginName) {
+            return;
+        }
+        let message = {
+            "info": "iframe connect",
+
+            // Note: absolute root url
+            "pluginUrl": "/router/plugins/" + pluginName,
+        }
+        // tell the target iframe that "source" iframe wants to connect and install a plugin
+        // if host on dev origin, soften developer pain by relaxing security, else be strict
+        let targetOrigin = this.isMoonspeakDevMode() ? "*" : location.origin;
+        t.value.contentWindow.postMessage(message, targetOrigin);
+    }
+
+    graph.connectionHandler.addListener(mxEvent.CONNECT, function(sender, evt)
+    {
+        var edge = evt.getProperty('cell');
+        var source = graph.getModel().getTerminal(edge, true);
+        var target = graph.getModel().getTerminal(edge, false);
+
+        // interconnect them both ways
+        connectIframes(source, target);
+        connectIframes(target, source);
+    });
 
     window.addEventListener("message", (event) =>
     {
-        let eventUrl = new URL(event.origin);
-        if (eventUrl.hostname !== window.location.hostname) {
-            // we only accept messages from the IFrames (must be on the same domain)
+        if (event.origin !== location.origin && !this.isMoonspeakDevMode()) {
+            // accept only messages from same origin, but ignore this rule for dev mode
             return;
         }
 
-        console.log(window.location + " received:");
+        console.log(location + " received:");
         console.log(event.data);
 
         if (! ("info" in event.data)) {
@@ -333,7 +333,9 @@ MoonspeakEditor.prototype.init = function()
             let info = iframe2info.get(event.source.frameElement);
             for (const connectedIFrame of info.connectedIFrames) {
                 let iframeWindow = (connectedIFrame.contentWindow || connectedIFrame.contentDocument);
-                iframeWindow.postMessage(event.data, iframeWindow.location.origin);
+                // if host on dev origin, soften developer pain by relaxing security, else be strict
+                let targetOrigin = this.isMoonspeakDevMode() ? "*" : location.origin;
+                iframeWindow.postMessage(event.data, targetOrigin);
             }
         } else if (event.data["info"].includes("manager action")) {
             let action_name = event.data["action_name"];
@@ -360,6 +362,28 @@ MoonspeakEditor.prototype.init = function()
     action.funct();
 };
 
+
+MoonspeakEditor.prototype.isMoonspeakDevMode = function(hostname = location.hostname) {
+    // checking .endsWith() is ok, but .startsWith() is not ok
+    return (
+        ['localhost', '127.0.0.1', '', '0.0.0.0', '::1'].includes(hostname)
+        || hostname.endsWith('.local')
+        || hostname.endsWith('.test')
+    )
+}
+
+// Function to communicate between embedded iframes
+MoonspeakEditor.prototype.mapBroadcast = function(event, map)
+{
+    map.forEach((featureExtraInfo, featureIFrameElem, m) => {
+        let iframeWindow = (featureIFrameElem.contentWindow || featureIFrameElem.contentDocument);
+        if (iframeWindow !== event.source) {
+            // if host on dev origin, soften developer pain by relaxing security, else be strict
+            let targetOrigin = this.isMoonspeakDevMode() ? "*" : location.origin;
+            iframeWindow.postMessage(event.data, targetOrigin);
+        };
+    });
+}
 
 // Inserts a new IFrame at center of screen
 MoonspeakEditor.prototype.addIframe = function(iframeElem)
@@ -391,18 +415,6 @@ MoonspeakEditor.prototype.addIframe = function(iframeElem)
         "iframe": iframeElem,
         "vertex": v1,
     }
-}
-
-
-// Function to communicate between embedded iframes
-MoonspeakEditor.prototype.mapBroadcast = function(event, map)
-{
-    map.forEach((featureExtraInfo, featureIFrameElem, m) => {
-        let iframeWindow = (featureIFrameElem.contentWindow || featureIFrameElem.contentDocument);
-        if (iframeWindow !== event.source) {
-            iframeWindow.postMessage(event.data, iframeWindow.location.origin);
-        };
-    });
 }
 
 

@@ -19,16 +19,26 @@ async function initPlus() {
     }
 }
 
+function isMoonspeakDevMode(hostname = location.hostname) {
+    // checking .endsWith() is ok, but .startsWith() is not ok
+    return (
+        ['localhost', '127.0.0.1', '', '0.0.0.0', '::1'].includes(hostname)
+        || hostname.endsWith('.local')
+        || hostname.endsWith('.test')
+    )
+}
 
 function request_feature(feature_url) {
     let message = {
         "info": "please feature",
         "src": feature_url,
     }
-    console.log(window.location + " posted:");
+    console.log(location + " posted:");
     console.log(message);
     if (window !== window.parent) {
-        window.parent.postMessage(message, window.parent.location.origin);
+        // if host on dev origin, soften developer pain by relaxing security, else be strict
+        let targetOrigin = isMoonspeakDevMode() ? "*" : location.origin;
+        window.parent.postMessage(message, targetOrigin);
     }
 }
 
