@@ -184,10 +184,28 @@ MoonspeakEditor.prototype.init = function()
 
     // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
     // handle message events
-    let iframe2info = new Map();
+    let iframeinfo = new Map();
 
     // sets default uuid for OPEN/SAVE actions
     graph.uuid = 'default';
+
+    let registerChildIframe = (iframe) => {
+        let channel = new MessageChannel();
+        let info = {
+            // contains channels of communicating child iframes
+            "connectedPorts": new Set(),
+
+            // the communication channel between graph and this iframe
+            "graphport": channel.port1,
+        };
+        info.graphport.onmessage = (event) => onChildMessage(event, iframe);
+        iframe.onload = () => {
+            // if host on dev origin, soften developer pain by relaxing security, else be strict
+            let targetOrigin = this.isMoonspeakDevMode() ? "*" : location.origin;
+            iframe.contentWindow.postMessage({"info": "port"}, targetOrigin, [channel.port2]);
+        };
+        iframeinfo.set(iframe, info);
+    };
 
     // Add OPEN action
     let getGraph = (url, graph, uuid) => {
@@ -201,10 +219,7 @@ MoonspeakEditor.prototype.init = function()
                 let cell = graph.model.cells[index];
                 var style = graph.getCurrentCellStyle(cell);
                 if (style && style['iframe'] == '1') {
-                    let info = {
-                        "connectedIFrames": new Set(),
-                    };
-                    iframe2info.set(cell.value, info);
+                    registerChildIframe(cell.value);
                 }
             }
 
@@ -216,8 +231,8 @@ MoonspeakEditor.prototype.init = function()
                     let target = graph.model.getTerminal(edge, false);
 
                     // interconnect them both ways
-                    connectIframes(source, target);
-                    connectIframes(target, source);
+                    connectIframes(source.value, target.value);
+                    connectIframes(target.value, source.value);
                 }
             }
 
@@ -247,8 +262,8 @@ MoonspeakEditor.prototype.init = function()
     graph.setAllowDanglingEdges(false);
 
     let disconnectIframes = (s, t) => {
-        let info = iframe2info.get(s.value);
-        info.connectedIFrames.delete(t.value);
+        let info = iframeinfo.get(s.value);
+        info.connectedPorts.delete(t.value);
         // disconnect happens without postMessage
         // because its too hard to undo a javascript "install"
     }
@@ -266,32 +281,33 @@ MoonspeakEditor.prototype.init = function()
     });
 
     let connectIframes = (s, t) => {
-        let info = iframe2info.get(s.value);
-        info.connectedIFrames.add(t.value);
+        let info_s = iframeinfo.get(s);
+        let info_t = iframeinfo.get(t);
+        info_s.connectedPorts.add(info_t.graphport);
 
-        // handle "source" iframe asking the target iframe to load a plugin
-        if (! s.value.contentWindow.moonspeakConnect) {
-            return;
-        }
-        let pluginName = null;
-        try {
-            pluginName = s.value.contentWindow.moonspeakConnect(t.value.contentWindow.document);
-        } catch (error) {
-            console.log("Error connecting from" + s.value.src + " to " + t.value.src);
-        }
-        if (! pluginName) {
-            return;
-        }
-        let message = {
-            "info": "iframe connect",
+        // // handle "source" iframe asking the target iframe to load a plugin
+        // if (! s.contentWindow.moonspeakConnect) {
+        //     return;
+        // }
+        // let pluginName = null;
+        // try {
+        //     pluginName = s.contentWindow.moonspeakConnect(t.contentWindow.document);
+        // } catch (error) {
+        //     console.log("Error connecting from" + s.src + " to " + t.src);
+        // }
+        // if (! pluginName) {
+        //     return;
+        // }
+        // let message = {
+        //     "info": "iframe connect",
 
-            // Note: absolute root url
-            "pluginUrl": "/router/plugins/" + pluginName,
-        }
-        // tell the target iframe that "source" iframe wants to connect and install a plugin
-        // if host on dev origin, soften developer pain by relaxing security, else be strict
-        let targetOrigin = this.isMoonspeakDevMode() ? "*" : location.origin;
-        t.value.contentWindow.postMessage(message, targetOrigin);
+        //     // Note: absolute root url
+        //     "pluginUrl": "/router/plugins/" + pluginName,
+        // }
+        // // tell the target iframe that "source" iframe wants to connect and install a plugin
+        // // if host on dev origin, soften developer pain by relaxing security, else be strict
+        // let targetOrigin = this.isMoonspeakDevMode() ? "*" : location.origin;
+        // t.contentWindow.postMessage(message, targetOrigin);
     }
 
     graph.connectionHandler.addListener(mxEvent.CONNECT, function(sender, evt)
@@ -301,11 +317,22 @@ MoonspeakEditor.prototype.init = function()
         var target = graph.getModel().getTerminal(edge, false);
 
         // interconnect them both ways
-        connectIframes(source, target);
-        connectIframes(target, source);
+        connectIframes(source.value, target.value);
+        connectIframes(target.value, source.value);
     });
 
-    window.addEventListener("message", (event) =>
+    let onChildMessage = (event, iframe) => {
+        console.log(location + " received:");
+        console.log(event.data);
+
+        // this is a message between the sub-iframes
+        let info = iframeinfo.get(iframe);
+        for (const connectedPort of info.connectedPorts) {
+            connectedPort.postMessage(event.data);
+        }
+    };
+
+    let onMessage = (event) =>
     {
         if (event.origin !== location.origin && !this.isMoonspeakDevMode()) {
             // accept only messages from same origin, but ignore this rule for dev mode
@@ -323,20 +350,18 @@ MoonspeakEditor.prototype.init = function()
         if (event.data["info"].includes("please feature")) {
             let iframe = document.createElement("iframe");
             iframe.src = event.data["src"];
+            registerChildIframe(iframe);
             let result = this.addIframe(iframe);
-            let info = {
-                "connectedIFrames": new Set(),
-            };
-            iframe2info.set(iframe, info);
-        } else if (event.data["info"].includes("broadcast")) {
-            // this is a message between the sub-iframes
-            let info = iframe2info.get(event.source.frameElement);
-            for (const connectedIFrame of info.connectedIFrames) {
-                let iframeWindow = (connectedIFrame.contentWindow || connectedIFrame.contentDocument);
-                // if host on dev origin, soften developer pain by relaxing security, else be strict
-                let targetOrigin = this.isMoonspeakDevMode() ? "*" : location.origin;
-                iframeWindow.postMessage(event.data, targetOrigin);
-            }
+        // } else if (event.data["info"].includes("broadcast")) {
+        //     // this is a message between the sub-iframes
+        //     let info = iframeinfo.get(event.source.frameElement);
+        //     for (const connectedIFrame of info.connectedIFrames) {
+        //         let iframeWindow = (connectedIFrame.contentWindow || connectedIFrame.contentDocument);
+        //         // if host on dev origin, soften developer pain by relaxing security, else be strict
+        //         let targetOrigin = this.isMoonspeakDevMode() ? "*" : location.origin;
+        //         iframeWindow.postMessage(event.data, targetOrigin);
+        //     }
+        //
         } else if (event.data["info"].includes("manager action")) {
             let action_name = event.data["action_name"];
             let action = this.editorUi.actions.get(action_name);
@@ -345,7 +370,9 @@ MoonspeakEditor.prototype.init = function()
             console.log("Can not understand message info:" + event.data["info"]);
             return;
         }
-    });
+    };
+
+    window.addEventListener("message", onMessage);
 
     // becasue editor initialisations use document.body.appendChild
     // the two deadzones must be added AFTER everyone has initialised

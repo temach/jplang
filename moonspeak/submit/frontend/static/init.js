@@ -2,6 +2,8 @@ var app = Elm.Main.init({
     node: document.getElementById("elm-app")
 });
 
+var graphPort = null;
+
 function isMoonspeakDevMode(hostname = location.hostname) {
     // checking .endsWith() is ok, but .startsWith() is not ok
     return (
@@ -19,12 +21,31 @@ app.ports.sendMessage.subscribe(function(message) {
     console.log(location + " posted:");
     message["info"] = "broadcast";
     console.log(message);
-    if (window !== window.parent) {
-        // if host on dev origin, soften developer pain by relaxing security, else be strict
-        let targetOrigin = isMoonspeakDevMode() ? "*" : location.origin;
-        window.parent.postMessage(message, targetOrigin);
+    if (graphPort) {
+        graphPort.postMessage(message);
+    } else {
+        console.log("Should buffer this: " + message);
     }
+    // if (window !== window.parent) {
+    //     // if host on dev origin, soften developer pain by relaxing security, else be strict
+    //     let targetOrigin = isMoonspeakDevMode() ? "*" : location.origin;
+    //     window.parent.postMessage(message, targetOrigin);
+    // }
 });
+
+function onPortMessage(event) {
+    console.log(location + " received:");
+    console.log(event.data);
+
+    if (event.data["info"].includes("iframe connect")) {
+        let script = document.createElement("script");
+        script.type = "text/javascript";
+        script.src = event.data["pluginUrl"];
+        document.body.appendChild(script);
+    } else {
+        app.ports.messageReceiver.send(event.data);
+    }
+}
 
 // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 window.addEventListener("message", (event) => {
@@ -36,13 +57,11 @@ window.addEventListener("message", (event) => {
     console.log(location + " received:");
     console.log(event.data);
 
-    if (event.data["info"].includes("iframe connect")) {
-        let script = document.createElement("script");
-        script.type = "text/javascript";
-        script.src = event.data["pluginUrl"];
-        document.body.appendChild(script);
-
+    if (event.data["info"].includes("port")) {
+        graphPort = event.ports[0];
+        graphPort.onmessage = onPortMessage;
     } else {
-        app.ports.messageReceiver.send(event.data);
+        console.log("Can not understand message info:" + event.data["info"]);
+        return;
     }
 });

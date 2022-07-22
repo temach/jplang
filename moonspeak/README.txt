@@ -186,6 +186,10 @@ Maybe each iframe can extract the hostname part from its location and postMessag
 expecting that the parent was run on port 80? Then this introduces a hard requirement on parent, if your
 dont start it on default http port, things will brake. This is a strange requirement. 
 
+Consider using MessageChannel that does not need to know targetOrigin (but is safe).
+Maybe via a library:
+- https://github.com/amplience/message-event-channel
+- https://github.com/krakenjs/post-robot
 
 
 
