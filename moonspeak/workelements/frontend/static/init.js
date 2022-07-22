@@ -2,27 +2,38 @@ var app = Elm.Main.init({
     node: document.getElementById("elm-app")
 });
 
+function isMoonspeakDevMode(hostname = location.hostname) {
+    // checking .endsWith() is ok, but .startsWith() is not ok
+    return (
+        ['localhost', '127.0.0.1', '', '0.0.0.0', '::1'].includes(hostname)
+        || hostname.endsWith('.local')
+        || hostname.endsWith('.test')
+    )
+}
+
 app.ports.sendMessage.subscribe(function(message) {
     // message from elm for javascript
-    // broadcast it to top window
+    // broadcast it to parent window
     // also: enforce same origin
-    console.log(window.location + " posted:");
+    // and avoid self-messages
+    console.log(location + " posted:");
     message["info"] = "broadcast";
     console.log(message);
     if (window !== window.parent) {
-        window.parent.postMessage(message, window.location.origin);
+        // if host on dev origin, soften developer pain by relaxing security, else be strict
+        let targetOrigin = isMoonspeakDevMode() ? "*" : location.origin;
+        window.parent.postMessage(message, targetOrigin);
     }
 });
 
 // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
 window.addEventListener("message", (event) => {
-    if (event.origin !== window.location.origin) {
-        // accept only messages for your domain
-        // and drop self-messages
+    if (event.origin !== location.origin && !isMoonspeakDevMode()) {
+        // accept only messages from same origin, but ignore this rule for dev mode
         return;
     }
 
-    console.log(window.location + " received:");
+    console.log(location + " received:");
     console.log(event.data);
 
     if (event.data["info"].includes("iframe connect")) {
