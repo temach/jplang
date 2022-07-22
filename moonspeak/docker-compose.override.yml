@@ -50,11 +50,35 @@ services:
 
   #===================================
   # Services for dev mode only
-  plus.moonspeak.test:
+  # "{\"services\":[{\"service_name\":\"workelements\",\"service_url\":\"/router/node/workelements-demouser-ddd\",\"image_url\":\"static/images/icons48/table.png\"},{\"service_name\":\"synonyms\",\"service_url\":\"/synonyms\",\"image_url\":\"static/images/icons48/earth.png\"},{\"service_name\":\"suggestions\",\"service_url\":\"/suggestions\",\"image_url\":\"static/images/icons48/gear.png\"},{\"service_name\":\"submit\",\"service_url\":\"/router/node/submit-demouser-ccc\",\"image_url\":\"static/images/icons48/keys.png\"}]}"
+  plus:
     container_name: plus.moonspeak.test
-    image: moonspeak-plus:latest
     build:
       context: ./plus
+    # docker-compose on server is old and ignores "configs", so we dance around with env + echo
+    # command: echo "$MOONSPEAK_PLUS_CONFIG_JSON" > /etc/nginx/frontend/config/plus.json && nginx -g "daemon off;"
+    environment:
+      MOONSPEAK_PLUS_CONFIG_JSON:  >- 
+          {
+              "services": [
+                  {
+                      "name": "synonyms",
+                      "url": "/synonyms"
+                  },
+                  {
+                      "name": "suggestions",
+                      "url": "/suggestions"
+                  },
+                  {
+                      "name": "workelements",
+                      "url": "/router/node/workelements-demouser-ddd"
+                  },
+                  {
+                      "name": "submit",
+                      "url": "/router/node/submit-demouser-ccc"
+                  }
+              ]
+          }
 
   #===================================
   # this is the user's unique access url
@@ -63,21 +87,65 @@ services:
     image: moonspeak-hud:latest
     build:
       context: ./hud
-    environment:
-      # this json lists urls that hud should load for the user
-      MOONSPEAK_HUD_CONFIG_JSON:  "{\"urls\":[\"/plus/\",\"/router/localhost/graph-demouser-bbb\"]}"
     volumes:
       - /opt/ms/tmp
+    # docker-compose on server is old and ignores "configs", so we dance around with env + echo
+    # command: echo "$MOONSPEAK_HUD_CONFIG_JSON" > /etc/nginx/frontend/config/hud.json && nginx -g "daemon off;"
+    environment:
+      # this json lists urls that hud should load for the user
+      MOONSPEAK_HUD_CONFIG_JSON: >-
+          {
+            "urls": [
+              "/plus/",
+              "/router/node/graph-demouser-bbb"
+            ]
+          }
 
-  # graph-demouser-bbb.moonspeak.test:
-  #   image: moonspeak-graph:latest
-  #   build:
-  #     context: ./grapheditor
-  #   environment:
-  #     # this xml sets default graph value
-  #     MOONSPEAK_GRAPH_INITIAL_XML: "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/></root></mxGraphModel>"
-  #   volumes:
-  #     - /opt/ms/tmp
+  # "<mxGraphModel><root><mxCell id=\"0\"/><mxCell id=\"1\" parent=\"0\"/><iframe xmlns=\"http://www.w3.org/1999/xhtml\" src=\"http://moonspeak.test:8040\" id=\"2\"><mxCell xmlns=\"\" style=\"iframe=1;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"320\" y=\"310\" width=\"320\" height=\"170\" as=\"geometry\"/></mxCell></iframe><iframe xmlns=\"http://www.w3.org/1999/xhtml\" src=\"http://moonspeak.test:8041\" id=\"3\"><mxCell xmlns=\"\" style=\"iframe=1;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"820\" y=\"400\" width=\"320\" height=\"170\" as=\"geometry\"/></mxCell></iframe><iframe xmlns=\"http://www.w3.org/1999/xhtml\" src=\"http://moonspeak.test:8042\" id=\"4\"><mxCell xmlns=\"\" style=\"iframe=1;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"1010\" y=\"130\" width=\"320\" height=\"170\" as=\"geometry\"/></mxCell></iframe><iframe xmlns=\"http://www.w3.org/1999/xhtml\" src=\"http://moonspeak.test:8043\" id=\"5\"><mxCell xmlns=\"\" style=\"iframe=1;\" vertex=\"1\" parent=\"1\"><mxGeometry x=\"540\" y=\"10\" width=\"320\" height=\"170\" as=\"geometry\"/></mxCell></iframe></root></mxGraphModel>"
+  graph-demo:
+    container_name: graph-demouser-bbb.moonspeak.test
+    image: moonspeak-graph:latest
+    build:
+      context: ./grapheditor
+    volumes:
+      - /opt/ms/tmp
+    environment:
+      # this xml sets default graph value
+      MOONSPEAK_GRAPH_INITIAL_XML: >-
+              <mxGraphModel>
+                  <root>
+                      <mxCell id="0"/>
+                      <mxCell id="1" parent="0"/>
+                      <iframe
+                          xmlns="http://www.w3.org/1999/xhtml" src="http://moonspeak.test:8040" id="2">
+                          <mxCell
+                              xmlns="" style="iframe=1;" vertex="1" parent="1">
+                              <mxGeometry x="320" y="310" width="320" height="170" as="geometry"/>
+                          </mxCell>
+                      </iframe>
+                      <iframe
+                          xmlns="http://www.w3.org/1999/xhtml" src="http://moonspeak.test:8041" id="3">
+                          <mxCell
+                              xmlns="" style="iframe=1;" vertex="1" parent="1">
+                              <mxGeometry x="820" y="400" width="320" height="170" as="geometry"/>
+                          </mxCell>
+                      </iframe>
+                      <iframe
+                          xmlns="http://www.w3.org/1999/xhtml" src="http://moonspeak.test:8042" id="4">
+                          <mxCell
+                              xmlns="" style="iframe=1;" vertex="1" parent="1">
+                              <mxGeometry x="1010" y="130" width="320" height="170" as="geometry"/>
+                          </mxCell>
+                      </iframe>
+                      <iframe
+                          xmlns="http://www.w3.org/1999/xhtml" src="http://moonspeak.test:8043" id="5">
+                          <mxCell
+                              xmlns="" style="iframe=1;" vertex="1" parent="1">
+                              <mxGeometry x="540" y="10" width="320" height="170" as="geometry"/>
+                          </mxCell>
+                      </iframe>
+                  </root>
+              </mxGraphModel>
 
   # submit-demouser-ccc.moonspeak.test:
   #   image: moonspeak-submit:latest

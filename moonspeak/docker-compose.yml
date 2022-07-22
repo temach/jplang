@@ -32,6 +32,9 @@ services:
     volumes:
       - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
 
+  plus:
+    image: "temachpool/moonspeak-plus:${TAG:-latest}"
+
   # synonyms:
   #   container_name: synonyms.moonspeak.test
   #   image: moonspeak-synonyms:latest
