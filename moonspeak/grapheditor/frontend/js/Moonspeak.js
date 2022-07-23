@@ -189,6 +189,17 @@ MoonspeakEditor.prototype.init = function()
     // sets default uuid for OPEN/SAVE actions
     graph.uuid = 'default';
 
+    let onChildMessage = (event, iframe) => {
+        console.log(location + " received:");
+        console.log(event.data);
+
+        // this is a message between the sub-iframes
+        let info = iframeinfo.get(iframe);
+        for (const connectedPort of info.connectedPorts) {
+            connectedPort.postMessage(event.data);
+        }
+    };
+
     let registerChildIframe = (iframe) => {
         let channel = new MessageChannel();
         let info = {
@@ -196,9 +207,9 @@ MoonspeakEditor.prototype.init = function()
             "connectedPorts": new Set(),
 
             // the communication channel between graph and this iframe
-            "graphport": channel.port1,
+            "iframeport": channel.port1,
         };
-        info.graphport.onmessage = (event) => onChildMessage(event, iframe);
+        info.iframeport.onmessage = (event) => onChildMessage(event, iframe);
         iframe.onload = () => {
             // if host on dev origin, soften developer pain by relaxing security, else be strict
             let targetOrigin = this.isMoonspeakDevMode() ? "*" : location.origin;
@@ -283,7 +294,7 @@ MoonspeakEditor.prototype.init = function()
     let connectIframes = (s, t) => {
         let info_s = iframeinfo.get(s);
         let info_t = iframeinfo.get(t);
-        info_s.connectedPorts.add(info_t.graphport);
+        info_s.connectedPorts.add(info_t.iframeport);
 
         // // handle "source" iframe asking the target iframe to load a plugin
         // if (! s.contentWindow.moonspeakConnect) {
@@ -321,17 +332,6 @@ MoonspeakEditor.prototype.init = function()
         connectIframes(target.value, source.value);
     });
 
-    let onChildMessage = (event, iframe) => {
-        console.log(location + " received:");
-        console.log(event.data);
-
-        // this is a message between the sub-iframes
-        let info = iframeinfo.get(iframe);
-        for (const connectedPort of info.connectedPorts) {
-            connectedPort.postMessage(event.data);
-        }
-    };
-
     let onMessage = (event) =>
     {
         if (event.origin !== location.origin && !this.isMoonspeakDevMode()) {
@@ -352,16 +352,6 @@ MoonspeakEditor.prototype.init = function()
             iframe.src = event.data["src"];
             registerChildIframe(iframe);
             let result = this.addIframe(iframe);
-        // } else if (event.data["info"].includes("broadcast")) {
-        //     // this is a message between the sub-iframes
-        //     let info = iframeinfo.get(event.source.frameElement);
-        //     for (const connectedIFrame of info.connectedIFrames) {
-        //         let iframeWindow = (connectedIFrame.contentWindow || connectedIFrame.contentDocument);
-        //         // if host on dev origin, soften developer pain by relaxing security, else be strict
-        //         let targetOrigin = this.isMoonspeakDevMode() ? "*" : location.origin;
-        //         iframeWindow.postMessage(event.data, targetOrigin);
-        //     }
-        //
         } else if (event.data["info"].includes("manager action")) {
             let action_name = event.data["action_name"];
             let action = this.editorUi.actions.get(action_name);
