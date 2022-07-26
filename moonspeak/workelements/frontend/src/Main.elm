@@ -292,7 +292,7 @@ submitElementEncoder element =
 
 view : Model -> Document Msg
 view model =
-    Document "Kanji" [ render model ]
+    Document "workelements" [ render model ]
 
 
 renderSingleWorkElement : Model -> Int -> WorkElement -> Html Msg

@@ -225,7 +225,7 @@ getSynonyms keyword =
 
 view : Model -> Document Msg
 view model =
-    Document "Kanji" [ render model ]
+    Document "synonyms" [ render model ]
 
 
 renderUserMessages : Model -> Html Msg

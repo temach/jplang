@@ -11408,7 +11408,7 @@ var $author$project$Main$render = function (model) {
 var $author$project$Main$view = function (model) {
 	return A2(
 		$elm$browser$Browser$Document,
-		'Kanji',
+		'synonyms',
 		_List_fromArray(
 			[
 				$author$project$Main$render(model)

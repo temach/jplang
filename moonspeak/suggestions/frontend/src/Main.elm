@@ -226,7 +226,7 @@ suggestionsDecoder =
 
 view : Model -> Document Msg
 view model =
-    Document "Kanji" [ render model ]
+    Document "suggestions" [ render model ]
 
 
 renderSingleSuggestion : Model -> Int -> KeyCandidate -> Html Msg

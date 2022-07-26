@@ -3,35 +3,12 @@ var app = Elm.Main.init({
 });
 
 app.ports.sendMessage.subscribe(function(message) {
-    // message from elm for javascript
-    // broadcast it to top window
-    // also: enforce same origin
-    console.log(window.location + " posted:");
-    message["info"] = "broadcast";
-    console.log(message);
-    if (window !== window.parent) {
-        window.parent.postMessage(message, window.location.origin);
-    }
+    moonspeakPostMessage(message);
 });
 
-// see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
-window.addEventListener("message", (event) => {
-    if (event.origin !== window.location.origin) {
-        // accept only messages for your domain
-        // and drop self-messages
-        return;
-    }
 
-    console.log(window.location + " received:");
-    console.log(event.data);
+function onMessage(event) {
+    app.ports.messageReceiver.send(event.data);
+}
 
-    if (event.data["info"].includes("iframe connect")) {
-        let script = document.createElement("script");
-        script.type = "text/javascript";
-        script.src = event.data["pluginUrl"];
-        document.body.appendChild(script);
-
-    } else {
-        app.ports.messageReceiver.send(event.data);
-    }
-});
+moonspeakInstallOnMessageHandler(onMessage);

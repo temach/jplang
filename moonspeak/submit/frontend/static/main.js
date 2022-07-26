@@ -11077,6 +11077,15 @@ var $author$project$Main$historyFilter = function (list) {
 			},
 			list));
 };
+var $author$project$Main$keywordEncoder = function (keyword) {
+	return $elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'keyword',
+				$elm$json$Json$Encode$string(keyword))
+			]));
+};
 var $author$project$Main$MsgDecoded = F3(
 	function (keyword, kanji, notes) {
 		return {kanji: kanji, keyword: keyword, notes: notes};
@@ -11216,7 +11225,13 @@ var $author$project$Main$update = F2(
 						});
 					return ($elm$core$String$length(word) >= 2) ? _Utils_Tuple2(
 						newModel,
-						A2($author$project$Main$getKeywordCheck, newModel.kanji, word)) : _Utils_Tuple2(
+						$elm$core$Platform$Cmd$batch(
+							_List_fromArray(
+								[
+									A2($author$project$Main$getKeywordCheck, newModel.kanji, word),
+									$author$project$Main$sendMessage(
+									$author$project$Main$keywordEncoder(newModel.keyword))
+								]))) : _Utils_Tuple2(
 						_Utils_update(
 							newModel,
 							{freq: _List_Nil, userMessage: $elm$core$Dict$empty}),
@@ -11459,7 +11474,7 @@ var $author$project$Main$render = function (model) {
 var $author$project$Main$view = function (model) {
 	return A2(
 		$elm$browser$Browser$Document,
-		'Kanji',
+		'submit',
 		_List_fromArray(
 			[
 				$author$project$Main$render(model)

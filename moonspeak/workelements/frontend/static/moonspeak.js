@@ -1,23 +1,31 @@
-var _moonspeakIframePort = null;
+let _moonspeakPorts = [];
 
-function _moonspeakBuildOnPortMessageHandler(userHandler) {
-    // we do a few housekeeping tasks and then call the user handler
-    return (event) => {
-        console.log(location + " received:");
-        console.log(event.data);
-
-        if ("info" in event.data && event.data["info"].includes("iframe connect")) {
-            let script = document.createElement("script");
-            script.type = "text/javascript";
-            script.src = event.data["pluginUrl"];
-            document.body.appendChild(script);
-        };
-
-        userHandler(event);
-    }
+function _moonspeakLog(msg, obj) {
+    // see: https://developer.mozilla.org/en-US/docs/Web/API/Console/log#logging_objects
+    console.log(location + " " + document.title + " " + msg);
+    console.log(JSON.parse(JSON.stringify(obj)));
 }
 
-function _moonspeakInternalHandler(event, userHandler) {
+function _moonspeakMessageHandler(event, userHandler) {
+    // if ("info" in event.data && event.data["info"].includes("install plugin")) {
+    //     let script = document.createElement("script");
+    //     script.type = "text/javascript";
+    //     script.src = event.data["pluginUrl"];
+    //     document.head.appendChild(script);
+    // } else if ("info" in event.data && event.data["info"].includes("iframe connect")) {
+    //     peerport = event.ports[0];
+    //     peerport.onmessage = (event) => _moonspeakMessageHandler(event, userHandler);
+    //     _moonspeakPorts.push(peerport);
+    // } else if ("info" in event.data) {
+    //     console.log("Can not understand message info:" + event.data["info"]);
+    //     return;
+    // };
+
+    _moonspeakLog("received:", event.data);
+    userHandler(event);
+}
+
+function _moonspeakBootstrapMasterPort(event, userHandler) {
     function isMoonspeakDevMode(hostname = location.hostname) {
         // checking .endsWith() is ok, but .startsWith() is not ok
         return (
@@ -32,14 +40,14 @@ function _moonspeakInternalHandler(event, userHandler) {
         return;
     }
 
-    console.log(location + " receiving once:");
-    console.log(event.data);
+    _moonspeakLog("receiving once:", event.data);
 
     if (event.data["info"].includes("port")) {
-        _moonspeakIframePort = event.ports[0];
-        _moonspeakIframePort.onmessage = _moonspeakBuildOnPortMessageHandler(userHandler);
+        masterport = event.ports[0];
+        masterport.onmessage = (event) => _moonspeakMessageHandler(event, userHandler);
+        _moonspeakPorts.push(masterport);
     } else {
-        console.log("Can not understand message info:" + event.data["info"]);
+        _moonspeakLog("Can not understand message info:", event.data["info"]);
         return;
     }
 }
@@ -49,15 +57,20 @@ function moonspeakInstallOnMessageHandler(userHandler) {
     // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
     // this listener is called ONCE to transfer the message channel for further communication
     window.addEventListener("message",
-        (event) => _moonspeakInternalHandler(event, userHandler),
+        (event) => _moonspeakBootstrapMasterPort(event, userHandler),
         {"once": true}
     );
-
 }
 
 // use this function to post messages
 function moonspeakPostMessage(message) {
-    console.log(location + " posted:");
-    console.log(message);
-    _moonspeakIframePort.postMessage(message);
+    if (_moonspeakPorts.length === 0) {
+        // if there are no ports listening set a timeout to simply repeat the post message after 500 milli-seconds
+        window.setTimeout(() => moonspeakPostMessage(message), 500);
+        return;
+    }
+    _moonspeakLog("posted:", message);
+    for (const port of _moonspeakPorts) {
+        port.postMessage(message);
+    }
 }

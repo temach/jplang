@@ -98,6 +98,12 @@ portEncoder model =
         ]
 
 
+keywordEncoder : String -> E.Value
+keywordEncoder keyword =
+    E.object
+        [ ( "keyword", E.string keyword ) ]
+
+
 type alias MsgDecoded =
     { keyword : Maybe String, kanji : Maybe String, notes : Maybe String }
 
@@ -159,7 +165,7 @@ update msg model =
                     }
             in
             if String.length word >= 2 then
-                ( newModel, getKeywordCheck newModel.kanji word )
+                ( newModel, Cmd.batch [ getKeywordCheck newModel.kanji word, sendMessage (keywordEncoder newModel.keyword) ] )
 
             else
                 ( { newModel | freq = [], userMessage = Dict.empty }, Cmd.none )
@@ -274,7 +280,7 @@ submitKeywordEncoder model =
 
 view : Model -> Document Msg
 view model =
-    Document "Kanji" [ render model ]
+    Document "submit" [ render model ]
 
 
 renderUserMessages : Model -> Html Msg
