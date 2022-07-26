@@ -4,6 +4,7 @@ import json
 import sqlite3
 import re
 import urllib
+from urllib.parse import unquote
 
 from bottle import response, request, post, get, route, run, template, HTTPResponse, static_file  # type: ignore
 
@@ -28,11 +29,17 @@ def work():
         c = DB.cursor()
         c.execute("SELECT * FROM diagrams where uuid = :uuid ;", dict(request.params))
         row = c.fetchone()
-        return row["xml"]
+        xml = row["xml"]
+        print("Returning xml from db")
+        return xml
     except Exception as e:
         print(f"Got exception {e}")
-    return static_file("graph.xml", root="../config/")
-
+        if GRAPH_INITIAL_XML:
+            print("Returning xml from env var")
+            return GRAPH_INITIAL_XML
+        else:
+            print("Returning xml from static file")
+            return static_file("graph.xml", root="../config/")
 
 @post("/save")
 def submit():
@@ -41,7 +48,7 @@ def submit():
     if "uuid" not in params:
         params["uuid"] = "default"
 
-    params["xml"] = urllib.parse.unquote(params["xml"], encoding='utf-8', errors='replace')
+    params["xml"] = unquote(params["xml"], encoding='utf-8', errors='replace')
 
     try:
         c = DB.cursor()
