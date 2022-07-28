@@ -8,9 +8,4 @@
     top: 0;
     bottom: 0;
     background-color: transparent;
-    pointer-events: none;
-}
-
-.acceptevents {
-    pointer-events: auto;
 }
