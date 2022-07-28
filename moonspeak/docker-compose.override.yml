@@ -1,10 +1,18 @@
+#
 # This file is applied automatically by docker-compose
 # see: https://docs.docker.com/compose/extends/
 #
-# This docker-compose runs production setup for .test domain
-# Its a template for running production on real domains
+# This docker-compose is used to run everything in dev mode for .test domain
 #
 # Important: define moonspeak.test in /etc/hosts 
+#
+# port definitions for services are for debug/development,
+# except the gateway service which is expected to be exposed to the internet
+#
+# For pdb debug add to service definition:
+#   stdin_open: true  # docker run -i
+#   tty: true         # docker run -t
+# and run "docker attach CONTAINER_NAME"
 #
 version: "3"
 
@@ -15,8 +23,9 @@ services:
     build:
       context: ./gateway-nginx
     ports:
-      - "127.0.0.1:80:8443"     # listens on 8433 to redirect to https port 443
+      - "127.0.0.1:8443:8443"
       - "127.0.0.1:443:443"
+      - "127.0.0.1:80:8443"
 
   router:
     container_name: router.moonspeak.test
@@ -50,13 +59,25 @@ services:
     image: "temachpool/moonspeak-hud:${TAG:-latest}"
     build:
       context: ./hud
-    volumes:
-      - /opt/ms/tmp
     environment:
       # this json lists urls that hud should load for the user
       MOONSPEAK_HUD_CONFIG_JSON: >-
           {
-            "graphurl": "/router/node/graph-demouser-bbb"
+            "graphurl": "/router/node/graph-demouser-bbb",
+            "services": [
+                {
+                    "name": "synonyms",
+                    "url": "/synonyms"
+                },
+                {
+                    "name": "suggestions",
+                    "url": "/suggestions"
+                },
+                {
+                    "name": "workelements",
+                    "url": "/router/node/workelements-demouser-ddd"
+                }
+            ]
           }
 
   workelements:

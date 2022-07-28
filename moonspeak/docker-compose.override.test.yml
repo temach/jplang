@@ -1,15 +1,9 @@
 #
-# This docker-compose is used to run everything in dev mode for .test domain
+# This docker-compose runs production setup for .test domain
 #
-# port definitions for services are for debug/development, except the gateway service 
-# which gets exposed to the internet
+# Its a template for running production on real domains
 #
 # Important: define moonspeak.test in /etc/hosts 
-#
-# For pdb debug add to service definition:
-#   stdin_open: true  # docker run -i
-#   tty: true         # docker run -t
-# and run "docker attach CONTAINER_NAME"
 #
 version: "3"
 
@@ -20,9 +14,8 @@ services:
     build:
       context: ./gateway-nginx
     ports:
-      - "127.0.0.1:8443:8443"
+      - "127.0.0.1:80:8443"     # listens on 8433 to redirect to https port 443
       - "127.0.0.1:443:443"
-      - "127.0.0.1:80:8443"
 
   router:
     container_name: router.moonspeak.test
@@ -30,10 +23,8 @@ services:
       context: ./router
     environment:
       MOONSPEAK_DOMAIN: "moonspeak.test"
-      MOONSPEAK_DEV_MODE: "true"
+      MOONSPEAK_DEV_MODE: ""
       RUST_LOG: "router=info"
-    ports:
-        - "127.0.0.1:8000:80"
 
   #===================================
   landing:
@@ -58,36 +49,12 @@ services:
     image: "temachpool/moonspeak-hud:${TAG:-latest}"
     build:
       context: ./hud
-    volumes:
-      - /opt/ms/tmp
     environment:
       # this json lists urls that hud should load for the user
       MOONSPEAK_HUD_CONFIG_JSON: >-
           {
             "graphurl": "/router/node/graph-demouser-bbb",
-            "services": [
-                {
-                    "name": "synonyms",
-                    "url": "/synonyms"
-                },
-                {
-                    "name": "suggestions",
-                    "url": "/suggestions"
-                },
-                {
-                    "name": "workelements",
-                    "url": "/router/node/workelements-demouser-ddd"
-                }
-            ]
           }
-
-  submit:
-    container_name: submit-demouser-ccc.moonspeak.test
-    image: "temachpool/moonspeak-submit:${TAG:-latest}"
-    build:
-      context: ./submit
-    volumes:
-      - /opt/ms/tmp
 
   workelements:
     container_name: workelements-demouser-ddd.moonspeak.test
