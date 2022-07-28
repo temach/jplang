@@ -7,7 +7,7 @@ from datetime import datetime
 from collections import defaultdict
 from itertools import dropwhile
 
-from bottle import request, post, get, route, run, template, HTTPResponse, static_file  # type: ignore
+from bottle import response, request, post, get, route, run, template, HTTPResponse, static_file  # type: ignore
 from typing import TypedDict, Any
 
 
@@ -33,6 +33,7 @@ def static(filepath):
 @get("/version")
 def version():
     data = {"version": "0.1"}
+    response.set_header("content-type", "application/json")
     return json.dumps(data)
 
 
@@ -45,6 +46,7 @@ def get_en_freq(word):
 @get("/api/suggestions/<kanji>")
 def suggestions(kanji):
     res = inner_suggestions(kanji)
+    response.set_header("content-type", "application/json")
     return json.dumps(res)
 
 

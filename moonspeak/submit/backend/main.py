@@ -102,12 +102,13 @@ def keyword_check(kanji, keyword):
         if substr_info.keyword.startswith(keyword) and substr_info.kanji != kanji and substr_info.description not in conflict:
                 conflict += substr_info.description + ";\n"
 
-    response = {
+    resp = {
         "word": "",
         "freq": get_en_freq_regex(keyword),
         "metadata": conflict,
     }
-    return json.dumps(response)
+    response.set_header("content-type", "application/json")
+    return json.dumps(resp)
 
 
 @post("/api/submit")
@@ -139,7 +140,7 @@ def submit():
     KEYWORDS[LEMMATIZER.lemmatize(keyword)] = ki
 
     # return a fake body because too lazy to unwrap properly in Elm
-    return HTTPResponse(status=200, body="")
+    return HTTPResponse(status=200, body="", headers={"content-type": "text/plain"})
 
 
 def db_init():

@@ -31,6 +31,7 @@ def work():
         data[kanji] = r
 
     payload = [e for e in data.values()]
+    response.set_header("content-type", "application/json")
     return json.dumps(payload, ensure_ascii=False)
 
 @post("/api/submit")
@@ -55,7 +56,7 @@ def submit():
         return HTTPResponse(status=202, body=body)
 
     # return a fake body because too lazy to unwrap properly in Elm
-    return HTTPResponse(status=200, body="")
+    return HTTPResponse(status=200, body="", headers={"content-type": "text/plain"})
 
 def db_init():
     c = DB.cursor()
