@@ -42,6 +42,23 @@ services:
     volumes:
       - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
 
+  hud:
+    image: "temachpool/moonspeak-hud:${TAG:-latest}"
+    volumes:
+      - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
+
+  workelements:
+    image: "temachpool/moonspeak-workelements:${TAG:-latest}"
+    volumes:
+      - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
+      - /opt/ms/tmp
+
+  graph:
+    image: "temachpool/moonspeak-graph:${TAG:-latest}"
+    volumes:
+      - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
+      - /opt/ms/tmp
+
   #===================================
   # Deploy is used in manual mode, see its source
   # deploy.moonspeak.test:

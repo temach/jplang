@@ -56,7 +56,6 @@ services:
   # this is the user's unique access url
   hud:
     container_name: hud-demouser-aaa.moonspeak.test
-    image: "temachpool/moonspeak-hud:${TAG:-latest}"
     build:
       context: ./hud
     environment:
@@ -82,19 +81,13 @@ services:
 
   workelements:
     container_name: workelements-demouser-ddd.moonspeak.test
-    image: "temachpool/moonspeak-workelements:${TAG:-latest}"
     build:
       context: ./workelements
-    volumes:
-      - /opt/ms/tmp
 
   graph:
     container_name: graph-demouser-bbb.moonspeak.test
-    image: "temachpool/moonspeak-graph:${TAG:-latest}"
     build:
       context: ./grapheditor
-    volumes:
-      - /opt/ms/tmp
     environment:
       # this xml sets default graph value
       MOONSPEAK_GRAPH_INITIAL_XML: >-

@@ -11,16 +11,12 @@ services:
   #===================================
   gateway:
     container_name: moonspeak.test
-    build:
-      context: ./gateway-nginx
     ports:
       - "127.0.0.1:80:8443"     # listens on 8433 to redirect to https port 443
       - "127.0.0.1:443:443"
 
   router:
     container_name: router.moonspeak.test
-    build:
-      context: ./router
     environment:
       MOONSPEAK_DOMAIN: "moonspeak.test"
       MOONSPEAK_DEV_MODE: ""
@@ -29,26 +25,17 @@ services:
   #===================================
   landing:
     container_name: landing.moonspeak.test
-    build:
-      context: ./landing
 
   synonyms:
     container_name: synonyms.moonspeak.test
-    build:
-      context: ./synonyms
 
   suggestions:
     container_name: suggestions.moonspeak.test
-    build:
-      context: ./suggestions
 
   #==================================
   # this is the user's unique access url
   hud:
     container_name: hud-demouser-aaa.moonspeak.test
-    image: "temachpool/moonspeak-hud:${TAG:-latest}"
-    build:
-      context: ./hud
     environment:
       # this json lists urls that hud should load for the user
       MOONSPEAK_HUD_CONFIG_JSON: >-
@@ -58,19 +45,9 @@ services:
 
   workelements:
     container_name: workelements-demouser-ddd.moonspeak.test
-    image: "temachpool/moonspeak-workelements:${TAG:-latest}"
-    build:
-      context: ./workelements
-    volumes:
-      - /opt/ms/tmp
 
   graph:
     container_name: graph-demouser-bbb.moonspeak.test
-    image: "temachpool/moonspeak-graph:${TAG:-latest}"
-    build:
-      context: ./grapheditor
-    volumes:
-      - /opt/ms/tmp
     environment:
       # this xml sets default graph value
       MOONSPEAK_GRAPH_INITIAL_XML: >-
