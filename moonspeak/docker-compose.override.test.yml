@@ -77,10 +77,6 @@ services:
                 {
                     "name": "workelements",
                     "url": "/router/node/workelements-demouser-ddd"
-                },
-                {
-                    "name": "submit",
-                    "url": "/router/node/submit-demouser-ccc"
                 }
             ]
           }
