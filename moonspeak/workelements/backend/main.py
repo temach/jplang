@@ -5,7 +5,7 @@ import sqlite3
 import re
 from pprint import pprint
 
-from bottle import response, request, post, get, route, run, template, HTTPResponse, static_file  # type: ignore
+from bottle import response, request, post, get, route, run, template, HTTPResponse, static_file, ServerAdapter  # type: ignore
 from nltk.stem.porter import PorterStemmer  # type: ignore
 from nltk.stem import WordNetLemmatizer  # type: ignore
 
@@ -194,12 +194,50 @@ def count_uppercase(word):
             count += 1
     return count
 
+class GunicornServer(ServerAdapter):
+    """ Untested. See http://gunicorn.org/configure.html for options. """
+    def run(self, handler):
+        from gunicorn.app.base import Application
+
+        config = {'bind': "%s:%d" % (self.host, int(self.port))}
+        config.update(self.options)
+
+        class GunicornApplication(Application):
+            def init(self, parser, opts, args):
+                return config
+
+            def load(self):
+                return handler
+
+            def load_config(self):
+                # Override the default function from gunicorn because it
+                # tries to do parse_args and that is breaking our parse_args
+
+                config = {}
+                for key, value in self.init(None, None, None).items():
+                    if key in self.cfg.settings and value is not None:
+                        config[key] = value
+
+                for key, value in config.items():
+                    self.cfg.set(key.lower(), value)
+
+                # current directory might be changed by the config now
+                # set up import paths and follow symlinks
+                self.chdir()
+
+        GunicornApplication().run()
 
 if __name__ == "__main__":
     import argparse
 
+    import os
+    import platform
+    hostname = os.getenv('HOSTNAME', platform.node()).split('.')[0]
+
     parser = argparse.ArgumentParser(description='Feature, run as "python main.py"')
+    parser.add_argument('--host', type=str, default="0.0.0.0", help='Host interface on which to bind')
     parser.add_argument('--port', type=int, default=80, help='port number')
+    parser.add_argument('--uds', type=str, default=f"/opt/moonspeak/unixsock/{hostname}.sock", help='Path to unix domain socket for binding')
     args = parser.parse_args()
 
     db_needs_init = (not os.path.isfile(KANJI_DB_PATH)) or (
@@ -247,4 +285,6 @@ if __name__ == "__main__":
             SUBS[word] = number
 
     print("Running bottle server on port {}".format(args.port))
-    run(host="0.0.0.0", port=args.port, debug=True)
+    bind_tcp = "{}:{}".format(args.host, args.port)
+    bind_uds = "unix:{}".format(args.uds)
+    run(host=args.host, port=args.port, server=GunicornServer, bind=[bind_tcp, bind_uds])
