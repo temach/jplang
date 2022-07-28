@@ -12,10 +12,6 @@
         {
             "name": "suggestions",
             "url": "http://moonspeak.test:8042"
-        },
-        {
-            "name": "submit",
-            "url": "http://moonspeak.test:8043"
         }
     ]
 }

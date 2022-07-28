@@ -8,6 +8,7 @@ import Html exposing (Attribute, Html, button, div, input, li, ol, span, text)
 import Html.Attributes exposing (attribute, class, placeholder, style, value)
 import Html.Events exposing (on, onClick, onInput)
 import Html.Events.Extra exposing (targetValueIntParse)
+import Html.Lazy exposing (lazy, lazy2)
 import Http
 import Json.Decode as D
 import Json.Encode as E
@@ -43,6 +44,17 @@ main =
 -- MODEL
 
 
+type alias KeyCandidate =
+    { word : String
+    , metadata : String
+    , freq : List Int
+    }
+
+
+type alias Frequency =
+    List Int
+
+
 type alias WorkElement =
     { kanji : String
     , keyword : String
@@ -54,8 +66,9 @@ type alias Model =
     { currentWork : WorkElement
     , workElements : List WorkElement
     , currentWorkIndex : Int
+    , freq : List Int
     , userMessages : Dict String String
-    , submitWorkIndex : Int
+    , onSubmitFailIndex : Int
     }
 
 
@@ -71,8 +84,9 @@ defaultModel =
     { currentWork = defaultCurrentWork
     , workElements = []
     , currentWorkIndex = 0
+    , freq = []
     , userMessages = Dict.empty
-    , submitWorkIndex = 0
+    , onSubmitFailIndex = 0
     }
 
 
@@ -93,6 +107,12 @@ init _ =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     messageReceiver RecvNewElementValue
+
+
+keywordEncoder : String -> E.Value
+keywordEncoder keyword =
+    E.object
+        [ ( "keyword", E.string keyword ) ]
 
 
 portEncoder : WorkElement -> E.Value
@@ -121,10 +141,16 @@ portDecoder =
 
 
 type Msg
-    = WorkElementsReady (Result Http.Error (List WorkElement))
-    | SelectWorkElement Int
-    | ElementSubmitReady (Result Http.Error String)
+    = SelectWorkElement Int
     | RecvNewElementValue D.Value
+      -- work element manipulations
+    | KeywordInput String
+    | NotesInput String
+    | ElementSubmitClick
+      -- Http responses
+    | WorkElementsReady (Result Http.Error (List WorkElement))
+    | ElementSubmitReady (Result Http.Error String)
+    | KeywordCheckReady (Result Http.Error KeyCandidate)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -147,8 +173,11 @@ update msg model =
 
                         newUserMessages =
                             Dict.insert "WorkElementsReady" message model.userMessages
+
+                        newModel =
+                            { model | userMessages = newUserMessages }
                     in
-                    ( { model | userMessages = newUserMessages }, Cmd.none )
+                    ( newModel, Cmd.none )
 
         SelectWorkElement index ->
             let
@@ -159,8 +188,14 @@ update msg model =
 
                 newModel =
                     { model | currentWorkIndex = index, currentWork = selected }
+
+                cmd =
+                    Cmd.batch
+                        [ getKeywordCheck newModel.currentWork.kanji newModel.currentWork.keyword
+                        , sendMessage (portEncoder newModel.currentWork)
+                        ]
             in
-            ( newModel, sendMessage (portEncoder newModel.currentWork) )
+            ( newModel, cmd )
 
         RecvNewElementValue jsonValue ->
             case D.decodeValue portDecoder jsonValue of
@@ -187,11 +222,19 @@ update msg model =
                                 | workElements = updatedWorkElements
                                 , currentWorkIndex = index
                                 , currentWork = currentElement
-                                , submitWorkIndex = model.currentWorkIndex
+                                , onSubmitFailIndex = model.currentWorkIndex
+                                , userMessages = Dict.empty
                             }
+
+                        cmd =
+                            Cmd.batch
+                                [ submitElement updatedElement
+                                , sendMessage (portEncoder currentElement)
+                                , getKeywordCheck currentElement.kanji currentElement.keyword
+                                ]
                     in
-                    -- send message with next work element, and post to backend
-                    ( newModel, Cmd.batch [ sendMessage (portEncoder currentElement), submitElement updatedElement ] )
+                    -- post to backend and send the message with next work element
+                    ( newModel, cmd )
 
                 Err _ ->
                     ( model, Cmd.none )
@@ -209,12 +252,14 @@ update msg model =
                                 Dict.insert "ElementSubmitReady" message model.userMessages
 
                             newModel =
-                                { model | userMessages = newUserMessages, currentWorkIndex = model.submitWorkIndex }
+                                { model | userMessages = newUserMessages, currentWorkIndex = model.onSubmitFailIndex }
                         in
                         ( newModel, getWorkElements )
 
                     else
-                        ( { model | userMessages = Dict.empty }, Cmd.none )
+                        -- submit went ok: do nothing
+                        -- the model has already been updated and the message has already been sent
+                        ( model, Cmd.none )
 
                 Err httpError ->
                     -- HTTP error: do nothing, just report
@@ -226,9 +271,91 @@ update msg model =
                             Dict.insert "ElementSubmitReady" message model.userMessages
 
                         newModel =
-                            { model | userMessages = newUserMessages, currentWorkIndex = model.submitWorkIndex }
+                            { model | userMessages = newUserMessages }
                     in
                     ( newModel, Cmd.none )
+
+        ElementSubmitClick ->
+            if String.length model.currentWork.keyword > 0 then
+                let
+                    -- update current elements array
+                    updatedWorkElements =
+                        List.Extra.setAt model.currentWorkIndex model.currentWork model.workElements
+
+                    -- select the next work element to display
+                    index =
+                        model.currentWorkIndex + 1
+
+                    currentElement =
+                        Maybe.withDefault
+                            (WorkElement "X" "Error" "An error occurred")
+                            (List.Extra.getAt index model.workElements)
+
+                    newModel =
+                        { model
+                            | workElements = updatedWorkElements
+                            , currentWorkIndex = index
+                            , currentWork = currentElement
+                            , onSubmitFailIndex = model.currentWorkIndex
+                            , userMessages = Dict.empty
+                        }
+
+                    cmd =
+                        Cmd.batch
+                            [ submitElement model.currentWork
+                            , sendMessage (portEncoder currentElement)
+                            , getKeywordCheck currentElement.kanji currentElement.keyword
+                            ]
+                in
+                -- send post request and message the world with new work element
+                ( newModel, cmd )
+
+            else
+                ( { model | userMessages = Dict.insert "ElementSubmitClick" "Error: keyword length must be non-zero" model.userMessages }, Cmd.none )
+
+        KeywordInput word ->
+            let
+                current =
+                    model.currentWork
+
+                newCurrentWork =
+                    { current | keyword = word }
+
+                newModel =
+                    { model | currentWork = newCurrentWork }
+
+                cmd =
+                    Cmd.batch
+                        [ getKeywordCheck newCurrentWork.kanji newCurrentWork.keyword
+                        , sendMessage (keywordEncoder newCurrentWork.keyword)
+                        ]
+            in
+            if String.length word >= 2 then
+                ( newModel, cmd )
+
+            else
+                ( { newModel | freq = [], userMessages = Dict.empty }, Cmd.none )
+
+        NotesInput word ->
+            let
+                current =
+                    model.currentWork
+
+                newCurrentWork =
+                    { current | notes = word }
+
+                newModel =
+                    { model | currentWork = newCurrentWork }
+            in
+            ( newModel, Cmd.none )
+
+        KeywordCheckReady result ->
+            case result of
+                Ok elem ->
+                    ( { model | freq = elem.freq, userMessages = Dict.insert "KeywordCheckReady" elem.metadata model.userMessages }, Cmd.none )
+
+                Err _ ->
+                    ( { model | freq = [], userMessages = Dict.insert "KeywordCheckReady" "Error getting keyword frequency" model.userMessages }, Cmd.none )
 
 
 buildErrorMessage : Http.Error -> String
@@ -248,6 +375,22 @@ buildErrorMessage httpError =
 
         Http.BadBody message ->
             message
+
+
+getKeywordCheck : String -> String -> Cmd Msg
+getKeywordCheck kanji keyword =
+    Http.get
+        { url = relative [ "api", "keywordcheck/" ++ kanji ++ "/" ++ keyword ] []
+        , expect = Http.expectJson KeywordCheckReady keyCandidateDecoder
+        }
+
+
+keyCandidateDecoder : D.Decoder KeyCandidate
+keyCandidateDecoder =
+    D.map3 KeyCandidate
+        (D.field "word" D.string)
+        (D.field "metadata" D.string)
+        (D.field "freq" (D.list D.int))
 
 
 getWorkElements : Cmd Msg
@@ -295,8 +438,48 @@ view model =
     Document "workelements" [ render model ]
 
 
-renderSingleWorkElement : Model -> Int -> WorkElement -> Html Msg
-renderSingleWorkElement model index elem =
+renderSubmitBar : WorkElement -> Frequency -> Html Msg
+renderSubmitBar currentWork freq =
+    div [ style "display" "flex" ]
+        [ span
+            [ style "flex" "1 0 auto" ]
+            [ text currentWork.kanji ]
+        , span
+            [ style "flex" "10 0 70px" ]
+            [ input
+                [ placeholder "Keyword"
+                , value currentWork.keyword
+                , onInput KeywordInput
+                , style "width" "100%"
+                , style "box-sizing" "border-box"
+                ]
+                []
+            ]
+        , span
+            [ style "flex" "1 0 auto" ]
+            [ text ("Corpus: " ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 0 freq)) ]
+        , span
+            [ style "flex" "1 0 auto" ]
+            [ text ("Subs: " ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 1 freq)) ]
+        , span
+            [ style "flex" "1 0 auto" ]
+            [ button [ onClick ElementSubmitClick ] [ text "Submit" ] ]
+        , span
+            [ style "flex" "10 0 70px" ]
+            [ input
+                [ placeholder "Notes"
+                , value currentWork.notes
+                , onInput NotesInput
+                , style "width" "100%"
+                , style "box-sizing" "border-box"
+                ]
+                []
+            ]
+        ]
+
+
+renderSingleWorkElement : Int -> WorkElement -> Html Msg
+renderSingleWorkElement index elem =
     div
         [ style "padding" "2px 0"
         , style "display" "flex"
@@ -334,22 +517,11 @@ renderSingleWorkElement model index elem =
         ]
 
 
-{-| Parse `event.target.selectedOptions` and return option values.
-targetSelectedOptions : Json.Decoder (List String)
-targetSelectedOptions =
-let
-options =
-Json.at [ "target", "selectedOptions" ] <|
-Json.keyValuePairs <|
-Json.field "value" Json.string
-in
-Json.map (List.map Tuple.second) options
--}
 renderWorkElements : Model -> Html Msg
 renderWorkElements model =
     let
         partial =
-            renderSingleWorkElement model
+            lazy2 renderSingleWorkElement
     in
     div
         [ on "click" (D.map SelectWorkElement targetValueIntParse)
@@ -368,7 +540,8 @@ render model =
         [ style "background-color" "rgb(210, 210, 210)"
         , style "overflow" "auto"
         ]
-        [ renderUserMessages model
-        , div [] [ text "Work Elements" ]
-        , renderWorkElements model
+        [ lazy renderUserMessages model
+        , lazy2 div [] [ text "Work Elements" ]
+        , lazy2 renderSubmitBar model.currentWork model.freq
+        , lazy renderWorkElements model
         ]

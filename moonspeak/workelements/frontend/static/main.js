@@ -10716,7 +10716,7 @@ var $author$project$Main$WorkElement = F3(
 		return {kanji: kanji, keyword: keyword, notes: notes};
 	});
 var $author$project$Main$defaultCurrentWork = A3($author$project$Main$WorkElement, '', '', '');
-var $author$project$Main$defaultModel = {currentWork: $author$project$Main$defaultCurrentWork, currentWorkIndex: 0, submitWorkIndex: 0, userMessages: $elm$core$Dict$empty, workElements: _List_Nil};
+var $author$project$Main$defaultModel = {currentWork: $author$project$Main$defaultCurrentWork, currentWorkIndex: 0, freq: _List_Nil, onSubmitFailIndex: 0, userMessages: $elm$core$Dict$empty, workElements: _List_Nil};
 var $author$project$Main$WorkElementsReady = function (a) {
 	return {$: 'WorkElementsReady', a: a};
 };
@@ -11050,6 +11050,43 @@ var $elm_community$list_extra$List$Extra$getAt = F2(
 		return (idx < 0) ? $elm$core$Maybe$Nothing : $elm$core$List$head(
 			A2($elm$core$List$drop, idx, xs));
 	});
+var $author$project$Main$KeywordCheckReady = function (a) {
+	return {$: 'KeywordCheckReady', a: a};
+};
+var $author$project$Main$KeyCandidate = F3(
+	function (word, metadata, freq) {
+		return {freq: freq, metadata: metadata, word: word};
+	});
+var $author$project$Main$keyCandidateDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$KeyCandidate,
+	A2($elm$json$Json$Decode$field, 'word', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'metadata', $elm$json$Json$Decode$string),
+	A2(
+		$elm$json$Json$Decode$field,
+		'freq',
+		$elm$json$Json$Decode$list($elm$json$Json$Decode$int)));
+var $author$project$Main$getKeywordCheck = F2(
+	function (kanji, keyword) {
+		return $elm$http$Http$get(
+			{
+				expect: A2($elm$http$Http$expectJson, $author$project$Main$KeywordCheckReady, $author$project$Main$keyCandidateDecoder),
+				url: A2(
+					$elm$url$Url$Builder$relative,
+					_List_fromArray(
+						['api', 'keywordcheck/' + (kanji + ('/' + keyword))]),
+					_List_Nil)
+			});
+	});
+var $author$project$Main$keywordEncoder = function (keyword) {
+	return $elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'keyword',
+				$elm$json$Json$Encode$string(keyword))
+			]));
+};
 var $author$project$Main$MsgDecoded = F3(
 	function (keyword, kanji, notes) {
 		return {kanji: kanji, keyword: keyword, notes: notes};
@@ -11297,11 +11334,10 @@ var $author$project$Main$update = F2(
 						var httpError = result.a;
 						var message = $author$project$Main$buildErrorMessage(httpError);
 						var newUserMessages = A3($elm$core$Dict$insert, 'WorkElementsReady', message, model.userMessages);
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{userMessages: newUserMessages}),
-							$elm$core$Platform$Cmd$none);
+						var newModel = _Utils_update(
+							model,
+							{userMessages: newUserMessages});
+						return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
 					}
 				case 'SelectWorkElement':
 					var index = msg.a;
@@ -11312,10 +11348,14 @@ var $author$project$Main$update = F2(
 					var newModel = _Utils_update(
 						model,
 						{currentWork: selected, currentWorkIndex: index});
-					return _Utils_Tuple2(
-						newModel,
-						$author$project$Main$sendMessage(
-							$author$project$Main$portEncoder(newModel.currentWork)));
+					var cmd = $elm$core$Platform$Cmd$batch(
+						_List_fromArray(
+							[
+								A2($author$project$Main$getKeywordCheck, newModel.currentWork.kanji, newModel.currentWork.keyword),
+								$author$project$Main$sendMessage(
+								$author$project$Main$portEncoder(newModel.currentWork))
+							]));
+					return _Utils_Tuple2(newModel, cmd);
 				case 'RecvNewElementValue':
 					var jsonValue = msg.a;
 					var _v2 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$portDecoder, jsonValue);
@@ -11330,20 +11370,20 @@ var $author$project$Main$update = F2(
 							A2($elm_community$list_extra$List$Extra$getAt, index, model.workElements));
 						var newModel = _Utils_update(
 							model,
-							{currentWork: currentElement, currentWorkIndex: index, submitWorkIndex: model.currentWorkIndex, workElements: updatedWorkElements});
-						return _Utils_Tuple2(
-							newModel,
-							$elm$core$Platform$Cmd$batch(
-								_List_fromArray(
-									[
-										$author$project$Main$sendMessage(
-										$author$project$Main$portEncoder(currentElement)),
-										$author$project$Main$submitElement(updatedElement)
-									])));
+							{currentWork: currentElement, currentWorkIndex: index, onSubmitFailIndex: model.currentWorkIndex, userMessages: $elm$core$Dict$empty, workElements: updatedWorkElements});
+						var cmd = $elm$core$Platform$Cmd$batch(
+							_List_fromArray(
+								[
+									$author$project$Main$submitElement(updatedElement),
+									$author$project$Main$sendMessage(
+									$author$project$Main$portEncoder(currentElement)),
+									A2($author$project$Main$getKeywordCheck, currentElement.kanji, currentElement.keyword)
+								]));
+						return _Utils_Tuple2(newModel, cmd);
 					} else {
 						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 					}
-				default:
+				case 'ElementSubmitReady':
 					var result = msg.a;
 					if (result.$ === 'Ok') {
 						var body = result.a;
@@ -11352,14 +11392,10 @@ var $author$project$Main$update = F2(
 							var newUserMessages = A3($elm$core$Dict$insert, 'ElementSubmitReady', message, model.userMessages);
 							var newModel = _Utils_update(
 								model,
-								{currentWorkIndex: model.submitWorkIndex, userMessages: newUserMessages});
+								{currentWorkIndex: model.onSubmitFailIndex, userMessages: newUserMessages});
 							return _Utils_Tuple2(newModel, $author$project$Main$getWorkElements);
 						} else {
-							return _Utils_Tuple2(
-								_Utils_update(
-									model,
-									{userMessages: $elm$core$Dict$empty}),
-								$elm$core$Platform$Cmd$none);
+							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 						}
 					} else {
 						var httpError = result.a;
@@ -11367,8 +11403,90 @@ var $author$project$Main$update = F2(
 						var newUserMessages = A3($elm$core$Dict$insert, 'ElementSubmitReady', message, model.userMessages);
 						var newModel = _Utils_update(
 							model,
-							{currentWorkIndex: model.submitWorkIndex, userMessages: newUserMessages});
+							{userMessages: newUserMessages});
 						return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
+					}
+				case 'ElementSubmitClick':
+					if ($elm$core$String$length(model.currentWork.keyword) > 0) {
+						var updatedWorkElements = A3($elm_community$list_extra$List$Extra$setAt, model.currentWorkIndex, model.currentWork, model.workElements);
+						var index = model.currentWorkIndex + 1;
+						var currentElement = A2(
+							$elm$core$Maybe$withDefault,
+							A3($author$project$Main$WorkElement, 'X', 'Error', 'An error occurred'),
+							A2($elm_community$list_extra$List$Extra$getAt, index, model.workElements));
+						var newModel = _Utils_update(
+							model,
+							{currentWork: currentElement, currentWorkIndex: index, onSubmitFailIndex: model.currentWorkIndex, userMessages: $elm$core$Dict$empty, workElements: updatedWorkElements});
+						var cmd = $elm$core$Platform$Cmd$batch(
+							_List_fromArray(
+								[
+									$author$project$Main$submitElement(model.currentWork),
+									$author$project$Main$sendMessage(
+									$author$project$Main$portEncoder(currentElement)),
+									A2($author$project$Main$getKeywordCheck, currentElement.kanji, currentElement.keyword)
+								]));
+						return _Utils_Tuple2(newModel, cmd);
+					} else {
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									userMessages: A3($elm$core$Dict$insert, 'ElementSubmitClick', 'Error: keyword length must be non-zero', model.userMessages)
+								}),
+							$elm$core$Platform$Cmd$none);
+					}
+				case 'KeywordInput':
+					var word = msg.a;
+					var current = model.currentWork;
+					var newCurrentWork = _Utils_update(
+						current,
+						{keyword: word});
+					var newModel = _Utils_update(
+						model,
+						{currentWork: newCurrentWork});
+					var cmd = $elm$core$Platform$Cmd$batch(
+						_List_fromArray(
+							[
+								A2($author$project$Main$getKeywordCheck, newCurrentWork.kanji, newCurrentWork.keyword),
+								$author$project$Main$sendMessage(
+								$author$project$Main$keywordEncoder(newCurrentWork.keyword))
+							]));
+					return ($elm$core$String$length(word) >= 2) ? _Utils_Tuple2(newModel, cmd) : _Utils_Tuple2(
+						_Utils_update(
+							newModel,
+							{freq: _List_Nil, userMessages: $elm$core$Dict$empty}),
+						$elm$core$Platform$Cmd$none);
+				case 'NotesInput':
+					var word = msg.a;
+					var current = model.currentWork;
+					var newCurrentWork = _Utils_update(
+						current,
+						{notes: word});
+					var newModel = _Utils_update(
+						model,
+						{currentWork: newCurrentWork});
+					return _Utils_Tuple2(newModel, $elm$core$Platform$Cmd$none);
+				default:
+					var result = msg.a;
+					if (result.$ === 'Ok') {
+						var elem = result.a;
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									freq: elem.freq,
+									userMessages: A3($elm$core$Dict$insert, 'KeywordCheckReady', elem.metadata, model.userMessages)
+								}),
+							$elm$core$Platform$Cmd$none);
+					} else {
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									freq: _List_Nil,
+									userMessages: A3($elm$core$Dict$insert, 'KeywordCheckReady', 'Error getting keyword frequency', model.userMessages)
+								}),
+							$elm$core$Platform$Cmd$none);
 					}
 			}
 		}
@@ -11376,6 +11494,127 @@ var $author$project$Main$update = F2(
 var $elm$browser$Browser$Document = F2(
 	function (title, body) {
 		return {body: body, title: title};
+	});
+var $elm$virtual_dom$VirtualDom$lazy2 = _VirtualDom_lazy2;
+var $elm$html$Html$Lazy$lazy2 = $elm$virtual_dom$VirtualDom$lazy2;
+var $author$project$Main$ElementSubmitClick = {$: 'ElementSubmitClick'};
+var $author$project$Main$KeywordInput = function (a) {
+	return {$: 'KeywordInput', a: a};
+};
+var $author$project$Main$NotesInput = function (a) {
+	return {$: 'NotesInput', a: a};
+};
+var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
+var $author$project$Main$renderSubmitBar = F2(
+	function (currentWork, freq) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'display', 'flex')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'flex', '1 0 auto')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(currentWork.kanji)
+						])),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'flex', '10 0 70px')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$input,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$placeholder('Keyword'),
+									$elm$html$Html$Attributes$value(currentWork.keyword),
+									$elm$html$Html$Events$onInput($author$project$Main$KeywordInput),
+									A2($elm$html$Html$Attributes$style, 'width', '100%'),
+									A2($elm$html$Html$Attributes$style, 'box-sizing', 'border-box')
+								]),
+							_List_Nil)
+						])),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'flex', '1 0 auto')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							'Corpus: ' + $elm$core$String$fromInt(
+								A2(
+									$elm$core$Maybe$withDefault,
+									0,
+									A2($elm_community$list_extra$List$Extra$getAt, 0, freq))))
+						])),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'flex', '1 0 auto')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text(
+							'Subs: ' + $elm$core$String$fromInt(
+								A2(
+									$elm$core$Maybe$withDefault,
+									0,
+									A2($elm_community$list_extra$List$Extra$getAt, 1, freq))))
+						])),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'flex', '1 0 auto')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$button,
+							_List_fromArray(
+								[
+									$elm$html$Html$Events$onClick($author$project$Main$ElementSubmitClick)
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('Submit')
+								]))
+						])),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'flex', '10 0 70px')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$input,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$placeholder('Notes'),
+									$elm$html$Html$Attributes$value(currentWork.notes),
+									$elm$html$Html$Events$onInput($author$project$Main$NotesInput),
+									A2($elm$html$Html$Attributes$style, 'width', '100%'),
+									A2($elm$html$Html$Attributes$style, 'box-sizing', 'border-box')
+								]),
+							_List_Nil)
+						]))
+				]));
 	});
 var $author$project$Main$renderUserMessages = function (model) {
 	return A2(
@@ -11390,8 +11629,8 @@ var $author$project$Main$renderUserMessages = function (model) {
 					$elm$core$Dict$values(model.userMessages)))
 			]));
 };
-var $author$project$Main$renderSingleWorkElement = F3(
-	function (model, index, elem) {
+var $author$project$Main$renderSingleWorkElement = F2(
+	function (index, elem) {
 		return A2(
 			$elm$html$Html$div,
 			_List_fromArray(
@@ -11484,7 +11723,7 @@ var $elm_community$html_extra$Html$Events$Extra$targetValueIntParse = A2(
 	$elm$html$Html$Events$targetValue,
 	A2($elm$core$Basics$composeR, $elm$core$String$toInt, $elm_community$html_extra$Html$Events$Extra$maybeStringToResult));
 var $author$project$Main$renderWorkElements = function (model) {
-	var partial = $author$project$Main$renderSingleWorkElement(model);
+	var partial = $elm$html$Html$Lazy$lazy2($author$project$Main$renderSingleWorkElement);
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -11506,15 +11745,17 @@ var $author$project$Main$render = function (model) {
 			]),
 		_List_fromArray(
 			[
-				$author$project$Main$renderUserMessages(model),
-				A2(
+				A2($elm$html$Html$Lazy$lazy, $author$project$Main$renderUserMessages, model),
+				A3(
+				$elm$html$Html$Lazy$lazy2,
 				$elm$html$Html$div,
 				_List_Nil,
 				_List_fromArray(
 					[
 						$elm$html$Html$text('Work Elements')
 					])),
-				$author$project$Main$renderWorkElements(model)
+				A3($elm$html$Html$Lazy$lazy2, $author$project$Main$renderSubmitBar, model.currentWork, model.freq),
+				A2($elm$html$Html$Lazy$lazy, $author$project$Main$renderWorkElements, model)
 			]));
 };
 var $author$project$Main$view = function (model) {
@@ -11529,4 +11770,4 @@ var $author$project$Main$view = function (model) {
 var $author$project$Main$main = $elm$browser$Browser$document(
 	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
-	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Json.Decode.Value":{"args":[],"type":"Json.Encode.Value"},"Main.WorkElement":{"args":[],"type":"{ kanji : String.String, keyword : String.String, notes : String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"WorkElementsReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"SelectWorkElement":["Basics.Int"],"ElementSubmitReady":["Result.Result Http.Error String.String"],"RecvNewElementValue":["Json.Decode.Value"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Json.Encode.Value":{"args":[],"tags":{"Value":[]}}}}})}});}(this));
+	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.KeyCandidate":{"args":[],"type":"{ word : String.String, metadata : String.String, freq : List.List Basics.Int }"},"Json.Decode.Value":{"args":[],"type":"Json.Encode.Value"},"Main.WorkElement":{"args":[],"type":"{ kanji : String.String, keyword : String.String, notes : String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"SelectWorkElement":["Basics.Int"],"RecvNewElementValue":["Json.Decode.Value"],"KeywordInput":["String.String"],"NotesInput":["String.String"],"ElementSubmitClick":[],"WorkElementsReady":["Result.Result Http.Error (List.List Main.WorkElement)"],"ElementSubmitReady":["Result.Result Http.Error String.String"],"KeywordCheckReady":["Result.Result Http.Error Main.KeyCandidate"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Json.Encode.Value":{"args":[],"tags":{"Value":[]}}}}})}});}(this));
