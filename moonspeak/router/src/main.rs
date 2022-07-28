@@ -200,13 +200,13 @@ async fn router(
 
     debug!("responding {:?}", finalised);
     info!(
-        r#"{} "{} {}" -> "{}" {}"#, 
+        r#" '{} {}' -> {} '{}' {}"#, 
+        req.method(),
+        req.uri(),
         match is_unixsock {
             true => "unix ",
             false => "",
         },
-        // req.method(), req.uri().path_and_query().unwrap_or(&actix_web::http::uri::PathAndQuery::from_static("/")),
-        req.method(), req.uri(),
         infoline,
         finalised.status()
     );
