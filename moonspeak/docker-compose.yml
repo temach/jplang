@@ -1,5 +1,5 @@
 #
-# ALSO LOOK AT ./docker-compose.override.yml
+# ALSO MUST SEE ./docker-compose.override.yml
 #
 version: "3"
 
@@ -32,33 +32,15 @@ services:
     volumes:
       - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
 
-  plus:
-    image: "temachpool/moonspeak-plus:${TAG:-latest}"
+  synonyms:
+    image: "temachpool/moonspeak-synonyms:${TAG:-latest}"
+    volumes:
+      - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
 
-  # synonyms:
-  #   container_name: synonyms.moonspeak.test
-  #   image: moonspeak-synonyms:latest
-  #   build:
-  #     context: ./synonyms
-  #   volumes:
-  #     - /opt/ms/tmp
-
-  # suggestions.moonspeak.test:
-  #   image: moonspeak-suggestions:latest
-  #   build:
-  #     context: ./suggestions
-  #   volumes:
-  #     - /opt/ms/tmp
-
-  # plugins.moonspeak.test:
-  #   image: moonspeak-plugins:latest
-  #   build:
-  #     context: ./plugins
-
-  # help.moonspeak.test:
-  #   image: moonspeak-help:latest
-  #   build:
-  #     context: ./help
+  suggestions:
+    image: "temachpool/moonspeak-suggestions:${TAG:-latest}"
+    volumes:
+      - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
 
   #===================================
   # Deploy is used in manual mode, see its source
@@ -75,4 +57,3 @@ services:
   #     - "127.0.0.20:80:80"
   #   volumes:
   #     - /var/run/docker.sock:/var/run/docker.sock
-

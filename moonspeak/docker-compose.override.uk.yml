@@ -1,3 +1,6 @@
+#
+# This docker-compose runs production setup for .uk domain
+#
 version: "3"
 
 services:
