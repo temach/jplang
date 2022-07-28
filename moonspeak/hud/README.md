@@ -52,7 +52,7 @@ Execute the below command in the directory with README:
 - Do NOT go to background with `-D`
 
 ```
-# PORT=8003 lighttpd -f lighttpd.conf -D
+# MOONSPEAK_UNIXSOCK="$PWD/here" MOONSPEAK_PORT=8003 lighttpd -f lighttpd.conf -D
 ```
 
 
