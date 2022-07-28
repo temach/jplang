@@ -1,5 +1,5 @@
 {
-    "graphurl": "http://moonspeak.test:8001",
+    "graphurl": "http://moonspeak.test:8010",
     "services": [
         {
             "name": "workelements",
