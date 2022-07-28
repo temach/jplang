@@ -59,6 +59,7 @@ services:
     build:
       context: ./hud
     environment:
+      MOONSPEAK_UNIXSOCK: "/opt/moonspeak/unixsock/hud-demouser-aaa.sock"
       # this json lists urls that hud should load for the user
       MOONSPEAK_HUD_CONFIG_JSON: >-
           {
@@ -84,7 +85,7 @@ services:
     build:
       context: ./workelements
     environment:
-      MOONSPEAK_UNIX_SOCK: "/opt/moonspeak/unixsock/workelements-demouser-ddd.sock"
+      MOONSPEAK_UNIXSOCK: "/opt/moonspeak/unixsock/workelements-demouser-ddd.sock"
 
   graph:
     container_name: graph-demouser-bbb.moonspeak.test

@@ -231,7 +231,7 @@ if __name__ == "__main__":
     import argparse
 
     current_dir = os.path.dirname(os.path.realpath(__file__))
-    unixsock = os.getenv('MOONSPEAK_UNIX_SOCK', f"{current_dir}/workelements.sock")
+    unixsock = os.getenv('MOONSPEAK_UNIXSOCK', f"{current_dir}/workelements.sock")
 
     parser = argparse.ArgumentParser(description='Feature, run as "python main.py"')
     parser.add_argument('--host', type=str, default="0.0.0.0", help='Host interface on which to bind')
