@@ -7,5 +7,5 @@ if [ -z "$MOONSPEAK_HUD_CONFIG_JSON" ]; then
   echo 'var.moonspeak_hud_config = "using from filesystem"'
 else 
   echo 'var.moonspeak_hud_config = "using from env MOONSPEAK_HUD_CONFIG_JSON"'
-  echo $MOONSPEAK_HUD_CONFIG_JSON > frontend/config/hud.json
+  echo "$MOONSPEAK_HUD_CONFIG_JSON" > frontend/config/hud.json
 fi
