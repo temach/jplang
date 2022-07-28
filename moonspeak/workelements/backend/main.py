@@ -230,14 +230,13 @@ class GunicornServer(ServerAdapter):
 if __name__ == "__main__":
     import argparse
 
-    import os
-    import platform
-    hostname = os.getenv('HOSTNAME', platform.node()).split('.')[0]
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    unixsock = os.getenv('MOONSPEAK_UNIX_SOCK', f"{current_dir}/workelements.sock")
 
     parser = argparse.ArgumentParser(description='Feature, run as "python main.py"')
     parser.add_argument('--host', type=str, default="0.0.0.0", help='Host interface on which to bind')
     parser.add_argument('--port', type=int, default=80, help='port number')
-    parser.add_argument('--uds', type=str, default=f"/opt/moonspeak/unixsock/{hostname}.sock", help='Path to unix domain socket for binding')
+    parser.add_argument('--uds', type=str, default=unixsock, help='Path to unix domain socket for binding')
     args = parser.parse_args()
 
     db_needs_init = (not os.path.isfile(KANJI_DB_PATH)) or (

@@ -83,6 +83,8 @@ services:
     container_name: workelements-demouser-ddd.moonspeak.test
     build:
       context: ./workelements
+    environment:
+      MOONSPEAK_UNIX_SOCK: "/opt/moonspeak/unixsock/workelements-demouser-ddd.sock"
 
   graph:
     container_name: graph-demouser-bbb.moonspeak.test
