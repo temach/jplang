@@ -153,7 +153,9 @@ async fn router(
                 let dom :NodeRef = parser.one(utf8_body);
 
                 // create <base>, use the actual path as root_url, otherwise relative paths "../common/" break
-                let base_node = create_node("base", vec![("href", req.path().to_string())]);
+                // enforce trailing slash "/" on base_url
+                let base_url = req.path().trim_end_matches('/').to_string() + "/";
+                let base_node = create_node("base", vec![("href", base_url)]);
 
                 debug!("base tag {:?}", base_node);
 
