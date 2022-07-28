@@ -1,6 +1,9 @@
 # Developing locally
 
-### The easy way using python
+For configuration edit frontend/config/hud.json.
+E.g. right now hud expects to connect to graph service on port 8010.
+
+## The easy way using python
 
 Install python 3 and in the directory with this README run:
 ```
@@ -10,7 +13,7 @@ python -m http.server 8003
 Then navigate to `http://127.0.0.1:8003/frontend/`
 
 
-### The advanced way
+## The advanced way
 
 This is how its run on production in docker container using lighttpd.
 
