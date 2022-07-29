@@ -59,6 +59,7 @@ services:
     build:
       context: ./hud
     environment:
+      MOONSPEAK_PORT: "80"
       MOONSPEAK_UNIXSOCK: "/opt/moonspeak/unixsock/hud-demouser-aaa.sock"
       # this json lists urls that hud should load for the user
       MOONSPEAK_HUD_CONFIG_JSON: >-
