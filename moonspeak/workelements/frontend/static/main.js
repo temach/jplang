@@ -10990,13 +10990,16 @@ var $elm$url$Url$Builder$relative = F2(
 			$elm$url$Url$Builder$toQuery(parameters));
 	});
 var $elm$json$Json$Decode$index = _Json_decodeIndex;
-var $author$project$Main$workElementsDecoder = $elm$json$Json$Decode$list(
-	A4(
-		$elm$json$Json$Decode$map3,
-		$author$project$Main$WorkElement,
-		A2($elm$json$Json$Decode$index, 0, $elm$json$Json$Decode$string),
-		A2($elm$json$Json$Decode$index, 1, $elm$json$Json$Decode$string),
-		A2($elm$json$Json$Decode$index, 2, $elm$json$Json$Decode$string)));
+var $author$project$Main$workElementsDecoder = A2(
+	$elm$json$Json$Decode$field,
+	'work',
+	$elm$json$Json$Decode$list(
+		A4(
+			$elm$json$Json$Decode$map3,
+			$author$project$Main$WorkElement,
+			A2($elm$json$Json$Decode$index, 0, $elm$json$Json$Decode$string),
+			A2($elm$json$Json$Decode$index, 1, $elm$json$Json$Decode$string),
+			A2($elm$json$Json$Decode$index, 2, $elm$json$Json$Decode$string))));
 var $author$project$Main$getWorkElements = $elm$http$Http$get(
 	{
 		expect: A2($elm$http$Http$expectJson, $author$project$Main$WorkElementsReady, $author$project$Main$workElementsDecoder),

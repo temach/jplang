@@ -3,9 +3,11 @@ import os
 import json
 import sqlite3
 import re
-from pprint import pprint
 
-from bottle import response, request, post, get, route, run, template, HTTPResponse, static_file, ServerAdapter  # type: ignore
+import gunicorn.app.base
+import gunicorn.config
+
+from flask import Flask, send_from_directory, make_response, request  # type: ignore
 from nltk.stem.porter import PorterStemmer  # type: ignore
 from nltk.stem import WordNetLemmatizer  # type: ignore
 
@@ -16,6 +18,74 @@ class KeywordInfo():
         self.description = description
         self.kanji = kanji
 
+
+class GunicornApp(gunicorn.app.base.Application):
+
+    def __init__(self, app, options=None):
+        self.options = options or {}
+        self.application = app
+        super().__init__()
+
+    def init(self, parser, opts, args):
+        return None
+
+    def load(self):
+        return self.application
+
+    # Override the default load_config function from gunicorn because it
+    # tries to do parse_args and that is breaking our parse_args
+    # instead we use parse_known_args here
+    def load_config(self):
+        # parse console args
+        parser = self.cfg.parser()
+        args, argv = parser.parse_known_args()
+        if argv:
+            print('unrecognized arguments: {}'.format(argv))
+
+        # optional settings from apps
+        cfg = self.init(parser, args, args.args)
+
+        # set up import paths and follow symlinks
+        self.chdir()
+
+        # Load up the any app specific configuration
+        if cfg:
+            for k, v in cfg.items():
+                self.cfg.set(k.lower(), v)
+
+        env_args = parser.parse_args(self.cfg.get_cmd_args_from_env())
+
+        if args.config:
+            self.load_config_from_file(args.config)
+        elif env_args.config:
+            self.load_config_from_file(env_args.config)
+        else:
+            default_config = gunicorn.config.get_default_config_file()
+            if default_config is not None:
+                self.load_config_from_file(default_config)
+
+        # Load up environment configuration
+        for k, v in vars(env_args).items():
+            if v is None:
+                continue
+            if k == "args":
+                continue
+            self.cfg.set(k.lower(), v)
+
+        # Lastly, update the configuration with any command line settings.
+        for k, v in vars(args).items():
+            if v is None:
+                continue
+            if k == "args":
+                continue
+            self.cfg.set(k.lower(), v)
+
+        # current directory might be changed by the config now
+        # set up import paths and follow symlinks
+        self.chdir()
+
+
+app = Flask(__name__, static_folder='../frontend/static/')
 
 VERSION = "0.1"
 KANJI_DB_PATH = "../tmp/kanji-parts.db"
@@ -34,19 +104,12 @@ STEMMER = PorterStemmer()
 LEMMATIZER = WordNetLemmatizer()
 
 
-@get("/")
-def index():
-    return static_file("index.html", root="../frontend/")
+@app.get("/")
+def get_index():
+    return send_from_directory('../frontend/', "index.html")
 
 
-@route("/static/<path:path>")
-def static(path):
-    if "index.html" in path:
-        return static_file("index.html", root="../frontend/")
-    return static_file(os.path.join("static", path), root="../frontend/")
-
-
-@get("/api/work")
+@app.route("/api/work")
 def work():
     c = DB.cursor()
     c.execute("SELECT * FROM kanjikeywords;")
@@ -56,10 +119,11 @@ def work():
         kanji = r[0]
         data[kanji] = r
 
-    payload = [e for e in data.values()]
-    response.set_header("content-type", "application/json")
+    payload_data = {"work": [e for e in data.values()]}
+    payload_str = json.dumps(payload_data, ensure_ascii=False)
 
-    return json.dumps(payload, ensure_ascii=False)
+    response = make_response(payload_str, 200, {"Content-Type": "application/json"})
+    return response
 
 def get_en_freq_regex(word):
     r = re.compile("^{}$".format(word), re.IGNORECASE)
@@ -80,7 +144,7 @@ def get_en_freq_regex(word):
     return (icorpus, isubs)
 
 
-@get("/api/keywordcheck/<kanji>/<keyword>")
+@app.route("/api/keywordcheck/<kanji>/<keyword>")
 def keyword_check(kanji, keyword):
     """
     Test conflict search with a database like this
@@ -130,16 +194,17 @@ def keyword_check(kanji, keyword):
         if substr_info.keyword.startswith(keyword) and substr_info.kanji != kanji and substr_info.description not in conflict:
                 conflict += substr_info.description + ";\n"
 
-    resp = {
+    payload_str = json.dumps({
         "word": "",
         "freq": get_en_freq_regex(keyword),
         "metadata": conflict,
-    }
-    response.set_header("content-type", "application/json")
-    return json.dumps(resp)
+    }, ensure_ascii=False)
+
+    response = make_response(payload_str, 200, {"Content-Type": "application/json"})
+    return response
 
 
-@post("/api/submit")
+@app.post("/api/submit")
 def submit():
     payload = request.json
 
@@ -154,11 +219,13 @@ def submit():
         DB.commit()
     except Exception as e:
         # return 2xx response because too lazy to unwrap errors in Elm
-        body = json.dumps({
+        body_str = json.dumps({
             "exception": str(e),
             "payload": payload,
         }, ensure_ascii=False)
-        return HTTPResponse(status=202, body=body)
+
+        response = make_response(body_str, 202, {"Content-Type": "application/json"})
+        return response
 
     # update in-memory keyword dictionary
     global KEYWORDS
@@ -171,8 +238,9 @@ def submit():
     KEYWORDS[STEMMER.stem(keyword)] = ki
     KEYWORDS[LEMMATIZER.lemmatize(keyword)] = ki
 
-    # return a fake body because too lazy to unwrap properly in Elm
-    return HTTPResponse(status=200, body="", headers={"content-type": "text/plain"})
+    # return an empty body because too lazy to unwrap properly in Elm
+    response = make_response("", 200, {"Content-Type": "text/plain"})
+    return response
 
 
 def db_init():
@@ -194,51 +262,8 @@ def count_uppercase(word):
             count += 1
     return count
 
-class GunicornServer(ServerAdapter):
-    """ Untested. See http://gunicorn.org/configure.html for options. """
-    def run(self, handler):
-        from gunicorn.app.base import Application
-
-        config = {'bind': "%s:%d" % (self.host, int(self.port))}
-        config.update(self.options)
-
-        class GunicornApplication(Application):
-            def init(self, parser, opts, args):
-                return config
-
-            def load(self):
-                return handler
-
-            def load_config(self):
-                # Override the default function from gunicorn because it
-                # tries to do parse_args and that is breaking our parse_args
-
-                config = {}
-                for key, value in self.init(None, None, None).items():
-                    if key in self.cfg.settings and value is not None:
-                        config[key] = value
-
-                for key, value in config.items():
-                    self.cfg.set(key.lower(), value)
-
-                # current directory might be changed by the config now
-                # set up import paths and follow symlinks
-                self.chdir()
-
-        GunicornApplication().run()
 
 if __name__ == "__main__":
-    import argparse
-
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    unixsock = os.getenv('MOONSPEAK_UNIXSOCK', f"{current_dir}/workelements.sock")
-
-    parser = argparse.ArgumentParser(description='Feature, run as "python main.py"')
-    parser.add_argument('--host', type=str, default="0.0.0.0", help='Host interface on which to bind')
-    parser.add_argument('--port', type=int, default=80, help='port number')
-    parser.add_argument('--uds', type=str, default=unixsock, help='Path to unix domain socket for binding')
-    args = parser.parse_args()
-
     db_needs_init = (not os.path.isfile(KANJI_DB_PATH)) or (
         os.path.getsize(KANJI_DB_PATH) == 0)
 
@@ -283,7 +308,4 @@ if __name__ == "__main__":
             word = line.split()[0].strip()
             SUBS[word] = number
 
-    print("Running bottle server on port {}".format(args.port))
-    bind_tcp = "{}:{}".format(args.host, args.port)
-    bind_uds = "unix:{}".format(args.uds)
-    run(host=args.host, port=args.port, server=GunicornServer, bind=[bind_tcp, bind_uds])
+    GunicornApp(app).run()

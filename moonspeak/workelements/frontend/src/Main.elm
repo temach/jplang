@@ -403,11 +403,14 @@ getWorkElements =
 
 workElementsDecoder : D.Decoder (List WorkElement)
 workElementsDecoder =
-    D.list
-        (D.map3 WorkElement
-            (D.index 0 D.string)
-            (D.index 1 D.string)
-            (D.index 2 D.string)
+    D.field "work"
+        (D.list
+            (D.map3
+                WorkElement
+                (D.index 0 D.string)
+                (D.index 1 D.string)
+                (D.index 2 D.string)
+            )
         )
 
 
