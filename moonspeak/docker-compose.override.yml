@@ -25,7 +25,7 @@ services:
     ports:
       - "127.0.0.1:8443:8443"
       - "127.0.0.1:443:443"
-      - "127.0.0.1:80:8443"
+      - "127.0.0.1:80:80"
 
   router:
     container_name: router.moonspeak.test
@@ -86,7 +86,7 @@ services:
     build:
       context: ./workelements
     environment:
-      MOONSPEAK_UNIXSOCK: "/opt/moonspeak/unixsock/workelements-demouser-ddd.sock"
+      GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsock/workelements-demouser-ddd.sock' "
 
   graph:
     container_name: graph-demouser-bbb.moonspeak.test
