@@ -4,20 +4,22 @@ WORKDIR /opt/ms/
 RUN mkdir tmp
 
 RUN mkdir backend
+
 RUN pip install nltk==3.7
-COPY backend/download_libs.py ./
+COPY backend/download_libs.py   download_libs.py
 RUN python ./download_libs.py
 
-COPY backend/requirements.txt ./
-RUN pip install -r ./requirements.txt
+COPY backend/requirements.txt   requirements.txt
+RUN pip install -r requirements.txt
 
 COPY resources resources
 
 RUN mkdir frontend
-COPY frontend/static frontend/static
-COPY frontend/index.html frontend/index.html
+COPY frontend/static        frontend/static
+COPY frontend/index.html    frontend/index.html
 
-COPY backend/main.py backend/main.py
+COPY backend/main.py            backend/main.py
+COPY backend/gunicorn.conf.py   backend/gunicorn.conf.py
 
 WORKDIR /opt/ms/backend
 CMD ["python", "main.py"]
