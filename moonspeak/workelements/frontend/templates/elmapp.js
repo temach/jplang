@@ -11022,18 +11022,19 @@ var $author$project$Main$subscriptions = function (_v0) {
 var $author$project$Main$SelectWorkElement = function (a) {
 	return {$: 'SelectWorkElement', a: a};
 };
+var $author$project$Main$brokenCurrentWork = A3($author$project$Main$WorkElement, '{{ no_kanji }}', '{{ error }}', '{{ unknown_error_description }}');
 var $author$project$Main$buildErrorMessage = function (httpError) {
 	switch (httpError.$) {
 		case 'BadUrl':
 			var message = httpError.a;
 			return message;
 		case 'Timeout':
-			return 'Server is taking too long to respond. Please try again later.';
+			return '{{ http_error_timeout }}';
 		case 'NetworkError':
-			return 'Unable to reach server.';
+			return '{{ http_error_network }}';
 		case 'BadStatus':
 			var statusCode = httpError.a;
-			return 'Request failed with status code: ' + $elm$core$String$fromInt(statusCode);
+			return '{{ http_error_bad_status }}' + $elm$core$String$fromInt(statusCode);
 		default:
 			var message = httpError.a;
 			return message;
@@ -11346,7 +11347,7 @@ var $author$project$Main$update = F2(
 					var index = msg.a;
 					var selected = A2(
 						$elm$core$Maybe$withDefault,
-						A3($author$project$Main$WorkElement, 'X', 'Error', 'An error occurred'),
+						$author$project$Main$brokenCurrentWork,
 						A2($elm_community$list_extra$List$Extra$getAt, index, model.workElements));
 					var newModel = _Utils_update(
 						model,
@@ -11369,7 +11370,7 @@ var $author$project$Main$update = F2(
 						var index = model.currentWorkIndex + 1;
 						var currentElement = A2(
 							$elm$core$Maybe$withDefault,
-							A3($author$project$Main$WorkElement, 'X', 'Error', 'An error occurred'),
+							$author$project$Main$brokenCurrentWork,
 							A2($elm_community$list_extra$List$Extra$getAt, index, model.workElements));
 						var newModel = _Utils_update(
 							model,
@@ -11391,7 +11392,7 @@ var $author$project$Main$update = F2(
 					if (result.$ === 'Ok') {
 						var body = result.a;
 						if ($elm$core$String$length(body) > 0) {
-							var message = 'Error submitting keyword. Details:' + body;
+							var message = '{{ submit_failed }}' + body;
 							var newUserMessages = A3($elm$core$Dict$insert, 'ElementSubmitReady', message, model.userMessages);
 							var newModel = _Utils_update(
 								model,
@@ -11415,7 +11416,7 @@ var $author$project$Main$update = F2(
 						var index = model.currentWorkIndex + 1;
 						var currentElement = A2(
 							$elm$core$Maybe$withDefault,
-							A3($author$project$Main$WorkElement, 'X', 'Error', 'An error occurred'),
+							$author$project$Main$brokenCurrentWork,
 							A2($elm_community$list_extra$List$Extra$getAt, index, model.workElements));
 						var newModel = _Utils_update(
 							model,
@@ -11434,7 +11435,7 @@ var $author$project$Main$update = F2(
 							_Utils_update(
 								model,
 								{
-									userMessages: A3($elm$core$Dict$insert, 'ElementSubmitClick', 'Error: keyword length must be non-zero', model.userMessages)
+									userMessages: A3($elm$core$Dict$insert, 'ElementSubmitClick', '{{ submit_onclick_error }}', model.userMessages)
 								}),
 							$elm$core$Platform$Cmd$none);
 					}
@@ -11487,7 +11488,7 @@ var $author$project$Main$update = F2(
 								model,
 								{
 									freq: _List_Nil,
-									userMessages: A3($elm$core$Dict$insert, 'KeywordCheckReady', 'Error getting keyword frequency', model.userMessages)
+									userMessages: A3($elm$core$Dict$insert, 'KeywordCheckReady', '{{ error_keyword_check }}', model.userMessages)
 								}),
 							$elm$core$Platform$Cmd$none);
 					}
@@ -11540,7 +11541,7 @@ var $author$project$Main$renderSubmitBar = F2(
 							$elm$html$Html$input,
 							_List_fromArray(
 								[
-									$elm$html$Html$Attributes$placeholder('Keyword'),
+									$elm$html$Html$Attributes$placeholder('{{ keyword_placeholder }}'),
 									$elm$html$Html$Attributes$value(currentWork.keyword),
 									$elm$html$Html$Events$onInput($author$project$Main$KeywordInput),
 									A2($elm$html$Html$Attributes$style, 'width', '100%'),
@@ -11557,7 +11558,7 @@ var $author$project$Main$renderSubmitBar = F2(
 					_List_fromArray(
 						[
 							$elm$html$Html$text(
-							'Corpus: ' + $elm$core$String$fromInt(
+							'{{ google_corpus_freq }}' + $elm$core$String$fromInt(
 								A2(
 									$elm$core$Maybe$withDefault,
 									0,
@@ -11572,7 +11573,7 @@ var $author$project$Main$renderSubmitBar = F2(
 					_List_fromArray(
 						[
 							$elm$html$Html$text(
-							'Subs: ' + $elm$core$String$fromInt(
+							'{{ subtitles_freq }}' + $elm$core$String$fromInt(
 								A2(
 									$elm$core$Maybe$withDefault,
 									0,
@@ -11594,7 +11595,7 @@ var $author$project$Main$renderSubmitBar = F2(
 								]),
 							_List_fromArray(
 								[
-									$elm$html$Html$text('Submit')
+									$elm$html$Html$text('{{ submit_button }}')
 								]))
 						])),
 					A2(
@@ -11609,7 +11610,7 @@ var $author$project$Main$renderSubmitBar = F2(
 							$elm$html$Html$input,
 							_List_fromArray(
 								[
-									$elm$html$Html$Attributes$placeholder('Notes'),
+									$elm$html$Html$Attributes$placeholder('{{ notes_title }}'),
 									$elm$html$Html$Attributes$value(currentWork.notes),
 									$elm$html$Html$Events$onInput($author$project$Main$NotesInput),
 									A2($elm$html$Html$Attributes$style, 'width', '100%'),
@@ -11755,7 +11756,7 @@ var $author$project$Main$render = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('Work Elements')
+						$elm$html$Html$text('{{ title }}')
 					])),
 				A3($elm$html$Html$Lazy$lazy2, $author$project$Main$renderSubmitBar, model.currentWork, model.freq),
 				A2($elm$html$Html$Lazy$lazy, $author$project$Main$renderWorkElements, model)

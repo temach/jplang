@@ -77,7 +77,7 @@ defaultCurrentWork =
 
 
 brokenCurrentWork =
-    WorkElement "X" "Error" "An error occurred"
+    WorkElement "{{ no_kanji }}" "{{ error }}" "{{ unknown_error_description }}"
 
 
 defaultModel =
@@ -88,10 +88,6 @@ defaultModel =
     , userMessages = Dict.empty
     , onSubmitFailIndex = 0
     }
-
-
-defaultModelTwo =
-    { defaultModel | workElements = [ WorkElement "a" "first" "", WorkElement "b" "" "asd", WorkElement "c" "third" "and comment" ] }
 
 
 init : () -> ( Model, Cmd Msg )
@@ -183,7 +179,7 @@ update msg model =
             let
                 selected =
                     Maybe.withDefault
-                        (WorkElement "X" "Error" "An error occurred")
+                        brokenCurrentWork
                         (List.Extra.getAt index model.workElements)
 
                 newModel =
@@ -214,7 +210,7 @@ update msg model =
 
                         currentElement =
                             Maybe.withDefault
-                                (WorkElement "X" "Error" "An error occurred")
+                                brokenCurrentWork
                                 (List.Extra.getAt index model.workElements)
 
                         newModel =
@@ -246,7 +242,7 @@ update msg model =
                         -- logical error: refresh all elements from db
                         let
                             message =
-                                "Error submitting keyword. Details:" ++ body
+                                "{{ submit_failed }}" ++ body
 
                             newUserMessages =
                                 Dict.insert "ElementSubmitReady" message model.userMessages
@@ -288,7 +284,7 @@ update msg model =
 
                     currentElement =
                         Maybe.withDefault
-                            (WorkElement "X" "Error" "An error occurred")
+                            brokenCurrentWork
                             (List.Extra.getAt index model.workElements)
 
                     newModel =
@@ -311,7 +307,7 @@ update msg model =
                 ( newModel, cmd )
 
             else
-                ( { model | userMessages = Dict.insert "ElementSubmitClick" "Error: keyword length must be non-zero" model.userMessages }, Cmd.none )
+                ( { model | userMessages = Dict.insert "ElementSubmitClick" "{{ submit_onclick_error }}" model.userMessages }, Cmd.none )
 
         KeywordInput word ->
             let
@@ -355,7 +351,7 @@ update msg model =
                     ( { model | freq = elem.freq, userMessages = Dict.insert "KeywordCheckReady" elem.metadata model.userMessages }, Cmd.none )
 
                 Err _ ->
-                    ( { model | freq = [], userMessages = Dict.insert "KeywordCheckReady" "Error getting keyword frequency" model.userMessages }, Cmd.none )
+                    ( { model | freq = [], userMessages = Dict.insert "KeywordCheckReady" "{{ error_keyword_check }}" model.userMessages }, Cmd.none )
 
 
 buildErrorMessage : Http.Error -> String
@@ -365,13 +361,13 @@ buildErrorMessage httpError =
             message
 
         Http.Timeout ->
-            "Server is taking too long to respond. Please try again later."
+            "{{ http_error_timeout }}"
 
         Http.NetworkError ->
-            "Unable to reach server."
+            "{{ http_error_network }}"
 
         Http.BadStatus statusCode ->
-            "Request failed with status code: " ++ String.fromInt statusCode
+            "{{ http_error_bad_status }}" ++ String.fromInt statusCode
 
         Http.BadBody message ->
             message
@@ -450,7 +446,7 @@ renderSubmitBar currentWork freq =
         , span
             [ style "flex" "10 0 70px" ]
             [ input
-                [ placeholder "Keyword"
+                [ placeholder "{{ keyword_placeholder }}"
                 , value currentWork.keyword
                 , onInput KeywordInput
                 , style "width" "100%"
@@ -460,17 +456,17 @@ renderSubmitBar currentWork freq =
             ]
         , span
             [ style "flex" "1 0 auto" ]
-            [ text ("Corpus: " ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 0 freq)) ]
+            [ text ("{{ google_corpus_freq }}" ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 0 freq)) ]
         , span
             [ style "flex" "1 0 auto" ]
-            [ text ("Subs: " ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 1 freq)) ]
+            [ text ("{{ subtitles_freq }}" ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 1 freq)) ]
         , span
             [ style "flex" "1 0 auto" ]
-            [ button [ onClick ElementSubmitClick ] [ text "Submit" ] ]
+            [ button [ onClick ElementSubmitClick ] [ text "{{ submit_button }}" ] ]
         , span
             [ style "flex" "10 0 70px" ]
             [ input
-                [ placeholder "Notes"
+                [ placeholder "{{ notes_title }}"
                 , value currentWork.notes
                 , onInput NotesInput
                 , style "width" "100%"
@@ -544,7 +540,7 @@ render model =
         , style "overflow" "auto"
         ]
         [ lazy renderUserMessages model
-        , lazy2 div [] [ text "Work Elements" ]
+        , lazy2 div [] [ text "{{ title }}" ]
         , lazy2 renderSubmitBar model.currentWork model.freq
         , lazy renderWorkElements model
         ]

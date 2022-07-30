@@ -3,11 +3,13 @@ import os
 import json
 import sqlite3
 import re
+import urllib
 
 import gunicorn.app.base
 import gunicorn.config
 
-from flask import Flask, send_from_directory, make_response, request  # type: ignore
+import werkzeug
+from flask import Flask, send_from_directory, make_response, request, redirect  # type: ignore
 from nltk.stem.porter import PorterStemmer  # type: ignore
 from nltk.stem import WordNetLemmatizer  # type: ignore
 
@@ -85,7 +87,7 @@ class GunicornApp(gunicorn.app.base.Application):
         self.chdir()
 
 
-app = Flask(__name__, static_folder='../frontend/static/')
+app = Flask(__name__)
 
 VERSION = "0.1"
 KANJI_DB_PATH = "../tmp/kanji-parts.db"
@@ -104,13 +106,8 @@ STEMMER = PorterStemmer()
 LEMMATIZER = WordNetLemmatizer()
 
 
-@app.get("/")
-def get_index():
-    return send_from_directory('../frontend/', "index.html")
-
-
-@app.route("/api/work")
-def work():
+@app.route("/<lang>/api/work")
+def work(lang):
     c = DB.cursor()
     c.execute("SELECT * FROM kanjikeywords;")
     rows = c.fetchall()
@@ -124,6 +121,7 @@ def work():
 
     response = make_response(payload_str, 200, {"Content-Type": "application/json"})
     return response
+
 
 def get_en_freq_regex(word):
     r = re.compile("^{}$".format(word), re.IGNORECASE)
@@ -144,8 +142,8 @@ def get_en_freq_regex(word):
     return (icorpus, isubs)
 
 
-@app.route("/api/keywordcheck/<kanji>/<keyword>")
-def keyword_check(kanji, keyword):
+@app.route("/<lang>/api/keywordcheck/<kanji>/<keyword>")
+def keyword_check(lang, kanji, keyword):
     """
     Test conflict search with a database like this
     Note that stem for 'children' is 'child' and overrides the 'child' keyword:
@@ -204,8 +202,8 @@ def keyword_check(kanji, keyword):
     return response
 
 
-@app.post("/api/submit")
-def submit():
+@app.post("/<lang>/api/submit")
+def submit(lang):
     payload = request.json
 
     try:
@@ -241,6 +239,23 @@ def submit():
     # return an empty body because too lazy to unwrap properly in Elm
     response = make_response("", 200, {"Content-Type": "text/plain"})
     return response
+
+
+@app.get("/")
+def get_index():
+    # must redirect to language sub-url otherwise relative links break
+    host_url = urllib.parse.urlparse(request.host_url)
+    domain = host_url.hostname.split(".")[-1]
+    return redirect(f"/{domain}/", code=307)
+
+
+@app.get("/<path:filename>")
+def get_static(filename):
+    # when requesting index.html, must specify the folder with a trailing slash
+    if filename.endswith("/"):
+        return send_from_directory("../frontend/", filename + "index.html")
+    else:
+        return send_from_directory("../frontend/", filename)
 
 
 def db_init():

@@ -1,3 +1,17 @@
+FROM node as builder
+
+WORKDIR /opt/ms
+
+RUN npm install --global gulp-cli
+COPY frontend/package.json           .
+COPY frontend/package-lock.json      .
+RUN npm install
+
+COPY frontend       frontend
+COPY gulpfile.js    .
+RUN gulp
+
+
 FROM python:alpine
 WORKDIR /opt/ms/
 
@@ -14,9 +28,7 @@ RUN pip install -r requirements.txt
 
 COPY resources resources
 
-RUN mkdir frontend
-COPY frontend/static        frontend/static
-COPY frontend/index.html    frontend/index.html
+COPY --from=builder /opt/ms/dist frontend
 
 COPY backend/main.py            backend/main.py
 COPY backend/gunicorn.conf.py   backend/gunicorn.conf.py

@@ -3,6 +3,7 @@
 
 bind=["127.0.0.1:8040"]
 
+# see: https://www.joelsleppy.com/blog/gunicorn-application-preloading/
 preload_app = True
 
 # write to console
