@@ -24,30 +24,9 @@ async function moonspeakRender(basename, extension, languageTag) {
     }
 }
 
-function moonspeakBasename(fileUrl=null) {
+function moonspeakBasename(fileUrl) {
     // e.g. from "/test/index.html" we get "index"
     try {
-
-        // try to auto determine which file is being loaded 
-        // for HTML: window.location.href
-        // for JS: document.currentScript.src
-        if (! fileUrl) {
-            if (! document.currentScript || ! document.currentScript.src) {
-                // we are running from HTML markup script tag
-                fileUrl = window.location.href;
-            } else {
-                // we are being eval'd by somefile.js
-                fileUrl = document.currentScript.src;
-            }
-            // const scriptName = document.currentScript.src;
-            // if (scriptName.includes("moonspeak_bootstrap.js")) {
-            //     fileUrl = window.location.href;
-            // } else {
-            //     // we are being eval'd by somefile.js
-            //     fileUrl = document.currentScript.src;
-            // }
-        }
-
         let [base, ext] = fileUrl.split("/").pop(0).split(".");
         if (base.length < 1 || ext.length < 1) {
             throw "Can not get basename & extension from: " + fileUrl;
@@ -74,7 +53,8 @@ function moonspeakLanguage() {
     }
 }
 
-function moonspeakBootstrap(fileUrl=null) {
+// this is the entry point, the fileUrl says which file should be bootstrapped
+function moonspeakBootstrap(fileUrl) {
     const languageTag = moonspeakLanguage()
     const [basename, extension] = moonspeakBasename(fileUrl);
 
