@@ -6,7 +6,8 @@ const c = require('ansi-colors');
 
 const fs = require('fs');
 const data = require('gulp-data');
-const merge = require('merge-stream');
+const mergeStream =   require('merge-stream');
+const tap = require('gulp-tap');
 
 const del = require('del');       //< see https://github.com/gulpjs/gulp/blob/master/docs/recipes/delete-files-folder.md
 
@@ -17,23 +18,6 @@ const htmlhint = require("gulp-htmlhint");
 const htmlmin = require('gulp-htmlmin');
 const TOML = require('fast-toml');
 const handlebars = require('gulp-compile-handlebars');
-
-
-function findVariables(lang) {
-    return function(file) {
-        const fp = './frontend/' + lang + '/' + file.stem + '.toml';
-        const language = TOML.parseFileSync(fp)
-        return {
-            ...language,
-            build_date: Date(),
-            "lang": lang,
-            gulp_debug_data: {
-                template: file.basename,
-                toml: lang + '/' + file.stem + '.toml',
-            }
-        }
-    }
-}
 
 const htmlhintconfig = {
     // doctype and head
@@ -77,11 +61,48 @@ const htmlhintconfig = {
     "spec-char-escape": true,
 }
 
-function htmlTemplateLintTask() {
-    return gulp.src(["./frontend/templates/*.html"])
-                    .pipe(htmlhint(htmlhintconfig))
-                    .pipe(htmlhint.reporter())
-                    .pipe(htmlhint.failOnError({suppress: true}));
+function htmlTemplateLintTask(cb) {
+    gulp.src(["./frontend/templates/*.html"])
+        .pipe(htmlhint(htmlhintconfig))
+        .pipe(htmlhint.reporter())
+        .pipe(htmlhint.failOnError({suppress: true}))
+        .on('finish', cb);
+}
+
+function delayTask(cb) {
+    setTimeout(cb, 100);
+}
+
+// Minify html
+function htmlTask(cb) {
+    gulp.src(["./dist/*/*.html"])
+        .pipe(htmlhint(htmlhintconfig))
+        .pipe(htmlhint.reporter())
+        .pipe(htmlhint.failOnError({ suppress: true }))
+        // minify html
+        .pipe(htmlmin({collapseWhitespace:true, removeComments: true}))
+        .pipe(gulp.dest('./dist/'))
+        .on('finish', cb); 
+}
+
+
+//====================================
+// Translations
+//
+function findVariables(lang) {
+    return function(file) {
+        const fp = './frontend/' + lang + '/' + file.stem + '.toml';
+        const language = TOML.parseFileSync(fp)
+        return {
+            ...language,
+            build_date: Date(),
+            "lang": lang,
+            gulp_debug_data: {
+                template: file.basename,
+                toml: lang + '/' + file.stem + '.toml',
+            }
+        }
+    }
 }
 
 function annotateError(err) {
@@ -98,71 +119,65 @@ function annotateError(err) {
     }
 }
 
-// Minify html and fix links to CSS and JS
-function htmlTask() {
+function makeTranslationsTask(cb) {
     // use a nodejs domain to get more exact info for handling template errors
     const d = require('domain').create();
     d.on('error', (err) => {try {annotateError(err)} finally {throw err}});
     d.enter();
 
-    const result = merge();
+    const result = mergeStream();
+
     for (const lang of ["test", "ru", "en", "kz"]) {
-        const r = gulp.src(["./frontend/templates/*.html"])
+        const r = gulp.src(["./frontend/templates/*"])
                 .pipe(data(findVariables(lang)))
                 .pipe(handlebars({}, {compile: {strict:true}}))
-                // becasue we sourced *.template we need to fix names here
                 .pipe(rename(path => {
                     path.dirname += "/" + lang;
-                    path.extname = ".html";
                 }))
-                .pipe(htmlhint(htmlhintconfig))
-                .pipe(htmlhint.reporter())
-                .pipe(htmlhint.failOnError({ suppress: true }))
-                // minify html
-                .pipe(htmlmin({collapseWhitespace:true, removeComments: true}))
                 .pipe(gulp.dest('./dist/'));
 
-        result.add(r, {end: false});
+        // by default does not close streams after each add
+        result.add(r);
     }
 
     // close the domain of error handling
     d.exit();
 
-    return result.end();
+    result.on('finish', cb); 
+    result.end();
 }
+
 
 
 //===========================================
-function preCleanTask() {
-    return del([
-        './dist/**/*',
+function preCleanTask(cb) {
+    del.sync([
+        './dist/',
     ]);
+    cb();
 }
 
-function copyTask() {
-    return gulp.src([
-            './frontend/*/*', 
-            
-            // exclude these
-            '!./frontend/*/*.html',
-            '!./frontend/templates/*.html',
-            '!./frontend/*/*.toml',
-        ])
-        .pipe(gulp.dest('./dist/'));
+function copyTask(cb) {
+    gulp.src([
+        './frontend/*/*', 
+        
+        // exclude these
+        '!./frontend/static/dev_mode',
+        '!./frontend/templates/*',
+        '!./frontend/elm/*',
+        '!./frontend/*/*.toml',
+        '!./frontend/README.md',
+    ])
+    .pipe(gulp.dest('./dist/'))
+    .on('end', cb);
 }
 
 function postCleanTask(cb) {
     // remove files that are only used in development
-    return del([
-        './dist/*/*.toml',
-        './dist/templates',
+    del.sync([
         './dist/README.md',
-        // dynamic libs
-        './dist/common/fast-toml.js',
-        './dist/common/nunjucks.min.js',
-        './dist/common/handlebars.js',
-        './dist/common/boot.js',
     ]);
+    cb();
 }
 
 
@@ -170,13 +185,15 @@ function postCleanTask(cb) {
 // then gradually improve by overriding some of them with optimised versions
 exports.default = gulp.series(
     preCleanTask,
-
     copyTask,
-
-    // html
     htmlTemplateLintTask,
-    htmlTask,
+    makeTranslationsTask,
 
+    // add delay to allow filesystem to flush
+    // or use complex in memory files: https://github.com/gulpjs/gulp/blob/master/docs/recipes/make-stream-from-buffer.md
+    delayTask,
+
+    htmlTask,
     postCleanTask,
 );
 

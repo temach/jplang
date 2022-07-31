@@ -1,11 +1,29 @@
 {
   "name": "workelements",
   "version": "1.0.0",
-  "description": "## Running locally",
-  "main": "gulpfile.js",
+  "description": "workelements feature for moonspeak",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "ansi-colors": "^4.1.3",
+    "del": "^6.1.1",
+    "fast-toml": "^0.5.4",
+    "git-rev-sync": "^3.0.2",
+    "gulp": "^4.0.2",
+    "gulp-cli": "^2.3.0",
+    "gulp-compile-handlebars": "^0.6.1",
+    "gulp-data": "^1.3.1",
+    "gulp-fontmin": "^0.7.4",
+    "gulp-htmlhint": "^4.0.2",
+    "gulp-htmlmin": "^5.0.1",
+    "gulp-rename": "^2.0.0",
+    "gulp-tap": "^2.0.0",
+    "handlebars": "^4.7.7",
+    "htmlhint": "^1.1.4",
+    "merge-stream": "^2.0.0"
+  }
 }
