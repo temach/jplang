@@ -62,7 +62,7 @@ const htmlhintconfig = {
 }
 
 function htmlTemplateLintTask(cb) {
-    gulp.src(["./frontend/templates/*.html"])
+    gulp.src(["./src/templates/*.html"])
         .pipe(htmlhint(htmlhintconfig))
         .pipe(htmlhint.reporter())
         .pipe(htmlhint.failOnError({suppress: true}))
@@ -91,7 +91,7 @@ function htmlTask(cb) {
 //
 function findVariables(lang) {
     return function(file) {
-        const fp = './frontend/' + lang + '/' + file.stem + '.toml';
+        const fp = './src/' + lang + '/' + file.stem + '.toml';
         const language = TOML.parseFileSync(fp)
         return {
             ...language,
@@ -114,7 +114,7 @@ function annotateError(err) {
     } 
     else if (err.plugin === 'gulp-htmlhint') {
         let msg = c.bold.red("HTMLHint reporting uses wrong filenames:\n")
-                + "Example: for errors in " + c.bold.red("templates/ru/doc.html") + " find the actual error in " + c.bold.red("frontend/ru/doc.toml")
+                + "Example: for errors in " + c.bold.red("templates/ru/index.html") + " find the actual error in " + c.bold.red("src/ru/index.toml")
         console.error(msg);
     }
 }
@@ -128,7 +128,7 @@ function makeTranslationsTask(cb) {
     const result = mergeStream();
 
     for (const lang of ["test", "ru", "en", "kz"]) {
-        const r = gulp.src(["./frontend/templates/*"])
+        const r = gulp.src(["./src/templates/*"])
                 .pipe(data(findVariables(lang)))
                 .pipe(handlebars({}, {compile: {strict:true}}))
                 .pipe(rename(path => {
@@ -159,14 +159,14 @@ function preCleanTask(cb) {
 
 function copyTask(cb) {
     gulp.src([
-        './frontend/*/*', 
+        './src/*/*', 
         
         // exclude these
-        '!./frontend/static/dev_mode',
-        '!./frontend/templates/*',
-        '!./frontend/elm/*',
-        '!./frontend/*/*.toml',
-        '!./frontend/README.md',
+        '!./src/static/dev_mode',
+        '!./src/templates/*',
+        '!./src/elm/*',
+        '!./src/*/*.toml',
+        '!./src/README.md',
     ])
     .pipe(gulp.dest('./dist/'))
     .on('end', cb);
