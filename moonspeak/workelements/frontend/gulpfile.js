@@ -9,7 +9,7 @@ const data = require('gulp-data');
 const mergeStream =   require('merge-stream');
 const tap = require('gulp-tap');
 
-const del = require('del');       //< see https://github.com/gulpjs/gulp/blob/master/docs/recipes/delete-files-folder.md
+const deleteAsync = require('del');       //< see https://github.com/gulpjs/gulp/blob/master/docs/recipes/delete-files-folder.md
 
 
 //===========================================
@@ -61,12 +61,11 @@ const htmlhintconfig = {
     "spec-char-escape": true,
 }
 
-function htmlTemplateLintTask(cb) {
-    gulp.src(["./src/templates/*.html"])
+function htmlTemplateLintTask() {
+    return gulp.src(["./src/templates/*.html"])
         .pipe(htmlhint(htmlhintconfig))
         .pipe(htmlhint.reporter())
-        .pipe(htmlhint.failOnError({suppress: true}))
-        .on('finish', cb);
+        .pipe(htmlhint.failOnError({suppress: true}));
 }
 
 function delayTask(cb) {
@@ -74,15 +73,14 @@ function delayTask(cb) {
 }
 
 // Minify html
-function htmlTask(cb) {
-    gulp.src(["./dist/*/*.html"])
+function htmlTask() {
+    return gulp.src(["./dist/*/*.html"])
         .pipe(htmlhint(htmlhintconfig))
         .pipe(htmlhint.reporter())
         .pipe(htmlhint.failOnError({ suppress: true }))
         // minify html
         .pipe(htmlmin({collapseWhitespace:true, removeComments: true}))
-        .pipe(gulp.dest('./dist/'))
-        .on('finish', cb); 
+        .pipe(gulp.dest('./dist/'));
 }
 
 
@@ -119,7 +117,7 @@ function annotateError(err) {
     }
 }
 
-function makeTranslationsTask(cb) {
+function makeTranslationsTask() {
     // use a nodejs domain to get more exact info for handling template errors
     const d = require('domain').create();
     d.on('error', (err) => {try {annotateError(err)} finally {throw err}});
@@ -143,22 +141,20 @@ function makeTranslationsTask(cb) {
     // close the domain of error handling
     d.exit();
 
-    result.on('finish', cb); 
-    result.end();
+    return result.end();
 }
 
 
 
 //===========================================
-function preCleanTask(cb) {
-    del.sync([
+function preCleanTask() {
+    return deleteAsync([
         './dist/',
     ]);
-    cb();
 }
 
-function copyTask(cb) {
-    gulp.src([
+function copyTask() {
+    return gulp.src([
         './src/*/*', 
         
         // exclude these
@@ -168,16 +164,14 @@ function copyTask(cb) {
         '!./src/*/*.toml',
         '!./src/README.md',
     ])
-    .pipe(gulp.dest('./dist/'))
-    .on('end', cb);
+    .pipe(gulp.dest('./dist/'));
 }
 
-function postCleanTask(cb) {
+function postCleanTask() {
     // remove files that are only used in development
-    del.sync([
+    return deleteAsync([
         './dist/README.md',
     ]);
-    cb();
 }
 
 
