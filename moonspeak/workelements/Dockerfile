@@ -1,14 +1,14 @@
 FROM node as builder
 
-WORKDIR /opt/ms
+WORKDIR /opt/ms/frontend
 
 RUN npm install --global gulp-cli
-COPY frontend/package.json           .
-COPY frontend/package-lock.json      .
+COPY frontend/package.json           package.json
+COPY frontend/package-lock.json      package-lock.json
 RUN npm install
 
-COPY frontend       frontend
-COPY gulpfile.js    .
+COPY frontend/src           src
+COPY frontend/gulpfile.js   gulpfile.js
 RUN gulp
 
 
@@ -28,7 +28,7 @@ RUN pip install -r requirements.txt
 
 COPY resources resources
 
-COPY --from=builder /opt/ms/dist frontend
+COPY --from=builder /opt/ms/frontend/dist frontend/src
 
 COPY backend/main.py            backend/main.py
 COPY backend/gunicorn.conf.py   backend/gunicorn.conf.py
