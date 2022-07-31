@@ -87,7 +87,7 @@ class GunicornApp(gunicorn.app.base.Application):
         self.chdir()
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=None)
 
 VERSION = "0.1"
 KANJI_DB_PATH = "../tmp/kanji-parts.db"
@@ -253,9 +253,9 @@ def get_index():
 def get_static(filename):
     # when requesting index.html, must specify the folder with a trailing slash
     if filename.endswith("/"):
-        return send_from_directory("../frontend/", filename + "index.html")
+        return send_from_directory("../frontend/src/", filename + "index.html")
     else:
-        return send_from_directory("../frontend/", filename)
+        return send_from_directory("../frontend/src/", filename)
 
 
 def db_init():

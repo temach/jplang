@@ -1,5 +1,7 @@
 async function moonspeakRender(basename, extension, languageTag) {
-    let response = await fetch(basename + '.toml');
+    let tomlFile = basename + "." + extension + ".toml";
+
+    let response = await fetch(tomlFile);
     let text = await response.text();
     let data = TOML.parse(text);
     let dummy_data = {
@@ -59,8 +61,8 @@ function moonspeakBootstrap(fileUrl) {
     const [basename, extension] = moonspeakBasename(fileUrl);
 
     const hacks = [
-        "../common/dev_mode/fast-toml.js",
-        "../common/dev_mode/handlebars.js",
+        "../static/dev_mode/fast-toml.js",
+        "../static/dev_mode/handlebars.js",
     ];
 
     let script = null;
@@ -72,7 +74,7 @@ function moonspeakBootstrap(fileUrl) {
 
     // wait for browser to load the last hack, then run this to fetch, template, load the actual file
     script.onload = () => {
-        console.log("Mashing template and data for: " + basename + "." + extension);
+        console.log("Mashing template and toml translation for: " + basename + "." + extension);
         moonspeakRender(basename, extension, languageTag);
     };
 }

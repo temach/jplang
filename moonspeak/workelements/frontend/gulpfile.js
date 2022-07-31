@@ -13,6 +13,17 @@ const deleteAsync = require('del');       //< see https://github.com/gulpjs/gulp
 
 const { PassThrough } = require('stream');
 
+const elm = require('gulp-elm');
+
+//===========================================
+// Elm
+
+function elmTask() {
+  return gulp.src('src/elm/src/Main.elm')
+    .pipe(elm.bundle("elmapp.js", {cwd: "src/elm/", optimize: true}))
+    .pipe(gulp.dest('src/templates/'));
+}
+
 
 //===========================================
 // HTML
@@ -162,6 +173,7 @@ function copyStatic() {
 // then gradually improve by overriding some of them with optimised versions
 exports.default = gulp.series(
     preCleanTask,
+    elmTask,
     copyStatic,
     htmlTemplateLintTask,
     makeTranslationsTask,
@@ -170,4 +182,8 @@ exports.default = gulp.series(
 
 exports.lint = gulp.series(
     htmlTemplateLintTask,
+);
+
+exports.elm = gulp.series(
+    elmTask,
 );
