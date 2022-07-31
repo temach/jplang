@@ -6,6 +6,8 @@ const c = require('ansi-colors');
 
 const fs = require('fs');
 const data = require('gulp-data');
+const glob = require("glob");
+const path = require("path");
 
 const deleteAsync = require('del');       //< see https://github.com/gulpjs/gulp/blob/master/docs/recipes/delete-files-folder.md
 
@@ -62,7 +64,7 @@ const htmlhintconfig = {
 }
 
 function htmlTemplateLintTask() {
-    return gulp.src(["./src/templates/*.html"])
+    return gulp.src(["src/templates/*.html"])
         .pipe(htmlhint(htmlhintconfig))
         .pipe(htmlhint.reporter())
         .pipe(htmlhint.failOnError({suppress: true}));
@@ -70,35 +72,19 @@ function htmlTemplateLintTask() {
 
 // Minify html
 function htmlTask() {
-    return gulp.src(["./dist/*/*.html"])
+    return gulp.src(["dist/*/*.html"])
         .pipe(htmlhint(htmlhintconfig))
         .pipe(htmlhint.reporter())
         .pipe(htmlhint.failOnError({ suppress: true }))
         // minify html
         .pipe(htmlmin({collapseWhitespace:true, removeComments: true}))
-        .pipe(gulp.dest('./dist/'));
+        .pipe(gulp.dest('dist/'));
 }
 
 
 //====================================
 // Translations
 //
-function findVariables(lang) {
-    return function(file) {
-        const fp = './src/' + lang + '/' + file.stem + '.toml';
-        const language = TOML.parseFileSync(fp)
-        return {
-            ...language,
-            build_date: Date(),
-            "lang": lang,
-            gulp_debug_data: {
-                template: file.basename,
-                toml: lang + '/' + file.stem + '.toml',
-            }
-        }
-    }
-}
-
 function annotateError(err) {
     if (err.message.includes("not defined in [object Object]")) {
         // this is an error about the templates compilation, it is critical
@@ -121,15 +107,30 @@ function makeTranslationsTask(cb) {
 
     const aggregate  = new PassThrough({objectMode: true});
 
-    for (const lang of ["test", "ru", "en", "kz"]) {
-        const r = gulp.src(["./src/templates/*"])
-                .pipe(data(findVariables(lang)))
-                .pipe(handlebars({}, {compile: {strict:true}}))
-                .pipe(rename(path => {
-                    path.dirname += "/" + lang;
-                }))
-                .pipe(gulp.dest('./dist/'))
-                .pipe(aggregate);
+    const tomlFiles = glob.sync("src/*/*.toml", {nonull: false});
+    for (const tomlPath of tomlFiles) {
+        const langCode = tomlPath.split("/")[1];
+        const translationStrings = TOML.parseFileSync(tomlPath);
+        const templatePath = "src/templates/" + path.basename(tomlPath, ".toml");
+
+        gulp.src([templatePath])
+            .pipe(data((file) => {
+                return {
+                    ...translationStrings,
+                    build_date: Date(),
+                    "lang": langCode,
+                    gulp_debug_data: {
+                        template: templatePath,
+                        toml: tomlPath
+                    }
+                }
+            }))
+            .pipe(handlebars({}, {compile: {strict:true}}))
+            .pipe(rename(path => {
+                path.dirname += "/" + langCode;
+            }))
+            .pipe(gulp.dest('dist/'))
+            .pipe(aggregate);
     }
 
     // close the domain of error handling
@@ -143,41 +144,28 @@ function makeTranslationsTask(cb) {
 //===========================================
 function preCleanTask() {
     return deleteAsync([
-        './dist/',
+        'dist/',
     ]);
 }
 
-function copyTask() {
+function copyStatic() {
     return gulp.src([
-        './src/*/*', 
+        'src/static/*', 
         
-        // exclude these
-        '!./src/static/dev_mode',
-        '!./src/templates/*',
-        '!./src/elm/*',
-        '!./src/*/*.toml',
-        '!./src/README.md',
+        // exclude dev_mode files
+        '!src/static/dev_mode',
     ])
-    .pipe(gulp.dest('./dist/'));
+    .pipe(gulp.dest('dist/static/'));
 }
-
-function postCleanTask() {
-    // remove files that are only used in development
-    return deleteAsync([
-        './dist/README.md',
-    ]);
-}
-
 
 // start by copying all files,
 // then gradually improve by overriding some of them with optimised versions
 exports.default = gulp.series(
     preCleanTask,
-    copyTask,
+    copyStatic,
     htmlTemplateLintTask,
     makeTranslationsTask,
     htmlTask,
-    postCleanTask,
 );
 
 exports.lint = gulp.series(
