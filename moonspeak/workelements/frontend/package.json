@@ -21,9 +21,7 @@
     "gulp-htmlhint": "^4.0.2",
     "gulp-htmlmin": "^5.0.1",
     "gulp-rename": "^2.0.0",
-    "gulp-tap": "^2.0.0",
     "handlebars": "^4.7.7",
-    "htmlhint": "^1.1.4",
-    "merge-stream": "^2.0.0"
+    "htmlhint": "^1.1.4"
   }
 }

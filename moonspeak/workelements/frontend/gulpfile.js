@@ -6,10 +6,10 @@ const c = require('ansi-colors');
 
 const fs = require('fs');
 const data = require('gulp-data');
-const mergeStream =   require('merge-stream');
-const tap = require('gulp-tap');
 
 const deleteAsync = require('del');       //< see https://github.com/gulpjs/gulp/blob/master/docs/recipes/delete-files-folder.md
+
+const { PassThrough } = require('stream');
 
 
 //===========================================
@@ -68,10 +68,6 @@ function htmlTemplateLintTask() {
         .pipe(htmlhint.failOnError({suppress: true}));
 }
 
-function delayTask(cb) {
-    setTimeout(cb, 100);
-}
-
 // Minify html
 function htmlTask() {
     return gulp.src(["./dist/*/*.html"])
@@ -117,13 +113,13 @@ function annotateError(err) {
     }
 }
 
-function makeTranslationsTask() {
+function makeTranslationsTask(cb) {
     // use a nodejs domain to get more exact info for handling template errors
     const d = require('domain').create();
     d.on('error', (err) => {try {annotateError(err)} finally {throw err}});
     d.enter();
 
-    const result = mergeStream();
+    const aggregate  = new PassThrough({objectMode: true});
 
     for (const lang of ["test", "ru", "en", "kz"]) {
         const r = gulp.src(["./src/templates/*"])
@@ -132,16 +128,14 @@ function makeTranslationsTask() {
                 .pipe(rename(path => {
                     path.dirname += "/" + lang;
                 }))
-                .pipe(gulp.dest('./dist/'));
-
-        // by default does not close streams after each add
-        result.add(r);
+                .pipe(gulp.dest('./dist/'))
+                .pipe(aggregate);
     }
 
     // close the domain of error handling
     d.exit();
 
-    return result.end();
+    aggregate.on('finish', cb);
 }
 
 
@@ -182,11 +176,6 @@ exports.default = gulp.series(
     copyTask,
     htmlTemplateLintTask,
     makeTranslationsTask,
-
-    // add delay to allow filesystem to flush
-    // or use complex in memory files: https://github.com/gulpjs/gulp/blob/master/docs/recipes/make-stream-from-buffer.md
-    delayTask,
-
     htmlTask,
     postCleanTask,
 );
