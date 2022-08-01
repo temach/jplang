@@ -1,13 +1,80 @@
 #!/usr/bin/env python3
 import json
 import re
-import os
-from datetime import datetime
+import urllib
 from collections import defaultdict
-from itertools import dropwhile
 
-from bottle import response, request, post, get, route, run, template, HTTPResponse, static_file  # type: ignore
+import gunicorn.app.base
+import gunicorn.config
+
+from flask import Flask, send_from_directory, make_response, request, redirect  # type: ignore
 from typing import TypedDict, Any
+
+
+class GunicornApp(gunicorn.app.base.Application):
+
+    def __init__(self, app, options=None):
+        self.options = options or {}
+        self.application = app
+        super().__init__()
+
+    def init(self, parser, opts, args):
+        return None
+
+    def load(self):
+        return self.application
+
+    # Override the default load_config function from gunicorn because it
+    # tries to do parse_args and that is breaking our parse_args
+    # instead we use parse_known_args here
+    def load_config(self):
+        # parse console args
+        parser = self.cfg.parser()
+        args, argv = parser.parse_known_args()
+        if argv:
+            print('unrecognized arguments: {}'.format(argv))
+
+        # optional settings from apps
+        cfg = self.init(parser, args, args.args)
+
+        # set up import paths and follow symlinks
+        self.chdir()
+
+        # Load up the any app specific configuration
+        if cfg:
+            for k, v in cfg.items():
+                self.cfg.set(k.lower(), v)
+
+        env_args = parser.parse_args(self.cfg.get_cmd_args_from_env())
+
+        if args.config:
+            self.load_config_from_file(args.config)
+        elif env_args.config:
+            self.load_config_from_file(env_args.config)
+        else:
+            default_config = gunicorn.config.get_default_config_file()
+            if default_config is not None:
+                self.load_config_from_file(default_config)
+
+        # Load up environment configuration
+        for k, v in vars(env_args).items():
+            if v is None:
+                continue
+            if k == "args":
+                continue
+            self.cfg.set(k.lower(), v)
+
+        # Lastly, update the configuration with any command line settings.
+        for k, v in vars(args).items():
+            if v is None:
+                continue
+            if k == "args":
+                continue
+            self.cfg.set(k.lower(), v)
+
+        # current directory might be changed by the config now
+        # set up import paths and follow symlinks
+        self.chdir()
 
 
 class KeyCandidate(TypedDict):
@@ -18,22 +85,7 @@ class KeyCandidate(TypedDict):
 
 ListKeyCandidate = list[KeyCandidate]
 Thesaurus = dict[str, list[str]]
-
-
-@get("/")
-def index():
-    return static_file("index.html", root="../frontend/")
-
-@get("/static/<filepath:re:.*\.(css|js)>")
-def static(filepath):
-    return static_file(filepath, root="../frontend/static/")
-
-
-@get("/version")
-def version():
-    data = {"version": "0.1"}
-    response.set_header("content-type", "application/json")
-    return json.dumps(data)
+app = Flask(__name__, static_folder=None)
 
 
 def get_en_freq(word):
@@ -42,11 +94,12 @@ def get_en_freq(word):
         SUBS.get(word, -1)
     ]
 
-@get("/api/synonyms/<word>")
-def synonyms(word):
+
+@app.get("/<lang>/api/synonyms/<word>")
+def synonyms(lang, word):
     res = inner_synonyms(word)
-    response.set_header("content-type", "application/json")
-    return json.dumps(res)
+    response = make_response(json.dumps(res), 200, {"Content-Type": "application/json"})
+    return response
 
 
 def inner_synonyms(word) -> ListKeyCandidate:
@@ -101,13 +154,24 @@ def inner_synonyms(word) -> ListKeyCandidate:
     return ordered
 
 
+@app.get("/")
+def get_index():
+    # must redirect to language sub-url otherwise relative links break
+    host_url = urllib.parse.urlparse(request.host_url)
+    domain = host_url.hostname.split(".")[-1]
+    return redirect(f"/{domain}/", code=307)
+
+
+@app.get("/<path:filename>")
+def get_static(filename):
+    # when requesting index.html, must specify the folder with a trailing slash
+    if filename.endswith("/"):
+        return send_from_directory("../frontend/src/", filename + "index.html")
+    else:
+        return send_from_directory("../frontend/src/", filename)
+
+
 if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description='Feature, run as "python main.py"')
-    parser.add_argument('--port', default=80, type=int, help='port number')
-    args = parser.parse_args()
-
     # english frequency
     CORPUS = {}
     SUBS = {}
@@ -157,5 +221,4 @@ if __name__ == "__main__":
             else:
                 WORDNET[key] = synonyms
 
-    print("Running bottle server on port {}".format(args.port))
-    run(host="0.0.0.0", port=args.port, debug=True)
+    GunicornApp(app).run()

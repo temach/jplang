@@ -8,6 +8,7 @@ import Html exposing (Attribute, Html, button, div, input, li, ol, span, text)
 import Html.Attributes exposing (attribute, class, placeholder, style, value)
 import Html.Events exposing (on, onClick, onInput)
 import Html.Events.Extra exposing (targetValueIntParse)
+import Html.Lazy exposing (lazy, lazy2)
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -52,7 +53,7 @@ type alias Model =
 
 
 defaultModel =
-    { keyword = "loading..."
+    { keyword = "{{ loading_placeholder }}"
     , userMessage = Dict.empty
     , synonyms = []
     }
@@ -140,12 +141,12 @@ update msg model =
                     ( { model | synonyms = syns, userMessage = Dict.remove "SynonymsReady" model.userMessage }, Cmd.none )
 
                 Err _ ->
-                    ( { model | synonyms = [], userMessage = Dict.insert "SynonymsReady" "Error getting synonyms from thesaurus" model.userMessage }, Cmd.none )
+                    ( { model | synonyms = [], userMessage = Dict.insert "SynonymsReady" "{{ error_getting_synonyms }}" model.userMessage }, Cmd.none )
 
         SelectSynonym index ->
             let
                 newKeyword =
-                    Maybe.withDefault { metadata = "Error!", word = "Error!", freq = [ 0, 0 ] } (getAt index model.synonyms)
+                    Maybe.withDefault { metadata = "{{ error_text }}", word = "{{ error_text }}", freq = [ 0, 0 ] } (getAt index model.synonyms)
 
                 newModel =
                     { model | keyword = newKeyword.word }
@@ -228,13 +229,13 @@ view model =
     Document "synonyms" [ render model ]
 
 
-renderUserMessages : Model -> Html Msg
-renderUserMessages model =
-    div [] [ text (String.join "!" (Dict.values model.userMessage)) ]
+renderUserMessages : Dict String String -> Html Msg
+renderUserMessages userMessage =
+    div [] [ text (String.join "!" (Dict.values userMessage)) ]
 
 
-renderSingleSynonym : Model -> Int -> KeyCandidate -> Html Msg
-renderSingleSynonym model index synonym =
+renderSingleSynonym : Int -> KeyCandidate -> Html Msg
+renderSingleSynonym index synonym =
     div
         [ style "padding" "2px 0"
         , style "display" "flex"
@@ -260,15 +261,15 @@ renderSingleSynonym model index synonym =
         ]
 
 
-renderSynonyms : Model -> Html Msg
-renderSynonyms model =
+renderSynonyms : List KeyCandidate -> Html Msg
+renderSynonyms synonyms =
     let
         partial =
-            renderSingleSynonym model
+            lazy2 renderSingleSynonym
     in
     div
         [ on "click" (Decode.map SelectSynonym targetValueIntParse) ]
-        (List.indexedMap partial model.synonyms)
+        (List.indexedMap partial synonyms)
 
 
 render : Model -> Html Msg
@@ -278,24 +279,24 @@ render model =
         [ style "background-color" "rgb(190, 190, 190)"
         , style "overflow" "auto"
         ]
-        [ renderUserMessages model
-        , div
+        [ lazy renderUserMessages model.userMessage
+        , lazy div
             [ style "display" "flex" ]
             [ span
                 [ style "flex" "10 1 calc(2rem + 2rem + 6rem)"
                 , onClick SortSynonymsByOrigin
                 ]
-                [ text "Keyword synonyms" ]
+                [ text "{{ title }}" ]
             , span
                 [ style "flex" "1 0 4rem"
                 , onClick SortSynonymsByFreq
                 ]
-                [ text "Corpus" ]
+                [ text "{{ google_corpus_freq }}" ]
             , span
                 [ style "flex" "1 0 4rem"
                 , onClick SortSynonymsByFreq
                 ]
-                [ text "Subs" ]
+                [ text "{{ subtitles_freq }}" ]
             ]
-        , div [] [ renderSynonyms model ]
+        , lazy div [] [ renderSynonyms model ]
         ]

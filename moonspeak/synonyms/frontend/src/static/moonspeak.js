@@ -63,10 +63,15 @@ function moonspeakInstallOnMessageHandler(userHandler) {
 }
 
 // use this function to post messages
-function moonspeakPostMessage(message) {
+function moonspeakPostMessage(message, isSecondTime=false) {
     if (_moonspeakPorts.length === 0) {
-        // if there are no ports listening set a timeout to simply repeat the post message after 500 milli-seconds
-        window.setTimeout(() => moonspeakPostMessage(message), 500);
+        if (isSecondTime === false) {
+            // if sending this message first time, try repeating it after few milli-seconds
+            // if it fails a second time, then ignore
+            window.setTimeout(() => moonspeakPostMessage(message, true), 500);
+        }
+
+        // if no ports listening, nothing to do
         return;
     }
     _moonspeakLog("posted:", message);
