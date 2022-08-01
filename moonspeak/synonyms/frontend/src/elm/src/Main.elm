@@ -146,7 +146,7 @@ update msg model =
         SelectSynonym index ->
             let
                 newKeyword =
-                    Maybe.withDefault { metadata = "{{ error_text }}", word = "{{ error_text }}", freq = [ 0, 0 ] } (getAt index model.synonyms)
+                    Maybe.withDefault { metadata = "{{ error }}", word = "{{ error }}", freq = [ 0, 0 ] } (getAt index model.synonyms)
 
                 newModel =
                     { model | keyword = newKeyword.word }
@@ -280,7 +280,7 @@ render model =
         , style "overflow" "auto"
         ]
         [ lazy renderUserMessages model.userMessage
-        , lazy div
+        , lazy2 div
             [ style "display" "flex" ]
             [ span
                 [ style "flex" "10 1 calc(2rem + 2rem + 6rem)"
@@ -298,5 +298,5 @@ render model =
                 ]
                 [ text "{{ subtitles_freq }}" ]
             ]
-        , lazy div [] [ renderSynonyms model ]
+        , lazy2 div [] [ renderSynonyms model.synonyms ]
         ]
