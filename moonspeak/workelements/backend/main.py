@@ -8,7 +8,6 @@ import urllib
 import gunicorn.app.base
 import gunicorn.config
 
-import werkzeug
 from flask import Flask, send_from_directory, make_response, request, redirect  # type: ignore
 from nltk.stem.porter import PorterStemmer  # type: ignore
 from nltk.stem import WordNetLemmatizer  # type: ignore

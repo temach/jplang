@@ -1,6 +1,6 @@
 port module Main exposing (..)
 
-import Browser exposing (Document)
+import Browser
 import Css
 import Debug exposing (log)
 import Dict exposing (Dict)
@@ -31,8 +31,9 @@ port messageReceiver : (D.Value -> msg) -> Sub msg
 -- MAIN
 
 
+-- see: https://package.elm-lang.org/packages/elm/browser/latest/Browser#document
 main =
-    Browser.document
+    Browser.element
         { init = init
         , subscriptions = subscriptions
         , update = update
@@ -432,9 +433,9 @@ submitElementEncoder element =
 -- VIEW
 
 
-view : Model -> Document Msg
+view : Model -> Html Msg
 view model =
-    Document "workelements" [ render model ]
+    render model
 
 
 renderSubmitBar : WorkElement -> Frequency -> Html Msg

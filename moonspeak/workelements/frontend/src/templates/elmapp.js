@@ -5312,7 +5312,7 @@ var $elm$core$Task$perform = F2(
 		return $elm$core$Task$command(
 			A2($elm$core$Task$map, toMessage, task));
 	});
-var $elm$browser$Browser$document = _Browser_document;
+var $elm$browser$Browser$element = _Browser_element;
 var $author$project$Main$WorkElement = F3(
 	function (kanji, keyword, notes) {
 		return {w: kanji, m: keyword, F: notes};
@@ -6694,10 +6694,6 @@ var $author$project$Main$update = F2(
 			}
 		}
 	});
-var $elm$browser$Browser$Document = F2(
-	function (title, body) {
-		return {cc: body, cE: title};
-	});
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$virtual_dom$VirtualDom$lazy = _VirtualDom_lazy;
 var $elm$html$Html$Lazy$lazy = $elm$virtual_dom$VirtualDom$lazy;
@@ -7039,15 +7035,9 @@ var $author$project$Main$render = function (model) {
 			]));
 };
 var $author$project$Main$view = function (model) {
-	return A2(
-		$elm$browser$Browser$Document,
-		'workelements',
-		_List_fromArray(
-			[
-				$author$project$Main$render(model)
-			]));
+	return $author$project$Main$render(model);
 };
-var $author$project$Main$main = $elm$browser$Browser$document(
+var $author$project$Main$main = $elm$browser$Browser$element(
 	{cm: $author$project$Main$init, cC: $author$project$Main$subscriptions, cF: $author$project$Main$update, cH: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
 	$elm$json$Json$Decode$succeed(0))(0)}});}(this));

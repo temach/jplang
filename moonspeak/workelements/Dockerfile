@@ -20,8 +20,7 @@ RUN mkdir tmp
 RUN mkdir backend
 
 RUN pip install nltk==3.7
-COPY backend/download_libs.py   download_libs.py
-RUN python ./download_libs.py
+RUN python -c "import nltk; nltk.download('omw-1.4'); nltk.download('wordnet');"
 
 COPY backend/requirements.txt   requirements.txt
 RUN pip install -r requirements.txt
