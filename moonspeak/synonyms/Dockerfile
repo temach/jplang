@@ -1,19 +1,36 @@
+FROM node as builder
+
+WORKDIR /opt/ms/frontend
+
+RUN npm install --global gulp-cli
+COPY frontend/package.json           package.json
+COPY frontend/package-lock.json      package-lock.json
+RUN npm install
+
+COPY frontend/src           src
+COPY frontend/gulpfile.js   gulpfile.js
+RUN gulp
+
+
 FROM python:alpine
-WORKDIR /root/
+WORKDIR /opt/ms/
 
 # dependencies
-COPY backend/requirements.txt   ./backend/
-RUN pip install -r backend/requirements.txt
+RUN pip install nltk==3.7
 RUN python -c "import nltk; nltk.download('wordnet');"
 
+COPY backend/requirements.txt   requirements.txt
+RUN pip install -r requirements.txt
+
 # data resources
-COPY resources                  ./resources
+COPY resources                  resources
 
 # code
-COPY frontend/index.html        ./frontend/
-COPY frontend/static/*          ./frontend/static/
-COPY backend/main.py            ./backend/
+COPY --from=builder /opt/ms/frontend/dist frontend/src
+
+COPY backend/main.py            backend/main.py
+COPY backend/gunicorn.conf.py   backend/gunicorn.conf.py
 
 # command
-WORKDIR /root/backend/
+WORKDIR /opt/ms/backend/
 CMD ["python", "main.py"]
