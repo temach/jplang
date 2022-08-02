@@ -1,6 +1,6 @@
 port module Main exposing (..)
 
-import Browser exposing (Document)
+import Browser
 import Css
 import Debug exposing (log)
 import Dict exposing (Dict)
@@ -22,7 +22,7 @@ import Url.Builder exposing (relative)
 
 
 main =
-    Browser.document
+    Browser.element
         { init = init
         , subscriptions = subscriptions
         , update = update
@@ -224,9 +224,9 @@ getSynonyms keyword =
 -- VIEW
 
 
-view : Model -> Document Msg
+view : Model -> Html Msg
 view model =
-    Document "synonyms" [ render model ]
+    render model
 
 
 renderUserMessages : Dict String String -> Html Msg

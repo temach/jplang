@@ -5312,7 +5312,7 @@ var $elm$core$Task$perform = F2(
 		return $elm$core$Task$command(
 			A2($elm$core$Task$map, toMessage, task));
 	});
-var $elm$browser$Browser$document = _Browser_document;
+var $elm$browser$Browser$element = _Browser_element;
 var $elm$core$Dict$RBEmpty_elm_builtin = {$: -2};
 var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
 var $author$project$Main$defaultModel = {m: '{{ loading_placeholder }}', x: _List_Nil, X: $elm$core$Dict$empty};
@@ -6393,10 +6393,6 @@ var $author$project$Main$update = F2(
 				}
 		}
 	});
-var $elm$browser$Browser$Document = F2(
-	function (title, body) {
-		return {b6: body, cz: title};
-	});
 var $author$project$Main$SortSynonymsByFreq = {$: 1};
 var $author$project$Main$SortSynonymsByOrigin = {$: 2};
 var $elm$html$Html$div = _VirtualDom_node('div');
@@ -6657,15 +6653,9 @@ var $author$project$Main$render = function (model) {
 			]));
 };
 var $author$project$Main$view = function (model) {
-	return A2(
-		$elm$browser$Browser$Document,
-		'synonyms',
-		_List_fromArray(
-			[
-				$author$project$Main$render(model)
-			]));
+	return $author$project$Main$render(model);
 };
-var $author$project$Main$main = $elm$browser$Browser$document(
+var $author$project$Main$main = $elm$browser$Browser$element(
 	{ch: $author$project$Main$init, cx: $author$project$Main$subscriptions, cA: $author$project$Main$update, cD: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
 	$elm$json$Json$Decode$succeed(0))(0)}});}(this));

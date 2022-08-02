@@ -5282,9 +5282,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
         const rendered = moonspeakRender(basename, extension, languageTag);
         if (extension === "html") {
-            document.open();
-            document.write(rendered);
-            document.close();
+            let html = new DOMParser().parseFromString(rendered, 'text/html');
+
+            let htmlElem = html.querySelector("html");
+            [...htmlElem.attributes].forEach( attr => { document.querySelector("html").setAttribute(attr.nodeName ,attr.nodeValue) })
+
+            let headString = html.querySelector("head").innerHTML;
+            let newHead = document.createRange().createContextualFragment(headString);
+            // document.querySelector('head').innerHTML = '';
+            document.querySelector('head').append(newHead);
+
+            let bodyString = html.querySelector("body").innerHTML;
+            let newBody = document.createRange().createContextualFragment(bodyString);
+            // document.querySelector('body').innerHTML = '';
+            document.querySelector('body').append(newBody);
+
         } else if (extension === "js") {
             let script = document.createElement("script");
             script.innerHTML = rendered;

@@ -1,5 +1,5 @@
 var app = Elm.Main.init({
-    node: document.getElementById("elm-app")
+    node: document.getElementById("elmapp")
 });
 
 app.ports.sendMessage.subscribe(function(message) {
