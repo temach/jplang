@@ -334,3 +334,68 @@ REPOSITORY                                                                      
 <none>                                                                               <none>            b9a0b8053d51   23 hours ago     536MB
 ```
 
+
+
+
+
+
+How to handle multiple js files in dev mode that must be one js file in prod?
+
+One option is to use webpack HtmlPlugin which combines js files and then outputs HTML file with link according to your template
+https://webpack.js.org/plugins/html-webpack-plugin/
+
+Another option is to use javascript modules, so index.html loads index.js module.
+In dev mode index.js imports other modules, in prod mode index.js is the final bundle
+Related question: How to import elm code using javascript "import" keyword?
+See: 
+- https://www.npmjs.com/package/react-elm-components
+- https://blog.boon.gl/2017/11/28/react-elm-wrapper.html
+- https://github.com/elm/core/issues/998
+- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this#function_context
+- https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules#other_differences_between_modules_and_standard_scripts
+- https://discourse.elm-lang.org/t/undefined-module-when-calling-elm-from-js/1941
+The core issue: elm expects "this" to be set to configure exports, but JS modules are 'use strict;' by default and so "this" is not set on elm init.
+
+Another option is to add markup DEV_MODE_BEGIN/DEV_MODE_END to index.html which gulp
+will cut out and replace with a single bundle.
+
+Another option is to use file as direcotry with numbered filenames, aka .conf.d/
+This has benefit of being an old idea and of how webservers handle directories by returning index.html inside
+Also has the benefit/drawback of keeping translations close to the file.
+
+Another option is to use symlinks, instead of proxy files. But must keep in mind the different directories and relative paths.
+
+
+Remember HTTP is unix filesystem extended over TCP/IP with "GET/POST /some/file " semantics.
+
+
+How to handle translations and what level of abstraction to use?
+
+Add separate en/ru/kz/test directories with proxy files?
+Its pretty complicated anyway. Also this does NOT work with javascript modules option above.
+Example: index.html loads javascript module index.js which has relative import to ./some_static.js AND to ../template/elmapp.js
+Then you might consider putting index.js into ../templates/ folder,
+but this means its src in index.html becomes relative, and so you NEED to add a index.js.toml. Ridiculus.
+And so you have all the extra files and folders in the world: templates, static, ru/en/kz/test full of proxy files.
+
+Fix it in webserver side: if file is not found, check if .toml exists, in which case return proxy.
+This means normal webservers will not be able to keep up, they are not fit anymore.
+Combined with placing /templates/ into /static/ dir, another thing crops up: after .toml check webserver should also check
+if file exists in /static/ directory (to accomodate relative paths, you go to /test/index.html but get back proxy from /static/proxy.html)
+So the paths get muddled somewhat.
+
+Another option is to use symlinks, instead of proxy files. But must keep in mind the different directories and relative paths.
+
+
+
+Basically when writing code the idea is to have "declaration mimic use" (an old idea from C language), however is it really wroth it?
+On the one hand you want "when you see it you know how to use it" effect, on the other this needlesly comingles two things that are separate:
+declaration is one thing, use is another.
+
+The way files are in you web project is one thing, the way they are served over the web is another.
+But! HTTP is basically an extension of the unix filesystem, so here its tempting to have "declaration mimic use".
+If you can just declare the files in a nice tree, then the user will have an easy time navigating (becasue its 
+the same file tree except over http).
+Is it?
+
+
