@@ -7,20 +7,6 @@ function _moonspeakLog(msg, obj) {
 }
 
 function _moonspeakMessageHandler(event, userHandler) {
-    // if ("info" in event.data && event.data["info"].includes("install plugin")) {
-    //     let script = document.createElement("script");
-    //     script.type = "text/javascript";
-    //     script.src = event.data["pluginUrl"];
-    //     document.head.appendChild(script);
-    // } else if ("info" in event.data && event.data["info"].includes("iframe connect")) {
-    //     peerport = event.ports[0];
-    //     peerport.onmessage = (event) => _moonspeakMessageHandler(event, userHandler);
-    //     _moonspeakPorts.push(peerport);
-    // } else if ("info" in event.data) {
-    //     console.log("Can not understand message info:" + event.data["info"]);
-    //     return;
-    // };
-
     _moonspeakLog("received:", event.data);
     userHandler(event);
 }
@@ -42,24 +28,21 @@ function _moonspeakBootstrapMasterPort(event, userHandler) {
 
     _moonspeakLog("receiving once:", event.data);
 
-    if (event.data["info"].includes("port")) {
+    if ("info" in event.data && event.data["info"].includes("port")) {
         masterport = event.ports[0];
         masterport.onmessage = (event) => _moonspeakMessageHandler(event, userHandler);
         _moonspeakPorts.push(masterport);
-    } else {
-        _moonspeakLog("Can not understand message info:", event.data["info"]);
-        return;
     }
+
+    _moonspeakLog("Can not understand message info, handling anyway: ", event.data["info"]);
+    _moonspeakMessageHandler(event, userHandler);
 }
 
 // use this function to subscribe to messages
 function moonspeakInstallOnMessageHandler(userHandler) {
     // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
-    // this listener is called ONCE to transfer the message channel for further communication
-    window.addEventListener("message",
-        (event) => _moonspeakBootstrapMasterPort(event, userHandler),
-        {"once": true}
-    );
+    // this listener is called once to transfer the message channel for further communication
+    window.addEventListener("message", (event) => _moonspeakBootstrapMasterPort(event, userHandler));
 }
 
 // use this function to post messages
