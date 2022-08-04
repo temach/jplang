@@ -2,6 +2,7 @@
 import json
 import re
 import urllib
+from pathlib import Path
 from collections import defaultdict
 
 import gunicorn.app.base
@@ -164,11 +165,29 @@ def get_index():
 
 @app.get("/<path:filename>")
 def get_static(filename):
-    # when requesting index.html, must specify the folder with a trailing slash
-    if filename.endswith("/"):
-        return send_from_directory("../frontend/src/", filename + "index.html")
-    else:
-        return send_from_directory("../frontend/src/", filename)
+    root = Path("../frontend/src/")
+    p = root / filename
+
+    # if just a dir name, try returning index.html
+    if p.is_dir():
+        p = p / "index.html"
+
+    if p.exists():
+        return send_from_directory(root, p.relative_to(root))
+
+    # if file does not exist and we are in dev mode
+    # blindly try to send proxy, expecing that ".toml" version exists
+    toml = p.parent / (p.name + '.toml')
+    if toml.exists():
+        proxy_file = "proxy.html" if ".html" in p.suffixes else "proxy.js" 
+        proxy = root / "static" / "dev_mode" / proxy_file
+        return send_from_directory(root, proxy.relative_to(root))
+
+    static = root / "static" / p.name
+    if static.exists():
+        return send_from_directory(root, static.relative_to(root))
+
+    return send_from_directory("", "")
 
 
 if __name__ == "__main__":

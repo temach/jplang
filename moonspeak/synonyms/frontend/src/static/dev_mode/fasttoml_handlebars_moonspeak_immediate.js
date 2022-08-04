@@ -5228,7 +5228,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
     function moonspeakRender(basename, extension, languageTag) {
-        let templateFile = "../templates/" + basename + "." + extension;
+        let templateFile = "../static/" + basename + "." + extension;
         let templateText = moonspeakMakeRequest(templateFile).responseText;
         let template = Handlebars.compile(templateText, {strict: true});
 

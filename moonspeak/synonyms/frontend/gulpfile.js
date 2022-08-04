@@ -15,23 +15,75 @@ const { PassThrough } = require('stream');
 
 const elm = require('gulp-elm');
 
-//===========================================
-// Elm
+// const uglify = require('gulp-uglify');
+// const pipeline = require('readable-stream').pipeline;
 
-function elmTask() {
-  return gulp.src('src/elm/src/Main.elm')
-    .pipe(elm.bundle("elmapp.js", {cwd: "src/elm/", optimize: true}))
-    .pipe(gulp.dest('src/templates/'));
-}
-
-
-//===========================================
-// HTML
 const htmlhint = require("gulp-htmlhint");
 const htmlmin = require('gulp-htmlmin');
 const TOML = require('fast-toml');
 const handlebars = require('gulp-compile-handlebars');
 
+
+//====================================
+// Translations
+//
+function annotateError(err) {
+    if (err.message.includes("not defined in [object Object]")) {
+        // this is an error about the templates compilation, it is critical
+        let data = err.domainEmitter._transformState.writechunk.data.gulp_debug_data;
+        let msg = "Error mashing " + data.toml + " with " + data.template + ". Template received null for this variable: " + err.message;
+        console.error(c.bold.red(msg));
+    } 
+    else if (err.plugin === 'gulp-htmlhint') {
+        let msg = c.bold.red("HTMLHint reporting uses wrong filenames:\n")
+                + "Example: for errors in " + c.bold.red("templates/ru/index.html") + " find the actual error in " + c.bold.red("src/ru/index.toml")
+        console.error(msg);
+    }
+}
+
+function makeTranslationsTask(cb) {
+    // use a nodejs domain to get more exact info for handling template errors
+    const d = require('domain').create();
+    d.on('error', (err) => {try {annotateError(err)} finally {throw err}});
+    d.enter();
+
+    const aggregate  = new PassThrough({objectMode: true});
+
+    const tomlFiles = glob.sync("src/*/*.toml", {nonull: false});
+    for (const tomlPath of tomlFiles) {
+        const langCode = tomlPath.split("/")[1];
+        const translationStrings = TOML.parseFileSync(tomlPath);
+        const templatePath = "src/templates/" + path.basename(tomlPath, ".toml");
+
+        gulp.src([templatePath])
+            .pipe(data((file) => {
+                return {
+                    ...translationStrings,
+                    build_date: Date(),
+                    lang: langCode,
+                    gulp_debug_data: {
+                        template: templatePath,
+                        toml: tomlPath
+                    }
+                }
+            }))
+            .pipe(handlebars({}, {compile: {strict:true}}))
+            .pipe(rename(path => {
+                path.dirname += "/" + langCode;
+            }))
+            .pipe(gulp.dest('dist/'))
+            .pipe(aggregate);
+    }
+
+    // close the domain of error handling
+    d.exit();
+
+    aggregate.on('finish', cb);
+}
+
+
+//===========================================
+// HTML
 const htmlhintconfig = {
     // doctype and head
     "doctype-first": true,
@@ -84,6 +136,9 @@ function htmlTemplateLintTask() {
 // Minify html
 function htmlTask() {
     return gulp.src(["dist/*/*.html"])
+        // remove development section from html
+        .pipe(streamify(replace(/.*GULP_CSS.*(\n.*)*GULP_CSS.*/g, "<link href='index.min.css' rel='stylesheet'>")))
+
         .pipe(htmlhint(htmlhintconfig))
         .pipe(htmlhint.reporter())
         .pipe(htmlhint.failOnError({ suppress: true }))
@@ -93,66 +148,46 @@ function htmlTask() {
 }
 
 
-//====================================
-// Translations
+//==========================================
+// Javascript
 //
-function annotateError(err) {
-    if (err.message.includes("not defined in [object Object]")) {
-        // this is an error about the templates compilation, it is critical
-        let data = err.domainEmitter._transformState.writechunk.data.gulp_debug_data;
-        let msg = "Error mashing " + data.toml + " with " + data.template + ". Template received null for this variable: " + err.message;
-        console.error(c.bold.red(msg));
-    } 
-    else if (err.plugin === 'gulp-htmlhint') {
-        let msg = c.bold.red("HTMLHint reporting uses wrong filenames:\n")
-                + "Example: for errors in " + c.bold.red("templates/ru/index.html") + " find the actual error in " + c.bold.red("src/ru/index.toml")
-        console.error(msg);
-    }
+const eslintconfig = {
+    "envs": [
+        "browser"
+    ],
+};
+
+function elmTask() {
+  return gulp.src('src/elm/src/Main.elm')
+    .pipe(elm.bundle("elmapp.js", {cwd: "src/elm/", optimize: true}))
+    .pipe(gulp.dest('src/static/'));
 }
 
-function makeTranslationsTask(cb) {
-    // use a nodejs domain to get more exact info for handling template errors
-    const d = require('domain').create();
-    d.on('error', (err) => {try {annotateError(err)} finally {throw err}});
-    d.enter();
-
-    const aggregate  = new PassThrough({objectMode: true});
-
-    const tomlFiles = glob.sync("src/*/*.toml", {nonull: false});
-    for (const tomlPath of tomlFiles) {
-        const langCode = tomlPath.split("/")[1];
-        const translationStrings = TOML.parseFileSync(tomlPath);
-        const templatePath = "src/templates/" + path.basename(tomlPath, ".toml");
-
-        gulp.src([templatePath])
-            .pipe(data((file) => {
-                return {
-                    ...translationStrings,
-                    build_date: Date(),
-                    "lang": langCode,
-                    gulp_debug_data: {
-                        template: templatePath,
-                        toml: tomlPath
-                    }
-                }
-            }))
-            .pipe(handlebars({}, {compile: {strict:true}}))
-            .pipe(rename(path => {
-                path.dirname += "/" + langCode;
-            }))
-            .pipe(gulp.dest('dist/'))
-            .pipe(aggregate);
-    }
-
-    // close the domain of error handling
-    d.exit();
-
-    aggregate.on('finish', cb);
-}
+// function lintJsTask() {
+//     return gulp.src([
+//         'src/static/*.js',
+//         'src/templates/*.js',
+// 
+//         // exclude these
+//         '!src/templates/elmapp.js',
+//     ])
+//     .pipe(eslint(eslintconf))
+//     .pipe(eslint.format())
+//     .pipe(eslint.failAfterError());
+// });
+// 
+// function minifyJsTask() {
+//   return pipeline(
+//       gulp.src('dist/*/*.js'),
+//       uglify(),
+//       gulp.dest('dist')
+//   );
+// });
 
 
 
 //===========================================
+// Assets
 function preCleanTask() {
     return deleteAsync([
         'dist/',

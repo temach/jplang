@@ -1,3 +1,5 @@
+const Elm = (function() {
+
 (function(scope){
 'use strict';
 
@@ -6658,4 +6660,9 @@ var $author$project$Main$view = function (model) {
 var $author$project$Main$main = $elm$browser$Browser$element(
 	{ch: $author$project$Main$init, cx: $author$project$Main$subscriptions, cA: $author$project$Main$update, cD: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
-	$elm$json$Json$Decode$succeed(0))(0)}});}(this));
+	$elm$json$Json$Decode$succeed(0))(0)}});}(window));
+
+  return window.Elm;
+}());
+
+export default Elm;

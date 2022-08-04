@@ -5,6 +5,9 @@ bind=["0.0.0.0:8043"]
 
 workers=2
 worker_class="gevent"
+timeout=0
+# workers=1
+# worker_class="sync"
 
 # see: https://www.joelsleppy.com/blog/gunicorn-application-preloading/
 preload_app = True
