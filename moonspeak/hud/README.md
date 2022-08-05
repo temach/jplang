@@ -1,3 +1,9 @@
+To support different index files see: https://serverfault.com/questions/1090298/lighttpd-execute-cgi-bin-index-cgi-if-exists-in-the-folder
+summary:
+
+index-file.names = ( "cgi-bin/index.pl" )
+
+
 # Developing locally
 
 For configuration edit frontend/config/hud.json.
@@ -59,3 +65,13 @@ Execute the below command in the directory with README:
 ### step 3: Send a request
 
 Open http://moonspeak.test:8003/ in browser.
+
+
+
+
+
+
+
+
+
+
