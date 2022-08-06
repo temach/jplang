@@ -2,12 +2,14 @@
 import json
 import re
 import urllib
+import os
 from pathlib import Path
 from collections import defaultdict
 
 import gunicorn.app.base
 import gunicorn.config
 
+import werkzeug
 from flask import Flask, send_from_directory, make_response, request, redirect  # type: ignore
 from typing import TypedDict, Any
 
@@ -20,6 +22,11 @@ class GunicornApp(gunicorn.app.base.Application):
         super().__init__()
 
     def init(self, parser, opts, args):
+        # config = {key: value for key, value in self.options.items()
+        #     if key in self.cfg.settings and value is not None}
+        # for key, value in config.items():
+        #     self.cfg.set(key.lower(), value)
+        # return self.option
         return None
 
     def load(self):
@@ -87,6 +94,7 @@ class KeyCandidate(TypedDict):
 ListKeyCandidate = list[KeyCandidate]
 Thesaurus = dict[str, list[str]]
 app = Flask(__name__, static_folder=None)
+app.config['DEV_MODE'] = len(os.getenv("MOONSPEAK_DEV_MODE", "")) > 1
 
 
 def get_en_freq(word):
@@ -172,22 +180,31 @@ def get_static(filename):
     if p.is_dir():
         p = p / "index.html"
 
-    if p.exists():
-        return send_from_directory(root, p.relative_to(root))
+    # try:
+    # in prod this works without extra checks
+    return send_from_directory(root, p.relative_to(root))
+    # except werkzeug.exceptions.NotFound:
+    #     if app.config["DEV_MODE"]:
+    #         return redirect(f"/index.html", code=307)
+    #     else:
+    #         return make_response("", 404)
 
-    # if file does not exist and we are in dev mode
-    # blindly try to send proxy, expecing that ".toml" version exists
-    toml = p.parent / (p.name + '.toml')
-    if toml.exists():
-        proxy_file = "proxy.html" if ".html" in p.suffixes else "proxy.js" 
-        proxy = root / "static" / "dev_mode" / proxy_file
-        return send_from_directory(root, proxy.relative_to(root))
+    # if p.exists():
+    #     return send_from_directory(root, p.relative_to(root))
 
-    static = root / "static" / p.name
-    if static.exists():
-        return send_from_directory(root, static.relative_to(root))
+    # # if file does not exist and we are in dev mode
+    # # blindly try to send proxy, expecing that ".toml" version exists
+    # toml = p.parent / (p.name + '.toml')
+    # if toml.exists():
+    #     proxy_file = "proxy.html" if ".html" in p.suffixes else "proxy.js" 
+    #     proxy = root / "static" / "dev_mode" / proxy_file
+    #     return send_from_directory(root, proxy.relative_to(root))
 
-    return send_from_directory("", "")
+    # static = root / "static" / p.name
+    # if static.exists():
+    #     return send_from_directory(root, static.relative_to(root))
+
+    # return send_from_directory("", "")
 
 
 if __name__ == "__main__":

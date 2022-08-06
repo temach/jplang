@@ -1,6 +1,0 @@
-loading_placeholder = "loading..."
-error_getting_synonyms = "Error getting synonyms from thesaurus"
-error = "Error"
-title = "Keyword synonyms"
-google_corpus_freq = "Corpus"
-subtitles_freq = "Subs"
