@@ -18,8 +18,7 @@ function moonspeakBootstrapMasterPort(event, userHandler) {
         // checking .endsWith() is ok, but .startsWith() is not ok
         return (
             ['localhost', '127.0.0.1', '', '0.0.0.0', '::1'].includes(hostname)
-            || hostname.endsWith('.local')
-            || hostname.endsWith('.test')
+            || hostname.endsWith('.localhost')
         )
     }
 
@@ -50,11 +49,15 @@ function moonspeakInstallOnMessageHandler(userHandler) {
 
 // use this function to post messages
 function moonspeakPostMessage(message, isSecondTime=false) {
-    if (_moonspeakPorts.length === 0) {
+    if (moonspeakPorts.length === 0) {
         if (isSecondTime === false) {
             // if sending this message first time, try repeating it after few milli-seconds
             // if it fails a second time, then ignore
             window.setTimeout(() => moonspeakPostMessage(message, true), 500);
+        }
+
+        if (isSecondTime === true) {
+            moonspeakLog("no ports connected, will abandon sending message:", message);
         }
 
         // if no ports listening, nothing to do

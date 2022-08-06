@@ -1,8 +1,6 @@
-import {registerRawSvgElement} from "./custom_elements.js";
-import Elm from "./elmapp.js";
+import "./custom_elements.js";
+import Elm from "./elm-app.js";
 import {moonspeakInstallOnMessageHandler, moonspeakPostMessage} from "./moonspeak.js";
-
-registerRawSvgElement();
 
 const app = window.Elm.Main.init({
     node: document.getElementById("elmapp")

@@ -2,16 +2,16 @@
 <html lang="{{lang}}">
   <head>
     <meta charset="utf-8">
-    <link href="main.css" rel="stylesheet">
+    <link href="css/main.css" rel="stylesheet">
     <title>{{title}}</title>
   </head>
 
   <body>
-    <!-- DEV_MODE_BEGIN -->
+    <!-- BEGIN_DEV_MODE -->
     <input oninput="window.postMessage({keyword:this.value}, '*');" type="text">
-    <!-- DEV_MODE_END -->
+    <!-- END_DEV_MODE -->
 
     <div id="elmapp"></div>
-    <script src="index.js" type="module"></script>
+    <script src="js/init.js" type="module"></script>
   </body>
 </html>
