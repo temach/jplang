@@ -1,5 +1,5 @@
 import "./custom_elements.js";
-import Elm from "./elm-app.js";
+import {Elm} from "./elm-app.js";
 import {moonspeakInstallOnMessageHandler, moonspeakPostMessage} from "./moonspeak.js";
 
 const app = window.Elm.Main.init({

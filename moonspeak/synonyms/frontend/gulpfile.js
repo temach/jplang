@@ -1,10 +1,9 @@
 const gulp = require('gulp');
 
-const git = require("git-rev-sync");
 const rename = require("gulp-rename");
 const c = require('ansi-colors');
 
-const fs = require('fs');
+const fse = require('fs-extra');
 const data = require('gulp-data');
 const glob = require("glob");
 const path = require("path");
@@ -15,9 +14,10 @@ const { PassThrough } = require('stream');
 
 const elm = require('gulp-elm');
 
-// const uglify = require('gulp-uglify');
-// const pipeline = require('readable-stream').pipeline;
+const eslint = require('gulp-eslint');
+const uglify = require('gulp-uglify-es').default;
 
+const replace = require('gulp-replace');
 const htmlhint = require("gulp-htmlhint");
 const htmlmin = require('gulp-htmlmin');
 const TOML = require('fast-toml');
@@ -34,14 +34,9 @@ function annotateError(err) {
         let msg = "Error mashing " + data.toml + " with " + data.template + ". Template received null for this variable: " + err.message;
         console.error(c.bold.red(msg));
     } 
-    else if (err.plugin === 'gulp-htmlhint') {
-        let msg = c.bold.red("HTMLHint reporting uses wrong filenames:\n")
-                + "Example: for errors in " + c.bold.red("templates/ru/index.html") + " find the actual error in " + c.bold.red("src/ru/index.toml")
-        console.error(msg);
-    }
 }
 
-function makeTranslationsTask(cb) {
+function translationsTask(cb) {
     // use a nodejs domain to get more exact info for handling template errors
     const d = require('domain').create();
     d.on('error', (err) => {try {annotateError(err)} finally {throw err}});
@@ -49,18 +44,21 @@ function makeTranslationsTask(cb) {
 
     const aggregate  = new PassThrough({objectMode: true});
 
-    const tomlFiles = glob.sync("src/*/*.toml", {nonull: false});
+    const tomlFiles = glob.sync("src/**/*.toml", {nonull: false});
     for (const tomlPath of tomlFiles) {
-        const langCode = tomlPath.split("/")[1];
-        const translationStrings = TOML.parseFileSync(tomlPath);
-        const templatePath = "src/templates/" + path.basename(tomlPath, ".toml");
+        // e.g. index.html.en.toml
+        const components = path.basename(tomlPath).split(".");
+        components.pop();
+        const langCode = components.pop();
+        const templatePath = path.join(path.dirname(tomlPath), components.join("."));
 
-        gulp.src([templatePath])
+        const translationStrings = TOML.parseFileSync(tomlPath);
+
+        gulp.src([templatePath], {base: "src"})
             .pipe(data((file) => {
                 return {
                     ...translationStrings,
                     build_date: Date(),
-                    lang: langCode,
                     gulp_debug_data: {
                         template: templatePath,
                         toml: tomlPath
@@ -68,10 +66,7 @@ function makeTranslationsTask(cb) {
                 }
             }))
             .pipe(handlebars({}, {compile: {strict:true}}))
-            .pipe(rename(path => {
-                path.dirname += "/" + langCode;
-            }))
-            .pipe(gulp.dest('dist/'))
+            .pipe(gulp.dest(path.join('dist', langCode)))
             .pipe(aggregate);
     }
 
@@ -126,19 +121,24 @@ const htmlhintconfig = {
     "spec-char-escape": true,
 }
 
-function htmlTemplateLintTask() {
-    return gulp.src(["src/templates/*.html"])
+// Minify html
+function htmlLintTask() {
+    return gulp.src(["src/**/*.html"])
+        // remove dev mode section from html
+        .pipe(replace(/.*BEGIN_DEV_MODE.*(\n.*)*END_DEV_MODE.*/g, ""))
+        // run htmlhint and report all errors, then fail if error and dont report it
         .pipe(htmlhint(htmlhintconfig))
         .pipe(htmlhint.reporter())
-        .pipe(htmlhint.failOnError({suppress: true}));
+        .pipe(htmlhint.failOnError({ suppress: true }));
 }
+
 
 // Minify html
 function htmlTask() {
-    return gulp.src(["dist/*/*.html"])
-        // remove development section from html
-        .pipe(streamify(replace(/.*GULP_CSS.*(\n.*)*GULP_CSS.*/g, "<link href='index.min.css' rel='stylesheet'>")))
-
+    return gulp.src(["dist/**/*.html"])
+        // remove dev mode section from html
+        .pipe(replace(/.*BEGIN_DEV_MODE.*(\n.*)*END_DEV_MODE.*/g, ""))
+        // run htmlhint and report all errors, then fail if error and dont report it
         .pipe(htmlhint(htmlhintconfig))
         .pipe(htmlhint.reporter())
         .pipe(htmlhint.failOnError({ suppress: true }))
@@ -151,38 +151,69 @@ function htmlTask() {
 //==========================================
 // Javascript
 //
-const eslintconfig = {
-    "envs": [
-        "browser"
-    ],
-};
 
-function elmTask() {
-  return gulp.src('src/elm/src/Main.elm')
-    .pipe(elm.bundle("elmapp.js", {cwd: "src/elm/", optimize: true}))
-    .pipe(gulp.dest('src/static/'));
+function jsLintTask() {
+    const eslintconf = {
+        "parserOptions": {
+            "sourceType": "module"
+        },
+        "envs": [
+            "es6",
+            "browser",
+        ],
+    };
+
+    return gulp.src([
+            'src/**/*.js',
+            // exclude these
+            '!src/**/elm-app.js',
+        ])
+        .pipe(eslint(eslintconf))
+        .pipe(eslint.format())
+        .pipe(eslint.failAfterError());
 }
 
-// function lintJsTask() {
-//     return gulp.src([
-//         'src/static/*.js',
-//         'src/templates/*.js',
-// 
-//         // exclude these
-//         '!src/templates/elmapp.js',
-//     ])
-//     .pipe(eslint(eslintconf))
-//     .pipe(eslint.format())
-//     .pipe(eslint.failAfterError());
-// });
-// 
-// function minifyJsTask() {
-//   return pipeline(
-//       gulp.src('dist/*/*.js'),
-//       uglify(),
-//       gulp.dest('dist')
-//   );
-// });
+function jsTask(cb) {
+    const aggregate  = new PassThrough({objectMode: true});
+    const langFolders = glob.sync("dist/*", {nonull: false});
+    for (const langFolder of langFolders) {
+        gulp.src(langFolder + "/**/*.js", {base: "dist"})
+            .pipe(uglify())
+            .pipe(gulp.dest("dist/"))
+            .pipe(aggregate);
+    }
+    aggregate.on('finish', cb);
+}
+
+function elmTask() {
+    const pure = ["F2","F3","F4","F5","F6","F7","F8","F9","A2","A3","A4","A5","A6","A7","A8","A9"];
+    const elmUglifyConf = {
+        compress: {
+            // from elm docs: https://guide.elm-lang.org/optimization/asset_size.html
+            pure_funcs: pure,
+            pure_getters: true,
+            keep_fargs: false,
+            unsafe_comps: true,
+            unsafe: true,
+        },
+        mangle: {
+            // see uglify docs for pure_funcs arg
+            reserved: pure,
+        }
+    }
+
+    return gulp.src('elm/src/Main.elm')
+        .pipe(elm.bundle("elm-app.js", {cwd: "elm/", optimize: true}))
+
+        // hot fixes to allow transpiled elm code to be natively imported as browser javascript module
+        .pipe(replace("(this)", "(window)"))
+        .pipe(replace(/$/, "\nexport const Elm = window.Elm;"))
+
+        // special uglify config for elm
+        .pipe(uglify(elmUglifyConf))
+
+        .pipe(gulp.dest('src/js/'));
+}
 
 
 
@@ -194,14 +225,37 @@ function preCleanTask() {
     ]);
 }
 
-function copyStatic() {
-    return gulp.src([
-        'src/static/*', 
-        
-        // exclude dev_mode files
-        '!src/static/dev_mode',
-    ])
-    .pipe(gulp.dest('dist/static/'));
+function copyStatic(cb) {
+    const shouldCopy = (src, dest) => {
+        if (path.extname(src) === ".toml") {
+            return false;
+        }
+        return true;
+    }
+
+    for (const langCode of ["en", "kz", "ru", "localhost"]) {
+        const langFolder = path.join("dist", langCode);
+        fse.copySync("src", langFolder, { filter: shouldCopy });
+    }
+    cb();
+}
+
+function makeSymlinks(cb) {
+    // create domain to ignore possible error
+    const d = require('domain').create();
+    d.on('error', (err) => console.warn(err));
+    d.enter();
+
+    // create symlinks so backend can serve the translated frontends easily
+    // see: https://nodejs.org/api/fs.html#fspromisessymlinktarget-path-type
+    fse.symlink("dist/ru", "ru", "junction");
+    fse.symlink("dist/en", "en", "junction");
+    fse.symlink("dist/kz", "kz", "junction");
+
+    // close the domain of error handling
+    d.exit();
+
+    cb();
 }
 
 // start by copying all files,
@@ -209,14 +263,13 @@ function copyStatic() {
 exports.default = gulp.series(
     preCleanTask,
     elmTask,
+    htmlLintTask,
+    jsLintTask,
     copyStatic,
-    htmlTemplateLintTask,
-    makeTranslationsTask,
+    translationsTask,
     htmlTask,
-);
-
-exports.lint = gulp.series(
-    htmlTemplateLintTask,
+    jsTask,
+    makeSymlinks,
 );
 
 exports.elm = gulp.series(
