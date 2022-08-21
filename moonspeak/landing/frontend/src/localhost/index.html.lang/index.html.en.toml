@@ -1,0 +1,48 @@
+lang = "en"
+title = """Moonspeak - learn kanji"""
+menu__item__kanji = """Kanji Facts"""
+menu__item__documentation = """Documentation"""
+
+hero__title = """Moonspeak"""
+hero__description = """
+Learn Japanese and Chinese kanji characters for the greater good
+"""
+
+start_callout = "No registration required!"
+start_callout_button = "Get started &#8594;"
+
+feature_title_1 = "Dynamic kanji list"
+feature_html_1 = "Upload subtitles or books and we will create a list of kanji for you to learn"
+
+feature_title_2 = "Mnemonics"
+feature_html_2 = "For each kanji create a mnemonic that suits YOU, we have powerful tools to help!"
+
+feature_title_3 = "Private"
+feature_html_3 = "We do not store any information about you, no emails, no phone numbers"
+
+feature_title_4 = "No signups, No passwords"
+feature_html_4 = "We give you a unique URL that you can use to login from any device"
+
+feature_title_5 = "Multi-language"
+feature_html_5 = "Support for dictionaries, synonyms, translations in multiple languages"
+
+feature_title_6 = "Open Source"
+feature_html_6 = """
+This software is open source, help to shape it on <a class="link link--light" href="https://github.com/temach/jplang" title="Github" target="_blank">Github</a>
+"""
+
+dev__title = "Developers"
+
+doc_callout = "Read on for kanji facts and project details"
+doc_callout_button = "Docs &#8594;"
+
+changelog__title = "Changelog"
+
+changelog__detail_1 = "Landing page"
+changelog__detail_2 = "Started closed testing"
+
+changelog__callout_button = "Checkout Full Log"
+
+footer_html = """
+Moonspeak is open source, help with development on <a class="link link--light" href="https://github.com/temach/jplang" title="Github" target="_blank">Github</a>.
+"""

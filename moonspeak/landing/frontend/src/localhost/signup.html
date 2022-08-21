@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="{{lang}}">
+  <head>
+      <meta charset="utf-8">
+      <meta name="description" content="">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>{{ title }}</title>
+
+      <link href="css/font-awesome.min.css" rel="stylesheet" >
+      <link href="css/NunitoSans-Regular.css" rel="stylesheet">
+
+      <!-- This meta tag holds version info for code, filled by gulp in html build task -->
+      <meta name="application-name" content="Moonspeak" data-date="{{build_date}}">
+
+      <link href="css/scribbler-global.css" rel="stylesheet">
+      <link href="css/scribbler-landing.css" rel="stylesheet">
+      <link href="humans.txt" rel="author">
+
+      <!-- choose your font: https://www.freejapanesefont.com/tag/commercial-use-ok/page/2/ -->
+      <link href="css/MochiyPopOne-Regular.css" rel="stylesheet">
+      <link href="css/fountain.css" rel="stylesheet">
+
+      <link href="favicon.png" rel="icon">
+  </head>
+  <body id="fountain">
+    <nav>
+      <a href="index.html" title="{{menu__item__index_html}}">
+        <img class="logo" src="assets/logo.png" title="Moonspeak project logo" alt="Moonspeak project logo"/>
+      </a>
+      <ul class="menu">
+        <div class="menu__item toggle"><span></span></div>
+        <li class="menu__item"><a class="link link--dark" href="index.html" title="{{menu__item__index_html}}"><i class="fa fa-home"></i> {{ menu__item__index_html }} </a></li>
+        <li class="menu__item"><a class="link link--dark" href="doc.html"  title="{{menu__item__documentation}}"><i class="fa fa-book"></i> {{ menu__item__documentation }} </a></li>
+        <li class="menu__item"><a class="link link--dark" href="https://github.com/temach/jplang/" title="Github"><i class="fa fa-github"></i> Github</a></li>
+      </ul>
+    </nav>
+    <div class="hero">
+      <h1 class="hero__title"> {{ hero__title }} </h1>
+      <p class="hero__description"> {{{hero__description_html}}} </p>
+    </div>
+    <footer class="footer"> {{{footer_html}}} </footer>
+    <script src="js/scribbler.js" defer="defer"></script>
+    <script src="js/fountain.js" defer="defer"></script>
+  </body>
+</html>
