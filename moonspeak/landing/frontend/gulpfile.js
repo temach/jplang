@@ -1,6 +1,7 @@
 const gulp = require('gulp');
 
 const path = require("path");
+const deleteAsync = require('del');       //< see https://github.com/gulpjs/gulp/blob/master/docs/recipes/delete-files-folder.md
 
 // globals
 const LANG_CODES = ["en", "ru"];
@@ -270,79 +271,49 @@ function cssTask() {
 const gulpfontmin = require('gulp-fontmin');
 const fontmin = require('fontmin');
 
-function fontminFountainTask(cb) {
-    let buffers = [];
-
-    const patternJs = path.join(EXPANDED_FILES, '**', 'js', 'fountain.js');
-    gulp.src(patternJs)
-        .on('data', file => {
-            buffers.push(file.contents);
-        })
+function minifyFont(fontFilePrefix, text, cb) {
+    // fontmin needs a ttf font source from which it generates all other fonts
+    gulp.src(path.join(EXPANDED_FILES, '**', 'fonts', `${fontFilePrefix}-*.ttf`))
+        .pipe(gulpfontmin({
+            text: text,
+            hinting: false,
+            use: [
+                fontmin.ttf2woff(),
+                fontmin.ttf2woff2()
+            ],
+        }))
+        .pipe(gulp.dest(EXPANDED_FILES))
         .on('end', () => {
-            // fontmin needs a ttf font source from which it generates all other fonts
-            const text = Buffer.concat(buffers).toString('utf-8');
-            const patternFont = path.join(EXPANDED_FILES, '**', 'fonts', 'MochiyPopOne-*.ttf')
-
-            gulp.src(patternFont)
-                .pipe(gulpfontmin({
-                    text: text,
-                    hinting: false,
-                    onlyChinese: true,
-                    use: [
-                        fontmin.ttf2woff(),
-                        fontmin.ttf2woff2()
-                    ],
-                }))
-                .pipe(gulp.dest(EXPANDED_FILES))
-                .on('end', () => {
-                    deleteAsync.sync([
-                        // useless font CSS and SVG files
-                        path.join(EXPANDED_FILES, '**', 'fonts', 'MochiyPopOne-*.css'),
-                        path.join(EXPANDED_FILES, '**', 'fonts', 'MochiyPopOne-*.svg'),
-                        path.join(EXPANDED_FILES, '**', 'fonts', 'MochiyPopOne-*.eot'),
-                    ]);
-                    cb();
-                });
+            deleteAsync.sync([
+                // useless font CSS and SVG files
+                path.join(EXPANDED_FILES, '*', 'fonts', `${fontFilePrefix}-*.css`),
+                path.join(EXPANDED_FILES, '*', 'fonts', `${fontFilePrefix}-*.svg`),
+                path.join(EXPANDED_FILES, '*', 'fonts', `${fontFilePrefix}-*.eot`),
+            ]);
+            cb();
         });
 }
 
-function fontminTask(cb) {
-    let buffers = [];
+function fontminFountainTask(cb) {
+    const fountainjs = glob.sync(path.join(EXPANDED_FILES, '*', 'js', 'fountain.js')).pop();
+    const text = fse.readFileSync(fountainjs, {encoding: 'utf8'});
+    minifyFont('MochiyPopOne', text, cb);
+}
 
+function fontminTask(cb) {
+    const buffers = [];
     const patterns = [
         path.join(EXPANDED_FILES, '**', '*.js'),
         path.join(EXPANDED_FILES, '**', '*.html'),
         path.join(EXPANDED_FILES, '**', '*.css'),
     ];
-
     gulp.src(patterns)
         .on('data', file => {
             buffers.push(file.contents);
         })
         .on('end', () => {
-            // fontmin needs a ttf font source from which it generates all other fonts
             const text = Buffer.concat(buffers).toString('utf-8');
-            const patternFont = path.join(EXPANDED_FILES, '**', 'fonts', 'NunitoSans-*.ttf')
-
-            gulp.src(patternFont)
-                .pipe(gulpfontmin({
-                    text: text,
-                    hinting: false,
-                    use: [
-                        fontmin.ttf2woff(),
-                        fontmin.ttf2woff2()
-                    ],
-                }))
-                .pipe(gulp.dest(EXPANDED_FILES))
-                .on('end', () => {
-                    deleteAsync.sync([
-                        // useless font CSS and SVG files
-                        path.join(EXPANDED_FILES, '**', 'fonts', 'NunitoSans-*.css'),
-                        path.join(EXPANDED_FILES, '**', 'fonts', 'NunitoSans-*.svg'),
-                        path.join(EXPANDED_FILES, '**', 'fonts', 'NunitoSans-*.eot'),
-                    ]);
-                    cb();
-                });
+            minifyFont('NunitoSans', text, cb);
         });
 }
 
@@ -350,12 +321,8 @@ function fontminTask(cb) {
 //=====================================
 // Assets
 //
-const deleteAsync = require('del');       //< see https://github.com/gulpjs/gulp/blob/master/docs/recipes/delete-files-folder.md
-
-function preCleanTask() {
-    return deleteAsync([
-        EXPANDED_FILES,
-    ]);
+function cleanTask() {
+    return deleteAsync(EXPANDED_FILES);
 }
 
 exports.default = gulp.series(
@@ -364,7 +331,7 @@ exports.default = gulp.series(
     jsLintTask,
     cssLintTask,
 
-    preCleanTask,
+    cleanTask,
 
     // expand translations into language dirs
     translationTask,
