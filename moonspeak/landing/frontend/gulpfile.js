@@ -1,36 +1,25 @@
 const gulp = require('gulp');
 
-const rename = require("gulp-rename");
-const c = require('ansi-colors');
-
-const fse = require('fs-extra');
-const data = require('gulp-data');
-const glob = require("glob");
 const path = require("path");
 
-const deleteAsync = require('del');       //< see https://github.com/gulpjs/gulp/blob/master/docs/recipes/delete-files-folder.md
-
-const { PassThrough } = require('stream');
-
-const eslint = require('gulp-eslint');
-const uglify = require('gulp-uglify-es').default;
-
-const replace = require('gulp-replace');
-const htmlhint = require("gulp-htmlhint");
-const htmlmin = require('gulp-htmlmin');
-const TOML = require('fast-toml');
-const handlebars = require('gulp-compile-handlebars');
-
-const fontmin = require('gulp-fontmin');
-
+// globals
 const LANG_CODES = ["en", "ru"];
-const UNIFIED_FILES = path.join("src", "localhost");
-const EXPANDED_FILES = path.join('tmp');
+const UNIFIED_FILES = 'src';
+const EXPANDED_FILES = 'dist';
 
 
 //====================================
 // Translations
 //
+const fse = require('fs-extra');
+const glob = require("glob");
+const data = require('gulp-data');
+const c = require('ansi-colors');
+const rename = require("gulp-rename");
+const { PassThrough } = require('stream');
+const TOML = require('fast-toml');
+const handlebars = require('gulp-compile-handlebars');
+
 function annotateError(err) {
     if (err.message.includes("not defined in [object Object]")) {
         // this is an error about the templates compilation, it is critical
@@ -107,6 +96,11 @@ function translationTask(cb) {
 
 //===========================================
 // HTML
+//
+const replace = require('gulp-replace');
+const htmlhint = require("gulp-htmlhint");
+const htmlmin = require('gulp-htmlmin');
+
 const htmlhintconfig = {
     // doctype and head
     "doctype-first": true,
@@ -149,9 +143,8 @@ const htmlhintconfig = {
     "spec-char-escape": true,
 }
 
-// Minify html
 function htmlLintTask() {
-    const pattern = path.join(EXPANDED_FILES, '**', '*.html');
+    const pattern = path.join(UNIFIED_FILES, '**', '*.html');
     return gulp.src(pattern)
         // remove dev mode section from html
         .pipe(replace(/.*BEGIN_DEV_MODE.*(\n.*)*END_DEV_MODE.*/g, ""))
@@ -161,8 +154,6 @@ function htmlLintTask() {
         .pipe(htmlhint.failOnError({ suppress: true }));
 }
 
-
-// Minify html
 function minifyHtmlTask() {
     const pattern = path.join(EXPANDED_FILES, '**', '*.html');
     return gulp.src(pattern)
@@ -181,6 +172,8 @@ function minifyHtmlTask() {
 //==========================================
 // Javascript
 //
+const eslint = require('gulp-eslint');
+const uglify = require('gulp-uglify-es').default;
 
 function jsLintTask() {
     const eslintconf = {
@@ -193,7 +186,7 @@ function jsLintTask() {
         ],
     };
 
-    const pattern = path.join(EXPANDED_FILES, '**', '*.js');
+    const pattern = path.join(UNIFIED_FILES, '**', '*.js');
     return gulp.src(pattern)
         .pipe(eslint(eslintconf))
         .pipe(eslint.format())
@@ -207,13 +200,76 @@ function uglifyJsTask() {
         .pipe(gulp.dest(EXPANDED_FILES));
 }
 
+//==========================================
+// CSS
+//
+const postcss    = require('gulp-postcss');
+const autoprefixer = require('autoprefixer');
+const stylelint = require('stylelint');
+const doiuse = require('doiuse');
+const simplevars = require('postcss-simple-vars');
+const nestedcss = require('postcss-nested');
+const reporter = require('postcss-reporter');
+const cleanCss = require('gulp-clean-css');
+
+const ourbrowsers = ['> 0.05% in RU', 'not ie < 10', 'not OperaMini all'];
+
+const prefixconfig = {
+    browserlist : ourbrowsers
+};
+const doiuseconfig = {
+    browserlist: ourbrowsers, // an autoprefixer-like array of browsers.
+};
+const reportconfig = {
+    clearMessages: true,        // should we disable gulp messages
+    throwError: false,           // should we stop processing if issues found
+    filter: function(message) { return true },      // allow any level of messages, not only warn()
+};
+const lintconfig = {
+    "extends": "stylelint-config-standard",
+    "rules": {
+        // our rules, place below
+        "property-no-vendor-prefix": true,
+        "selector-no-vendor-prefix": true,
+        "at-rule-no-vendor-prefix": true,
+        "value-no-vendor-prefix": true,
+        "declaration-no-important": true,
+    }
+};
+
+function cssLintTask() {
+    return gulp.src([
+            path.join(UNIFIED_FILES, '**', '*.css'),
+            '!' + path.join(UNIFIED_FILES, '**', 'font-awesome.min.css'),
+        ])
+        .pipe(postcss([
+            simplevars(),
+            nestedcss(),
+            stylelint({config: lintconfig}),
+            doiuse(doiuseconfig),
+            autoprefixer(prefixconfig),
+            reporter(reportconfig),
+        ]));
+}
+
+function cssTask() {
+    return gulp.src(path.join(EXPANDED_FILES, '**', '*.css'))
+        // minify
+        .pipe(cleanCss({
+            compatibility: 'ie10'
+        }))
+        .pipe(gulp.dest(EXPANDED_FILES));
+}
+
 
 //===========================================
-// Assets
+// Fonts
+//
+// must see for font performance: Peter Muller - High Performance Web Fonts
+//
+const gulpfontmin = require('gulp-fontmin');
+const fontmin = require('fontmin');
 
-// takes the source files and fonts
-// writes the font files only for thouse characters
-// that we use in the source files
 function fontminFountainTask(cb) {
     let buffers = [];
 
@@ -225,15 +281,28 @@ function fontminFountainTask(cb) {
         .on('end', () => {
             // fontmin needs a ttf font source from which it generates all other fonts
             const text = Buffer.concat(buffers).toString('utf-8');
-            const patternFont = path.join(EXPANDED_FILES, '**', 'assets', 'MochiyPopOne-Regular.ttf')
+            const patternFont = path.join(EXPANDED_FILES, '**', 'fonts', 'MochiyPopOne-*.ttf')
 
             gulp.src(patternFont)
-                .pipe(fontmin({
+                .pipe(gulpfontmin({
                     text: text,
                     hinting: false,
+                    onlyChinese: true,
+                    use: [
+                        fontmin.ttf2woff(),
+                        fontmin.ttf2woff2()
+                    ],
                 }))
                 .pipe(gulp.dest(EXPANDED_FILES))
-                .on('end', cb);
+                .on('end', () => {
+                    deleteAsync.sync([
+                        // useless font CSS and SVG files
+                        path.join(EXPANDED_FILES, '**', 'fonts', 'MochiyPopOne-*.css'),
+                        path.join(EXPANDED_FILES, '**', 'fonts', 'MochiyPopOne-*.svg'),
+                        path.join(EXPANDED_FILES, '**', 'fonts', 'MochiyPopOne-*.eot'),
+                    ]);
+                    cb();
+                });
         });
 }
 
@@ -253,17 +322,35 @@ function fontminTask(cb) {
         .on('end', () => {
             // fontmin needs a ttf font source from which it generates all other fonts
             const text = Buffer.concat(buffers).toString('utf-8');
-            const patternFont = path.join(EXPANDED_FILES, '**', 'assets', 'NunitoSans-Regular.ttf')
+            const patternFont = path.join(EXPANDED_FILES, '**', 'fonts', 'NunitoSans-*.ttf')
 
             gulp.src(patternFont)
-                .pipe(fontmin({
+                .pipe(gulpfontmin({
                     text: text,
                     hinting: false,
+                    use: [
+                        fontmin.ttf2woff(),
+                        fontmin.ttf2woff2()
+                    ],
                 }))
                 .pipe(gulp.dest(EXPANDED_FILES))
-                .on('end', cb);
+                .on('end', () => {
+                    deleteAsync.sync([
+                        // useless font CSS and SVG files
+                        path.join(EXPANDED_FILES, '**', 'fonts', 'NunitoSans-*.css'),
+                        path.join(EXPANDED_FILES, '**', 'fonts', 'NunitoSans-*.svg'),
+                        path.join(EXPANDED_FILES, '**', 'fonts', 'NunitoSans-*.eot'),
+                    ]);
+                    cb();
+                });
         });
 }
+
+
+//=====================================
+// Assets
+//
+const deleteAsync = require('del');       //< see https://github.com/gulpjs/gulp/blob/master/docs/recipes/delete-files-folder.md
 
 function preCleanTask() {
     return deleteAsync([
@@ -271,36 +358,13 @@ function preCleanTask() {
     ]);
 }
 
-// function copyAssets() {
-//     const patterns = [
-//         path.join(EXPANDED_FILES, '**', 'assets', '**'),
-//         path.join(EXPANDED_FILES, '**', 'css', '**'),
-//     ];
-//     return gulp.src(patterns).pipe(gulp.dest(FINAL_FILES));
-// }
-
-function postCleanTask(cb) {
-    // remove files that are only used in development
-    deleteAsync.sync([
-        // useless font CSS and SVG files
-        path.join(EXPANDED_FILES, '**', 'assets', 'MochiyPopOne-Regular.css'),
-        path.join(EXPANDED_FILES, '**', 'assets', 'MochiyPopOne-Regular.svg'),
-        path.join(EXPANDED_FILES, '**', 'assets', 'NunitoSans-Regular.css'),
-        path.join(EXPANDED_FILES, '**', 'assets', 'NunitoSans-Regular.svg'),
-    ]);
-    cb();
-}
-
-function prepareForServerTask() {
-    return gulp.src(path.join(EXPANDED_FILES, '**')).pipe(gulp.dest('src'));
-}
-
 exports.default = gulp.series(
-    preCleanTask,
-
     // lint
     htmlLintTask,
     jsLintTask,
+    cssLintTask,
+
+    preCleanTask,
 
     // expand translations into language dirs
     translationTask,
@@ -310,8 +374,5 @@ exports.default = gulp.series(
     uglifyJsTask,
     fontminFountainTask,
     fontminTask,
-    postCleanTask,
-    // copyAssets,
-
-    prepareForServerTask,
+    cssTask,
 );
