@@ -1,6 +1,6 @@
 FROM node as builder
 
-WORKDIR /opt/ms/frontend
+WORKDIR /opt/moonspeak/frontend
 
 RUN npm install --global gulp-cli
 COPY frontend/package.json           package.json
@@ -13,5 +13,6 @@ RUN gulp
  
 
 FROM nginx:alpine
-COPY --from=builder /opt/ms/frontend/dist /etc/nginx/frontend/dist
-COPY nginx.conf /etc/nginx/nginx.conf
+WORKDIR /etc/nginx
+COPY --from=builder /opt/moonspeak/frontend/dist ./frontend/dist
+COPY nginx.conf  ./
