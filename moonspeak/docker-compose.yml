@@ -21,7 +21,7 @@ services:
     environment:
       # the router inserts reference to hostname into each feature via <base> tag
       # this supplies the correct name
-      MOONSPEAK_DOMAIN: "moonspeak.test"
+      MOONSPEAK_DOMAIN: "moonspeak.localhost"
       # turn off debug features when running with docker-compose
       MOONSPEAK_DEV_MODE: ""
       RUST_LOG: "router=info"
@@ -32,41 +32,24 @@ services:
     volumes:
       - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
 
-  synonyms:
-    image: "temachpool/moonspeak-synonyms:${TAG:-latest}"
-    volumes:
-      - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
+  # synonyms:
+  #   image: "temachpool/moonspeak-synonyms:${TAG:-latest}"
+  #   volumes:
+  #     - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
 
-  suggestions:
-    image: "temachpool/moonspeak-suggestions:${TAG:-latest}"
-    volumes:
-      - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
-
-  hud:
-    image: "temachpool/moonspeak-hud:${TAG:-latest}"
-    volumes:
-      - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
-
-  workelements:
-    image: "temachpool/moonspeak-workelements:${TAG:-latest}"
-    volumes:
-      - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
-      - /opt/ms/tmp
-
-  graph:
-    image: "temachpool/moonspeak-graph:${TAG:-latest}"
-    volumes:
-      - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
-      - /opt/ms/tmp
+  # suggestions:
+  #   image: "temachpool/moonspeak-suggestions:${TAG:-latest}"
+  #   volumes:
+  #     - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
 
   #===================================
   # Deploy is used in manual mode, see its source
-  # deploy.moonspeak.test:
+  # deploy.moonspeak.localhost:
   #   image: moonspeak-deploy:latest
   #   environment:
   #     # the deploy writes configuration for graph and hud services which have absolute urls
   #     # this supplies the correct domain
-  #     MOONSPEAK_DOMAIN: "moonspeak.test"
+  #     MOONSPEAK_DOMAIN: "moonspeak.localhost"
   #     MOONSPEAK_DEPLOY_SECRET: "my_secret"
   #   build:
   #     context: ./deploy

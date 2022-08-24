@@ -2,9 +2,9 @@
 # This file is applied automatically by docker-compose
 # see: https://docs.docker.com/compose/extends/
 #
-# This docker-compose is used to run everything in dev mode for .test domain
+# This docker-compose is used to run everything in dev mode for .localhost domain
 #
-# Important: define moonspeak.test in /etc/hosts 
+# Important: you might need to define moonspeak.localhost in /etc/hosts 
 #
 # port definitions for services are for debug/development,
 # except the gateway service which is expected to be exposed to the internet
@@ -19,7 +19,7 @@ version: "3"
 services:
   #===================================
   gateway:
-    container_name: moonspeak.test
+    container_name: moonspeak.localhost
     build:
       context: ./gateway-nginx
     ports:
@@ -28,97 +28,108 @@ services:
       - "127.0.0.1:80:80"
 
   router:
-    container_name: router.moonspeak.test
+    container_name: router.moonspeak.localhost
     build:
       context: ./router
     environment:
-      MOONSPEAK_DOMAIN: "moonspeak.test"
+      MOONSPEAK_DOMAIN: "moonspeak.localhost"
       MOONSPEAK_DEV_MODE: "true"
       RUST_LOG: "router=info"
 
   #===================================
   landing:
-    container_name: landing.moonspeak.test
+    container_name: landing.moonspeak.localhost
     build:
       context: ./landing
 
-  synonyms:
-    container_name: synonyms.moonspeak.test
-    build:
-      context: ./synonyms
+  # synonyms:
+  #   container_name: synonyms.moonspeak.localhost
+  #   build:
+  #     context: ./synonyms
 
-  suggestions:
-    container_name: suggestions.moonspeak.test
-    build:
-      context: ./suggestions
+  # suggestions:
+  #   container_name: suggestions.moonspeak.localhost
+  #   build:
+  #     context: ./suggestions
 
-  #==================================
-  # this is the user's unique access url
-  hud:
-    container_name: hud-demouser-aaa.moonspeak.test
-    build:
-      context: ./hud
-    environment:
-      MOONSPEAK_PORT: "80"
-      MOONSPEAK_UNIXSOCK: "/opt/moonspeak/unixsock/hud-demouser-aaa.sock"
-      # this json lists urls that hud should load for the user
-      MOONSPEAK_HUD_CONFIG_JSON: >-
-          {
-            "graphurl": "/router/node/graph-demouser-bbb",
-            "services": [
-                {
-                    "name": "synonyms",
-                    "url": "/synonyms"
-                },
-                {
-                    "name": "suggestions",
-                    "url": "/suggestions"
-                },
-                {
-                    "name": "workelements",
-                    "url": "/router/node/workelements-demouser-ddd"
-                }
-            ]
-          }
+  # #==================================
+  # # this is the user's unique access url
+  # hud:
+  #   image: "temachpool/moonspeak-hud:${TAG:-latest}"
+  #   volumes:
+  #     - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
+  #   container_name: hud-demouser-aaa.moonspeak.localhost
+  #   build:
+  #     context: ./hud
+  #   environment:
+  #     MOONSPEAK_PORT: "80"
+  #     MOONSPEAK_UNIXSOCK: "/opt/moonspeak/unixsock/hud-demouser-aaa.sock"
+  #     # this json lists urls that hud should load for the user
+  #     MOONSPEAK_HUD_CONFIG_JSON: >-
+  #         {
+  #           "graphurl": "/router/node/graph-demouser-bbb",
+  #           "services": [
+  #               {
+  #                   "name": "synonyms",
+  #                   "url": "/synonyms"
+  #               },
+  #               {
+  #                   "name": "suggestions",
+  #                   "url": "/suggestions"
+  #               },
+  #               {
+  #                   "name": "workelements",
+  #                   "url": "/router/node/workelements-demouser-ddd"
+  #               }
+  #           ]
+  #         }
 
-  workelements:
-    container_name: workelements-demouser-ddd.moonspeak.test
-    build:
-      context: ./workelements
-    environment:
-      GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsock/workelements-demouser-ddd.sock' "
+  # workelements:
+  #   image: "temachpool/moonspeak-workelements:${TAG:-latest}"
+  #   volumes:
+  #     - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
+  #     - /opt/ms/tmp
+  #   container_name: workelements-demouser-ddd.moonspeak.localhost
+  #   build:
+  #     context: ./workelements
+  #   environment:
+  #     GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsock/workelements-demouser-ddd.sock' "
 
-  graph:
-    container_name: graph-demouser-bbb.moonspeak.test
-    build:
-      context: ./grapheditor
-    environment:
-      # this xml sets default graph value
-      MOONSPEAK_GRAPH_INITIAL_XML: >-
-        <mxGraphModel dx="2638" dy="1176" grid="1" gridSize="10" guides="1" tooltips="0" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100">
-          <root>
-            <mxCell id="0" />
-            <mxCell id="1" parent="0" />
-            <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="/router/node/workelements-demouser-ddd/" style="width: 680px; height: 560px; border: medium none;" id="2">
-              <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
-                <mxGeometry x="-80" y="-85" width="700" height="580" as="geometry" />
-              </mxCell>
-            </iframe>
-            <mxCell id="11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.003;entryY=0.384;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="4" target="2" edge="1">
-              <mxGeometry relative="1" as="geometry" />
-            </mxCell>
-            <iframe xmlns="http://www.w3.org/1999/xhtml" name="suggestions" src="/suggestions/" style="width: 380px; height: 290px; border: medium none;" id="4">
-              <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
-                <mxGeometry x="-530" y="-80" width="400" height="310" as="geometry" />
-              </mxCell>
-            </iframe>
-            <mxCell id="12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="5" target="2" edge="1">
-              <mxGeometry relative="1" as="geometry" />
-            </mxCell>
-            <iframe xmlns="http://www.w3.org/1999/xhtml" name="synonyms" src="/synonyms/" style="width: 340px; height: 530px; border: medium none;" id="5">
-              <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
-                <mxGeometry x="650" y="-70" width="360" height="550" as="geometry" />
-              </mxCell>
-            </iframe>
-          </root>
-        </mxGraphModel>
+  # graph:
+  #   image: "temachpool/moonspeak-graph:${TAG:-latest}"
+  #   volumes:
+  #     - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
+  #     - /opt/ms/tmp
+  #   container_name: graph-demouser-bbb.moonspeak.localhost
+  #   build:
+  #     context: ./grapheditor
+  #   environment:
+  #     # this xml sets default graph value
+  #     MOONSPEAK_GRAPH_INITIAL_XML: >-
+  #       <mxGraphModel dx="2638" dy="1176" grid="1" gridSize="10" guides="1" tooltips="0" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100">
+  #         <root>
+  #           <mxCell id="0" />
+  #           <mxCell id="1" parent="0" />
+  #           <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="/router/node/workelements-demouser-ddd/" style="width: 680px; height: 560px; border: medium none;" id="2">
+  #             <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
+  #               <mxGeometry x="-80" y="-85" width="700" height="580" as="geometry" />
+  #             </mxCell>
+  #           </iframe>
+  #           <mxCell id="11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.003;entryY=0.384;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="4" target="2" edge="1">
+  #             <mxGeometry relative="1" as="geometry" />
+  #           </mxCell>
+  #           <iframe xmlns="http://www.w3.org/1999/xhtml" name="suggestions" src="/suggestions/" style="width: 380px; height: 290px; border: medium none;" id="4">
+  #             <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
+  #               <mxGeometry x="-530" y="-80" width="400" height="310" as="geometry" />
+  #             </mxCell>
+  #           </iframe>
+  #           <mxCell id="12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="5" target="2" edge="1">
+  #             <mxGeometry relative="1" as="geometry" />
+  #           </mxCell>
+  #           <iframe xmlns="http://www.w3.org/1999/xhtml" name="synonyms" src="/synonyms/" style="width: 340px; height: 530px; border: medium none;" id="5">
+  #             <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
+  #               <mxGeometry x="650" y="-70" width="360" height="550" as="geometry" />
+  #             </mxCell>
+  #           </iframe>
+  #         </root>
+  #       </mxGraphModel>

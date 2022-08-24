@@ -1,0 +1,94 @@
+#
+# This docker-compose runs production setup for .localhost domain
+#
+# Its a template for running production on real domains
+#
+# Important: define moonspeak.localhost in /etc/hosts 
+#
+version: "3"
+
+services:
+  #===================================
+  gateway:
+    container_name: moonspeak.localhost
+    ports:
+      - "127.0.0.1:80:8443"     # listens on 8433 to redirect to https port 443
+      - "127.0.0.1:443:443"
+
+  router:
+    container_name: router.moonspeak.localhost
+    environment:
+      MOONSPEAK_DOMAIN: "moonspeak.localhost"
+      MOONSPEAK_DEV_MODE: ""
+      RUST_LOG: "router=info"
+
+  #===================================
+  landing:
+    container_name: landing.moonspeak.localhost
+
+  # synonyms:
+  #   container_name: synonyms.moonspeak.localhost
+
+  # suggestions:
+  #   container_name: suggestions.moonspeak.localhost
+
+  #==================================
+  # this is the user's unique access url
+  # hud:
+  #   container_name: hud-demouser-aaa.moonspeak.localhost
+  #   environment:
+  #     # this json lists urls that hud should load for the user
+  #     MOONSPEAK_HUD_CONFIG_JSON: >-
+  #         {
+  #           "graphurl": "/router/node/graph-demouser-bbb",
+  #         }
+
+  # workelements:
+  #   container_name: workelements-demouser-ddd.moonspeak.localhost
+  #   environment:
+  #     GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsock/workelements-demouser-ddd.sock' "
+
+  # graph:
+  #   container_name: graph-demouser-bbb.moonspeak.localhost
+  #   environment:
+  #     # this xml sets default graph value
+  #     MOONSPEAK_GRAPH_INITIAL_XML: >-
+  #       <mxGraphModel dx="3474" dy="1551" grid="1" gridSize="10" guides="1" tooltips="0" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100">
+  #         <root>
+  #           <mxCell id="0" />
+  #           <mxCell id="1" parent="0" />
+  #           <mxCell id="8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.625;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="2" target="4" edge="1">
+  #             <mxGeometry relative="1" as="geometry" />
+  #           </mxCell>
+  #           <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="/router/node/workelements-demouser-ddd" style="width: 680px; height: 560px; border: medium none;" id="2">
+  #             <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
+  #               <mxGeometry x="-70" y="130" width="700" height="580" as="geometry" />
+  #             </mxCell>
+  #           </iframe>
+  #           <mxCell id="9" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="3" target="5" edge="1">
+  #             <mxGeometry relative="1" as="geometry" />
+  #           </mxCell>
+  #           <mxCell id="10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="3" target="2" edge="1">
+  #             <mxGeometry relative="1" as="geometry" />
+  #           </mxCell>
+  #           <iframe xmlns="http://www.w3.org/1999/xhtml" name="submit" src="/router/node/submit-demouser-ccc" style="width: 660px; height: 110px; border: medium none;" id="3">
+  #             <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
+  #               <mxGeometry x="-60" y="-30" width="680" height="130" as="geometry" />
+  #             </mxCell>
+  #           </iframe>
+  #           <mxCell id="11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="4" target="3" edge="1">
+  #             <mxGeometry relative="1" as="geometry" />
+  #           </mxCell>
+  #           <iframe xmlns="http://www.w3.org/1999/xhtml" name="suggestions" src="/suggestions" style="width: 380px; height: 290px; border: medium none;" id="4">
+  #             <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
+  #               <mxGeometry x="-510" y="-40" width="400" height="310" as="geometry" />
+  #             </mxCell>
+  #           </iframe>
+  #           <iframe xmlns="http://www.w3.org/1999/xhtml" name="synonyms" src="/synonyms" style="width: 360px; height: 410px; border: medium none;" id="5">
+  #             <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
+  #               <mxGeometry x="660" y="-100" width="380" height="430" as="geometry" />
+  #             </mxCell>
+  #           </iframe>
+  #         </root>
+  #       </mxGraphModel>
+
