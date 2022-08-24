@@ -153,8 +153,7 @@ async fn router(
                 let dom :NodeRef = parser.one(utf8_body);
 
                 // create <base>, use the actual path as root_url, otherwise relative paths "../common/" break
-                // enforce trailing slash "/" on base_url
-                let base_url = req.path().trim_end_matches('/').to_string() + "/";
+                let base_url = String::from(req.path());
                 let base_node = create_node("base", vec![("href", base_url)]);
 
                 debug!("base tag {:?}", base_node);
@@ -237,7 +236,6 @@ async fn handler3(
 // Supports the following:
 // curl 'http://moonspeak.test:8080/plus'
 // curl 'http://moonspeak.test:8080/plus/'
-// curl 'http://moonspeak.test:8080/plus' 
 // curl 'http://moonspeak.test:8080/plus?q=1'
 // curl 'http://moonspeak.test:8080/plus/x/y/z' 
 // curl 'http://moonspeak.test:8080/plus/x/y/z?q=1'
