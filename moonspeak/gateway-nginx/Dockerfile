@@ -1,7 +1,9 @@
 FROM nginx:alpine
 
-# the certificates are overriden in production
-COPY fullchain.pem /etc/nginx/fullchain.pem
-COPY privkey.pem /etc/nginx/privkey.pem
+WORKDIR /etc/nginx
 
-COPY nginx.conf /etc/nginx/nginx.conf
+# the certificates are overriden in production
+COPY fullchain.pem  ./
+COPY privkey.pem    ./
+
+COPY nginx.conf     ./
