@@ -85,3 +85,12 @@ Via unix sockets:
 ```
 
 Or visit http://moonspeak.test/test/ in browser.
+
+
+
+### Development
+
+To use font awesome:
+1. Copy a specific declaration from FontAwesomeAll.css into FontAwesome.css
+2. Change the css unicode escape sequence to the actual byte value
+3. Rely on gulp fontmin task to minify font-awesome files

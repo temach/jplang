@@ -273,12 +273,11 @@ const fontmin = require('fontmin');
 
 function minifyFont(fontFilePrefix, text, cb) {
     // fontmin needs a ttf font source from which it generates all other fonts
-    gulp.src(path.join(EXPANDED_FILES, '**', 'fonts', `${fontFilePrefix}-*.ttf`))
+    gulp.src(path.join(EXPANDED_FILES, '**', 'webfonts', `${fontFilePrefix}-*.ttf`))
         .pipe(gulpfontmin({
             text: text,
             hinting: false,
             use: [
-                fontmin.ttf2woff(),
                 fontmin.ttf2woff2()
             ],
         }))
@@ -286,18 +285,13 @@ function minifyFont(fontFilePrefix, text, cb) {
         .on('end', () => {
             deleteAsync.sync([
                 // useless font CSS and SVG files
-                path.join(EXPANDED_FILES, '*', 'fonts', `${fontFilePrefix}-*.css`),
-                path.join(EXPANDED_FILES, '*', 'fonts', `${fontFilePrefix}-*.svg`),
-                path.join(EXPANDED_FILES, '*', 'fonts', `${fontFilePrefix}-*.eot`),
+                path.join(EXPANDED_FILES, '*', 'webfonts', `${fontFilePrefix}-*.css`),
+                path.join(EXPANDED_FILES, '*', 'webfonts', `${fontFilePrefix}-*.woff`),
+                path.join(EXPANDED_FILES, '*', 'webfonts', `${fontFilePrefix}-*.svg`),
+                path.join(EXPANDED_FILES, '*', 'webfonts', `${fontFilePrefix}-*.eot`),
             ]);
             cb();
         });
-}
-
-function fontminFountainTask(cb) {
-    const fountainjs = glob.sync(path.join(EXPANDED_FILES, '*', 'js', 'fountain.js')).pop();
-    const text = fse.readFileSync(fountainjs, {encoding: 'utf8'});
-    minifyFont('MochiyPopOne', text, cb);
 }
 
 function fontminTask(cb) {
@@ -307,13 +301,17 @@ function fontminTask(cb) {
         path.join(EXPANDED_FILES, '**', '*.html'),
         path.join(EXPANDED_FILES, '**', '*.css'),
     ];
+
     gulp.src(patterns)
         .on('data', file => {
             buffers.push(file.contents);
         })
         .on('end', () => {
             const text = Buffer.concat(buffers).toString('utf-8');
+
+            minifyFont('MochiyPopOne', text, cb);
             minifyFont('NunitoSans', text, cb);
+            minifyFont('fa', text, cb);
         });
 }
 
@@ -339,7 +337,6 @@ exports.default = gulp.series(
     // combine expanded files into optimised distribution files
     minifyHtmlTask,
     uglifyJsTask,
-    fontminFountainTask,
-    fontminTask,
     cssTask,
+    fontminTask,
 );

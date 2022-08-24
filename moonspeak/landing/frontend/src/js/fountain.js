@@ -65,12 +65,10 @@ Fountain.prototype.createParticle = function() {
   const particle = document.createElement("span");
   particle.innerHTML = this.variants[Math.floor(Math.random() * this.variants.length)];
   particle.classList.add("particle");
-  particle.setAttribute("style", `
-  font-size: ${size}px;
-  left: ${left}px;
-  top: ${top}px;
-  transform: rotate(${spinVal}deg);
-`);
+  particle.style.fontSize = `${size}px`;
+  particle.style.left = `${left}px`;
+  particle.style.top = `${top}px`;
+  particle.style.transform = `rotate(${spinVal}deg)`;
   (_document4 = document) === null || _document4 === void 0 ? void 0 : (_document4$bodyEl = _document4.body) === null || _document4$bodyEl === void 0 ? void 0 : _document4$bodyEl.appendChild(particle);
   this.particles.push({
     direction,
@@ -97,12 +95,10 @@ Fountain.prototype.updateParticles = function() {
       p.element.remove();
     }
 
-    p.element.setAttribute("style", `
-    font-size: ${p.size}px;
-    left: ${p.left}px;
-    top: ${p.top}px;
-    transform: rotate(${p.spinVal}deg);
-  `);
+    p.element.style.fontSize = `${p.size}px`;
+    p.element.style.left = `${p.left}px`;
+    p.element.style.top = `${p.top}px`;
+    p.element.style.transform = `rotate(${p.spinVal}deg)`;
   });
 }
 
