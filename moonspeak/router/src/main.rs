@@ -94,7 +94,7 @@ async fn router(
     debug!("Requesting line {}", infoline);
 
     let (client_req, is_unixsock) = {
-        let p = format!("/opt/moonspeak/unixsock/{}.sock", service);
+        let p = format!("../unixsock/{}.sock", service);
         let unixsock = path::Path::new(&p);
 
         let builder = ClientBuilder::new().disable_redirects();
@@ -299,7 +299,7 @@ fn is_dev_mode() -> bool {
 #[clap(author, version, about, long_about = None)]
 struct RouterArgs {
     /// Path to unix domain socket for binding
-    #[clap(long, value_parser, default_value_t = String::from("/opt/moonspeak/unixsock/router.sock"))]
+    #[clap(long, value_parser, default_value_t = String::from("../unixsock/router.sock"))]
     uds: String,
 
     /// TCP hostname interface on which to bind
@@ -316,11 +316,16 @@ struct RouterArgs {
 async fn main() -> std::io::Result<()> {
 
     // configure the "log" crate to use this level for "default" env, i.e. everywhere
-    env_logger::init_from_env(env_logger::Env::default().default_filter_or("debug"));
+    let default_log_level = if is_dev_mode() {
+        "debug"
+    } else {
+        "info"
+    };
+    env_logger::init_from_env(env_logger::Env::default().default_filter_or(default_log_level));
 
     let args = RouterArgs::parse();
     info!("CLI arguments: {:?}", args);
-    info!("Appstate domain: {:?}", env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.test".to_string()));
+    info!("Appstate domain: {:?}", env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.localhost".to_string()));
     info!("Appstate dev_mode: {:?}", is_dev_mode());
 
     if is_dev_mode() {
@@ -329,7 +334,7 @@ async fn main() -> std::io::Result<()> {
         let server = HttpServer::new(|| {
             App::new()
                 .app_data(web::Data::new(AppState {
-                    domain: env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.test".to_string()),
+                    domain: env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.localhost".to_string()),
                     dev_mode: is_dev_mode(),
                 }))
                 .wrap(Logger::default())
@@ -356,7 +361,7 @@ async fn main() -> std::io::Result<()> {
         HttpServer::new(|| {
             App::new()
                 .app_data(web::Data::new(AppState {
-                    domain: env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.test".to_string()),
+                    domain: env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.localhost".to_string()),
                     dev_mode: is_dev_mode(),
                 }))
                 .wrap(Logger::default())
