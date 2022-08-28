@@ -1,0 +1,6 @@
+loading = "Загружаемся..."
+error = "Ошибка"
+error_getting_suggestions = "Ошибка: невозможно запросить получить рекомендации из словаря"
+title = "Рекомендации"
+google_corpus_freq = "Интернет"
+subtitles_freq = "Субтитры"

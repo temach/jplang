@@ -1,0 +1,6 @@
+loading = "Loading..."
+error = "Error"
+error_getting_suggestions = "Error getting keyword suggestions"
+title = "Suggestions"
+google_corpus_freq = "Corpus"
+subtitles_freq = "Subtitles"

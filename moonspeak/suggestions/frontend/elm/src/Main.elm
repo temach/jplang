@@ -1,6 +1,6 @@
 port module Main exposing (..)
 
-import Browser exposing (Document)
+import Browser
 import Css
 import Debug exposing (log)
 import Dict exposing (Dict)
@@ -21,7 +21,7 @@ import Url.Builder exposing (relative)
 
 
 main =
-    Browser.document
+    Browser.element
         { init = init
         , subscriptions = subscriptions
         , update = update
@@ -54,7 +54,7 @@ type alias Model =
 
 defaultModel =
     { kanji = "X"
-    , keyword = "loading..."
+    , keyword = "{{ loading }}"
     , userMessage = Dict.empty
     , suggestions = []
     }
@@ -124,7 +124,7 @@ update msg model =
         SelectSuggestion index ->
             let
                 newSuggestion =
-                    Maybe.withDefault (KeyCandidate "Error" "Error" [ 0 ]) (getAt index model.suggestions)
+                    Maybe.withDefault (KeyCandidate "{{ error }}" "{{ error }}" [ 0 ]) (getAt index model.suggestions)
 
                 newModel =
                     { model | keyword = newSuggestion.word }
@@ -147,7 +147,7 @@ update msg model =
                     update SortSuggestionsByFreq newModel
 
                 Err _ ->
-                    ( { model | userMessage = Dict.insert "SuggestionsReady" "Error getting keyword suggestions" model.userMessage }, Cmd.none )
+                    ( { model | userMessage = Dict.insert "SuggestionsReady" "{{ error_getting_suggestions }}" model.userMessage }, Cmd.none )
 
         Recv jsonValue ->
             case Decode.decodeValue portDecoder jsonValue of
@@ -224,9 +224,9 @@ suggestionsDecoder =
 -- VIEW
 
 
-view : Model -> Document Msg
+view : Model -> Html Msg
 view model =
-    Document "suggestions" [ render model ]
+    render model
 
 
 renderSingleSuggestion : Model -> Int -> KeyCandidate -> Html Msg
@@ -274,7 +274,6 @@ renderUserMessages model =
 
 render : Model -> Html Msg
 render model =
-    -- Suggestions
     div
         [ style "background-color" "rgb(230, 230, 230)"
         , style "overflow" "auto"
@@ -286,17 +285,17 @@ render model =
                 [ style "flex" "10 0 calc(1.5rem + 6rem + 6rem)"
                 , onClick SortSuggestionsByOrigin
                 ]
-                [ text "Keyword suggestion" ]
+                [ text "{{ title }}" ]
             , span
                 [ style "flex" "1 0 3rem"
                 , onClick SortSuggestionsByFreq
                 ]
-                [ text "Corpus" ]
+                [ text "{{ google_corpus_freq }}" ]
             , span
                 [ style "flex" "1 0 3rem"
                 , onClick SortSuggestionsByFreq
                 ]
-                [ text "Subs" ]
+                [ text "{{ subtitles_freq }}" ]
             ]
         , renderSuggestions model
         ]

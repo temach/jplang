@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-#!/usr/bin/env python3
 import json
 import re
 import os
+import re
+from urllib.parse import urlparse
+from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
 from itertools import dropwhile
 
-from bottle import response, request, post, get, route, run, template, HTTPResponse, static_file  # type: ignore
+from bottle import response, request, post, get, route, run, template, HTTPResponse, static_file, redirect  # type: ignore
 from typing import TypedDict, Any
 
 
@@ -22,12 +24,37 @@ Thesaurus = dict[str, list[str]]
 
 
 @get("/")
-def index():
-    return static_file("index.html", root="../frontend/")
+def root():
+    # find the language and redirect to that, otherwise relative paths break
+    # language check order:
+    # 0 - what language cookie you have
+    cookie_lang = request.get_cookie("lang")
+    if cookie_lang:
+        return redirect(f"/{cookie_lang}/")
 
-@get("/static/<filepath:re:.*\.(css|js)>")
-def static(filepath):
-    return static_file(filepath, root="../frontend/static/")
+    # 1 - what does accept_language header have
+    accept_language_header = request.headers.get("Accept-Language")
+    if accept_language_header:
+        m = re.match('[a-z]{2,3}', accept_language_header.strip(), flags=re.IGNORECASE)
+        if m:
+            return redirect(f"/{m.group()}/")
+
+    # 2 - what domain are you targetting, useful for tools that normally dont supply accept_language header
+    hostname = urlparse(request.headers.get("Host")).hostname
+    if hostname:
+        m = re.match('.*[.]([a-z0-9]+)$', hostname, flags=re.IGNORECASE)
+        if m:
+            return redirect(f"/{m.group()}/")
+
+    # finally use english by default
+    return redirect(f"/en/")
+
+
+@get("/<lang>/")
+@get("/<lang>/<filepath:re:.*\.(html|css|js)>")
+def static(lang, filepath="index.html"):
+    root = Path("../frontend/") / lang
+    return static_file(filepath, root=root)
 
 
 @get("/version")
@@ -42,6 +69,7 @@ def get_en_freq(word):
         CORPUS.get(word, -1),
         SUBS.get(word, -1)
     ]
+
 
 @get("/api/suggestions/<kanji>")
 def suggestions(kanji):

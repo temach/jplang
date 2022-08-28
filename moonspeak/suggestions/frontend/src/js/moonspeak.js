@@ -18,8 +18,7 @@ function moonspeakBootstrapMasterPort(event, userHandler) {
         // checking .endsWith() is ok, but .startsWith() is not ok
         return (
             ['localhost', '127.0.0.1', '', '0.0.0.0', '::1'].includes(hostname)
-            || hostname.endsWith('.local')
-            || hostname.endsWith('.test')
+            || hostname.endsWith('.localhost')
         )
     }
 
@@ -70,4 +69,4 @@ function moonspeakPostMessage(message, isSecondTime=false) {
     }
 }
 
-// export { moonspeakInstallOnMessageHandler, moonspeakPostMessage };
+export { moonspeakInstallOnMessageHandler, moonspeakPostMessage };
