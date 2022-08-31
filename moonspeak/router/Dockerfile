@@ -11,7 +11,7 @@ RUN rustup target add x86_64-unknown-linux-musl
 RUN apt-get update
 RUN apt-get install musl musl-dev musl-tools && ld-musl-config
 
-WORKDIR /opt/ms/router
+WORKDIR /opt/moonspeak/router
 
 # create fake project to build only dependencies, allows docker caching
 RUN cargo init .
@@ -25,6 +25,6 @@ RUN touch src/main.rs
 RUN cargo build --target=x86_64-unknown-linux-musl --release 
 
 FROM alpine
-WORKDIR /opt/ms
-COPY --from=builder /opt/ms/router/target/x86_64-unknown-linux-musl/release/router ./
-CMD ["/opt/ms/router"]
+WORKDIR /opt/moonspeak/router
+COPY --from=builder /opt/moonspeak/router/target/x86_64-unknown-linux-musl/release/router ./
+CMD ["/opt/moonspeak/router/router"]
