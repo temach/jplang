@@ -1,4 +1,3 @@
-import "./custom_elements.js";
 import {Elm} from "./elm-app.js";
 import {moonspeakInstallOnMessageHandler, moonspeakPostMessage} from "./moonspeak.js";
 
