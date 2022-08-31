@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json
 import re
-import urllib
+from urllib.parse import urlparse
 import os
 from pathlib import Path
 from collections import defaultdict
@@ -163,23 +163,45 @@ def inner_synonyms(word) -> ListKeyCandidate:
 
 
 @app.get("/")
-def get_index():
-    # must redirect to language sub-url otherwise relative links break
-    host_url = urllib.parse.urlparse(request.host_url)
-    domain = host_url.hostname.split(".")[-1]
-    return redirect(f"/{domain}/", code=307)
+def root():
+    # find the language and redirect to that, otherwise relative paths break
+    # language check order:
+    # 0 - what language cookie you have
+    cookie_lang = request.cookies.get("lang")
+    if cookie_lang:
+        return redirect(f"/{cookie_lang}/", code=307)
+
+    # 1 - what does accept_language header have
+    accept_language_header = request.headers.get("Accept-Language")
+    if accept_language_header:
+        m = re.match('[a-z]{2,3}', accept_language_header.strip(), flags=re.IGNORECASE)
+        if m:
+            return redirect(f"/{m.group()}/", code=307)
+
+    # 2 - what domain are you targetting, useful for tools that normally dont supply accept_language header
+    hostname = urlparse(request.headers.get("Host")).hostname
+    if hostname:
+        m = re.match('.*[.]([a-z0-9]+)$', hostname, flags=re.IGNORECASE)
+        if m:
+            return redirect(f"/{m.group()}/", code=307)
+
+    # finally use english by default
+    return redirect(f"/en/", code=307)
 
 
-@app.get("/<path:filename>")
-def get_static(filename):
-    root = Path("../frontend/")
-    p = root / filename
+@app.get("/localhost/")
+@app.get("/localhost/<path:filepath>")
+def localhost_static(filepath="index.html"):
+    # this is for dev mode only
+    root = Path("../frontend/src/")
+    return send_from_directory(root, filepath)
 
-    # if just a dir name, try returning index.html
-    if p.is_dir():
-        p = p / "index.html"
 
-    return send_from_directory(root, p.relative_to(root))
+@app.get("/<lang>/")
+@app.get("/<lang>/<path:filepath>")
+def static(lang, filepath="index.html"):
+    root = Path("../frontend/dist/") / lang
+    return send_from_directory(root, filepath)
 
 
 if __name__ == "__main__":
