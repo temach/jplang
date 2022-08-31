@@ -1,6 +1,6 @@
 loading_placeholder = "Загружаемся..."
-error_getting_synonyms = "Ошибка: невозможно запросить синонимы из словаря"
 error = "Ошибка"
+error_getting_synonyms = "Ошибка: невозможно запросить синонимы из словаря"
 title = "Синонимы"
 google_corpus_freq = "Интернет"
 subtitles_freq = "Субтитры"
