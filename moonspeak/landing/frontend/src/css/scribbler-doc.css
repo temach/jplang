@@ -1,4 +1,5 @@
-html, body {
+html,
+body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -67,7 +68,7 @@ html, body {
 .doc__nav li:hover {
   color: var(--primary-color-light);
   cursor: pointer;
-  transition: color .3s ease-in-out;
+  transition: color 0.3s ease-in-out;
 }
 
 .doc__nav .selected {
@@ -75,7 +76,7 @@ html, body {
   position: relative;
 }
 
-.doc__nav .selected:after {
+.doc__nav .selected::after {
   position: absolute;
   content: "";
   width: 1rem;
@@ -94,23 +95,28 @@ html, body {
   .wrapper {
     flex-direction: column;
   }
+
   .doc__content {
     padding-left: 0;
   }
+
   .doc__nav ul {
     border-bottom: 1px solid var(--code-bg-color);
     padding-bottom: 0.5rem;
   }
+
   .doc__nav ul.fixed {
-    /* nutralized the fixed menu for mobile*/
+    /* nutralized the fixed menu for mobile */
     position: relative;
     top: 0;
   }
+
   .doc__nav li {
     display: inline-block;
     padding-right: 1rem;
   }
-  .doc__nav .selected:after {
+
+  .doc__nav .selected::after {
     display: none;
   }
 }

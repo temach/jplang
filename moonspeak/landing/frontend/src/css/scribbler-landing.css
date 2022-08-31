@@ -14,7 +14,7 @@ nav {
 .hero {
   text-align: center;
   background-color: var(--bg-color);
-  padding: 1.5rem 0 6rem 0;
+  padding: 1.5rem 0 6rem;
 }
 
 .hero__title {
@@ -23,12 +23,12 @@ nav {
 }
 
 .hero__description {
-  margin: -1rem auto 2rem auto;
+  margin: -1rem auto 2rem;
 }
 
 .hero__terminal {
   width: 60%;
-  margin: -11rem auto 3rem auto;
+  margin: -11rem auto 3rem;
   text-align: left;
   color: white;
   padding: 0 1rem;
@@ -36,7 +36,7 @@ nav {
   background-color: #232323;
   min-height: 285px;
   animation: fadeUp 2s;
-  box-shadow: 0px 12px 36.8px 9.2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 36.8px 9.2px rgb(0 0 0 / 10%);
 }
 
 .hero__terminal pre {
@@ -73,7 +73,7 @@ nav {
   position: relative;
   border: 1px solid var(--code-bg-color);
   flex-basis: 50%;
-  padding: 2rem 1rem 1rem 1rem;
+  padding: 2rem 1rem 1rem;
   list-style: none;
   line-height: 2rem;
 }
@@ -112,14 +112,14 @@ nav {
   font-family: Courier;
   font-size: 0.7rem;
   color: var(--dark-gray-color);
-  padding: 3px 3px 1px 3px;
+  padding: 3px 3px 1px;
   vertical-align: middle;
 }
 
 /* callout section */
 .callout {
   text-align: center;
-  padding: 1rem 0 3rem 0;
+  padding: 1rem 0 3rem;
 }
 
 .callout .button--primary {
@@ -152,7 +152,7 @@ nav {
 }
 
 .changelog__callout {
-  margin: 3rem auto 2rem auto;
+  margin: 3rem auto 2rem;
   text-align: center;
 }
 
@@ -160,21 +160,28 @@ nav {
   .hero__terminal {
     width: 70%;
   }
+
   .tab__container > ul {
     right: auto;
     left: 0;
     padding-left: 0;
   }
+
   .tab__container .code {
     margin-top: 2rem;
   }
-  .feature, .keybinding, .changelog__item {
+
+  .feature,
+  .keybinding,
+  .changelog__item {
     flex-direction: column;
   }
+
   .feature__item {
     max-width: 100%;
     margin: 0;
   }
+
   .keybinding {
     font-size: 0.8rem;
   }

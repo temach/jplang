@@ -1,7 +1,7 @@
 .particle {
-    -webkit-user-select: none;
-    font-family: 'Mochiy Pop One', monospace;
-    pointer-events: none;
-    position: fixed;
-    overflow: hidden;
+  user-select: none;
+  font-family: "Mochiy Pop One", monospace;
+  pointer-events: none;
+  position: fixed;
+  overflow: hidden;
 }

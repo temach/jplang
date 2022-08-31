@@ -1,7 +1,9 @@
 @font-face {
-    font-family: "Mochiy Pop One";
-    src: url("../webfonts/MochiyPopOne-400-Regular.woff2") format("woff2"), /* chrome 36+, firefox 39+,iOS 10+, Android 67+ */
+  font-family: "Mochiy Pop One";
+  src:
+    url("../webfonts/MochiyPopOne-400-Regular.woff2") format("woff2"), /* chrome 36+, firefox 39+,iOS 10+, Android 67+ */
     url("../webfonts/MochiyPopOne-400-Regular.ttf") format("truetype"); /* chrome, firefox, opera, Safari, Android, iOS 4.2+ */
-    font-style: normal;
-    font-weight: 400;
+
+  font-style: normal;
+  font-weight: 400;
 }
