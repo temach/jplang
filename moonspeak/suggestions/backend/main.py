@@ -57,13 +57,6 @@ def static(lang, filepath="index.html"):
     return static_file(filepath, root=root)
 
 
-@get("/version")
-def version():
-    data = {"version": "0.1"}
-    response.set_header("content-type", "application/json")
-    return json.dumps(data)
-
-
 def get_en_freq(word):
     return [
         CORPUS.get(word, -1),
