@@ -253,6 +253,20 @@ function cssLintTask() {
         ]));
 }
 
+function cssAutoFixTask() {
+    return gulp.src([
+            path.join(UNIFIED_FILES, '**', '*.css'),
+        ])
+        .pipe(postcss([
+            simplevars(),
+            nestedcss(),
+            stylelint({fix: true, config: lintconfig}),
+            reporter(reportconfig),
+        ]))
+        .pipe(gulp.dest(UNIFIED_FILES));
+}
+
+
 function cssTask() {
     return gulp.src(path.join(EXPANDED_FILES, '**', '*.css'))
         // minify
@@ -339,4 +353,8 @@ exports.default = gulp.series(
     uglifyJsTask,
     cssTask,
     fontminTask,
+);
+
+exports.formatcss = gulp.series(
+    cssAutoFixTask,
 );

@@ -15,7 +15,6 @@
     "doiuse": "^4.4.1",
     "fast-toml": "^0.5.4",
     "fs-extra": "^10.1.0",
-    "git-rev-sync": "^3.0.2",
     "gulp": "^4.0.2",
     "gulp-clean-css": "^4.3.0",
     "gulp-cli": "^2.3.0",
