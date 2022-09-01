@@ -232,6 +232,17 @@ function elmTask() {
         .pipe(gulp.dest('src/js/'));
 }
 
+function elmdebugTask() {
+    return gulp.src('elm/src/Main.elm')
+        .pipe(elm.bundle("elm-app.js", {cwd: "elm/", optimize: false, debug: true}))
+
+        // hack to allow transpiled elm code to be natively imported as browser javascript module
+        .pipe(replace("(this)", "(window)"))
+        .pipe(replace(/$/, "\nexport const Elm = window.Elm;"))
+
+        .pipe(gulp.dest('src/js/'));
+}
+
 
 //==========================================
 // CSS
@@ -284,7 +295,16 @@ function cssLintTask() {
         ]));
 }
 
-function cssAutoFixTask() {
+function cssTask() {
+    return gulp.src(path.join(EXPANDED_FILES, '**', '*.css'))
+        // minify
+        .pipe(cleanCss({
+            compatibility: 'ie10'
+        }))
+        .pipe(gulp.dest(EXPANDED_FILES));
+}
+
+function cssformatTask() {
     return gulp.src([
             path.join(UNIFIED_FILES, '**', '*.css'),
         ])
@@ -297,15 +317,6 @@ function cssAutoFixTask() {
         .pipe(gulp.dest(UNIFIED_FILES));
 }
 
-function cssTask() {
-    return gulp.src(path.join(EXPANDED_FILES, '**', '*.css'))
-        // minify
-        .pipe(cleanCss({
-            compatibility: 'ie10'
-        }))
-        .pipe(gulp.dest(EXPANDED_FILES));
-}
-
 
 
 //===========================================
@@ -315,16 +326,36 @@ function cleanTask() {
     return deleteAsync(EXPANDED_FILES);
 }
 
+
 exports.default = gulp.series(
+    // elm
+    elmdebugTask,
+
     // lint
     htmlLintTask,
     jsLintTask,
-    elmTask,
     cssLintTask,
 
     cleanTask,
 
     // expand translations into language dirs
+    // and copy static files without translations
+    translationTask,
+);
+
+exports.production = gulp.series(
+    // elm
+    elmTask,
+
+    // lint
+    htmlLintTask,
+    jsLintTask,
+    cssLintTask,
+
+    cleanTask,
+
+    // expand translations into language dirs
+    // and copy static files without translations
     translationTask,
 
     // combine expanded files into optimised distribution files
@@ -334,9 +365,9 @@ exports.default = gulp.series(
 );
 
 exports.elm = gulp.series(
-    elmTask,
+    elmdebugTask,
 );
 
-exports.formatcss = gulp.series(
-    cssAutoFixTask,
+exports.format = gulp.series(
+    cssformatTask,
 );

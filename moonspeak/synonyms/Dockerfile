@@ -10,7 +10,8 @@ RUN npm install
 COPY frontend/src           src
 COPY frontend/elm           elm
 COPY frontend/gulpfile.js   gulpfile.js
-RUN gulp
+
+RUN gulp production
 
 
 FROM python:alpine
