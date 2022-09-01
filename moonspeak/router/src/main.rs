@@ -94,7 +94,7 @@ async fn router(
     debug!("Requesting line {}", infoline);
 
     let (client_req, is_unixsock) = {
-        let p = format!("../unixsock/{}.sock", service);
+        let p = format!("../unixsocks/{}.sock", service);
         let unixsock = path::Path::new(&p);
 
         let builder = ClientBuilder::new().disable_redirects();
@@ -158,7 +158,7 @@ async fn router(
 
                 debug!("base tag {:?}", base_node);
 
-                // find first head element and append base tag
+                // find first head element and insert base tag
                 let head = match dom.select_first("head") {
                     Ok(h) => h,
                     Err(error) => {
@@ -299,7 +299,7 @@ fn is_dev_mode() -> bool {
 #[clap(author, version, about, long_about = None)]
 struct RouterArgs {
     /// Path to unix domain socket for binding
-    #[clap(long, value_parser, default_value_t = String::from("../unixsock/router.sock"))]
+    #[clap(long, value_parser, default_value_t = String::from("../unixsocks/router.sock"))]
     uds: String,
 
     /// TCP hostname interface on which to bind

@@ -26,40 +26,25 @@ This is enough to test .toml translations and see how different languages actual
 
 This is how its run in production, using nginx and unix sockets.
 
-#### Step 1
-
-Add DNS records, append moonspeak.test to /etc/hosts
-```
-127.0.0.1	moonspeak.test
-```
-
-Create directory for unix sockets (its fixed in nginx.conf) and give yourself permissions to write there:
-```
-# sudo mkdir -p /opt/moonspeak/unixsock/
-# sudo chown -R $USER:$USER /opt/moonspeak/
-```
-
-
-#### Step 2: docker option
+#### Option 1: Docker
 
 Run nginx via docker. 
 
 Execute the below command in the directory with README:
 
 - Expose port 80.
-- Bind mount this config folder into the container.
-- Bind mount /opt/moonspeak/ to reach unix sockets.
+- Bind mount the config and sources folder into the container.
+- Bind mount unixsocks dir to share unix sockets.
 
 ```
 # docker run -p 80:80 \
-    --mount type=bind,src=$(pwd)/frontend,dst=/etc/nginx/frontend \
-    --mount type=bind,src=$(pwd)/nginx.conf,dst=/etc/nginx/nginx.conf \
-    --mount type=bind,src=/opt/moonspeak/,dst=/opt/moonspeak/ \
+    --mount type=bind,src=$(pwd),dst=/etc/nginx/ \
+    --mount type=bind,src=$(pwd)/../unixsocks/,dst=/etc/unixsocks/ \
     -it nginx:alpine
 ```
 
 
-#### Step 2: system install option
+#### Option 2: System install nginx
 
 Install nginx. 
 
@@ -76,15 +61,16 @@ Execute the below command in the directory with README:
 ```
 
 
-### step 3: Send a request
+### Send a request
 
 Via unix sockets:
 ```
-# curl --unix-socket /opt/moonspeak/landing.sock http://moonspeak.test/
-# curl --unix-socket /opt/moonspeak/landing.sock http://moonspeak.test/test/
+# curl --unix-socket ../unixsocks/landing.sock http://moonspeak.localhost/
+# curl --unix-socket ../unixsocks/landing.sock http://moonspeak.localhost/en/
+# curl --unix-socket ../unixsocks/landing.sock http://moonspeak.localhost/localhost/
 ```
 
-Or visit http://moonspeak.test/test/ in browser.
+Or open http://moonspeak.localhost/ in browser.
 
 
 
