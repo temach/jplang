@@ -1,23 +1,24 @@
-let _moonspeakPorts = [];
+let moonspeakPorts = [];
 
-function _moonspeakLog(msg, obj) {
-    // see: https://developer.mozilla.org/en-US/docs/Web/API/Console/log#logging_objects
+function moonspeakLog(msg, obj) {
     console.log(location + " " + document.title + " " + msg);
-    console.log(JSON.parse(JSON.stringify(obj)));
+    if (obj) {
+        // see: https://developer.mozilla.org/en-US/docs/Web/API/Console/log#logging_objects
+        console.log(JSON.parse(JSON.stringify(obj)));
+    }
 }
 
-function _moonspeakMessageHandler(event, userHandler) {
-    _moonspeakLog("received:", event.data);
+function moonspeakMessageHandler(event, userHandler) {
+    moonspeakLog("received:", event.data);
     userHandler(event);
 }
 
-function _moonspeakBootstrapMasterPort(event, userHandler) {
+function moonspeakBootstrapMasterPort(event, userHandler) {
     function isMoonspeakDevMode(hostname = location.hostname) {
         // checking .endsWith() is ok, but .startsWith() is not ok
         return (
             ['localhost', '127.0.0.1', '', '0.0.0.0', '::1'].includes(hostname)
-            || hostname.endsWith('.local')
-            || hostname.endsWith('.test')
+            || hostname.endsWith('.localhost')
         )
     }
 
@@ -26,39 +27,46 @@ function _moonspeakBootstrapMasterPort(event, userHandler) {
         return;
     }
 
-    _moonspeakLog("receiving once:", event.data);
+    moonspeakLog("receiving once:", event.data);
 
     if ("info" in event.data && event.data["info"].includes("port")) {
         masterport = event.ports[0];
-        masterport.onmessage = (event) => _moonspeakMessageHandler(event, userHandler);
-        _moonspeakPorts.push(masterport);
+        masterport.onmessage = (event) => moonspeakMessageHandler(event, userHandler);
+        moonspeakPorts.push(masterport);
+        return;
     }
 
-    _moonspeakLog("Can not understand message info, handling anyway: ", event.data["info"]);
-    _moonspeakMessageHandler(event, userHandler);
+    moonspeakLog("Can not understand message info, handling anyway.");
+    moonspeakMessageHandler(event, userHandler);
 }
 
 // use this function to subscribe to messages
 function moonspeakInstallOnMessageHandler(userHandler) {
     // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
-    // this listener is called once to transfer the message channel for further communication
-    window.addEventListener("message", (event) => _moonspeakBootstrapMasterPort(event, userHandler));
+    // this listener is called ONCE to transfer the message channel for further communication
+    window.addEventListener("message", (event) => moonspeakBootstrapMasterPort(event, userHandler));
 }
 
 // use this function to post messages
 function moonspeakPostMessage(message, isSecondTime=false) {
-    if (_moonspeakPorts.length === 0) {
+    if (moonspeakPorts.length === 0) {
         if (isSecondTime === false) {
             // if sending this message first time, try repeating it after few milli-seconds
             // if it fails a second time, then ignore
             window.setTimeout(() => moonspeakPostMessage(message, true), 500);
         }
 
+        if (isSecondTime === true) {
+            moonspeakLog("no ports connected, will abandon sending message:", message);
+        }
+
         // if no ports listening, nothing to do
         return;
     }
-    _moonspeakLog("posted:", message);
-    for (const port of _moonspeakPorts) {
+    moonspeakLog("posted:", message);
+    for (const port of moonspeakPorts) {
         port.postMessage(message);
     }
 }
+
+export { moonspeakInstallOnMessageHandler, moonspeakPostMessage };

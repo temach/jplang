@@ -1,4 +1,7 @@
-var app = Elm.Main.init({
+import {Elm} from "./elm-app.js";
+import {moonspeakInstallOnMessageHandler, moonspeakPostMessage} from "./moonspeak.js";
+
+const app = window.Elm.Main.init({
     node: document.getElementById("elmapp")
 });
 

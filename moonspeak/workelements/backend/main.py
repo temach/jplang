@@ -3,7 +3,8 @@ import os
 import json
 import sqlite3
 import re
-import urllib
+from urllib.parse import urlparse
+from pathlib import Path
 
 import gunicorn.app.base
 import gunicorn.config
@@ -88,8 +89,7 @@ class GunicornApp(gunicorn.app.base.Application):
 
 app = Flask(__name__, static_folder=None)
 
-VERSION = "0.1"
-KANJI_DB_PATH = "../tmp/kanji-parts.db"
+KANJI_DB_PATH = "../userdata/kanji-parts.db"
 DB = sqlite3.connect(KANJI_DB_PATH)
 
 # kanji in-memory list
@@ -241,20 +241,45 @@ def submit(lang):
 
 
 @app.get("/")
-def get_index():
-    # must redirect to language sub-url otherwise relative links break
-    host_url = urllib.parse.urlparse(request.host_url)
-    domain = host_url.hostname.split(".")[-1]
-    return redirect(f"/{domain}/", code=307)
+def root():
+    # find the language and redirect to that, otherwise relative paths break
+    # language check order:
+    # 0 - what language cookie you have
+    cookie_lang = request.cookies.get("lang")
+    if cookie_lang:
+        return redirect(f"/{cookie_lang}/", code=307)
+
+    # 1 - what does accept_language header have
+    accept_language_header = request.headers.get("Accept-Language")
+    if accept_language_header:
+        m = re.match('[a-z]{2,3}', accept_language_header.strip(), flags=re.IGNORECASE)
+        if m:
+            return redirect(f"/{m.group()}/", code=307)
+
+    # 2 - what domain are you targetting, useful for tools that normally dont supply accept_language header
+    hostname = urlparse(request.headers.get("Host")).hostname
+    if hostname:
+        m = re.match('.*[.]([a-z0-9]+)$', hostname, flags=re.IGNORECASE)
+        if m:
+            return redirect(f"/{m.group()}/", code=307)
+
+    # finally use english by default
+    return redirect(f"/en/", code=307)
 
 
-@app.get("/<path:filename>")
-def get_static(filename):
-    # when requesting index.html, must specify the folder with a trailing slash
-    if filename.endswith("/"):
-        return send_from_directory("../frontend/src/", filename + "index.html")
-    else:
-        return send_from_directory("../frontend/src/", filename)
+@app.get("/localhost/")
+@app.get("/localhost/<path:filepath>")
+def localhost_static(filepath="index.html"):
+    # this is for dev mode only
+    root = Path("../frontend/src/")
+    return send_from_directory(root, filepath)
+
+
+@app.get("/<lang>/")
+@app.get("/<lang>/<path:filepath>")
+def static(lang, filepath="index.html"):
+    root = Path("../frontend/dist/") / lang
+    return send_from_directory(root, filepath)
 
 
 def db_init():

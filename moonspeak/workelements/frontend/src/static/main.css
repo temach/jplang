@@ -1,8 +1,0 @@
-.row {
-    padding: 2px 0;
-    display: flex;
-}
-
-.row:hover {
-    background-color: rgb(200, 230, 230);
-}

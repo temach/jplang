@@ -1,6 +1,6 @@
 FROM node as builder
 
-WORKDIR /opt/ms/frontend
+WORKDIR /opt/moonspeak/build/frontend
 
 RUN npm install --global gulp-cli
 COPY frontend/package.json           package.json
@@ -8,29 +8,31 @@ COPY frontend/package-lock.json      package-lock.json
 RUN npm install
 
 COPY frontend/src           src
+COPY frontend/elm           elm
 COPY frontend/gulpfile.js   gulpfile.js
-RUN gulp
+
+RUN gulp production
 
 
 FROM python:alpine
-WORKDIR /opt/ms/
+WORKDIR /opt/moonspeak/workelements
 
-RUN mkdir tmp
+RUN mkdir userdata
 
-RUN mkdir backend
-
-RUN pip install nltk==3.7
-RUN python -c "import nltk; nltk.download('omw-1.4'); nltk.download('wordnet');"
-
-COPY backend/requirements.txt   requirements.txt
+# dependencies
+COPY backend/requirements.txt       requirements.txt
 RUN pip install -r requirements.txt
 
-COPY resources resources
+RUN python -c "import nltk; nltk.download('wordnet'); nltk.download('omw-1.4');"
 
-COPY --from=builder /opt/ms/frontend/dist frontend/src
+# data resources
+COPY resources          resources
+
+# code
+COPY --from=builder /opt/moonspeak/build/frontend/dist       frontend/dist
 
 COPY backend/main.py            backend/main.py
 COPY backend/gunicorn.conf.py   backend/gunicorn.conf.py
 
-WORKDIR /opt/ms/backend
+WORKDIR /opt/moonspeak/workelements/backend
 CMD ["python", "main.py"]
