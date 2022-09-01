@@ -1,6 +1,7 @@
 loading = "Загружаемся..."
 error = "Ошибка"
-error_getting_suggestions = "Ошибка: невозможно запросить получить рекомендации из словаря"
+error_getting_suggestions = "Ошибка: невозможно получить рекомендации из словаря для ${kanji}"
+suggestions_are_empty = "Не нашлось ни одного рекомендованного слова для этого иероглифа: ${kanji}"
 title = "Рекомендации"
 google_corpus_freq = "Интернет"
 subtitles_freq = "Субтитры"

@@ -50,10 +50,18 @@ def root():
     return redirect(f"/en/")
 
 
+@get("/localhost/")
+@get("/localhost/<filepath:re:.*\.(html|css|js)>")
+def static(filepath="index.html"):
+    # this is for dev mode only
+    root = Path("../frontend/src/")
+    return static_file(filepath, root=root)
+
+
 @get("/<lang>/")
 @get("/<lang>/<filepath:re:.*\.(html|css|js)>")
 def static(lang, filepath="index.html"):
-    root = Path("../frontend/") / lang
+    root = Path("../frontend/dist/") / lang
     return static_file(filepath, root=root)
 
 
@@ -64,8 +72,8 @@ def get_en_freq(word):
     ]
 
 
-@get("/api/suggestions/<kanji>")
-def suggestions(kanji):
+@get("/<lang>/api/suggestions/<kanji>")
+def suggestions(lang, kanji):
     res = inner_suggestions(kanji)
     response.set_header("content-type", "application/json")
     return json.dumps(res)
@@ -74,40 +82,43 @@ def suggestions(kanji):
 def inner_suggestions(kanji) -> ListKeyCandidate:
     result = []
 
-    u = SCRIPTIN[kanji]["uniq"]
-    item: KeyCandidate = {
-        "word": u,
-        "freq": get_en_freq(u),
-        "metadata": "scriptin-uniq"
-    }
-    result.append(item)
-
-    for k in SCRIPTIN[kanji]["keys"]:
-        item = {
-            "word": k,
-            "freq": get_en_freq(k),
-            "metadata": "scriptin-keys"
+    if SCRIPTIN.get(kanji):
+        u = SCRIPTIN[kanji]["uniq"]
+        item: KeyCandidate = {
+            "word": u,
+            "freq": get_en_freq(u),
+            "metadata": "scriptin-uniq"
         }
         result.append(item)
 
-    for m in KANJIDIC[kanji]:
-        item = {
-            "word": m,
-            "freq": get_en_freq(m),
-            "metadata": "kanjidic"
-        }
-        result.append(item)
+        for k in SCRIPTIN[kanji]["keys"]:
+            item = {
+                "word": k,
+                "freq": get_en_freq(k),
+                "metadata": "scriptin-keys"
+            }
+            result.append(item)
 
-    # regex test value: "understand/divide or minute / equal /etc./plural"
-    # should be: ['understand', 'divide', 'minute ', 'equal ', 'etc', 'plural']
-    kanjidamage_keywords = re.split(r"[,./]| or ", KANJIDAMAGE[kanji])
-    for d in (m.strip() for m in kanjidamage_keywords if len(m) > 0):
-        item = {
-            "word": d,
-            "freq": get_en_freq(d),
-            "metadata": "kanjidamage"
-        }
-        result.append(item)
+    if KANJIDIC.get(kanji):
+        for m in KANJIDIC[kanji]:
+            item = {
+                "word": m,
+                "freq": get_en_freq(m),
+                "metadata": "kanjidic"
+            }
+            result.append(item)
+
+    if KANJIDAMAGE.get(kanji):
+        # regex test value: "understand/divide or minute / equal /etc./plural"
+        # should be: ['understand', 'divide', 'minute ', 'equal ', 'etc', 'plural']
+        kanjidamage_keywords = re.split(r"[,./]| or ", KANJIDAMAGE[kanji])
+        for d in (m.strip() for m in kanjidamage_keywords if len(m) > 0):
+            item = {
+                "word": d,
+                "freq": get_en_freq(d),
+                "metadata": "kanjidamage"
+            }
+            result.append(item)
 
     return result
 
@@ -116,7 +127,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Feature, run as "python main.py"')
-    parser.add_argument('--port', type=int, default=80, help='port number')
+    parser.add_argument('--port', type=int, default=8042, help='port number')
     args = parser.parse_args()
 
     # english frequency
@@ -147,4 +158,4 @@ if __name__ == "__main__":
         KANJIDAMAGE = json.load(kanjidamage)
 
     print("Running bottle server on port {}".format(args.port))
-    run(host="0.0.0.0", port=args.port, debug=True)
+    run(host="0.0.0.0", port=args.port)

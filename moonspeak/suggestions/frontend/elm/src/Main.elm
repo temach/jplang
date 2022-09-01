@@ -47,7 +47,7 @@ type alias Frequency =
 type alias Model =
     { kanji : String
     , keyword : String
-    , userMessage : Dict String String
+    , userMessages : Dict String String
     , suggestions : List KeyCandidate
     }
 
@@ -55,7 +55,7 @@ type alias Model =
 defaultModel =
     { kanji = "X"
     , keyword = "{{ loading }}"
-    , userMessage = Dict.empty
+    , userMessages = Dict.empty
     , suggestions = []
     }
 
@@ -140,14 +140,35 @@ update msg model =
         SuggestionsReady result ->
             case result of
                 Ok suggestions ->
-                    let
-                        newModel =
-                            { model | suggestions = suggestions }
-                    in
-                    update SortSuggestionsByFreq newModel
+                    if List.length suggestions > 0 then
+                        let
+                            messages =
+                                Dict.remove "SuggestionsReady" model.userMessages
+
+                            newModel =
+                                { model | suggestions = suggestions, userMessages = messages }
+                        in
+                        update SortSuggestionsByFreq newModel
+
+                    else
+                        let
+                            errmsg =
+                                "{{ suggestions_are_empty }}" |> String.replace "${kanji}" model.kanji
+
+                            messages =
+                                Dict.insert "SuggestionsReady" errmsg model.userMessages
+                        in
+                        ( { model | userMessages = messages }, Cmd.none )
 
                 Err _ ->
-                    ( { model | userMessage = Dict.insert "SuggestionsReady" "{{ error_getting_suggestions }}" model.userMessage }, Cmd.none )
+                    let
+                        errmsg =
+                            "{{ error_getting_suggestions }}" |> String.replace "${kanji}" model.kanji
+
+                        messages =
+                            Dict.insert "SuggestionsReady" errmsg model.userMessages
+                    in
+                    ( { model | userMessages = messages }, Cmd.none )
 
         Recv jsonValue ->
             case Decode.decodeValue portDecoder jsonValue of
@@ -269,7 +290,7 @@ renderSuggestions model =
 
 renderUserMessages : Model -> Html Msg
 renderUserMessages model =
-    div [] [ text (String.join "!" (Dict.values model.userMessage)) ]
+    div [] [ text (String.join "!" (Dict.values model.userMessages)) ]
 
 
 render : Model -> Html Msg

@@ -8,7 +8,7 @@
 
   <body>
     <!-- BEGIN_DEV_MODE -->
-    <input oninput="window.postMessage({kanji:this.value}, '*');" type="text">
+    <input type="text" value="日" oninput="window.postMessage({kanji:this.value}, '*');">
     <!-- END_DEV_MODE -->
 
     <div id="elmapp"></div>
