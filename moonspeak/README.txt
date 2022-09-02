@@ -1,3 +1,5 @@
+To test localhost installations against open web, use ngrok: https://dashboard.ngrok.com/get-started/setup
+
 Setup for development:
 
 Add the following to your /etc/hosts
@@ -388,7 +390,9 @@ Another option is to use symlinks, instead of proxy files. But must keep in mind
 
 
 
-Basically when writing code the idea is to have "declaration mimic use" (an old idea from C language), however is it really wroth it?
+Basically when writing code the idea is to have "declaration mimic use".
+Which is an old idea from C language, see: http://ptgmedia.pearsoncmg.com/images/9780131774292/samplepages/0131774298.pdf
+However is it worth it?
 On the one hand you want "when you see it you know how to use it" effect, on the other this needlesly comingles two things that are separate:
 declaration is one thing, use is another.
 
@@ -398,4 +402,67 @@ If you can just declare the files in a nice tree, then the user will have an eas
 the same file tree except over http).
 Is it?
 
+
+
+About web development:
+
+Favour bundling (and build step) because:
+- multiple http requests is bad
+- code splitting (i.e. load only necessary files per each page)
+- build step is necessary anyway for font minification
+- newer syntax on older browsers (and typescript etc.)
+- itegration between multiple frameworks (e.g. elm and react in same project)
+
+
+Avoiding bundling:
+- simpler code
+- build step can be avoided for dev mode, easier to get started for new people
+- http2 and http2_server_push make it much faster to handle multiple requests over one tcp connection
+- dynamically load js modules as code splitting: https://hackernoon.com/reduce-js-bundle-size-by-dynamically-importing-es6-modules
+- link prefetching and preloading: https://developer.mozilla.org/en-US/docs/Web/HTTP/Link_prefetching_FAQ and https://developer.mozilla.org/en-US/docs/Web/HTML/Link_types/preload
+- changing small part of a bundle means invalidating the whole bundle, but if we avoid bundles cache is not invalidated needlessly!
+
+ideas about avoiding bundling:
+- https://javascript.plainenglish.io/what-got-me-writing-vanilla-js-again-2c53756c8a4c
+- https://www.nginx.com/blog/nginx-1-13-9-http2-server-push
+- https://stackoverflow.com/questions/70041823/what-is-the-overhead-in-nginx-to-proxy-an-http-2-request-to-an-http-1-1-request
+
+Basically without bundles: better caching, worse compression (and small overhead on wire).
+With bundles: frequent cache invalidation, better compression.
+
+
+
+About deployment:
+
+Really we need to spin up a few default containers when a user tries to access a url. This is like lambda or WSGI processing.
+But we use containers becasue its safer and allows for fs manipulations and versioning.
+So really the thing that the user leaves is his data. Its in ../userdata/ folder in each container.
+Really the userdata is on a docker volume. The volume has tags that tell us how info about it.
+- We must know what service is the volume used for: hud, graph, workelements?
+- Must know what VERSION of the service the volume was last used with, because then we can handle upgrades and data migration when we run it with a new version of the service.
+- Must know who is the user that created the data, i.e. the user's uuid.
+
+The above info can not be stored inside a volume, because that's leaking abstraction to service developers.
+The fact that containers for users are started and stopped, means they are easier to upgrade, as there is always downtime.
+Also this allows them to have some internal state while they are working.
+The containers can be started on first url request, but there needs to be a way to designate a few "always needed"
+containers for pre-loading on the very first url request.
+
+Looks like this starting mechanism is really like WSGI. Maybe nginx can handle this? I.e. the gateway 
+can run a WSGI program that starts up docker containers?
+
+Maybe each volume should just have a uuid, and somewhere keep a mapping between volume uuid and its metadata?
+Maybe metadata can be attached directly to a volume?
+
+
+
+
+About html includes, they are needed for two reasons:
+1. for code that is only used in dev mode
+2. to template parts for doc.html, index.html, signup.html such as header/footer
+3. they should work in dev mode and be absent in prod
+They can NOT be done in javascript, because then they will persist to prod.
+Also they can NOT be done as Server Side Includes, because then they will persist to prod.
+Therefore they have to be done as a build step that does not break dev mode.
+Instead of gulp replace, consider using: https://www.npmjs.com/package/gulp-processhtml
 
