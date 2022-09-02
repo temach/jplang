@@ -46,7 +46,7 @@ services:
   # workelements:
   #   container_name: workelements-demouser-ddd.moonspeak.localhost
   #   environment:
-  #     GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsock/workelements-demouser-ddd.sock' "
+  #     GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsocks/workelements-demouser-ddd.sock' "
 
   # graph:
   #   container_name: graph-demouser-bbb.moonspeak.localhost

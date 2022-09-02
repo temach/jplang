@@ -5,19 +5,19 @@ version: "3"
 
 volumes:
   # used to share unix sockets
-  opt-moonspeak-unixsock:
+  unixsocks:
 
 services:
   #===================================
   gateway:
     image: "temachpool/moonspeak-gateway:${TAG:-latest}"
     volumes:
-      - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
+      - unixsocks:/etc/unixsocks
 
   router:
     image: "temachpool/moonspeak-router:${TAG:-latest}"
     volumes:
-      - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
+      - unixsocks:/opt/moonspeak/unixsocks
     environment:
       # the router inserts reference to hostname into each feature via <base> tag
       # this supplies the correct name
@@ -30,17 +30,17 @@ services:
   landing:
     image: "temachpool/moonspeak-landing:${TAG:-latest}"
     volumes:
-      - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
+      - unixsocks:/etc/unixsocks
 
-  # synonyms:
-  #   image: "temachpool/moonspeak-synonyms:${TAG:-latest}"
-  #   volumes:
-  #     - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
+  synonyms:
+    image: "temachpool/moonspeak-synonyms:${TAG:-latest}"
+    volumes:
+      - unixsocks:/opt/moonspeak/unixsocks
 
-  # suggestions:
-  #   image: "temachpool/moonspeak-suggestions:${TAG:-latest}"
-  #   volumes:
-  #     - opt-moonspeak-unixsock:/opt/moonspeak/unixsock
+  suggestions:
+    image: "temachpool/moonspeak-suggestions:${TAG:-latest}"
+    volumes:
+      - unixsocks:/opt/moonspeak/unixsocks
 
   #===================================
   # Deploy is used in manual mode, see its source
