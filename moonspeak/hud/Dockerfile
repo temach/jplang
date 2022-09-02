@@ -20,8 +20,6 @@ FROM sebp/lighttpd:latest
 # this means to change config you must each time renew-anon-volumes
 # its annoying, so avoid using /etc/lighttpd dir altogether
 
-RUN mkdir -p /opt/moonspeak/unixsocks/
-
 ENV MOONSPEAK_PORT=80
 WORKDIR /opt/moonspeak/hud
 

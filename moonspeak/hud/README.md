@@ -46,7 +46,7 @@ Execute the below command in the directory with README:
 - Do NOT go to background with `-D`
 
 ```
-MOONSPEAK_PORT=8003 lighttpd -f lighttpd.conf -D
+MOONSPEAK_UNIXSOCK="hud.sock" MOONSPEAK_PORT=8003 lighttpd -f lighttpd.conf -D
 ```
 
 ### step 3: Send a request
