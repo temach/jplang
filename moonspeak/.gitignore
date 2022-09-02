@@ -1,4 +1,5 @@
 elm-stuff/
+dist/
 .idea/
 .mypy_cache
 tmp
