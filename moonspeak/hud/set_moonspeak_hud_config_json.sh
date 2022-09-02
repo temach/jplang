@@ -4,8 +4,9 @@
 # therefore can not set the appropriate config.json at build time
 
 if [ -z "$MOONSPEAK_HUD_CONFIG_JSON" ]; then
-  echo 'var.moonspeak_hud_config = "using from filesystem"'
+  echo 'using hud config from filesystem' > /dev/stderr
 else 
-  echo 'var.moonspeak_hud_config = "using from env MOONSPEAK_HUD_CONFIG_JSON"'
-  echo "$MOONSPEAK_HUD_CONFIG_JSON" > frontend/config/hud.json
+  echo 'tying to use hud confg from env MOONSPEAK_HUD_CONFIG_JSON' > /dev/stderr
+  echo "$MOONSPEAK_HUD_CONFIG_JSON" > frontend/dist/ru/config/hud.json || true
+  echo "$MOONSPEAK_HUD_CONFIG_JSON" > frontend/dist/en/config/hud.json || true
 fi
