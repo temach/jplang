@@ -1,0 +1,13 @@
+lang = "en"
+title = "Hud"
+loading_placeholder = """Loading... if you encounter problems, please contact us!"""
+contact_html = """
+<ul>
+    <li>
+        Open an issue on <a href="https://github.com/temach/jplang" title="Github" target="_blank">Github</a> 
+    </li>
+    <li>
+        Post a comment in our Telegram channel <a href="https://t.me/moonspeak_uk" title="Moonspeak" target="_blank">@moonspeak_uk</a>
+    </li>
+</ul>
+"""

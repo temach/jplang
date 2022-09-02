@@ -1,9 +1,3 @@
-To support different index files see: https://serverfault.com/questions/1090298/lighttpd-execute-cgi-bin-index-cgi-if-exists-in-the-folder
-summary:
-
-index-file.names = ( "cgi-bin/index.pl" )
-
-
 # Developing locally
 
 For configuration edit frontend/config/hud.json.
@@ -23,14 +17,8 @@ Then navigate to `http://127.0.0.1:8003/frontend/`
 
 This is how its run on production in docker container using lighttpd.
 
-#### Step 1
 
-Add DNS records, append moonspeak.test to /etc/hosts
-```
-127.0.0.1	moonspeak.test
-```
-
-#### Step 2: docker nginx option
+#### Option 1: docker lighttpd option
 
 Run via docker. 
 
@@ -47,31 +35,21 @@ Execute the below command in the directory with README:
 ```
 
 
-#### Step 2: system nginx option
+#### Option 2: system lighttpd option
 
 Install lighttpd. 
 
 Execute the below command in the directory with README:
 
-- Set port with `PORT=80` env variable.
+- Set port with `MOONSPEAK_PORT=80` env variable.
 - Set config file path with `-f`.
 - Do NOT go to background with `-D`
 
 ```
-# MOONSPEAK_UNIXSOCK="$PWD/here" MOONSPEAK_PORT=8003 lighttpd -f lighttpd.conf -D
+MOONSPEAK_PORT=8003 lighttpd -f lighttpd.conf -D
 ```
-
 
 ### step 3: Send a request
 
 Open http://moonspeak.test:8003/ in browser.
-
-
-
-
-
-
-
-
-
 

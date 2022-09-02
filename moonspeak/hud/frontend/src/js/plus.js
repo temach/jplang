@@ -1,3 +1,6 @@
+document.getElementById('addFeatureButton')
+    .addEventListener('click', () => document.getElementById('feature_list_container').classList.toggle('hidden'))
+
 async function initPlus() {
     let response = await fetch("config/hud.json");
 
@@ -10,12 +13,14 @@ async function initPlus() {
     let json = await response.json();
 
     // order affects layout
-    for (const service of json["services"]) {
-        let img_child = document.getElementById(service["name"]);
-        img_child.title += " @ " + service["url"];
-        img_child.addEventListener("click", () => {
-            request_feature(service["url"]);
-        });
+    if ("services" in json) {
+        for (const service of json["services"]) {
+            let img_child = document.getElementById(service["name"]);
+            img_child.title += " @ " + service["url"];
+            img_child.addEventListener("click", () => {
+                request_feature(service["url"]);
+            });
+        }
     }
 }
 
@@ -23,8 +28,6 @@ function isMoonspeakDevMode(hostname = location.hostname) {
     // checking .endsWith() is ok, but .startsWith() is not ok
     return (
         ['localhost', '127.0.0.1', '', '0.0.0.0', '::1'].includes(hostname)
-        || hostname.endsWith('.local')
-        || hostname.endsWith('.test')
     )
 }
 

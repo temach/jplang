@@ -2,6 +2,8 @@
 window.addEventListener('message', onMessage);
 window.addEventListener('load', initHud, true);
 
+document.getElementById('showHintButton')
+    .addEventListener('click', () => document.getElementById('hints').classList.toggle('hidden'))
 
 //=========================================================
 // Managing fullscreen features that are loaded once at the start of app
@@ -37,8 +39,6 @@ function isMoonspeakDevMode(hostname = location.hostname) {
     // checking .endsWith() is ok, but .startsWith() is not ok
     return (
         ['localhost', '127.0.0.1', '', '0.0.0.0', '::1'].includes(hostname)
-        || hostname.endsWith('.local')
-        || hostname.endsWith('.test')
     )
 }
 
