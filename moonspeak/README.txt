@@ -466,3 +466,13 @@ Also they can NOT be done as Server Side Includes, because then they will persis
 Therefore they have to be done as a build step that does not break dev mode.
 Instead of gulp replace, consider using: https://www.npmjs.com/package/gulp-processhtml
 
+
+Right now links should be relaive in each service, if a link is absolute then it ignores the base tag and goes to root of moonspeak server.
+With reedirects the story is similar, but there are three types of reddirects:
+- redirects that specify hostname e.g. http://moonspeak.localhost/landing/en/
+- redirects without hostname, that start with root slash e.g. /landing/en/
+- redirects without hostname, without root slash e.g. landing/en/
+
+nginx by default adds hostname (see "absolute_redirect on").
+lighttpd and flask do not add hostname.
+For now lets use redirects without hostname.
