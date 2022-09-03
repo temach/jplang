@@ -53,6 +53,8 @@ services:
     container_name: suggestions.moonspeak.localhost
     build:
       context: ./suggestions
+    environment:
+      MOONSPEAK_PORT: 80
 
   # #==================================
   # this is the user's unique access url
@@ -68,7 +70,7 @@ services:
       MOONSPEAK_UNIXSOCK: "../unixsocks/hud-demouser-aaa.sock"
       MOONSPEAK_HUD_CONFIG_JSON: >-
           {
-            "graphurl": "/router/node/graph-demouser-bbb"
+            "graphurl": "/router/route/graph-demouser-bbb/index.html"
           }
 
   workelements:
@@ -97,7 +99,7 @@ services:
           <root>
             <mxCell id="0" />
             <mxCell id="1" parent="0" />
-            <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="/router/node/workelements-demouser-ddd/" style="width: 680px; height: 560px; border: medium none;" id="2">
+            <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="/router/route/workelements-demouser-ddd/" style="width: 680px; height: 560px; border: medium none;" id="2">
               <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
                 <mxGeometry x="-80" y="-85" width="700" height="580" as="geometry" />
               </mxCell>
