@@ -25,29 +25,48 @@ Thesaurus = dict[str, list[str]]
 
 @get("/")
 def root():
-    # find the language and redirect to that, otherwise relative paths break
-    # language check order:
-    # 0 - what language cookie you have
-    cookie_lang = request.get_cookie("lang")
-    if cookie_lang:
-        return redirect(f"/{cookie_lang}/")
 
-    # 1 - what does accept_language header have
-    accept_language_header = request.headers.get("Accept-Language")
-    if accept_language_header:
-        m = re.match('[a-z]{2,3}', accept_language_header.strip(), flags=re.IGNORECASE)
-        if m:
-            return redirect(f"/{m.group()}/")
+    def relative_redirect(url, code=307):
+        # modified from bottle.py because redirects must be relative (without scheme://host/ )
+        res = response.copy(cls=HTTPResponse)
+        res.status = code
+        res.body = ""
+        res.set_header('Location', url)
+        raise res
 
-    # 2 - what domain are you targetting, useful for tools that normally dont supply accept_language header
-    hostname = urlparse(request.headers.get("Host")).hostname
-    if hostname:
-        m = re.match('.*[.]([a-z0-9]+)$', hostname, flags=re.IGNORECASE)
-        if m:
-            return redirect(f"/{m.group()}/")
+    def choose_lang(request):
+        # find the language and redirect to that, otherwise relative paths break
+        # language check order:
+        # 0 - what language cookie you have
+        cookie_lang = request.get_cookie("lang")
+        if cookie_lang:
+            return cookie_lang
 
-    # finally use english by default
-    return redirect(f"/en/")
+        # 1 - what does accept_language header have
+        accept_language_header = request.headers.get("Accept-Language")
+        if accept_language_header:
+            m = re.match('[a-z]{2,3}', accept_language_header.strip(), flags=re.IGNORECASE)
+            if m:
+                return m.group()
+
+        # 2 - what domain are you targetting, useful for tools that normally dont supply accept_language header
+        hostname = urlparse(request.headers.get("Host")).hostname
+        if hostname:
+            m = re.match('.*[.]([a-z0-9]+)$', hostname, flags=re.IGNORECASE)
+            if m:
+                return m.group()
+
+        # finally use english by default
+        return "en"
+
+    lang = choose_lang(request)
+
+    # in dev mode, language dirs may be absent, then redirect to /localhost/
+    langdir = Path(f"../frontend/dist/{lang}")
+    if not langdir.exists():
+        return relative_redirect("/localhost/", code=307)
+
+    return relative_redirect(f"/{lang}/", code=307)
 
 
 @get("/localhost/")
