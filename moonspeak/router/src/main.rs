@@ -22,6 +22,7 @@ use html5ever::tendril::TendrilSink;
 use std::os::unix::fs::PermissionsExt;
 use std::str::FromStr;
 
+const BASE_HREF_PREPEND: &'static str = "/router";
 const BODY_LIMIT: usize =  5 * 1024 * 1024;
 
 const HTML_NS: Namespace = namespace_url!("http://www.w3.org/1999/xhtml");
@@ -47,7 +48,6 @@ fn create_node(tagname: &str, attrs: Vec<(&str, String)>) -> NodeRef {
 
 async fn router(
     req: HttpRequest,
-    node: String, 
     service: String, 
     path: String, 
     appstate: web::Data<AppState>, 
@@ -153,7 +153,8 @@ async fn router(
                 let dom :NodeRef = parser.one(utf8_body);
 
                 // create <base>, use the actual path as root_url, otherwise relative paths "../common/" break
-                let base_url = String::from(req.path());
+                // prepend router service name so hrefs look like /router/route/xxx
+                let base_url = format!("{}{}", BASE_HREF_PREPEND, req.path());
                 let base_node = create_node("base", vec![("href", base_url)]);
 
                 debug!("base tag {:?}", base_node);
@@ -215,22 +216,22 @@ async fn router(
 
 async fn handler2(
     req: HttpRequest,
-    combined_path: web::Path<(String, String)>,
+    combined_path: web::Path<(String)>,
     body: web::Bytes,
     appstate: web::Data<AppState>, 
 ) -> HttpResponse {
-    let (node, service) = combined_path.into_inner();
-    router(req, node, service, String::new(), appstate, body).await
+    let service = combined_path.into_inner();
+    router(req, service, String::new(), appstate, body).await
 }
 
 async fn handler3(
     req: HttpRequest,
-    combined_path: web::Path<(String, String, String)>, 
+    combined_path: web::Path<(String, String)>, 
     body: web::Bytes,
     appstate: web::Data<AppState>
 ) -> HttpResponse {
-    let (node, service, path) = combined_path.into_inner();
-    router(req, node, service, path, appstate, body).await
+    let (service, path) = combined_path.into_inner();
+    router(req, service, path, appstate, body).await
 }
 
 // Supports the following:
@@ -279,7 +280,7 @@ async fn handler_dev(
 
     let s_service_name = String::from(service_name);
     let s_service_path = String::from(service_path);
-    router(req, String::from("localhost"), s_service_name, s_service_path, appstate, body).await
+    router(req, s_service_name, s_service_path, appstate, body).await
 }
 
 fn make_uds(args_uds: String) -> std::io::Result<UnixListener> { 
@@ -338,8 +339,8 @@ async fn main() -> std::io::Result<()> {
                     dev_mode: is_dev_mode(),
                 }))
                 .wrap(Logger::default())
-                .route("/router/{node}/{service}", web::to(handler2))
-                .route("/router/{node}/{service}/{path:.*}", web::to(handler3))
+                .route("/route/{service}", web::to(handler2))
+                .route("/route/{service}/{path:.*}", web::to(handler3))
                 .default_service(web::to(handler_dev))
         })
         .bind((args.host, args.port))?;
@@ -365,8 +366,8 @@ async fn main() -> std::io::Result<()> {
                     dev_mode: is_dev_mode(),
                 }))
                 .wrap(Logger::default())
-                .route("/router/{node}/{service}", web::to(handler2))
-                .route("/router/{node}/{service}/{path:.*}", web::to(handler3))
+                .route("/route/{service}", web::to(handler2))
+                .route("/route/{service}/{path:.*}", web::to(handler3))
         })
         .bind((args.host, args.port))?
         .listen_uds(uds)?
