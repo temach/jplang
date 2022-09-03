@@ -164,29 +164,40 @@ def inner_synonyms(word) -> ListKeyCandidate:
 
 @app.get("/")
 def root():
-    # find the language and redirect to that, otherwise relative paths break
-    # language check order:
-    # 0 - what language cookie you have
-    cookie_lang = request.cookies.get("lang")
-    if cookie_lang:
-        return redirect(f"/{cookie_lang}/", code=307)
 
-    # 1 - what does accept_language header have
-    accept_language_header = request.headers.get("Accept-Language")
-    if accept_language_header:
-        m = re.match('[a-z]{2,3}', accept_language_header.strip(), flags=re.IGNORECASE)
-        if m:
-            return redirect(f"/{m.group()}/", code=307)
+    def choose_lang(request):
+        # find the language and redirect to that, otherwise relative paths break
+        # language check order:
+        # 0 - what language cookie you have
+        cookie_lang = request.cookies.get("lang")
+        if cookie_lang:
+            return cookie_lang
 
-    # 2 - what domain are you targetting, useful for tools that normally dont supply accept_language header
-    hostname = urlparse(request.headers.get("Host")).hostname
-    if hostname:
-        m = re.match('.*[.]([a-z0-9]+)$', hostname, flags=re.IGNORECASE)
-        if m:
-            return redirect(f"/{m.group()}/", code=307)
+        # 1 - what does accept_language header have
+        accept_language_header = request.headers.get("Accept-Language")
+        if accept_language_header:
+            m = re.match('[a-z]{2,3}', accept_language_header.strip(), flags=re.IGNORECASE)
+            if m:
+                return m.group()
 
-    # finally use english by default
-    return redirect(f"/en/", code=307)
+        # 2 - what domain are you targetting, useful for tools that normally dont supply accept_language header
+        hostname = urlparse(request.headers.get("Host")).hostname
+        if hostname:
+            m = re.match('.*[.]([a-z0-9]+)$', hostname, flags=re.IGNORECASE)
+            if m:
+                return m.group()
+
+        # finally use english by default
+        return "en"
+
+    lang = choose_lang(request)
+
+    # in dev mode, language dirs may be absent, then redirect to /localhost/
+    langdir = Path(f"../frontend/dist/{lang}")
+    if not langdir.exists():
+        return redirect("/localhost/", code=307)
+
+    return redirect(f"/{lang}/", code=307)
 
 
 @app.get("/localhost/")
