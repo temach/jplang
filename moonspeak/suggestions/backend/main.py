@@ -127,7 +127,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Feature, run as "python main.py"')
-    parser.add_argument('--port', type=int, default=8042, help='port number')
+    parser.add_argument('--port', type=int, default=os.getenv("MOONSPEAK_PORT", 8042), help='port number')
     args = parser.parse_args()
 
     # english frequency
