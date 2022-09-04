@@ -103,4 +103,4 @@ if __name__ == "__main__":
 
     # other
     print("Running bottle server on port {}".format(args.port))
-    run(host=args.host, port=args.port, debug=True)
+    run(host='0.0.0.0', port=args.port)
