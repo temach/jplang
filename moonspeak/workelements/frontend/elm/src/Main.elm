@@ -29,9 +29,9 @@ port messageReceiver : (D.Value -> msg) -> Sub msg
 
 
 -- MAIN
-
-
 -- see: https://package.elm-lang.org/packages/elm/browser/latest/Browser#document
+
+
 main =
     Browser.element
         { init = init
@@ -103,7 +103,7 @@ init _ =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    messageReceiver RecvNewElementValue
+    Sub.batch [ messageReceiver RecvNewElementValue ]
 
 
 keywordEncoder : String -> E.Value
@@ -112,8 +112,8 @@ keywordEncoder keyword =
         [ ( "keyword", E.string keyword ) ]
 
 
-portEncoder : WorkElement -> E.Value
-portEncoder elem =
+elementEncoder : WorkElement -> E.Value
+elementEncoder elem =
     E.object
         [ ( "kanji", E.string elem.kanji )
         , ( "keyword", E.string elem.keyword )
@@ -121,16 +121,17 @@ portEncoder elem =
         ]
 
 
-type alias MsgDecoded =
-    { keyword : String, kanji : String, notes : String }
-
-
-portDecoder : D.Decoder MsgDecoded
-portDecoder =
-    D.map3 MsgDecoded
-        (D.field "keyword" D.string)
+elementDecoder : D.Decoder WorkElement
+elementDecoder =
+    D.map3 WorkElement
         (D.field "kanji" D.string)
+        (D.field "keyword" D.string)
         (D.field "notes" D.string)
+
+
+keywordDecoder : D.Decoder String
+keywordDecoder =
+    D.field "keyword" D.string
 
 
 
@@ -189,18 +190,18 @@ update msg model =
                 cmd =
                     Cmd.batch
                         [ getKeywordCheck newModel.currentWork.kanji newModel.currentWork.keyword
-                        , sendMessage (portEncoder newModel.currentWork)
+                        , sendMessage (elementEncoder newModel.currentWork)
                         ]
             in
             ( newModel, cmd )
 
         RecvNewElementValue jsonValue ->
-            case D.decodeValue portDecoder jsonValue of
-                Ok value ->
+            case D.decodeValue elementDecoder jsonValue of
+                Ok elem ->
                     let
                         -- update current element
                         updatedElement =
-                            WorkElement value.kanji value.keyword value.notes
+                            WorkElement elem.kanji elem.keyword elem.notes
 
                         updatedWorkElements =
                             List.Extra.setAt model.currentWorkIndex updatedElement model.workElements
@@ -226,7 +227,7 @@ update msg model =
                         cmd =
                             Cmd.batch
                                 [ submitElement updatedElement
-                                , sendMessage (portEncoder currentElement)
+                                , sendMessage (elementEncoder currentElement)
                                 , getKeywordCheck currentElement.kanji currentElement.keyword
                                 ]
                     in
@@ -234,7 +235,13 @@ update msg model =
                     ( newModel, cmd )
 
                 Err _ ->
-                    ( model, Cmd.none )
+                    -- if you could not decode a full element, try to decode just a keyword
+                    case D.decodeValue keywordDecoder jsonValue of
+                        Ok keyword ->
+                            update (KeywordInput keyword) model
+
+                        Err _ ->
+                            ( model, Cmd.none )
 
         ElementSubmitReady result ->
             case result of
@@ -300,7 +307,7 @@ update msg model =
                     cmd =
                         Cmd.batch
                             [ submitElement model.currentWork
-                            , sendMessage (portEncoder currentElement)
+                            , sendMessage (elementEncoder currentElement)
                             , getKeywordCheck currentElement.kanji currentElement.keyword
                             ]
                 in

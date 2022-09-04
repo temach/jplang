@@ -11015,9 +11015,17 @@ var $author$project$Main$init = function (_v0) {
 var $author$project$Main$RecvNewElementValue = function (a) {
 	return {$: 'RecvNewElementValue', a: a};
 };
+var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $author$project$Main$messageReceiver = _Platform_incomingPort('messageReceiver', $elm$json$Json$Decode$value);
 var $author$project$Main$subscriptions = function (_v0) {
-	return $author$project$Main$messageReceiver($author$project$Main$RecvNewElementValue);
+	return $elm$core$Platform$Sub$batch(
+		_List_fromArray(
+			[
+				$author$project$Main$messageReceiver($author$project$Main$RecvNewElementValue)
+			]));
+};
+var $author$project$Main$KeywordInput = function (a) {
+	return {$: 'KeywordInput', a: a};
 };
 var $author$project$Main$SelectWorkElement = function (a) {
 	return {$: 'SelectWorkElement', a: a};
@@ -11039,6 +11047,27 @@ var $author$project$Main$buildErrorMessage = function (httpError) {
 			var message = httpError.a;
 			return message;
 	}
+};
+var $author$project$Main$elementDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$author$project$Main$WorkElement,
+	A2($elm$json$Json$Decode$field, 'kanji', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'keyword', $elm$json$Json$Decode$string),
+	A2($elm$json$Json$Decode$field, 'notes', $elm$json$Json$Decode$string));
+var $author$project$Main$elementEncoder = function (elem) {
+	return $elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'kanji',
+				$elm$json$Json$Encode$string(elem.kanji)),
+				_Utils_Tuple2(
+				'keyword',
+				$elm$json$Json$Encode$string(elem.keyword)),
+				_Utils_Tuple2(
+				'notes',
+				$elm$json$Json$Encode$string(elem.notes))
+			]));
 };
 var $elm$core$List$head = function (list) {
 	if (list.b) {
@@ -11082,6 +11111,7 @@ var $author$project$Main$getKeywordCheck = F2(
 					_List_Nil)
 			});
 	});
+var $author$project$Main$keywordDecoder = A2($elm$json$Json$Decode$field, 'keyword', $elm$json$Json$Decode$string);
 var $author$project$Main$keywordEncoder = function (keyword) {
 	return $elm$json$Json$Encode$object(
 		_List_fromArray(
@@ -11089,31 +11119,6 @@ var $author$project$Main$keywordEncoder = function (keyword) {
 				_Utils_Tuple2(
 				'keyword',
 				$elm$json$Json$Encode$string(keyword))
-			]));
-};
-var $author$project$Main$MsgDecoded = F3(
-	function (keyword, kanji, notes) {
-		return {kanji: kanji, keyword: keyword, notes: notes};
-	});
-var $author$project$Main$portDecoder = A4(
-	$elm$json$Json$Decode$map3,
-	$author$project$Main$MsgDecoded,
-	A2($elm$json$Json$Decode$field, 'keyword', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'kanji', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'notes', $elm$json$Json$Decode$string));
-var $author$project$Main$portEncoder = function (elem) {
-	return $elm$json$Json$Encode$object(
-		_List_fromArray(
-			[
-				_Utils_Tuple2(
-				'kanji',
-				$elm$json$Json$Encode$string(elem.kanji)),
-				_Utils_Tuple2(
-				'keyword',
-				$elm$json$Json$Encode$string(elem.keyword)),
-				_Utils_Tuple2(
-				'notes',
-				$elm$json$Json$Encode$string(elem.notes))
 			]));
 };
 var $author$project$Main$sendMessage = _Platform_outgoingPort('sendMessage', $elm$core$Basics$identity);
@@ -11357,15 +11362,15 @@ var $author$project$Main$update = F2(
 							[
 								A2($author$project$Main$getKeywordCheck, newModel.currentWork.kanji, newModel.currentWork.keyword),
 								$author$project$Main$sendMessage(
-								$author$project$Main$portEncoder(newModel.currentWork))
+								$author$project$Main$elementEncoder(newModel.currentWork))
 							]));
 					return _Utils_Tuple2(newModel, cmd);
 				case 'RecvNewElementValue':
 					var jsonValue = msg.a;
-					var _v2 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$portDecoder, jsonValue);
+					var _v2 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$elementDecoder, jsonValue);
 					if (_v2.$ === 'Ok') {
-						var value = _v2.a;
-						var updatedElement = A3($author$project$Main$WorkElement, value.kanji, value.keyword, value.notes);
+						var elem = _v2.a;
+						var updatedElement = A3($author$project$Main$WorkElement, elem.kanji, elem.keyword, elem.notes);
 						var updatedWorkElements = A3($elm_community$list_extra$List$Extra$setAt, model.currentWorkIndex, updatedElement, model.workElements);
 						var index = model.currentWorkIndex + 1;
 						var currentElement = A2(
@@ -11380,12 +11385,22 @@ var $author$project$Main$update = F2(
 								[
 									$author$project$Main$submitElement(updatedElement),
 									$author$project$Main$sendMessage(
-									$author$project$Main$portEncoder(currentElement)),
+									$author$project$Main$elementEncoder(currentElement)),
 									A2($author$project$Main$getKeywordCheck, currentElement.kanji, currentElement.keyword)
 								]));
 						return _Utils_Tuple2(newModel, cmd);
 					} else {
-						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+						var _v3 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$keywordDecoder, jsonValue);
+						if (_v3.$ === 'Ok') {
+							var keyword = _v3.a;
+							var $temp$msg = $author$project$Main$KeywordInput(keyword),
+								$temp$model = model;
+							msg = $temp$msg;
+							model = $temp$model;
+							continue update;
+						} else {
+							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+						}
 					}
 				case 'ElementSubmitReady':
 					var result = msg.a;
@@ -11426,7 +11441,7 @@ var $author$project$Main$update = F2(
 								[
 									$author$project$Main$submitElement(model.currentWork),
 									$author$project$Main$sendMessage(
-									$author$project$Main$portEncoder(currentElement)),
+									$author$project$Main$elementEncoder(currentElement)),
 									A2($author$project$Main$getKeywordCheck, currentElement.kanji, currentElement.keyword)
 								]));
 						return _Utils_Tuple2(newModel, cmd);
@@ -11498,9 +11513,6 @@ var $author$project$Main$update = F2(
 var $elm$virtual_dom$VirtualDom$lazy2 = _VirtualDom_lazy2;
 var $elm$html$Html$Lazy$lazy2 = $elm$virtual_dom$VirtualDom$lazy2;
 var $author$project$Main$ElementSubmitClick = {$: 'ElementSubmitClick'};
-var $author$project$Main$KeywordInput = function (a) {
-	return {$: 'KeywordInput', a: a};
-};
 var $author$project$Main$NotesInput = function (a) {
 	return {$: 'NotesInput', a: a};
 };
