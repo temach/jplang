@@ -24,7 +24,7 @@
 }
 
 .deadzone:hover {
-    background-color: yellow;
+    background-color: rgba(0,0,0,0);
 }
 
 .bottomleft {
@@ -34,7 +34,7 @@
     border-radius: 10%;
     width: 15vmin;
     height: 15vmin;
-    background-color: red;
+    background-color: rgba(0,0,0,0);
     z-index: 100;
 }
 
@@ -45,6 +45,6 @@
     border-radius: 10%;
     width: 15vmin;
     height: 15vmin;
-    background-color: red;
+    background-color: rgba(0,0,0,0);
     z-index: 100;
 }
