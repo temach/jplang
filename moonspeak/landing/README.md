@@ -2,10 +2,10 @@
 
 ## Option 1: Open index.html in any browser
 
-You just open the file ./frontend/templates/index.html in any browser without using a backing web server.
+You just open the file ./frontend/src/index.html in any browser without using a backing web server.
 You will see placeholder names and placeholder text for images (if the image has localised text).
 
-Works well when you want to change only the templates.
+Works fine when you just have a small change to make.
 
 
 ## Option 2: Run a local web server
@@ -14,12 +14,10 @@ Works well when you want to change only the templates.
 
 Install python 3 and in the directory with this README run:
 ```
-python -m http.server 8080
+python -m http.server 8002
 ```
 
-Then navigate to `http://127.0.0.1:8080/frontend/test`
-
-This is enough to test .toml translations and see how different languages actually display.
+Then navigate to `http://127.0.0.1:8002/frontend/test`
 
 
 ### The production way
@@ -32,12 +30,12 @@ Run nginx via docker.
 
 Execute the below command in the directory with README:
 
-- Expose port 80.
+- Map localhost port 80 to container port 8002
 - Bind mount the config and sources folder into the container.
 - Bind mount unixsocks dir to share unix sockets.
 
 ```
-# docker run -p 80:80 \
+# docker run -p 80:8002 \
     --mount type=bind,src=$(pwd),dst=/etc/nginx/ \
     --mount type=bind,src=$(pwd)/../unixsocks/,dst=/etc/unixsocks/ \
     -it nginx:alpine
@@ -66,11 +64,9 @@ Execute the below command in the directory with README:
 Via unix sockets:
 ```
 # curl --unix-socket ../unixsocks/landing.sock http://moonspeak.localhost/
-# curl --unix-socket ../unixsocks/landing.sock http://moonspeak.localhost/en/
-# curl --unix-socket ../unixsocks/landing.sock http://moonspeak.localhost/localhost/
 ```
 
-Or open http://moonspeak.localhost/ in browser.
+Or open http://moonspeak.localhost:8002/ in browser.
 
 
 
