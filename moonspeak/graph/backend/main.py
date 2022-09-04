@@ -92,8 +92,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Feature, run as "python main.py"')
-    parser.add_argument('--host', type=str, default="0.0.0.0", help='hostname, e.g. 127.0.0.24')
-    parser.add_argument('--port', type=int, default=80, help='port number')
+    parser.add_argument('--port', type=int, default=os.getenv("MOONSPEAK_PORT", 8001), help='port number')
     args = parser.parse_args()
 
     db_needs_init = (not os.path.isfile(DB_PATH)) or (
