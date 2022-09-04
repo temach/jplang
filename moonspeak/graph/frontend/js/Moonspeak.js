@@ -359,8 +359,6 @@ MoonspeakEditor.prototype.isMoonspeakDevMode = function(hostname = location.host
     // checking .endsWith() is ok, but .startsWith() is not ok
     return (
         ['localhost', '127.0.0.1', '', '0.0.0.0', '::1'].includes(hostname)
-        || hostname.endsWith('.local')
-        || hostname.endsWith('.test')
     )
 }
 

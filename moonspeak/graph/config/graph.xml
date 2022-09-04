@@ -2,7 +2,7 @@
   <root>
     <mxCell id="0" />
     <mxCell id="1" parent="0" />
-    <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="http://moonspeak.test:8040" style="width: 680px; height: 560px; border: medium none;" id="2">
+    <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="http://moonspeak.localhost:8040" style="width: 680px; height: 560px; border: medium none;" id="2">
       <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
         <mxGeometry x="-80" y="-85" width="700" height="580" as="geometry" />
       </mxCell>
@@ -10,7 +10,7 @@
     <mxCell id="11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.003;entryY=0.384;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="4" target="2" edge="1">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <iframe xmlns="http://www.w3.org/1999/xhtml" name="suggestions" src="http://moonspeak.test:8042" style="width: 380px; height: 290px; border: medium none;" id="4">
+    <iframe xmlns="http://www.w3.org/1999/xhtml" name="suggestions" src="http://moonspeak.localhost:8042" style="width: 380px; height: 290px; border: medium none;" id="4">
       <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
         <mxGeometry x="-530" y="-80" width="400" height="310" as="geometry" />
       </mxCell>
@@ -18,7 +18,7 @@
     <mxCell id="12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="5" target="2" edge="1">
       <mxGeometry relative="1" as="geometry" />
     </mxCell>
-    <iframe xmlns="http://www.w3.org/1999/xhtml" name="synonyms" src="http://moonspeak.test:8043" style="width: 340px; height: 530px; border: medium none;" id="5">
+    <iframe xmlns="http://www.w3.org/1999/xhtml" name="synonyms" src="http://moonspeak.localhost:8043" style="width: 340px; height: 530px; border: medium none;" id="5">
       <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
         <mxGeometry x="650" y="-70" width="360" height="550" as="geometry" />
       </mxCell>
