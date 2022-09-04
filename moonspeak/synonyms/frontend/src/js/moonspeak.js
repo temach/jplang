@@ -14,12 +14,8 @@ function moonspeakMessageHandler(event, userHandler) {
 }
 
 function moonspeakBootstrapMasterPort(event, userHandler) {
-    function isMoonspeakDevMode(hostname = location.hostname) {
-        // checking .endsWith() is ok, but .startsWith() is not ok
-        return (
-            ['localhost', '127.0.0.1', '', '0.0.0.0', '::1'].includes(hostname)
-            || hostname.endsWith('.localhost')
-        )
+    function isMoonspeakDevMode() {
+        return ['moonspeak.localhost', '127.0.0.1', '0.0.0.0'].includes(location.hostname);
     }
 
     if (event.origin !== location.origin && !isMoonspeakDevMode()) {
@@ -30,14 +26,14 @@ function moonspeakBootstrapMasterPort(event, userHandler) {
     moonspeakLog("receiving once:", event.data);
 
     if ("info" in event.data && event.data["info"].includes("port")) {
-        masterport = event.ports[0];
+        const masterport = event.ports[0];
         masterport.onmessage = (event) => moonspeakMessageHandler(event, userHandler);
         moonspeakPorts.push(masterport);
         return;
     }
 
     moonspeakLog("Can not understand message info, handling anyway.");
-    moonspeakMessageHandler(event, userHandler);
+    userHandler(event);
 }
 
 // use this function to subscribe to messages

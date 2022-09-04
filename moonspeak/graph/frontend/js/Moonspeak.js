@@ -355,11 +355,8 @@ MoonspeakEditor.prototype.init = function()
 };
 
 
-MoonspeakEditor.prototype.isMoonspeakDevMode = function(hostname = location.hostname) {
-    // checking .endsWith() is ok, but .startsWith() is not ok
-    return (
-        ['localhost', '127.0.0.1', '', '0.0.0.0', '::1'].includes(hostname)
-    )
+MoonspeakEditor.prototype.isMoonspeakDevMode = function() {
+    return ['moonspeak.localhost', '127.0.0.1', '0.0.0.0'].includes(location.hostname);
 }
 
 // Function to communicate between embedded iframes
