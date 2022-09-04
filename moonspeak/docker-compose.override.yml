@@ -46,54 +46,48 @@ services:
     container_name: synonyms.moonspeak.localhost
     build:
       context: ./synonyms
-    environment:
-      GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsocks/synonyms.sock' "
 
   suggestions:
     container_name: suggestions.moonspeak.localhost
     build:
       context: ./suggestions
-    environment:
-      MOONSPEAK_PORT: 80
 
   # #==================================
   # this is the user's unique access url
   hud:
-    image: "temachpool/moonspeak-hud:${TAG:-latest}"
-    volumes:
-      - unixsocks:/opt/moonspeak/unixsocks
     container_name: hud-demouser-aaa.moonspeak.localhost
     build:
       context: ./hud
     environment:
-      MOONSPEAK_PORT: "80"
-      MOONSPEAK_UNIXSOCK: "../unixsocks/hud-demouser-aaa.sock"
       MOONSPEAK_HUD_CONFIG_JSON: >-
           {
-            "graphurl": "/router/route/graph-demouser-bbb/index.html"
+            "graphurl": "/router/route/graph-demouser-bbb/index.html",
+            "services": [
+                {
+                    "name": "workelements",
+                    "url": "/router/route/workelements-demouser-ddd/"
+                },
+                {
+                    "name": "synonyms",
+                    "url": "/synonyms/"
+                },
+                {
+                    "name": "suggestions",
+                    "url": "/suggestions/"
+                }
+            ]
           }
 
   workelements:
-    image: "temachpool/moonspeak-workelements:${TAG:-latest}"
-    volumes:
-      - unixsocks:/opt/moonspeak/unixsocks
-      - /opt/moonspeak/workelements/userdata
     container_name: workelements-demouser-ddd.moonspeak.localhost
     build:
       context: ./workelements
-    environment:
-      GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsocks/workelements-demouser-ddd.sock' "
 
   graph:
-    image: "temachpool/moonspeak-graph:${TAG:-latest}"
-    volumes:
-      - unixsocks:/opt/moonspeak/unixsocks
-      - /opt/moonspeak/graph/userdata
     container_name: graph-demouser-bbb.moonspeak.localhost
     build:
       context: ./graph
     environment:
-      MOONSPEAK_PORT: 80
       # this xml sets default graph value
       MOONSPEAK_GRAPH_INITIAL_XML: >-
         <mxGraphModel dx="2638" dy="1176" grid="1" gridSize="10" guides="1" tooltips="0" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100">
