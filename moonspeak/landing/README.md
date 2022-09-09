@@ -72,6 +72,8 @@ Or open http://moonspeak.localhost:8002/ in browser.
 
 ### Development
 
+Logo style: black text on white background, blue color is rgb(22, 126, 236)
+
 To use font awesome:
 1. Copy a specific declaration from FontAwesomeAll.css into FontAwesome.css
 2. Change the css unicode escape sequence to the actual byte value
