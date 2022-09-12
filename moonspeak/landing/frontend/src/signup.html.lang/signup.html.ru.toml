@@ -5,7 +5,7 @@ menu__item__documentation = """Документация"""
 hero__title = """Скоро полноценный запуск!"""
 
 hero__description_html = """
-Сейчас мунспик в закрытом тестировании, подписывайтесь на телеграм канал чтобы узнать о запуске <a class="link link--light" href="https://t.me/moonspeak_ru" title="Moonspeak" target="_blank">@moonspeak_ru</a>
+Сейчас мунспик в закрытом тестировании, подписывайтесь на телеграм канал чтобы узнать о запуске <a class="link link--light" href="https://t.me/MoonspeakRu" title="Moonspeak" target="_blank">@MoonspeakRu</a>
 """
 
 footer_html = """

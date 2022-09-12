@@ -83,7 +83,7 @@ doc__dev__html = """
 
 doc__feedback__title = """Обратная связь"""
 doc__feedback__html = """
-<p>Вступайте в телеграм канал <a class="link link--light" href="https://t.me/moonspeak_ru" title="Moonspeak" target="_blank">@moonspeak_ru</a>, чтобы голосовать за фичи, общаться в чате, сообщать о проблемах и пожеланиях.</p>
+<p>Вступайте в телеграм канал <a class="link link--light" href="https://t.me/MoonspeakRu" title="Moonspeak" target="_blank">@MoonspeakRu</a>, чтобы голосовать за фичи, общаться в чате, сообщать о проблемах и пожеланиях.</p>
 <p>Также о проблемах можно сообщить на <a class="link link--light" href="https://github.com/temach/jplang" title="Github" target="_blank">Github</a>.</p>
 """
 

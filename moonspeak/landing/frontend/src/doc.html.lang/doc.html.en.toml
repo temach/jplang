@@ -85,7 +85,7 @@ doc__dev__html = """
 
 doc__feedback__title = """Feedback"""
 doc__feedback__html = """
-<p>Join the telegram channel <a class="link link--light" href="https://t.me/moonspeak_uk" title="Moonspeak" target="_blank">@moonspeak_uk</a>, to vote for features, discuss the project and submit bugs/enhancements.</p>
+<p>Join the telegram channel <a class="link link--light" href="https://t.me/MoonspeakEn" title="Moonspeak" target="_blank">@MoonspeakEn</a>, to vote for features, discuss the project and submit bugs/enhancements.</p>
 <p>You can also report a problem on <a class="link link--light" href="https://github.com/temach/jplang" title="Github" target="_blank">Github</a>.</p>
 """
 
