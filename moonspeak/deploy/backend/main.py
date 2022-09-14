@@ -4,59 +4,55 @@
 
 import os
 import logging
-import socket
-from uuid import uuid4
 import pathlib
 import json
-from lxml import etree as xml
 import secrets
+import threading
 
 import ansible_runner
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from bottle import route, run, get, request, HTTPResponse
+from lxml import etree as xml
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARN)
+logger.setLevel(logging.INFO)
+
 
 DOMAIN = os.getenv("MOONSPEAK_DOMAIN", "moonspeak.test")
-NODE = os.getenv("MOONSPEAK_NODE", "testnode")
+DEPLOY_SECRET = os.getenv("MOONSPEAK_DEPLOY_SECRET", "secret")
 
-# this must be supplied, 
-# if not supplied we generate random number which will block any attempts to deploy :)
-SECRET = os.getenv("MOONSPEAK_DEPLOY_SECRET", secrets.token_urlsafe())
 
-def guid():
-    return secrets.token_urlsafe()
+# load templates
+JINJA_ENV = Environment(
+    loader=FileSystemLoader(pathlib.Path("../resources/templates")),
+    autoescape=select_autoescape()
+)
+HUD_TEMPLATE = JINJA_ENV.get_template("moonspeak_hud_config.json")
+GRAPH_TEMPLATE = JINJA_ENV.get_template("moonspeak_graph_initial.xml")
+EXTRAVARS_TEMPLATE = JINJA_ENV.get_template("extravars")
 
-@route("/new/<deploy_secret>/<unique_id>", method=["GET"])
-def login(deploy_secret, unique_id):
-    if not secrets.compare_digest(deploy_secret, SECRET):
-        return HTTPResponse(status=401)
 
-    # load templates
-    jinja_env = Environment(
-        loader=FileSystemLoader(pathlib.Path("../resources/templates")),
-        autoescape=select_autoescape()
-    )
+def guid(nbytes=10):
+    return secrets.token_hex(nbytes)
 
+def submit_deployment_task(unique_id, node):
     # generate service names
     moonspeak_hud_service = "hud-{}-{}".format(unique_id, guid())
     moonspeak_graph_service = "graph-{}-{}".format(unique_id, guid())
     moonspeak_submit_service = "submit-{}-{}".format(unique_id, guid())
     moonspeak_workelements_service = "workelements-{}-{}".format(unique_id, guid())
 
-    # render templates into meaningful objects 
-    hud_template = jinja_env.get_template("moonspeak_hud_config.json")
-    json_string = hud_template.render(
+    # render templates into strings and then try to make valid objects 
+    # this is to protect against bad characters, XSS, injections
+    json_string = HUD_TEMPLATE.render(
         moonspeak_domain = DOMAIN,
         moonspeak_graph_service = moonspeak_graph_service,
-        moonspeak_node = NODE,
+        moonspeak_node = node,
     )
     moonspeak_hud_config_json = json.loads(json_string)
  
-    graph_template = jinja_env.get_template("moonspeak_graph_initial.xml")
-    xml_string = graph_template.render(
-        moonspeak_node = NODE,
+    xml_string = GRAPH_TEMPLATE.render(
+        moonspeak_node = node,
         moonspeak_domain = DOMAIN,
         moonspeak_hud_service = moonspeak_hud_service,
         moonspeak_graph_service = moonspeak_graph_service,
@@ -66,8 +62,7 @@ def login(deploy_secret, unique_id):
     moonspeak_graph_initial_xml = xml.XML(xml_string, parser=xml.XMLParser(remove_blank_text=True))
 
     # this will be supplied to ansible
-    extravars_template = jinja_env.get_template("extravars")
-    extravars_string = extravars_template.render(
+    extravars_string = EXTRAVARS_TEMPLATE.render(
         moonspeak_domain = DOMAIN,
         moonspeak_hud_service = moonspeak_hud_service,
         moonspeak_graph_service = moonspeak_graph_service,
@@ -77,7 +72,7 @@ def login(deploy_secret, unique_id):
         moonspeak_graph_initial_xml = xml.tostring(moonspeak_graph_initial_xml, encoding="unicode", method="xml"),
     )
 
-    logger.info(extravars_string)
+    logger.debug(extravars_string)
 
     with open("../resources/env/extravars", "w") as f:
         f.write(extravars_string)
@@ -86,12 +81,15 @@ def login(deploy_secret, unique_id):
     runner_thread, r = ansible_runner.run_async(
         private_data_dir="../resources",
         playbook="services.yml",
+        host_pattern=node,
+        ident=moonspeak_hud_service,
+        rotate_artifacts=50,
+        # pass cancel_callback because of bug in ansible runner: https://github.com/ansible/ansible-runner/issues/1075
+        cancel_callback=lambda: None,
     )
 
-    user_unique_url = "/router/{}/{}".format(NODE, moonspeak_hud_service)
-    return {
-        "url": user_unique_url,
-    }
+    user_unique_url = "http://{}/router/{}/{}".format(DOMAIN, node, moonspeak_hud_service)
+    return user_unique_url
 
     # if r.rc == 0:
     #     with open(r.stdout.name, "r") as f:
@@ -106,6 +104,34 @@ def login(deploy_secret, unique_id):
     #     "statusline": "{}: {}".format(r.status, r.rc)
     # }
 
+@route("/<deploy_secret>/new", method=["GET"])
+def deploy(deploy_secret):
+    if not secrets.compare_digest(deploy_secret, DEPLOY_SECRET):
+        return HTTPResponse(status=401)
+
+    # select the node on which to deploy
+    node = "localhost"
+
+    # generate unique id
+    unique_id = guid(6)
+
+    # ask to spin up personal containers for this user 
+    user_unique_url = submit_deployment_task(unique_id, node)
+
+    # return the url of root service 
+    return {
+        "user_unique_url": user_unique_url,
+    }
+
+@route("/<deploy_secret>/status", method=["GET"])
+def status(deploy_secret):
+    if not secrets.compare_digest(deploy_secret, DEPLOY_SECRET):
+        return HTTPResponse(status=401)
+
+    return {
+        "threads": [str(t) for t in threading.enumerate()]
+    }
+
 
 if __name__ == "__main__":
     import argparse
@@ -114,5 +140,5 @@ if __name__ == "__main__":
     parser.add_argument('--port', type=int, default=80, help='port number')
     args = parser.parse_args()
 
-    logger.info("Running server on port {}".format(args.port))
+    logger.debug("Running server on port {}".format(args.port))
     run(host="0.0.0.0", port=args.port, debug=True)
