@@ -1,4 +1,3 @@
-'use strict';
 var mxClient = {
   VERSION : "20.3.0",
   IS_IE : null != navigator.userAgent && 0 <= navigator.userAgent.indexOf("MSIE"),
@@ -32594,12 +32593,12 @@ mxGraph.prototype.moveCells = function(cells, data, e, o, parent, target, header
           parent = this.getDefaultParent();
         }
       }
-      var 1 = this.isAllowNegativeCoordinates();
+      var t = this.isAllowNegativeCoordinates();
       if (null != parent) {
         this.setAllowNegativeCoordinates(true);
       }
       this.cellsMoved(cells, data, e, !o && this.isDisconnectOnMove() && this.isAllowDanglingEdges(), null == parent, this.isExtendParentsOnMove() && null == parent);
-      this.setAllowNegativeCoordinates(1);
+      this.setAllowNegativeCoordinates(t);
       if (null != parent) {
         var parentContext = this.model.getChildCount(parent);
         this.cellsAdded(cells, parent, parentContext, null, null, true);
