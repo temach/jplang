@@ -920,6 +920,9 @@ App.main = function(callback, createUi)
                         urlParams['chrome'] == '0' || uiTheme == 'min',
                         null, null, null, urlParams['chrome'] != '0'));
                 
+                // give moonspeak a chance to init as the last init step
+                MoonspeakInit(ui);
+
                 if (window.mxscript != null)
                 {
                     // Loads dropbox for all browsers but IE8 and below (no CORS) if not disabled or if enabled and in embed mode
