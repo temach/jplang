@@ -268,12 +268,16 @@
             mxscript(drawDevUrl + 'js/diagramly/Init.js');
             mxscript(geBasePath + '/Init.js');
             mxscript(mxBasePath + '/mxClient.js');
-            
+
             // Adds all JS code that depends on mxClient. This indirection via Devel.js is
             // required in some browsers to make sure mxClient.js (and the files that it
             // loads asynchronously) are available when the code loaded in Devel.js runs.
             mxscript(drawDevUrl + 'js/diagramly/Devel.js');
-            
+
+            // we also depend on mxclient to be loaded
+            mxscript(drawDevUrl + 'js/grapheditor/Moonspeak.js');
+            mxscript(drawDevUrl + 'js/grapheditor/dev_mode.js');
+
             // Electron
             if (mxIsElectron)
             {
@@ -411,6 +415,7 @@
             margin:5px;
         }
     </style>
+    <link rel="stylesheet" type="text/css" href="styles/moonspeak.css">
     <!-- Workaround for binary XHR in IE 9/10, see App.loadUrl -->
     <!--[if (IE 9)|(IE 10)]><!-->
         <script type="text/vbscript">
