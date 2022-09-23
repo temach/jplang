@@ -65,8 +65,6 @@ MoonspeakInit = function(app)
     let stylesheet = graph.getStylesheet();
 
     let vertexStyle = stylesheet.getDefaultVertexStyle();
-    // vertexStyle[mxConstants.STYLE_POINTER_EVENTS] = 'none';
-    // vertexStyle["locked"] = '1';
 
     let edgeStyle = stylesheet.getDefaultEdgeStyle();
 	edgeStyle[mxConstants.STYLE_ENDARROW] = mxConstants.NONE;
