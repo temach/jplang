@@ -37,17 +37,6 @@
         }
     }
 
-    // mxShape.prototype.svgPointerEvents = 'none';
-
-    // let mxShapeCreateTransparentSvgRectangle = mxShape.prototype.createTransparentSvgRectangle;
-    // mxShape.prototype.createTransparentSvgRectangle = function(x, y, w, h)
-    // {
-    //     var rect = mxShapeCreateTransparentSvgRectangle(x, y, w, h);
-    //     // actually ignore all events so iframes can handle them
-    //     rect.setAttribute('pointer-events', 'none');
-    //     return rect;
-    // };
-
 })();
 
 
@@ -94,8 +83,36 @@ MoonspeakInit = function(app)
     let graphIsZoomWheelEvent = graph.isZoomWheelEvent;
     graph.isZoomWheelEvent = function(evt)
     {
+        if (evt.target.nodeName && evt.target.nodeName.toLowerCase() === "iframe") {
+            // iframe get the event anyway, without reaching this listener
+            // so if we are here, we must ignore it
+            return false;
+        }
         return true;
     }
+
+    // Resize IFrame and Rectangle together
+    let iframeRectanglePadding = 16;
+    graph.addListener(mxEvent.CELLS_RESIZED, function(sender, evt)
+    {
+      var cells = evt.getProperty('cells');
+
+      if (cells != null)
+      {
+        for (var i = 0; i < cells.length; i++)
+        {
+          let cell = cells[i];
+          let geo = this.getCellGeometry(cell);
+          if (cell.value.style)
+          {
+              cell.value.style.width = (geo.width - iframeRectanglePadding) + "px";
+              cell.value.style.height = (geo.height - iframeRectanglePadding) + "px";
+              cell.value.style.border = 'none';
+          }
+        }
+      }
+    });
+
 
     // disable tooltips
     graph.setTooltips(false);
