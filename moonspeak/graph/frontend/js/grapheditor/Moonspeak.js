@@ -46,6 +46,17 @@
         return false;
     }
 
+    // hide the format window after init
+    let EditorUiInit = EditorUi.prototype.init;
+    EditorUi.prototype.init = function()
+    {
+        EditorUiInit.apply(this, arguments);
+        this.formatWindow.window.setVisible(false);
+    }
+
+						
+
+
 })();
 
 
