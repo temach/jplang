@@ -37,6 +37,15 @@
         }
     }
 
+    // do not load too many fonts for speedup
+    Menus.prototype.defaultFonts = ['Helvetica', 'Verdana', 'Times New Roman'];
+
+    // disable all popup banners for now
+	EditorUi.prototype.showBanner = function(id, text, onclick, doNotShowAgainOnClose)
+    {
+        return false;
+    }
+
 })();
 
 
