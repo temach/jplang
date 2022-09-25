@@ -29,8 +29,8 @@
     let mxGraphConvertValueToString = mxGraph.prototype.convertValueToString;
     mxGraph.prototype.convertValueToString = function(cell)
     {
-		let style = this.getCurrentCellStyle(cell);
-		if (style && style['iframe'] === 1) {
+        let style = this.getCurrentCellStyle(cell);
+        if (style && style['iframe'] === 1) {
             return cell.value;
         } else {
             return mxGraphConvertValueToString.apply(this, arguments);
@@ -41,7 +41,7 @@
     Menus.prototype.defaultFonts = ['Helvetica', 'Verdana', 'Times New Roman'];
 
     // disable all popup banners for now
-	EditorUi.prototype.showBanner = function(id, text, onclick, doNotShowAgainOnClose)
+    EditorUi.prototype.showBanner = function(id, text, onclick, doNotShowAgainOnClose)
     {
         return false;
     }
@@ -54,8 +54,6 @@
         this.formatWindow.window.setVisible(false);
     }
 
-						
-
 
 })();
 
@@ -66,9 +64,9 @@ MoonspeakInit = function(app)
         return ['moonspeak.localhost', '127.0.0.1', '0.0.0.0'].includes(location.hostname);
     }
 
-    this.editorUi = app.editor;
+    let editorUi = app.editor;
     
-    let graph = this.editorUi.graph;
+    let graph = editorUi.graph;
 
     // style fixes
     let stylesheet = graph.getStylesheet();
@@ -76,9 +74,9 @@ MoonspeakInit = function(app)
     let vertexStyle = stylesheet.getDefaultVertexStyle();
 
     let edgeStyle = stylesheet.getDefaultEdgeStyle();
-	edgeStyle[mxConstants.STYLE_ENDARROW] = mxConstants.NONE;
-	edgeStyle[mxConstants.STYLE_STARTARROW] = mxConstants.NONE;
-	edgeStyle[mxConstants.STYLE_EDGE] = mxConstants.EDGESTYLE_ORTHOGONAL;
+    edgeStyle[mxConstants.STYLE_ENDARROW] = mxConstants.NONE;
+    edgeStyle[mxConstants.STYLE_STARTARROW] = mxConstants.NONE;
+    edgeStyle[mxConstants.STYLE_EDGE] = mxConstants.EDGESTYLE_ORTHOGONAL;
     edgeStyle[mxConstants.STYLE_ROUNDED] = true;
     edgeStyle[mxConstants.STYLE_JETTY_SIZE] = 'auto';
     edgeStyle[mxConstants.STYLE_ORTHOGONAL_LOOP] = true;
@@ -86,13 +84,20 @@ MoonspeakInit = function(app)
     // becasue rigidly moving the whole edge is not useful
     edgeStyle[mxConstants.STYLE_MOVABLE] = false;
 
+    // override the setVisible function for floating formatWindow
+    let formatWindowSetVisible = app.formatWindow.window.setVisible;
+    app.formatWindow.window.setVisible = function(visible) {
+        // always set to invisible
+        formatWindowSetVisible.bind(this, false);
+    }
+
     // override in instance instead of prototype, because original func is defined during .init()
     let graphIsHtmlLabel = graph.isHtmlLabel;
     graph.isHtmlLabel = function(cell)
     {
         // adjust html label check by checking for iframe style tag (also call the original)
-		let style = this.getCurrentCellStyle(cell);
-		return (style != null) ? (style['iframe'] === 1 || graphIsHtmlLabel.apply(this, arguments)) : false;
+        let style = this.getCurrentCellStyle(cell);
+        return (style != null) ? (style['iframe'] === 1 || graphIsHtmlLabel.apply(this, arguments)) : false;
     }
 
     // make zooming slower as main use is on touchscreens
@@ -183,84 +188,84 @@ MoonspeakInit = function(app)
     graph.uuid = 'default';
 
     // Add OPEN action
-    // let getGraph = (url, graph, uuid) => {
-    //     mxUtils.get(url + '?' + 'uuid=' + encodeURIComponent(uuid), function(req)
-    //     {
-    //         let node = req.getDocumentElement();
-    //         let dec = new mxCodec(node.ownerDocument);
-    //         dec.decode(node, graph.getModel());
+    let getGraph = (url, graph, uuid) => {
+        mxUtils.get(url + '?' + 'uuid=' + encodeURIComponent(uuid), function(req)
+        {
+            let node = req.getDocumentElement();
+            let dec = new mxCodec(node.ownerDocument);
+            dec.decode(node, graph.getModel());
 
-    //         for (let index in graph.model.cells) {
-    //             let cell = graph.model.cells[index];
-    //             let style = graph.getCurrentCellStyle(cell);
-    //             if (style && style['iframe'] === 1) {
-    //                 registerChildIframe(cell.value);
-    //             }
-    //         }
+            for (let index in graph.model.cells) {
+                let cell = graph.model.cells[index];
+                let style = graph.getCurrentCellStyle(cell);
+                if (style && style['iframe'] === 1) {
+                    registerChildIframe(cell.value);
+                }
+            }
 
-    //         for (let index in graph.model.cells) {
-    //             let cell = graph.model.cells[index];
-    //             if (cell.edge) {
-    //                 let edge = cell;
-    //                 let source = graph.model.getTerminal(edge, true);
-    //                 let target = graph.model.getTerminal(edge, false);
+            for (let index in graph.model.cells) {
+                let cell = graph.model.cells[index];
+                if (cell.edge) {
+                    let edge = cell;
+                    let source = graph.model.getTerminal(edge, true);
+                    let target = graph.model.getTerminal(edge, false);
 
-    //                 // interconnect them both ways
-    //                 addObserver(source.value, target.value);
-    //                 addObserver(target.value, source.value);
-    //             }
-    //         }
+                    // interconnect them both ways
+                    addObserver(source.value, target.value);
+                    addObserver(target.value, source.value);
+                }
+            }
 
-    //         // Stores ID for saving
-    //         graph.uuid = uuid;
-    //     });
-    // }
-	// this.editorUi.actions.addAction('open', function() { getGraph(OPEN_URL, graph, graph.uuid)  });
+            // Stores ID for saving
+            graph.uuid = uuid;
+        });
+    }
+    //editorUi.actions.addAction('open', function() { getGraph(OPEN_URL, graph, graph.uuid)  });
 
     // Add SAVE action
-    // let postGraph = (url, graph) => {
-    //     let enc = new mxCodec();
-    //     let node = enc.encode(graph.getModel());
-    //     let xml = mxUtils.getXml(node);
+    let postGraph = (url, graph) => {
+        let enc = new mxCodec();
+        let node = enc.encode(graph.getModel());
+        let xml = mxUtils.getXml(node);
 
-    //     mxUtils.post(url + '?' + 'uuid=' + encodeURIComponent(graph.uuid), 'xml=' + encodeURIComponent(xml), function()
-    //     {
-    //         mxUtils.alert('Saved');
-    //     }, function()
-    //     {
-    //         mxUtils.alert('Error');
-    //     });
-    // }
-	// this.editorUi.actions.addAction('save', function() { postGraph(SAVE_URL, graph)  }, null, null, Editor.ctrlKey + '+S');
+        mxUtils.post(url + '?' + 'uuid=' + encodeURIComponent(graph.uuid), 'xml=' + encodeURIComponent(xml), function()
+        {
+            mxUtils.alert('Saved');
+        }, function()
+        {
+            mxUtils.alert('Error');
+        });
+    }
+    //editorUi.actions.addAction('save', function() { postGraph(SAVE_URL, graph)  }, null, null, Editor.ctrlKey + '+S');
 
-    // let deleteObserver = (sourceIFrame, observerIFrame) => {
-    //     let source = iframeinfo.get(sourceIFrame);
-    //     let observer = iframeinfo.get(observerIFrame);
-    //     source.observers.delete(observer.iframeport);
-    // }
+    let deleteObserver = (sourceIFrame, observerIFrame) => {
+        let source = iframeinfo.get(sourceIFrame);
+        let observer = iframeinfo.get(observerIFrame);
+        source.observers.delete(observer.iframeport);
+    }
 
-    // graph.addListener(mxEvent.CELLS_REMOVED, function(sender, evt)
-    // {
-    //     for (const cell of evt.properties.cells) {
-    //         if (!cell.edge) {
-    //             continue;
-    //         }
-    //         // delete the connection between two iframes
-    //         deleteObserver(cell.source, cell.target);
-    //         deleteObserver(cell.target, cell.source);
-    //     }
-    // });
+    graph.addListener(mxEvent.CELLS_REMOVED, function(sender, evt)
+    {
+        for (const cell of evt.properties.cells) {
+            if (!cell.edge) {
+                continue;
+            }
+            // delete the connection between two iframes
+            deleteObserver(cell.source, cell.target);
+            deleteObserver(cell.target, cell.source);
+        }
+    });
 
-    // graph.connectionHandler.addListener(mxEvent.CONNECT, function(sender, evt)
-    // {
-    //     let edge = evt.getProperty('cell');
-    //     let source = graph.getModel().getTerminal(edge, true);
-    //     let target = graph.getModel().getTerminal(edge, false);
+    graph.connectionHandler.addListener(mxEvent.CONNECT, function(sender, evt)
+    {
+        let edge = evt.getProperty('cell');
+        let source = graph.getModel().getTerminal(edge, true);
+        let target = graph.getModel().getTerminal(edge, false);
 
-    //     // interconnect them both ways
-    //     addObserver(source.value, target.value);
-    //     addObserver(target.value, source.value);
-    // });
+        // interconnect them both ways
+        addObserver(source.value, target.value);
+        addObserver(target.value, source.value);
+    });
 
     let onMessage = (event) =>
     {
@@ -284,8 +289,8 @@ MoonspeakInit = function(app)
             let result = this.addIframe(iframe);
         } else if (event.data["info"].includes("manager action")) {
             let action_name = event.data["action_name"];
-            let action = this.editorUi.actions.get(action_name);
-			action.funct();
+            let action = editorUi.actions.get(action_name);
+            action.funct();
         } else {
             console.log("Can not understand message info:" + event.data["info"]);
             return;
@@ -305,6 +310,6 @@ MoonspeakInit = function(app)
     // document.body.appendChild(divLeft);
 
     // trigger loading of saved graph from backend
-    // let action = this.editorUi.actions.get("open");
+    // let action = editorUi.actions.get("open");
     // action.funct();
 };
