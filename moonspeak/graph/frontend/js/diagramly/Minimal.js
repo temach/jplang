@@ -2246,7 +2246,7 @@ EditorUi.initMinimalTheme = function()
 				pageMenu.style.padding = '6px';
 				pageMenu.style.textOverflow = 'ellipsis';
 				pageMenu.style.opacity = '0.8';
-				footer.appendChild(pageMenu);
+				// footer.appendChild(pageMenu);
 
 				function updatePageName()
 				{
