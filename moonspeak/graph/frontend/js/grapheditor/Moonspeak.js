@@ -255,8 +255,10 @@ MoonspeakInit = function(app)
                 continue;
             }
             // delete the connection between two iframes
-            deleteObserver(cell.source, cell.target);
-            deleteObserver(cell.target, cell.source);
+            if (cell.source && cell.target) {
+                deleteObserver(cell.source, cell.target);
+                deleteObserver(cell.target, cell.source);
+            }
         }
     });
 
