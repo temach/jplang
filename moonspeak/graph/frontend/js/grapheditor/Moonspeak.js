@@ -51,7 +51,9 @@
     EditorUi.prototype.init = function()
     {
         EditorUiInit.apply(this, arguments);
-        this.formatWindow.window.setVisible(false);
+        if (this.formatWindow) {
+            this.formatWindow.window.setVisible(false);
+        }
     }
 
 
@@ -85,10 +87,12 @@ MoonspeakInit = function(app)
     edgeStyle[mxConstants.STYLE_MOVABLE] = false;
 
     // override the setVisible function for floating formatWindow
-    let formatWindowSetVisible = app.formatWindow.window.setVisible;
-    app.formatWindow.window.setVisible = function(visible) {
-        // always set to invisible
-        formatWindowSetVisible.bind(this, false);
+    if (app.formatWindow) {
+        let formatWindowSetVisible = app.formatWindow.window.setVisible;
+        app.formatWindow.window.setVisible = function(visible) {
+            // always set to invisible
+            formatWindowSetVisible.bind(this, false);
+        }
     }
 
     // override in instance instead of prototype, because original func is defined during .init()
