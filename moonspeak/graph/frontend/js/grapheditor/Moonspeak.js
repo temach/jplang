@@ -54,6 +54,9 @@
         if (this.formatWindow) {
             this.formatWindow.window.setVisible(false);
         }
+        if (this.picker) {
+            this.picker.style.display = 'none';
+        }
     }
 
 
