@@ -2051,48 +2051,6 @@ EditorUi.initMinimalTheme = function()
                         return elt;
                     };
 
-                    // Append sidebar elements
-                    addElt(ui.sidebar.createVertexTemplate('text;strokeColor=none;fillColor=none;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;', 
-                        60, 30, 'Text', mxResources.get('text') + ' (A)', true, false, null, true, true),
-                        mxResources.get('text') + ' (A)', null, 'A');
-                    addElt(ui.sidebar.createVertexTemplate('shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;' +
-                        'fontColor=#000000;darkOpacity=0.05;fillColor=#FFF9B2;strokeColor=none;fillStyle=solid;' +
-                        'direction=west;gradientDirection=north;gradientColor=#FFF2A1;shadow=1;size=20;pointerEvents=1;',
-                        140, 160, '', mxResources.get('note') + ' (S)', true, false, null, true),
-                        mxResources.get('note') + ' (S)', null, 'S');
-                    addElt(ui.sidebar.createVertexTemplate('rounded=0;whiteSpace=wrap;html=1;', 160, 80, '',
-                        mxResources.get('rectangle') + ' (D)', true, false, null, true),
-                        mxResources.get('rectangle') + ' (D)', null, 'D');
-                    addElt(ui.sidebar.createVertexTemplate('ellipse;whiteSpace=wrap;html=1;', 160, 100, '',
-                        mxResources.get('ellipse') + ' (F)', true, false, null, true),
-                        mxResources.get('ellipse') + ' (F)', null, 'F');
-                    
-                    (function()
-                    {
-                        var edgeStyle = 'edgeStyle=none;orthogonalLoop=1;jettySize=auto;html=1;';
-                        var cell = new mxCell('', new mxGeometry(0, 0, graph.defaultEdgeLength, 0), edgeStyle);
-                        cell.geometry.setTerminalPoint(new mxPoint(0, 0), true);
-                        cell.geometry.setTerminalPoint(new mxPoint(cell.geometry.width, 0), false);
-                        cell.geometry.points = [];
-                        cell.geometry.relative = true;
-                        cell.edge = true;
-                        
-                        addElt(ui.sidebar.createEdgeTemplateFromCells([cell],
-                            cell.geometry.width, cell.geometry.height,
-                            mxResources.get('line') + ' (C)', true, null, true, false),
-                            mxResources.get('line') + ' (C)', null, 'C');
-                            
-                        cell = cell.clone();
-                        cell.style = edgeStyle + 'shape=flexArrow;rounded=1;startSize=8;endSize=8;';
-                        cell.geometry.width = graph.defaultEdgeLength + 20;
-                        cell.geometry.setTerminalPoint(new mxPoint(0, 20), true);
-                        cell.geometry.setTerminalPoint(new mxPoint(cell.geometry.width, 20), false);
-        
-                        addElt(ui.sidebar.createEdgeTemplateFromCells([cell],
-                            cell.geometry.width, 40, mxResources.get('arrow'),
-                            true, null, true, false), mxResources.get('arrow'));
-                    })();
-                
                     function addAction(action, label, image, key)
                     {
                         var elt = addMenuItem('', action.funct, null, label, action, image);
@@ -2106,14 +2064,15 @@ EditorUi.initMinimalTheme = function()
                     addAction(ui.actions.get('insertFreehand'), mxResources.get('freehand') + ' (X)',
                         Editor.freehandImage, 'X');
 
-                    elt = addMenu('insert', null, Editor.plusImage);
-                    elt.style.boxShadow = 'none';
-                    elt.style.opacity = '0.7';
-                    elt.style.padding = '6px';
-                    elt.style.margin = '0px';
-                    elt.style.height = '34px';
-                    elt.style.width = '37px';
-                    addElt(elt, null, 'pointer');
+                    addAction(ui.actions.get('toggleDarkMode'), mxResources.get('dark') + ' (D)',
+                        (Editor.isDarkMode() ? Editor.lightModeImage : Editor.darkModeImage), 'D');
+
+                    // also see: Graph.prototype.selectUnlockedLayer
+                    // from addLayer in grapheditor/Dialogs.js:
+                    var child = ui.editor.graph.model.getChildAt(graph.model.root, 0);
+                    var style = ui.editor.graph.getCurrentCellStyle(child);
+                    addAction(ui.actions.get('lockUnlockLayer'), mxResources.get('lockUnlock') + ' (L)',
+                        ((mxUtils.getValue(style, 'locked', '0') == '1') ? Editor.lockedImage : Editor.unlockedImage), 'L');
                 }
 
                 if (urlParams['embedInline'] != '1')
@@ -2159,6 +2118,7 @@ EditorUi.initMinimalTheme = function()
             
             ui.addListener('darkModeChanged', initPicker);
             ui.addListener('sketchModeChanged', initPicker);
+            ui.addListener('lockUnlockLayerChanged', initPicker);
         }
         else
         {

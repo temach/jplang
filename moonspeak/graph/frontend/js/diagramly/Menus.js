@@ -300,6 +300,44 @@
                 document.fullscreenElement != null;
         });
 
+        var lockUnlockLayerAction = editorUi.actions.put('lockUnlockLayer', new Action(mxResources.get('lockUnlock'), function(e) {
+            var graph = editorUi.editor.graph;
+            if (graph.isEnabled())
+            {
+                var value = null;
+                var child = graph.model.getChildAt(graph.model.root, 0)
+                var style = graph.getCurrentCellStyle(child);
+
+                graph.getModel().beginUpdate();
+                try
+                {
+                    value = (mxUtils.getValue(style, 'locked', '0') == '1') ? null : '1';
+                    graph.setCellStyles('locked', value, [child]);
+                }
+                finally
+                {
+                    graph.getModel().endUpdate();
+                }
+
+                if (value == '1')
+                {
+                    graph.removeSelectionCells(graph.getModel().getDescendants(child));
+                }
+
+                // in Minimal.js the listener to trigger picker repaint was added to ui.addListener
+                // not graph.addListener, so the event must be fired on EditorUi instance.
+                editorUi.fireEvent(new mxEventObject('lockUnlockLayerChanged'));
+            };
+        }));
+
+        lockUnlockLayerAction.setToggleAction(true);
+        lockUnlockLayerAction.setSelectedCallback(function() {
+            var graph = editorUi.editor.graph;
+            var child = graph.model.getChildAt(graph.model.root, 0)
+            var style = graph.getCurrentCellStyle(child);
+            return mxUtils.getValue(style, 'locked', 0);
+        });
+
         var toggleDarkModeAction = editorUi.actions.put('toggleDarkMode', new Action(mxResources.get('dark'), function(e)
         {
             editorUi.setDarkMode(!Editor.isDarkMode());
