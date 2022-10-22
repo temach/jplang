@@ -2010,6 +2010,7 @@ EditorUi.initMinimalTheme = function()
             foldImg.setAttribute('title', 'Minimize'/*TODO:mxResources.get('minimize')*/);
             
             var collapsed = false;
+            var veryFirstRender = true;
 
             var initPicker = mxUtils.bind(this, function()
             {
@@ -2071,8 +2072,14 @@ EditorUi.initMinimalTheme = function()
                     // from addLayer in grapheditor/Dialogs.js:
                     var child = ui.editor.graph.model.getChildAt(graph.model.root, 0);
                     var style = ui.editor.graph.getCurrentCellStyle(child);
-                    addAction(ui.actions.get('lockUnlockLayer'), mxResources.get('lockUnlock') + ' (L)',
-                        ((mxUtils.getValue(style, 'locked', '0') == '1') ? Editor.lockedImage : Editor.unlockedImage), 'L');
+                    if (veryFirstRender) {
+                        veryFirstRender = false;
+                        // on the very first render, we force to render the locked image
+                        addAction(ui.actions.get('lockUnlockLayer'), mxResources.get('lockUnlock') + ' (L)', Editor.lockedImage, 'L');
+                    } else {
+                        addAction(ui.actions.get('lockUnlockLayer'), mxResources.get('lockUnlock') + ' (L)',
+                            ((mxUtils.getValue(style, 'locked', '0') == '1') ? Editor.lockedImage : Editor.unlockedImage), 'L');
+                    }
                 }
 
                 if (urlParams['embedInline'] != '1')
