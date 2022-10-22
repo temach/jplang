@@ -11,6 +11,42 @@ mxClient.4.2.2.js
 72140-				state.shape.bounds = null;
 
 
+Example initial config for graph:
+```
+{
+  "language": "",
+  "configVersion": null,
+  "customFonts": [],
+  "libraries": "general;uml;er;bpmn;flowchart;basic;arrows2",
+  "customLibraries": [
+    "L.scratchpad"
+  ],
+  "plugins": [],
+  "recentColors": [],
+  "formatWidth": "240",
+  "createTarget": true,
+  "pageFormat": {
+    "x": 0,
+    "y": 0,
+    "width": 850,
+    "height": 1100
+  },
+  "search": true,
+  "showStartScreen": true,
+  "gridColor": "#d0d0d0",
+  "darkGridColor": "#6e6e6e",
+  "autosave": true,
+  "resizeImages": null,
+  "openCounter": 79,
+  "version": 18,
+  "unit": 1,
+  "isRulerOn": false,
+  "ui": "",
+  "darkMode": false
+}
+```
+
+
 
 Looks like there are a few ways to lock the elements:
 
