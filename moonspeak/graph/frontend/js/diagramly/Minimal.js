@@ -2067,20 +2067,26 @@ EditorUi.initMinimalTheme = function()
                     // from addLayer in grapheditor/Dialogs.js:
                     var child = ui.editor.graph.model.getChildAt(graph.model.root, 0);
                     var style = ui.editor.graph.getCurrentCellStyle(child);
-                    if (veryFirstRender) {
-                        veryFirstRender = false;
-                        // on the very first render, we force to render the locked image
-                        addAction(ui.actions.get('lockUnlockLayer'), mxResources.get('lockUnlock'), Editor.lockedImage, 'L');
-                    } else {
-                        addAction(ui.actions.get('lockUnlockLayer'), mxResources.get('lockUnlock'),
-                            ((mxUtils.getValue(style, 'locked', '0') == '1') ? Editor.lockedImage : Editor.unlockedImage), 'L');
-                    }
-
-                    addAction(ui.actions.get('insertFreehand'), mxResources.get('freehand'),
-                        Editor.freehandImage, 'X');
+                    var isLocked = veryFirstRender || (mxUtils.getValue(style, 'locked', '0') == '1');
+                    // hack: on the very first render just force render the locked image because conditional is broken somehow
+                    veryFirstRender = false;
+                    addAction(ui.actions.get('lockUnlockLayer'), mxResources.get('lockUnlock'), 
+                        (isLocked ? Editor.lockedImage : Editor.unlockedImage), 'L');
 
                     addAction(ui.actions.get('toggleDarkMode'), mxResources.get('dark'),
                         (Editor.isDarkMode() ? Editor.lightModeImage : Editor.darkModeImage), 'D');
+
+                    var freehandElt = addAction(ui.actions.get('insertFreehand'), mxResources.get('freehand'),
+                        Editor.freehandImage, 'X');
+                    freehandElt.style.opacity = isLocked ? '0.1' : '0.7';
+
+                    var deleteAction = ui.actions.get('delete');
+                    var deleteElt = addAction(deleteAction, mxResources.get('delete'), Editor.trashImage, 'T');
+                    deleteElt.style.opacity = '0.1';
+                    deleteAction.addListener('stateChanged', function()
+                    {
+                        deleteElt.style.opacity = (deleteAction.enabled) ? '0.7' : '0.1';
+                    });
 
                 }
 
@@ -2167,16 +2173,6 @@ EditorUi.initMinimalTheme = function()
 
             if (footer != null)
             {
-                var deleteAction = ui.actions.get('delete');
-                var deleteElt = addMenuItem('', deleteAction.funct, null, mxResources.get('delete'), deleteAction, Editor.trashImage);
-                deleteElt.style.opacity = '0.1';
-                toolbar.appendChild(deleteElt);
-
-                deleteAction.addListener('stateChanged', function()
-                {
-                    deleteElt.style.opacity = (deleteAction.enabled) ? '' : '0.1';
-                });
-                
                 var undoListener = function()
                 {
                     undoElt.style.display = (ui.editor.undoManager.history.length > 0 ||

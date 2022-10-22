@@ -323,6 +323,7 @@
                 {
                     graph.removeSelectionCells(graph.getModel().getDescendants(child));
                 }
+                graph.freehand.stopDrawing();
 
                 // in Minimal.js the listener to trigger picker repaint was added to ui.addListener
                 // not graph.addListener, so the event must be fired on EditorUi instance.
