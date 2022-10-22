@@ -40,6 +40,19 @@
     // do not load too many fonts for speedup
     Menus.prototype.defaultFonts = ['Helvetica', 'Verdana', 'Times New Roman'];
 
+    // change menu that appears on right click on background
+    Menus.prototype.createPopupMenu = function(menu, cell, evt)
+    {
+        menu.smartSeparators = true;
+
+        this.addPopupMenuHistoryItems(menu, cell, evt);
+        this.addPopupMenuEditItems(menu, cell, evt);
+        // this.addPopupMenuStyleItems(menu, cell, evt);
+        this.addPopupMenuArrangeItems(menu, cell, evt);
+        // this.addPopupMenuCellItems(menu, cell, evt);
+        // this.addPopupMenuSelectionItems(menu, cell, evt);
+    };
+
     // disable all popup banners for now
     EditorUi.prototype.showBanner = function(id, text, onclick, doNotShowAgainOnClose)
     {
