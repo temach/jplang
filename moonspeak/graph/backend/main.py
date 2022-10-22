@@ -15,6 +15,10 @@ DB.row_factory = sqlite3.Row
 
 GRAPH_INITIAL_XML = os.getenv("MOONSPEAK_GRAPH_INITIAL_XML", None)
 
+@get("/config/<filename>")
+def config(filename):
+    return static_file(filename, root="../config/")
+
 @get("/open")
 def work():
     # set to return xml
