@@ -960,7 +960,7 @@ EditorUi.initMinimalTheme = function()
                 }
             }
             
-            ui.menus.addSubmenu('exportAs', menu, parent);
+            // ui.menus.addSubmenu('exportAs', menu, parent);
             
             if (mxClient.IS_CHROMEAPP || EditorUi.isElectronApp)
             {

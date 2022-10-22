@@ -14728,7 +14728,7 @@
 			(file == null || file.isRestricted());
 		this.actions.get('makeCopy').setEnabled(!restricted);
 		this.actions.get('print').setEnabled(!restricted);
-		this.menus.get('exportAs').setEnabled(!restricted);
+		// this.menus.get('exportAs').setEnabled(!restricted);
 		this.menus.get('embed').setEnabled(!restricted);
 		
 		// Disables libraries and extras menu in embed mode
