@@ -889,7 +889,7 @@ EditorUi.initMinimalTheme = function()
         this.put('diagram', new Menu(mxUtils.bind(this, function(menu, parent)
         {
             var file = ui.getCurrentFile();
-            ui.menus.addSubmenu('extras', menu, parent, mxResources.get('preferences'));
+            // ui.menus.addSubmenu('extras', menu, parent, mxResources.get('preferences'));
             menu.addSeparator(parent);
             
             if (mxClient.IS_CHROMEAPP || EditorUi.isElectronApp)
@@ -971,14 +971,15 @@ EditorUi.initMinimalTheme = function()
                 ui.menus.addSubmenu('importFrom', menu, parent);
             }
 
-            ui.menus.addMenuItems(menu, ['-',  'findReplace'], parent);
+            // ui.menus.addMenuItems(menu, ['-',  'findReplace'], parent);
 
             if (ui.commentsSupported())
             {
                 ui.menus.addMenuItems(menu, ['comments', '-'], parent);
             }
 
-            ui.menus.addMenuItems(menu, ['toggleFormat', 'layers', 'tags', '-', 'pageSetup'], parent);
+            // ui.menus.addMenuItems(menu, ['toggleFormat', 'layers', 'tags', '-', 'pageSetup'], parent);
+            ui.menus.addMenuItems(menu, ['-', 'pageSetup'], parent);
 
             // Cannot use print in standalone mode on iOS as we cannot open new windows
             if (urlParams['noFileMenu'] != '1' && (!mxClient.IS_IOS || !navigator.standalone))
