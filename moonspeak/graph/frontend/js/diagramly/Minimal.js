@@ -2062,12 +2062,6 @@ EditorUi.initMinimalTheme = function()
                         
                         return addElt(elt, null, 'pointer', key);
                     };
-                    
-                    addAction(ui.actions.get('insertFreehand'), mxResources.get('freehand') + ' (X)',
-                        Editor.freehandImage, 'X');
-
-                    addAction(ui.actions.get('toggleDarkMode'), mxResources.get('dark') + ' (D)',
-                        (Editor.isDarkMode() ? Editor.lightModeImage : Editor.darkModeImage), 'D');
 
                     // also see: Graph.prototype.selectUnlockedLayer
                     // from addLayer in grapheditor/Dialogs.js:
@@ -2076,11 +2070,18 @@ EditorUi.initMinimalTheme = function()
                     if (veryFirstRender) {
                         veryFirstRender = false;
                         // on the very first render, we force to render the locked image
-                        addAction(ui.actions.get('lockUnlockLayer'), mxResources.get('lockUnlock') + ' (L)', Editor.lockedImage, 'L');
+                        addAction(ui.actions.get('lockUnlockLayer'), mxResources.get('lockUnlock'), Editor.lockedImage, 'L');
                     } else {
-                        addAction(ui.actions.get('lockUnlockLayer'), mxResources.get('lockUnlock') + ' (L)',
+                        addAction(ui.actions.get('lockUnlockLayer'), mxResources.get('lockUnlock'),
                             ((mxUtils.getValue(style, 'locked', '0') == '1') ? Editor.lockedImage : Editor.unlockedImage), 'L');
                     }
+
+                    addAction(ui.actions.get('insertFreehand'), mxResources.get('freehand'),
+                        Editor.freehandImage, 'X');
+
+                    addAction(ui.actions.get('toggleDarkMode'), mxResources.get('dark'),
+                        (Editor.isDarkMode() ? Editor.lightModeImage : Editor.darkModeImage), 'D');
+
                 }
 
                 if (urlParams['embedInline'] != '1')
