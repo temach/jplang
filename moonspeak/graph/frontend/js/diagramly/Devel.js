@@ -268,6 +268,9 @@ mxscript(drawDevUrl + 'js/diagramly/TrelloClient.js');
 mxscript(drawDevUrl + 'js/diagramly/GitLabFile.js');
 mxscript(drawDevUrl + 'js/diagramly/GitLabLibrary.js');
 mxscript(drawDevUrl + 'js/diagramly/GitLabClient.js');
+mxscript(drawDevUrl + 'js/diagramly/MoonspeakFile.js');
+mxscript(drawDevUrl + 'js/diagramly/MoonspeakLibrary.js');
+mxscript(drawDevUrl + 'js/diagramly/MoonspeakClient.js');
 
 mxscript(drawDevUrl + 'js/diagramly/App.js');
 mxscript(drawDevUrl + 'js/diagramly/Menus.js');

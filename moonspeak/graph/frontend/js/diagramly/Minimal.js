@@ -1609,6 +1609,10 @@ EditorUi.initMinimalTheme = function()
                 {
                     mode = 'oneDrive';
                 }
+                else if (mode == 'moonspeak')
+                {
+                    mode = 'moonSpeak';
+                }
                 
                 mode = mxResources.get(mode);
                 menubar.setAttribute('title', file.getTitle() + ((mode != null) ? ' (' + mode + ')' : ''));

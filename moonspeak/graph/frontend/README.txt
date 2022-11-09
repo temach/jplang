@@ -3,6 +3,16 @@ To view translation keys and disable splash on draw.io use:`
 https://app.diagrams.net/?lang=i18n&splash=0
 ```
 
+save and saveAs modes:
+MODE_DEVICE - save data as a file for downloading to device
+MODE_BROWSER - save graph as data into browser storage
+
+see:
+```
+rgjs ui.mode
+rgjs unsavedChangesClickHereToSave
+```
+
 to set ui, use ui=sketch url parameter
 
 
@@ -61,9 +71,11 @@ OR
 
 
 Load line, see https://www.diagrams.net/doc/faq/supported-url-parameters :
-http://localhost:8001/?lang=i18n&splash=0&dev=1&ui=sketch&noFileMenu=1&plugins=0&gapi=0&math=0&url=http://localhost:8001/config/graph.xml
+http://localhost:8001/?lang=i18n&mode=moonspeak&splash=0&dev=1&ui=sketch&noFileMenu=1&plugins=0&gapi=0&math=0#Mhttp://localhost:8001/config/graph.xml
+
 
 older config lines:
+- localhost:8001/?lang=i18n&splash=0&dev=1&ui=sketch&noFileMenu=1&plugins=0&gapi=0&math=0#Uhttp://localhost:8001/config/graph.xml
 - localhost:8001/?lang=i18n&splash=0&dev=1&ui=sketch&noFileMenu=1&plugins=0&gapi=0&math=0&url=https://raw.githubusercontent.com/temach/jplang/master/moonspeak/graph/config/workelements.xml
 - localhost:8001/?lang=i18n&dev=1&ui=sketch&noFileMenu=1&plugins=0&gapi=0&math=0&create=https://raw.githubusercontent.com/temach/jplang/master/moonspeak/graph/config/workelements.xml
 

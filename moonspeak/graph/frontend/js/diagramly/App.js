@@ -236,6 +236,11 @@ App.MODE_BROWSER = 'browser';
 App.MODE_TRELLO = 'trello';
 
 /**
+ * Moonspeak App Mode
+ */
+App.MODE_MOONSPEAK = 'moonspeak';
+
+/**
  * Embed App Mode
  */
 App.MODE_EMBED = 'embed';
@@ -1428,6 +1433,20 @@ App.prototype.init = function()
     if (this.gitLab != null)
     {
         this.gitLab.addListener('userChanged', mxUtils.bind(this, function()
+        {
+            this.updateUserElement();
+            this.restoreLibraries();
+        }));
+    }
+
+    /**
+     * Creates moonspeak client.
+     */
+    this.moonSpeak = new MoonspeakClient(this);
+
+    if (this.moonSpeak != null)
+    {
+        this.moonSpeak.addListener('userChanged', mxUtils.bind(this, function()
         {
             this.updateUserElement();
             this.restoreLibraries();
@@ -4043,14 +4062,16 @@ App.prototype.pickLibrary = function(mode)
     mode = (mode != null) ? mode : this.mode;
     
     if (mode == App.MODE_GOOGLE || mode == App.MODE_DROPBOX || mode == App.MODE_ONEDRIVE ||
-        mode == App.MODE_GITHUB || mode == App.MODE_GITLAB || mode == App.MODE_TRELLO)
+        mode == App.MODE_GITHUB || mode == App.MODE_GITLAB || mode == App.MODE_TRELLO ||
+        mode == App.MODE_MOONSPEAK)
     {
         var peer = (mode == App.MODE_GOOGLE) ? this.drive :
             ((mode == App.MODE_ONEDRIVE) ? this.oneDrive :
             ((mode == App.MODE_GITHUB) ? this.gitHub :
             ((mode == App.MODE_GITLAB) ? this.gitLab :
             ((mode == App.MODE_TRELLO) ? this.trello :
-            this.dropbox))));
+            ((mode == App.MODE_MOONSPEAK) ? this.moonSpeak :
+            this.dropbox)))));
         
         if (peer != null)
         {
@@ -5198,6 +5219,7 @@ App.prototype.loadFile = function(id, sameWindow, file, success, force)
                             }
                         }
                         
+                        // set true->false here to force give file a mode (so its not a temp file)
                         var tempFile = new LocalFile(this, text, (urlParams['title'] != null) ?
                             decodeURIComponent(urlParams['title']) : filename, true);
                         tempFile.getHash = function()
@@ -5262,6 +5284,10 @@ App.prototype.loadFile = function(id, sameWindow, file, success, force)
                 else if (id.charAt(0) == 'T')
                 {
                     peer = this.trello;
+                }
+                else if (id.charAt(0) == 'M')
+                {
+                    peer = this.moonSpeak;
                 }
                 
                 if (peer == null)

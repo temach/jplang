@@ -19,7 +19,7 @@ GRAPH_INITIAL_XML = os.getenv("MOONSPEAK_GRAPH_INITIAL_XML", None)
 def config(filename):
     return static_file(filename, root="../config/")
 
-@get("/open")
+@get("/import")
 def work():
     # set to return xml
     response.set_header("Content-Type", "text/xml;charset=UTF-8")
