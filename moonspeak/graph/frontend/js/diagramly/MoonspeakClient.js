@@ -98,7 +98,8 @@ MoonspeakClient.prototype.getFile = function(id, success, error, denyConvert, as
             error({code: App.ERROR_TIMEOUT, retry: callback})
         }), this.ui.timeout);
         
-        this.ui.editor.loadUrl(OPEN_URL + '?uuid=' + encodeURIComponent(graph_uuid), mxUtils.bind(this, function(data)
+        let graphUrl = OPEN_URL + '?uuid=' + encodeURIComponent(graph_uuid);
+        this.ui.editor.loadUrl(graphUrl, mxUtils.bind(this, function(data)
         {
             window.clearTimeout(timeoutThread);
             
@@ -106,6 +107,8 @@ MoonspeakClient.prototype.getFile = function(id, success, error, denyConvert, as
             {
                 let meta = {
                     "uuid": graph_uuid,
+                    "hash": graphUrl,
+                    "name": graph_uuid,
                 };
 
                 if (asLibrary)
@@ -192,56 +195,15 @@ MoonspeakClient.prototype.insertFile = function(filename, data, success, error, 
  */
 MoonspeakClient.prototype.saveFile = function(file, success, error)
 {
-	// write the file first (with the same name), then delete the old file
-	// so that nothing is lost if something goes wrong with deleting
-	var ids = file.meta.compoundId.split(this.SEPARATOR);
-
-	var fn = mxUtils.bind(this, function(data)
-	{
-		this.writeFile(file.meta.name, data, ids[0], function(meta)
-		{
-			Moonspeak.del('cards/' + ids[0] + '/attachments/' + ids[1], mxUtils.bind(this, function()
-			{
-				success(meta);
-			}), mxUtils.bind(this, function(err)
-			{
-				if (err != null && err.status == 401)
-	    		{
-					// KNOWN: Does not wait for popup to close for callback
-	    			this.authenticate(callback, error, true);
-	    		}
-	    		else
-	    		{
-	    			error();
-	    		}
-			}));
-		}, error);
-	});
-	
-	var callback = mxUtils.bind(this, function()
-	{
-		if (this.ui.useCanvasForExport && /(\.png)$/i.test(file.meta.name))
-		{
-			this.ui.getEmbeddedPng(mxUtils.bind(this, function(data)
-			{
-				fn(this.ui.base64ToBlob(data, 'image/png'));
-			}), error, (this.ui.getCurrentFile() != file) ? file.getData() : null);
-		}
-		else
-		{
-			fn(file.getData());
-		}
-	});
-	
-	this.authenticate(callback, error);
+    this.writeFile(file.meta, file.getData(), success, error);
 };
 
 /**
  * 
  */
-MoonspeakClient.prototype.writeFile = function(filename, data, cardId, success, error)
+MoonspeakClient.prototype.writeFile = function(meta, data, success, error)
 {
-	if (filename != null && data != null)
+	if (meta.name != null && data != null)
 	{
 		if (data.length >= this.maxFileSize)
 		{
@@ -261,14 +223,7 @@ MoonspeakClient.prototype.writeFile = function(filename, data, cardId, success, 
 			error({code: App.ERROR_TIMEOUT, retry: fn});
 		  }), this.ui.timeout);
 			
-		  var formData = new FormData();
-		  formData.append('key', Moonspeak.key());
-		  formData.append('token', Moonspeak.token());
-		  formData.append('file', typeof data === 'string' ? new Blob([data]) : data, filename);
-		  formData.append('name', filename);
-
 		  var request = new XMLHttpRequest();
-		  request.responseType = 'json';
 		  
 		  request.onreadystatechange = mxUtils.bind(this, function() 
 		  {
@@ -280,14 +235,8 @@ MoonspeakClient.prototype.writeFile = function(filename, data, cardId, success, 
 	    		{
 		    		if (request.status == 200)
 	    			{
-		    			var fileMeta = request.response;
-		    			fileMeta.compoundId = cardId + this.SEPARATOR + fileMeta.id
-		    			success(fileMeta);
+		    			success(meta);
 	    			}
-		    		else if (request.status == 401)
-		    		{
-		    			this.authenticate(fn, error, true);
-		    		}
 	    			else
     				{
 		    			error();
@@ -296,11 +245,12 @@ MoonspeakClient.prototype.writeFile = function(filename, data, cardId, success, 
 		    }
 		  });
 		  
-		  request.open('POST', this.baseUrl + 'cards/' + cardId + '/attachments');
-		  request.send(formData);
+		  request.open('POST', SAVE_URL + '?uuid=' + meta.name);
+          request.setRequestHeader("Content-Type", "text/plain");
+          request.send(data);
 		});
 		
-		this.authenticate(fn, error);
+        fn();
 	}
 	else
 	{

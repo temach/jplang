@@ -18,7 +18,7 @@ mxUtils.extend(MoonspeakFile, DrawioFile);
  */
 MoonspeakFile.prototype.getHash = function()
 {
-	return 'T' + encodeURIComponent(this.meta.compoundId);
+	return 'M' + this.meta.hash;
 };
 
 /**
@@ -114,7 +114,7 @@ MoonspeakFile.prototype.saveFile = function(title, revision, success, error)
 		
 		if (this.getTitle() == title)
 		{
-			this.ui.moonspeak.saveFile(this, mxUtils.bind(this, function(meta)
+			this.ui.moonSpeak.saveFile(this, mxUtils.bind(this, function(meta)
 			{
 				// Checks for changes during save
 				this.setModified(this.getShadowModified());
@@ -124,7 +124,7 @@ MoonspeakFile.prototype.saveFile = function(title, revision, success, error)
 				
 				if (success != null)
 				{
-					success();
+					success(meta);
 				}
 				
 				if (this.saveNeededCounter > 0)
@@ -147,7 +147,7 @@ MoonspeakFile.prototype.saveFile = function(title, revision, success, error)
 		{
 			this.ui.pickFolder(App.MODE_MOONSPEAK, mxUtils.bind(this, function(cardId)
 			{
-				this.ui.moonspeak.insertFile(title, this.getData(), mxUtils.bind(this, function(file)
+				this.ui.moonSpeak.insertFile(title, this.getData(), mxUtils.bind(this, function(file)
 				{
 					this.savingFile = false;
 					

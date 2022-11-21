@@ -47,12 +47,12 @@ def work():
 
 @post("/save")
 def submit():
-    params = dict(request.params)
+    vals = dict(request.params)
 
-    if "uuid" not in params:
-        params["uuid"] = "default"
+    if "uuid" not in vals:
+        vals["uuid"] = "default"
 
-    params["xml"] = unquote(params["xml"], encoding='utf-8', errors='replace')
+    vals["xml"] = request.body.read()
 
     try:
         c = DB.cursor()
@@ -60,13 +60,12 @@ def submit():
         # https://www.sqlite.org/lang_UPSERT.html
         c.execute("""INSERT OR ABORT INTO diagrams VALUES (:uuid, :xml)
                 ON CONFLICT(uuid) DO UPDATE SET xml=excluded.xml;
-                """, params)
+                """, vals)
         DB.commit()
     except Exception as e:
         return HTTPResponse(status=500, body="{}".format(e))
 
-    # return a fake body because too lazy to unwrap properly in Elm
-    return HTTPResponse(status=200, body="")
+    return HTTPResponse(status=200)
 
 
 @get("/")
