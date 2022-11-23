@@ -126,14 +126,7 @@ MoonspeakClient.prototype.getFile = function(id, success, error, denyConvert, as
                 
             if (acceptResponse)
             {
-                if (req.status == 401)
-                {
-                    this.authenticate(callback, error, true);
-                }
-                else
-                {
-                    error();
-                }
+                error();
             }
         }), binary, null, null, null, headers);
 

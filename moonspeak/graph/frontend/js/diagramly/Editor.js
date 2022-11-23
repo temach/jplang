@@ -198,7 +198,7 @@
 	/**
 	 * Specifies if XML files should be compressed. Default is true.
 	 */
-	Editor.compressXml = true;
+	Editor.compressXml = false;
 
 	/**
 	 * Specifies if XML files should be compressed. Default is true.
