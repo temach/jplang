@@ -1,0 +1,118 @@
+OK: string : 532
+string -> ? : 289
+OK: number : 244
+number -> ? : 170
+Object -> ? : 167
+OK: Object : 158
+OK: Function : 94
+Function -> ? : 83
+OK: boolean : 54
+Object -> string : 30
+boolean -> ? : 28
+OK: Array : 26
+jasmine.Env -> ? : 24
+number -> string : 22
+(HTMLElement|string) -> ? : 20
+Array -> Object : 16
+* -> string : 15
+string -> Object : 14
+* -> ? : 13
+jasmine.Spec -> ? : 12
+OK: ? : 12
+Node -> ? : 12
+Node -> Object : 11
+OK: Date : 10
+string -> Element : 10
+Object -> (Object|number) : 9
+string -> number : 9
+Object -> number : 8
+(Object|string) -> string : 8
+jasmine.Suite -> ? : 8
+Object -> Window : 8
+HTMLElement -> ? : 8
+Event -> ? : 7
+Node -> Element : 7
+Function -> string : 7
+boolean -> string : 7
+Array -> string : 6
+(number|string) -> string : 6
+* -> Object : 6
+Object -> Function : 6
+string -> Function : 6
+Array -> ? : 6
+jsworld.Locale -> ? : 6
+Object -> HTMLElement : 6
+? -> Object : 6
+Object -> Element : 5
+OK: Event : 4
+Comment -> ? : 4
+number -> Object : 4
+(Array|Element|string) -> string : 4
+HTMLElement -> Object : 4
+jasmine.Reporter -> ? : 4
+HTMLElement -> Element : 4
+Node -> string : 3
+Node -> number : 3
+Array.<string> -> string : 3
+number -> Function : 3
+Object -> Array : 3
+(Date|string) -> string : 3
+string -> (boolean|number) : 3
+Object -> (Node|string) : 3
+OK: Error : 3
+OK: RegExp : 3
+Function -> (EventListener|Function) : 2
+(Array|string) -> Array : 2
+(number|string) -> ? : 2
+Array -> (Array|Function|string) : 2
+(Array|Element|string) -> Object : 2
+Function -> number : 2
+number -> (Object|number) : 2
+OK: Element : 2
+Date -> ? : 2
+(Array|string) -> string : 2
+number -> (Function|string) : 2
+Object -> Event : 2
+Array -> Function : 2
+(Function|string) -> string : 2
+string -> Array : 2
+Text -> string : 2
+NamedNodeMap -> Object : 2
+Function -> EventTarget : 2
+(NodeList|string) -> ? : 2
+(number|string) -> number : 2
+(Date|Function|number) -> Object : 2
+OK: (Object|number) : 2
+(Array.<string>|string) -> string : 2
+Function -> Object : 1
+OK: * : 1
+string -> (Object|number) : 1
+Arguments -> Array : 1
+Function -> null : 1
+Array.<fv.Node> -> ? : 1
+Array -> number : 1
+OK: (Array|Function|string) : 1
+Array.<string> -> Array : 1
+(Node|number) -> number : 1
+(Array|Element) -> Object : 1
+Array.<string> -> ? : 1
+Error -> ? : 1
+NamedNodeMap -> ? : 1
+string -> (Node|string) : 1
+(Function|string) -> Function : 1
+(RegExp|string) -> string : 1
+string -> (number|string) : 1
+string -> RegExp : 1
+Object -> undefined : 1
+Element -> ? : 1
+(Array.<string>|string) -> Array : 1
+OK: JSONType : 1
+Array -> EventTarget : 1
+Object -> (boolean|number) : 1
+RegExp -> ? : 1
+OK: (Function|string) : 1
+string -> (ArrayBuffer|string) : 1
+(Array|Node|string) -> ? : 1
+Array.<string> -> Function : 1
+(Array|Element) -> RegExp : 1
+* -> CanvasRenderingContext2D : 1
