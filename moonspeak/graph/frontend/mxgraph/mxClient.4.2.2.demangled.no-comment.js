@@ -1,8 +1,10 @@
 var mxClient = {
-  VERSION : "20.3.0",
+  VERSION : "4.2.2",
   IS_IE : null != navigator.userAgent && 0 <= navigator.userAgent.indexOf("MSIE"),
+  IS_IE6 : null != navigator.userAgent && 0 <= navigator.userAgent.indexOf("MSIE 6"),
   IS_IE11 : null != navigator.userAgent && !!navigator.userAgent.match(/Trident\/7\./),
-  IS_EDGE: null != navigator.userAgent && !!navigator.userAgent.match(/Edge\//),
+  IS_EDGE : null != navigator.userAgent && !!navigator.userAgent.match(/Edge\
+  IS_QUIRKS : null != navigator.userAgent && (0 <= navigator.userAgent.indexOf("MSIE") && (null == document.documentMode || 5 == document.documentMode)),
   IS_EM : "spellcheck" in document.createElement("textarea") && 8 == document.documentMode,
   VML_PREFIX : "v",
   OFFICE_PREFIX : "o",
@@ -11,36 +13,39 @@ var mxClient = {
   IS_OT : null != navigator.userAgent && (0 <= navigator.userAgent.indexOf("Presto/") && (0 > navigator.userAgent.indexOf("Presto/2.4.") && (0 > navigator.userAgent.indexOf("Presto/2.3.") && (0 > navigator.userAgent.indexOf("Presto/2.2.") && (0 > navigator.userAgent.indexOf("Presto/2.1.") && (0 > navigator.userAgent.indexOf("Presto/2.0.") && 0 > navigator.userAgent.indexOf("Presto/1."))))))),
   IS_SF : /Apple Computer, Inc/.test(navigator.vendor),
   IS_ANDROID : 0 <= navigator.appVersion.indexOf("Android"),
-  IS_IOS : /iP(hone|od|ad)/.test(navigator.platform) || navigator.userAgent.match(/Mac/) && (navigator.maxTouchPoints && 2 < navigator.maxTouchPoints),
-  IS_WEBVIEW : /((iPhone|iPod|iPad).*AppleWebKit(?!.*Version)|; wv)/i.test(navigator.userAgent),
+  IS_IOS : /iP(hone|od|ad)/.test(navigator.platform),
   IS_GC : /Google Inc/.test(navigator.vendor),
   IS_CHROMEAPP : null != window.chrome && (null != chrome.app && null != chrome.app.runtime),
   IS_FF : "undefined" !== typeof InstallTrigger,
   IS_MT : 0 <= navigator.userAgent.indexOf("Firefox/") && (0 > navigator.userAgent.indexOf("Firefox/1.") && 0 > navigator.userAgent.indexOf("Firefox/2.")) || (0 <= navigator.userAgent.indexOf("Iceweasel/") && (0 > navigator.userAgent.indexOf("Iceweasel/1.") && 0 > navigator.userAgent.indexOf("Iceweasel/2.")) || (0 <= navigator.userAgent.indexOf("SeaMonkey/") && 0 > navigator.userAgent.indexOf("SeaMonkey/1.") || 0 <= navigator.userAgent.indexOf("Iceape/") && 0 > navigator.userAgent.indexOf("Iceape/1."))),
+  IS_VML : "MICROSOFT INTERNET EXPLORER" == navigator.appName.toUpperCase(),
   IS_SVG : "MICROSOFT INTERNET EXPLORER" != navigator.appName.toUpperCase(),
-  NO_FO : !document.createElementNS || ("[object SVGForeignObjectElement]" !== document.createElementNS("http://www.w3.org/2000/svg", "foreignObject").toString() || 0 <= navigator.userAgent.indexOf("Opera/")),
+  NO_FO : !document.createElementNS || ("[object SVGForeignObjectElement]" != document.createElementNS("http://www.w3.org/2000/svg", "foreignObject") || 0 <= navigator.userAgent.indexOf("Opera/")),
   IS_WIN : 0 < navigator.appVersion.indexOf("Win"),
   IS_MAC : 0 < navigator.appVersion.indexOf("Mac"),
   IS_CHROMEOS : /\bCrOS\b/.test(navigator.appVersion),
-  IS_LINUX : /\bLinux\b/.test(navigator.appVersion),
   IS_TOUCH : "ontouchstart" in document.documentElement,
   IS_POINTER : null != window.PointerEvent && !(0 < navigator.appVersion.indexOf("Mac")),
   IS_LOCAL : 0 > document.location.href.indexOf("http://") && 0 > document.location.href.indexOf("https://"),
   defaultBundles : [],
   isBrowserSupported : function() {
-    return mxClient.IS_SVG;
+    return mxClient.IS_VML || mxClient.IS_SVG;
   },
-  link : function(rel, name, doc, pad) {
+  link : function(rel, str, doc, id) {
     doc = doc || document;
-    var link = doc.createElement("link");
-    link.setAttribute("rel", rel);
-    link.setAttribute("href", name);
-    link.setAttribute("charset", "UTF-8");
-    link.setAttribute("type", "text/css");
-    if (pad) {
-      link.setAttribute("id", pad);
+    if (mxClient.IS_IE6) {
+      doc.write('<link rel="' + rel + '" href="' + str + '" charset="UTF-8" type="text/css"/>');
+    } else {
+      var link = doc.createElement("link");
+      link.setAttribute("rel", rel);
+      link.setAttribute("href", str);
+      link.setAttribute("charset", "UTF-8");
+      link.setAttribute("type", "text/css");
+      if (id) {
+        link.setAttribute("id", id);
+      }
+      doc.getElementsByTagName("head")[0].appendChild(link);
     }
-    doc.getElementsByTagName("head")[0].appendChild(link);
   },
   loadResources : function(fn, lan) {
     function callback() {
@@ -83,16 +88,44 @@ if ("undefined" != typeof mxImageBasePath && 0 < mxImageBasePath.length) {
   }
   mxClient.imageBasePath = mxImageBasePath;
 } else {
-  mxClient.imageBasePath = "images";
+  mxClient.imageBasePath = mxClient.basePath + "/images";
 }
 mxClient.language = "undefined" != typeof mxLanguage && null != mxLanguage ? mxLanguage : mxClient.IS_IE ? navigator.userLanguage : navigator.language;
 mxClient.defaultLanguage = "undefined" != typeof mxDefaultLanguage && null != mxDefaultLanguage ? mxDefaultLanguage : "en";
 if (mxLoadStylesheets) {
-  mxClient.link("stylesheet", "mxgraph/css/common.css");
+  mxClient.link("stylesheet", mxClient.basePath + "/css/common.css");
 }
 if ("undefined" != typeof mxLanguages) {
   if (null != mxLanguages) {
     mxClient.languages = mxLanguages;
+  }
+}
+if (mxClient.IS_VML) {
+  if (mxClient.IS_SVG) {
+    mxClient.IS_VML = false;
+  } else {
+    if (null != document.namespaces) {
+      if (8 == document.documentMode) {
+        document.namespaces.add(mxClient.VML_PREFIX, "urn:schemas-microsoft-com:vml", "#default#VML");
+        document.namespaces.add(mxClient.OFFICE_PREFIX, "urn:schemas-microsoft-com:office:office", "#default#VML");
+      } else {
+        document.namespaces.add(mxClient.VML_PREFIX, "urn:schemas-microsoft-com:vml");
+        document.namespaces.add(mxClient.OFFICE_PREFIX, "urn:schemas-microsoft-com:office:office");
+      }
+    }
+    if (mxClient.IS_QUIRKS && 30 <= document.styleSheets.length) {
+      (function() {
+        var node = document.createElement("style");
+        node.type = "text/css";
+        node.styleSheet.cssText = mxClient.VML_PREFIX + "\\:*{behavior:url(#default#VML)}" + mxClient.OFFICE_PREFIX + "\\:*{behavior:url(#default#VML)}";
+        document.getElementsByTagName("head")[0].appendChild(node);
+      })();
+    } else {
+      document.createStyleSheet().cssText = mxClient.VML_PREFIX + "\\:*{behavior:url(#default#VML)}" + mxClient.OFFICE_PREFIX + "\\:*{behavior:url(#default#VML)}";
+    }
+    if (mxLoadStylesheets) {
+      mxClient.link("stylesheet", mxClient.basePath + "/css/explorer.css");
+    }
   }
 }
 var mxLog = {
@@ -214,10 +247,10 @@ var mxLog = {
       return mxLog.writeln("Entering " + string), (new Date).getTime();
     }
   },
-  leave: function(string, t0) {
+  leave : function(t0, string) {
     if (mxLog.TRACE) {
-      var dt = (t0 != 0) ? ' ('+(new Date().getTime() - t0)+' ms)' : '';
-      mxLog.writeln('Leaving '+string+dt);
+      var dt = 0 != string ? " (" + ((new Date).getTime() - string) + " ms)" : "";
+      mxLog.writeln("Leaving " + t0 + dt);
     }
   },
   debug : function() {
@@ -298,10 +331,10 @@ mxDictionary.prototype.get = function(cell) {
   cell = mxObjectIdentity.get(cell);
   return this.map[cell];
 };
-mxDictionary.prototype.put = function(key, value) {
-  var id = mxObjectIdentity.get(key);
+mxDictionary.prototype.put = function(cell, update) {
+  var id = mxObjectIdentity.get(cell);
   var previous = this.map[id];
-  this.map[id] = value;
+  this.map[id] = update;
   return previous;
 };
 mxDictionary.prototype.remove = function(cell) {
@@ -548,9 +581,6 @@ mxRectangle.prototype.rotate90 = function() {
 };
 mxRectangle.prototype.equals = function(bounds) {
   return null != bounds && (bounds.x == this.x && (bounds.y == this.y && (bounds.width == this.width && bounds.height == this.height)));
-};
-mxRectangle.fromPoint = function(b) {
-  return new mxRectangle(b.x, b.y, 0, 0);
 };
 mxRectangle.fromRectangle = function(state) {
   return new mxRectangle(state.x, state.y, state.width, state.height);
@@ -823,7 +853,7 @@ var mxUtils = {
     return best;
   },
   isNode : function(value, nodeName, attributeName, attributeValue) {
-    return null == value || (value.constructor !== Element || null != nodeName && value.nodeName.toLowerCase() != nodeName.toLowerCase()) ? false : null == attributeName || value.getAttribute(attributeName) == attributeValue;
+    return null == value || (isNaN(value.nodeType) || null != nodeName && value.nodeName.toLowerCase() != nodeName.toLowerCase()) ? false : null == attributeName || value.getAttribute(attributeName) == attributeValue;
   },
   isAncestorNode : function(ancestor, child) {
     for (var parent = child;null != parent;) {
@@ -873,16 +903,31 @@ var mxUtils = {
   },
   createXmlDocument : function() {
     var doc = null;
-    if (document.implementation) {
-      if (document.implementation.createDocument) {
-        doc = document.implementation.createDocument("", "", null);
+    if (document.implementation && document.implementation.createDocument) {
+      doc = document.implementation.createDocument("", "", null);
+    } else {
+      if ("ActiveXObject" in window) {
+        doc = mxUtils.createMsXmlDocument();
       }
     }
     return doc;
   },
-  parseXml : function(xml) {
-    return(new DOMParser).parseFromString(xml, "text/xml");
+  createMsXmlDocument : function() {
+    var doc = new ActiveXObject("Microsoft.XMLDOM");
+    doc.async = false;
+    doc.validateOnParse = false;
+    doc.resolveExternals = false;
+    return doc;
   },
+  parseXml : function() {
+    return window.DOMParser ? function(xml) {
+      return(new DOMParser).parseFromString(xml, "text/xml");
+    } : function(xml) {
+      var doc = mxUtils.createMsXmlDocument();
+      doc.loadXML(xml);
+      return doc;
+    };
+  }(),
   clearSelection : function() {
     return document.selection ? function() {
       document.selection.empty();
@@ -911,7 +956,7 @@ var mxUtils = {
     s = String(s || "");
     s = s.replace(/&/g, "&amp;");
     s = s.replace(/"/g, "&quot;");
-    s = s.replace(/'/g, "&#39;");
+    s = s.replace(/\'/g, "&#39;");
     s = s.replace(/</g, "&lt;");
     s = s.replace(/>/g, "&gt;");
     if (null == layer || layer) {
@@ -919,10 +964,8 @@ var mxUtils = {
     }
     return s;
   },
-  decodeHtml : function(str) {
-    var ta = document.createElement("textarea");
-    ta.innerHTML = str;
-    return ta.value;
+  isVml : function(node) {
+    return null != node && "urn:schemas-microsoft-com:vml" == node.tagUrn;
   },
   getXml : function(node, linefeed) {
     var xml = "";
@@ -1099,8 +1142,8 @@ var mxUtils = {
     }
     return node;
   },
-  writeln : function(parent, text) {
-    var node = parent.ownerDocument.createTextNode(text);
+  writeln : function(parent, title) {
+    var node = parent.ownerDocument.createTextNode(title);
     if (null != parent) {
       parent.appendChild(node);
       parent.appendChild(document.createElement("br"));
@@ -1227,8 +1270,8 @@ var mxUtils = {
     for (var i = 0;i < urls.length;i++) {
       (function(cell, index) {
         mxUtils.get(cell, function(req) {
-          var status = req.getStatus();
-          if (200 > status || 299 < status) {
+          var f = req.getStatus();
+          if (200 > f || 299 < f) {
             err();
           } else {
             result[index] = req;
@@ -1287,25 +1330,15 @@ var mxUtils = {
     }
     return value;
   },
-  isEmptyObject : function(a) {
-    for (var key in a) {
-      return false;
-    }
-    return true;
-  },
-  clone : function(obj, transients, shallow) {
-    shallow = null != shallow ? shallow : false;
+  clone : function(obj, connectingEdge, initialMove) {
+    initialMove = null != initialMove ? initialMove : false;
     var clone = null;
     if (null != obj && "function" == typeof obj.constructor) {
-      if (obj.constructor === Element) {
-        clone = obj.cloneNode(null != shallow ? !shallow : false);
-      } else {
-        clone = new obj.constructor;
-        for (var i in obj) {
-          if (i != mxObjectIdentity.FIELD_NAME) {
-            if (null == transients || 0 > mxUtils.indexOf(transients, i)) {
-              clone[i] = shallow || "object" != typeof obj[i] ? obj[i] : mxUtils.clone(obj[i]);
-            }
+      clone = new obj.constructor;
+      for (var i in obj) {
+        if (i != mxObjectIdentity.FIELD_NAME) {
+          if (null == connectingEdge || 0 > mxUtils.indexOf(connectingEdge, i)) {
+            clone[i] = initialMove || "object" != typeof obj[i] ? obj[i] : mxUtils.clone(obj[i]);
           }
         }
       }
@@ -1375,7 +1408,7 @@ var mxUtils = {
           } else {
             if ("object" == typeof obj[i]) {
               var ctor = mxUtils.getFunctionName(obj[i].constructor);
-              output += i + " => [" + ctor + "]\n";
+              output = output + (i + " => [" + ctor + "]\n");
             } else {
               output += i + " = " + obj[i] + "\n";
             }
@@ -1404,7 +1437,7 @@ var mxUtils = {
     var ryd = -x / 2;
     var txd = -y / 2;
     var cpsi = Math.cos(rxd * Math.PI / 180);
-    spsi = Math.sin(rxd * Math.PI / 180);
+    var spsi = Math.sin(rxd * Math.PI / 180);
     rxd = cpsi * ryd + spsi * txd;
     ryd = -1 * spsi * ryd + cpsi * txd;
     txd = rxd * rxd;
@@ -1452,7 +1485,7 @@ var mxUtils = {
     var cos = Math.sin(alpha);
     tyd = -ryd * (txd * cos + r2 * sin);
     r1x = -ryd * (r1 * cos - cpsi * sin);
-    var spsi = [];
+    spsi = [];
     for (var A = 0;A < sweepFlag;++A) {
       alpha += rxd;
       sin = Math.cos(alpha);
@@ -1589,7 +1622,8 @@ var mxUtils = {
     return state;
   },
   reversePortConstraints : function(constraint) {
-    var b = (constraint & mxConstants.DIRECTION_MASK_WEST) << 3;
+    var b;
+    b = (constraint & mxConstants.DIRECTION_MASK_WEST) << 3;
     b |= (constraint & mxConstants.DIRECTION_MASK_NORTH) << 1;
     b |= (constraint & mxConstants.DIRECTION_MASK_SOUTH) >> 1;
     return b |= (constraint & mxConstants.DIRECTION_MASK_EAST) >> 3;
@@ -1611,38 +1645,38 @@ var mxUtils = {
     }
     return index;
   },
-  getDirectedBounds : function(rect, m, style, flipH, flipV) {
-    var direction = mxUtils.getValue(style, mxConstants.STYLE_DIRECTION, mxConstants.DIRECTION_EAST);
-    flipH = null != flipH ? flipH : mxUtils.getValue(style, mxConstants.STYLE_FLIPH, false);
+  getDirectedBounds : function(rect, m, style, m2, flipV) {
+    var d = mxUtils.getValue(style, mxConstants.STYLE_DIRECTION, mxConstants.DIRECTION_EAST);
+    m2 = null != m2 ? m2 : mxUtils.getValue(style, mxConstants.STYLE_FLIPH, false);
     flipV = null != flipV ? flipV : mxUtils.getValue(style, mxConstants.STYLE_FLIPV, false);
     m.x = Math.round(Math.max(0, Math.min(rect.width, m.x)));
     m.y = Math.round(Math.max(0, Math.min(rect.height, m.y)));
     m.width = Math.round(Math.max(0, Math.min(rect.width, m.width)));
     m.height = Math.round(Math.max(0, Math.min(rect.height, m.height)));
-    if (flipV && (direction == mxConstants.DIRECTION_SOUTH || direction == mxConstants.DIRECTION_NORTH) || flipH && (direction == mxConstants.DIRECTION_EAST || direction == mxConstants.DIRECTION_WEST)) {
+    if (flipV && (d == mxConstants.DIRECTION_SOUTH || d == mxConstants.DIRECTION_NORTH) || m2 && (d == mxConstants.DIRECTION_EAST || d == mxConstants.DIRECTION_WEST)) {
       style = m.x;
       m.x = m.width;
       m.width = style;
     }
-    if (flipH && (direction == mxConstants.DIRECTION_SOUTH || direction == mxConstants.DIRECTION_NORTH) || flipV && (direction == mxConstants.DIRECTION_EAST || direction == mxConstants.DIRECTION_WEST)) {
+    if (m2 && (d == mxConstants.DIRECTION_SOUTH || d == mxConstants.DIRECTION_NORTH) || flipV && (d == mxConstants.DIRECTION_EAST || d == mxConstants.DIRECTION_WEST)) {
       style = m.y;
       m.y = m.height;
       m.height = style;
     }
-    var m2 = mxRectangle.fromRectangle(m);
-    if (direction == mxConstants.DIRECTION_SOUTH) {
+    m2 = mxRectangle.fromRectangle(m);
+    if (d == mxConstants.DIRECTION_SOUTH) {
       m2.y = m.x;
       m2.x = m.height;
       m2.width = m.y;
       m2.height = m.width;
     } else {
-      if (direction == mxConstants.DIRECTION_WEST) {
+      if (d == mxConstants.DIRECTION_WEST) {
         m2.y = m.height;
         m2.x = m.width;
         m2.width = m.x;
         m2.height = m.y;
       } else {
-        if (direction == mxConstants.DIRECTION_NORTH) {
+        if (d == mxConstants.DIRECTION_NORTH) {
           m2.y = m.width;
           m2.x = m.y;
           m2.width = m.height;
@@ -1671,14 +1705,6 @@ var mxUtils = {
       }
     }
     return null != min ? min.p : null;
-  },
-  intersectsPoints : function(rect, pts) {
-    for (var i = 0;i < pts.length - 1;i++) {
-      if (mxUtils.rectangleIntersectsSegment(rect, pts[i], pts[i + 1])) {
-        return true;
-      }
-    }
-    return false;
   },
   rectangleIntersectsSegment : function(bounds, p1, p2) {
     var top = bounds.y;
@@ -1725,16 +1751,16 @@ var mxUtils = {
   contains : function(cell, x, y) {
     return cell.x <= x && (cell.x + cell.width >= x && (cell.y <= y && cell.y + cell.height >= y));
   },
-  intersects : function(a, x) {
-    var tw = a.width;
-    var th = a.height;
+  intersects : function(state, x) {
+    var tw = state.width;
+    var th = state.height;
     var rw = x.width;
     var rh = x.height;
     if (0 >= rw || (0 >= rh || (0 >= tw || 0 >= th))) {
       return false;
     }
-    var tx = a.x;
-    var ty = a.y;
+    var tx = state.x;
+    var ty = state.y;
     var rx = x.x;
     var ry = x.y;
     rw = rw + rx;
@@ -1782,34 +1808,37 @@ var mxUtils = {
     }
     return true;
   },
-  getOffset : function(container, offset) {
+  getOffset : function(container, scrollOffset) {
     var offsetLeft = 0;
     var offsetTop = 0;
-    var fixed = false;
+    var r = false;
     var node = container;
     var b = document.body;
-    for (var d = document.documentElement;null != node && (node != b && (node != d && !fixed));) {
+    for (var d = document.documentElement;null != node && (node != b && (node != d && !r));) {
       var style = mxUtils.getCurrentStyle(node);
       if (null != style) {
-        fixed = fixed || "fixed" == style.position;
+        r = r || "fixed" == style.position;
       }
       node = node.parentNode;
     }
-    if (!offset) {
-      if (!fixed) {
-        offset = mxUtils.getDocumentScrollOrigin(container.ownerDocument);
-        offsetLeft += offset.x;
-        offsetTop += offset.y;
+    if (!scrollOffset) {
+      if (!r) {
+        r = mxUtils.getDocumentScrollOrigin(container.ownerDocument);
+        offsetLeft += r.x;
+        offsetTop += r.y;
       }
     }
-    container = container.getBoundingClientRect();
-    if (null != container) {
-      offsetLeft += container.left;
-      offsetTop += container.top;
+    r = container.getBoundingClientRect();
+    if (null != r) {
+      offsetLeft += r.left;
+      offsetTop += r.top;
     }
     return new mxPoint(offsetLeft, offsetTop);
   },
   getDocumentScrollOrigin : function(doc) {
+    if (mxClient.IS_QUIRKS) {
+      return new mxPoint(doc.body.scrollLeft, doc.body.scrollTop);
+    }
     doc = doc.defaultView || doc.parentWindow;
     return new mxPoint(null != doc && void 0 !== window.pageXOffset ? window.pageXOffset : (document.documentElement || (document.body.parentNode || document.body)).scrollLeft, null != doc && void 0 !== window.pageYOffset ? window.pageYOffset : (document.documentElement || (document.body.parentNode || document.body)).scrollTop);
   },
@@ -1842,12 +1871,12 @@ var mxUtils = {
     }
     return result;
   },
-  convertPoint : function(point, gridEnabled, y) {
-    var offset = mxUtils.getScrollOrigin(point, false);
-    point = mxUtils.getOffset(point);
-    point.x -= offset.x;
-    point.y -= offset.y;
-    return new mxPoint(gridEnabled - point.x, y - point.y);
+  convertPoint : function(container, gridEnabled, evt) {
+    var origin = mxUtils.getScrollOrigin(container, false);
+    container = mxUtils.getOffset(container);
+    container.x -= origin.x;
+    container.y -= origin.y;
+    return new mxPoint(gridEnabled - container.x, evt - container.y);
   },
   ltrim : function(str, chars) {
     return null != str ? str.replace(new RegExp("^[" + (chars || "\\s") + "]+", "g"), "") : null;
@@ -1864,8 +1893,8 @@ var mxUtils = {
   isInteger : function(n) {
     return String(parseInt(n)) === String(n);
   },
-  mod : function(array, defaultValue) {
-    return(array % defaultValue + defaultValue) % defaultValue;
+  mod : function(angle, defaultValue) {
+    return(angle % defaultValue + defaultValue) % defaultValue;
   },
   intersection : function(x2, y0, x0, y1, x1, y2, x3, y3) {
     var l = (y3 - y2) * (x0 - x2) - (x3 - x1) * (y1 - y0);
@@ -1922,34 +1951,45 @@ var mxUtils = {
     mxEffects.fadeOut.apply(this, arguments);
   },
   setOpacity : function(node, opacity) {
-    if (mxClient.IS_IE && ("undefined" === typeof document.documentMode || 9 > document.documentMode)) {
-      node.style.filter = 100 <= opacity ? "" : "alpha(opacity=" + opacity + ")";
+    if (mxUtils.isVml(node)) {
+      node.style.filter = 100 <= opacity ? "" : "alpha(opacity=" + opacity / 5 + ")";
     } else {
-      node.style.opacity = opacity / 100;
+      if (mxClient.IS_IE && ("undefined" === typeof document.documentMode || 9 > document.documentMode)) {
+        node.style.filter = 100 <= opacity ? "" : "alpha(opacity=" + opacity + ")";
+      } else {
+        node.style.opacity = opacity / 100;
+      }
     }
   },
   createImage : function(src) {
-    var imageNode = document.createElement("img");
-    imageNode.setAttribute("src", src);
-    imageNode.setAttribute("border", "0");
+    var imageNode;
+    if (mxClient.IS_IE6 && "CSS1Compat" != document.compatMode) {
+      imageNode = document.createElement(mxClient.VML_PREFIX + ":image");
+      imageNode.setAttribute("src", src);
+      imageNode.style.borderStyle = "none";
+    } else {
+      imageNode = document.createElement("img");
+      imageNode.setAttribute("src", src);
+      imageNode.setAttribute("border", "0");
+    }
     return imageNode;
   },
   sortCells : function(cells, initialMove) {
     initialMove = null != initialMove ? initialMove : true;
-    var dict = new mxDictionary;
-    cells.sort(function(terminal, cell) {
-      var p1 = dict.get(terminal);
+    var lookup = new mxDictionary;
+    cells.sort(function(cell, terminal) {
+      var p1 = lookup.get(cell);
       if (null == p1) {
-        p1 = mxCellPath.create(terminal).split(mxCellPath.PATH_SEPARATOR);
-        dict.put(terminal, p1);
+        p1 = mxCellPath.create(cell).split(mxCellPath.PATH_SEPARATOR);
+        lookup.put(cell, p1);
       }
-      terminal = dict.get(cell);
-      if (null == terminal) {
-        terminal = mxCellPath.create(cell).split(mxCellPath.PATH_SEPARATOR);
-        dict.put(cell, terminal);
+      var p2 = lookup.get(terminal);
+      if (null == p2) {
+        p2 = mxCellPath.create(terminal).split(mxCellPath.PATH_SEPARATOR);
+        lookup.put(terminal, p2);
       }
-      cell = mxCellPath.compare(p1, terminal);
-      return 0 == cell ? 0 : 0 < cell == initialMove ? 1 : -1;
+      p1 = mxCellPath.compare(p1, p2);
+      return 0 == p1 ? 0 : 0 < p1 == initialMove ? 1 : -1;
     });
     return cells;
   },
@@ -1968,9 +2008,9 @@ var mxUtils = {
     }
     return result;
   },
-  indexOfStylename : function(tokens, stylename) {
-    if (null != tokens && null != stylename) {
-      tokens = tokens.split(";");
+  indexOfStylename : function(style, stylename) {
+    if (null != style && null != stylename) {
+      var tokens = style.split(";");
       var pos = 0;
       for (var i = 0;i < tokens.length;i++) {
         if (tokens[i] == stylename) {
@@ -1996,10 +2036,10 @@ var mxUtils = {
     }
     return style;
   },
-  removeStylename : function(tokens, stylename) {
+  removeStylename : function(style, stylename) {
     var result = [];
-    if (null != tokens) {
-      tokens = tokens.split(";");
+    if (null != style) {
+      var tokens = style.split(";");
       for (var i = 0;i < tokens.length;i++) {
         if (tokens[i] != stylename) {
           result.push(tokens[i]);
@@ -2032,45 +2072,6 @@ var mxUtils = {
         }
       } finally {
         model.endUpdate();
-      }
-    }
-  },
-  hex2rgb : function(url) {
-    if (null != url && (7 == url.length && "#" == url.charAt(0))) {
-      var current = parseInt(url.substring(1, 3), 16);
-      var w = parseInt(url.substring(3, 5), 16);
-      url = parseInt(url.substring(5, 7), 16);
-      url = "rgb(" + current + ", " + w + ", " + url + ")";
-    }
-    return url;
-  },
-  hex2rgba : function(url) {
-    if (null != url && (7 <= url.length && "#" == url.charAt(0))) {
-      var current = parseInt(url.substring(1, 3), 16);
-      var w = parseInt(url.substring(3, 5), 16);
-      var left = parseInt(url.substring(5, 7), 16);
-      var e = 1;
-      if (7 < url.length) {
-        e = parseInt(url.substring(7, 9), 16) / 255;
-      }
-      url = "rgba(" + current + ", " + w + ", " + left + ", " + e + ")";
-    }
-    return url;
-  },
-  rgba2hex : function(start) {
-    return(rgb = start && start.match ? start.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?/i) : start) && 4 === rgb.length ? "#" + ("0" + parseInt(rgb[1], 10).toString(16)).slice(-2) + ("0" + parseInt(rgb[2], 10).toString(16)).slice(-2) + ("0" + parseInt(rgb[3], 10).toString(16)).slice(-2) : start;
-  },
-  setCssText : function(fo, value) {
-    if (null != fo && null != value) {
-      value = value.split(";");
-      for (var i = 0;i < value.length;i++) {
-        var lines = value[i].split(":");
-        if (1 < lines.length) {
-          lines[0] = mxUtils.trim(lines[0].replace(/-([a-z])/gi, function(editor, flex) {
-            return flex.toUpperCase();
-          }));
-          fo[lines[0]] = mxUtils.trim(lines[1]);
-        }
       }
     }
   },
@@ -2124,7 +2125,8 @@ var mxUtils = {
         style = value || null == value ? style + index + key + "=" + flag : style + index + key + "=0";
       } else {
         var cont = style.indexOf(";", index);
-        var tmp = 0 > cont ? style.substring(index + key.length + 1) : style.substring(index + key.length + 1, cont);
+        var tmp;
+        tmp = 0 > cont ? style.substring(index + key.length + 1) : style.substring(index + key.length + 1, cont);
         tmp = null == value ? parseInt(tmp) ^ flag : value ? parseInt(tmp) | flag : parseInt(tmp) & ~flag;
         style = style.substring(0, index) + key + "=" + tmp + (0 <= cont ? style.substring(cont) : "");
       }
@@ -2150,13 +2152,13 @@ var mxUtils = {
     }
     return new mxPoint(x, y);
   },
-  getSizeForString : function(text, fontSize, fontFamily, width, fontStyle) {
+  getSizeForString : function(text, fontSize, fontFamily, textWidth, fontStyle) {
     fontSize = null != fontSize ? fontSize : mxConstants.DEFAULT_FONTSIZE;
     fontFamily = null != fontFamily ? fontFamily : mxConstants.DEFAULT_FONTFAMILY;
     var div = document.createElement("div");
     div.style.fontFamily = fontFamily;
     div.style.fontSize = Math.round(fontSize) + "px";
-    div.style.lineHeight = mxConstants.ABSOLUTE_LINE_HEIGHT ? fontSize * mxConstants.LINE_HEIGHT + "px" : mxConstants.LINE_HEIGHT * mxSvgCanvas2D.prototype.lineHeightCorrection;
+    div.style.lineHeight = Math.round(fontSize * mxConstants.LINE_HEIGHT) + "px";
     if (null != fontStyle) {
       if ((fontStyle & mxConstants.FONT_BOLD) == mxConstants.FONT_BOLD) {
         div.style.fontWeight = "bold";
@@ -2177,10 +2179,10 @@ var mxUtils = {
     }
     div.style.position = "absolute";
     div.style.visibility = "hidden";
-    div.style.display = "inline-block";
+    div.style.display = mxClient.IS_QUIRKS ? "inline" : "inline-block";
     div.style.zoom = "1";
-    if (null != width) {
-      div.style.width = width + "px";
+    if (null != textWidth) {
+      div.style.width = textWidth + "px";
       div.style.whiteSpace = "normal";
     } else {
       div.style.whiteSpace = "nowrap";
@@ -2313,7 +2315,7 @@ var mxUtils = {
         } catch (m) {
         }
       }
-      y0 = y0 + '</style></head><body style="margin:0px;"><div style="position:absolute;overflow:hidden;width:' + (node + "px;height:" + tmp + 'px;"><div style="position:relative;left:' + dx + "px;top:" + dy + 'px;">') + graph.container.innerHTML;
+      y0 = y0 + '</style></head><body style="margin:0px;">' + ('<div style="position:absolute;overflow:hidden;width:' + node + "px;height:" + tmp + 'px;"><div style="position:relative;left:' + dx + "px;top:" + dy + 'px;">') + graph.container.innerHTML;
       doc.writeln(y0 + "</div></div></body><html>");
       doc.close();
     } else {
@@ -2380,13 +2382,13 @@ var mxUtils = {
       print();
     }
   },
-  popup : function(content, pre) {
-    if (pre) {
+  popup : function(content, isInternalWindow) {
+    if (isInternalWindow) {
       var div = document.createElement("div");
       div.style.overflow = "scroll";
       div.style.width = "636px";
       div.style.height = "460px";
-      pre = document.createElement("pre");
+      var pre = document.createElement("pre");
       pre.innerHTML = mxUtils.htmlEntities(content, false).replace(/\n/g, "<br>").replace(/ /g, "&nbsp;");
       div.appendChild(pre);
       div = new mxWindow("Popup Window", div, document.body.clientWidth / 2 - 320, Math.max(document.body.clientHeight || 0, document.documentElement.clientHeight) / 2 - 240, 640, 480, false, true);
@@ -2408,8 +2410,8 @@ var mxUtils = {
   alert : function(message) {
     alert(message);
   },
-  prompt : function(message, defaultValue) {
-    return prompt(message, null != defaultValue ? defaultValue : "");
+  prompt : function(message, scale) {
+    return prompt(message, null != scale ? scale : "");
   },
   confirm : function(message) {
     return confirm(message);
@@ -2450,7 +2452,7 @@ var mxUtils = {
     warn.setVisible(true);
     return warn;
   },
-  makeDraggable : function(dragSource, graphF, funct, dragElement, dx, dy, autoscroll, scalePreview, highlightDropTargets, getDropTarget) {
+  makeDraggable : function(dragSource, graphF, funct, node, dx, dy, autoscroll, scalePreview, highlightDropTargets, getDropTarget) {
     dragSource = new mxDragSource(dragSource, funct);
     dragSource.dragOffset = new mxPoint(null != dx ? dx : 0, null != dy ? dy : mxConstants.TOOLTIP_VERTICAL_OFFSET);
     dragSource.autoscroll = autoscroll;
@@ -2464,13 +2466,13 @@ var mxUtils = {
     dragSource.getGraphForEvent = function(evt) {
       return "function" == typeof graphF ? graphF(evt) : graphF;
     };
-    if (null != dragElement) {
+    if (null != node) {
       dragSource.createDragElement = function() {
-        return dragElement.cloneNode(true);
+        return node.cloneNode(true);
       };
       if (scalePreview) {
         dragSource.createPreviewElement = function(graph) {
-          var elt = dragElement.cloneNode(true);
+          var elt = node.cloneNode(true);
           var h = parseInt(elt.style.width);
           var w = parseInt(elt.style.height);
           elt.style.width = Math.round(h * graph.view.scale) + "px";
@@ -2480,9 +2482,6 @@ var mxUtils = {
       }
     }
     return dragSource;
-  },
-  format : function(value) {
-    return parseFloat(parseFloat(value).toFixed(2));
   }
 };
 var mxConstants = {
@@ -2493,6 +2492,7 @@ var mxConstants = {
   RENDERING_HINT_FASTER : "faster",
   RENDERING_HINT_FASTEST : "fastest",
   DIALECT_SVG : "svg",
+  DIALECT_VML : "vml",
   DIALECT_MIXEDHTML : "mixedHtml",
   DIALECT_PREFERHTML : "preferHtml",
   DIALECT_STRICTHTML : "strictHtml",
@@ -2586,12 +2586,10 @@ var mxConstants = {
   STYLE_TARGET_PORT_CONSTRAINT : "targetPortConstraint",
   STYLE_OPACITY : "opacity",
   STYLE_FILL_OPACITY : "fillOpacity",
-  STYLE_FILL_STYLE : "fillStyle",
   STYLE_STROKE_OPACITY : "strokeOpacity",
   STYLE_TEXT_OPACITY : "textOpacity",
   STYLE_TEXT_DIRECTION : "textDirection",
   STYLE_OVERFLOW : "overflow",
-  STYLE_BLOCK_SPACING : "blockSpacing",
   STYLE_ORTHOGONAL : "orthogonal",
   STYLE_EXIT_X : "exitX",
   STYLE_EXIT_Y : "exitY",
@@ -2651,8 +2649,6 @@ var mxConstants = {
   STYLE_ENDSIZE : "endSize",
   STYLE_STARTSIZE : "startSize",
   STYLE_SWIMLANE_LINE : "swimlaneLine",
-  STYLE_SWIMLANE_HEAD : "swimlaneHead",
-  STYLE_SWIMLANE_BODY : "swimlaneBody",
   STYLE_ENDFILL : "endFill",
   STYLE_STARTFILL : "startFill",
   STYLE_DASHED : "dashed",
@@ -2680,7 +2676,6 @@ var mxConstants = {
   STYLE_FONTSTYLE : "fontStyle",
   STYLE_ASPECT : "aspect",
   STYLE_AUTOSIZE : "autosize",
-  STYLE_FIXED_WIDTH : "fixedWidth",
   STYLE_FOLDABLE : "foldable",
   STYLE_EDITABLE : "editable",
   STYLE_BACKGROUND_OUTLINE : "backgroundOutline",
@@ -2701,7 +2696,6 @@ var mxConstants = {
   STYLE_ORTHOGONAL_LOOP : "orthogonalLoop",
   STYLE_ROUTING_CENTER_X : "routingCenterX",
   STYLE_ROUTING_CENTER_Y : "routingCenterY",
-  STYLE_CLIP_PATH : "clipPath",
   FONT_BOLD : 1,
   FONT_ITALIC : 2,
   FONT_UNDERLINE : 4,
@@ -2741,7 +2735,6 @@ var mxConstants = {
   DIRECTION_SOUTH : "south",
   DIRECTION_EAST : "east",
   DIRECTION_WEST : "west",
-  DIRECTION_RADIAL : "radial",
   TEXT_DIRECTION_DEFAULT : "",
   TEXT_DIRECTION_AUTO : "auto",
   TEXT_DIRECTION_LTR : "ltr",
@@ -2785,8 +2778,8 @@ mxEventObject.prototype.getName = function() {
 mxEventObject.prototype.getProperties = function() {
   return this.properties;
 };
-mxEventObject.prototype.getProperty = function(key) {
-  return this.properties[key];
+mxEventObject.prototype.getProperty = function(actionname) {
+  return this.properties[actionname];
 };
 mxEventObject.prototype.isConsumed = function() {
   return this.consumed;
@@ -2896,41 +2889,27 @@ mxEventSource.prototype.fireEvent = function(evt, sender) {
     if (null == sender) {
       sender = this;
     }
+    var args = [sender, evt];
     for (var i = 0;i < this.eventListeners.length;i += 2) {
       var listen = this.eventListeners[i];
       if (!(null != listen && listen != evt.getName())) {
-        this.eventListeners[i + 1].apply(this, [sender, evt]);
+        this.eventListeners[i + 1].apply(this, args);
       }
     }
   }
 };
 var mxEvent = {
   addListener : function() {
-    if (window.addEventListener) {
-      var a = false;
-      try {
-        document.addEventListener("test", function() {
-        }, Object.defineProperty && Object.defineProperty({}, "passive", {
-          get : function() {
-            a = true;
-          }
-        }));
-      } catch (b) {
+    return window.addEventListener ? function(element, eventName, funct) {
+      element.addEventListener(eventName, funct, false);
+      if (null == element.mxListenerList) {
+        element.mxListenerList = [];
       }
-      return function(element, eventName, funct) {
-        element.addEventListener(eventName, funct, a ? {
-          passive : false
-        } : false);
-        if (null == element.mxListenerList) {
-          element.mxListenerList = [];
-        }
-        element.mxListenerList.push({
-          name : eventName,
-          f : funct
-        });
-      };
-    }
-    return function(element, eventName, funct) {
+      element.mxListenerList.push({
+        name : eventName,
+        f : funct
+      });
+    } : function(element, eventName, funct) {
       element.attachEvent("on" + eventName, funct);
       if (null == element.mxListenerList) {
         element.mxListenerList = [];
@@ -3142,8 +3121,8 @@ var mxEvent = {
       });
     }
   },
-  disableContextMenu : function(element) {
-    mxEvent.addListener(element, "contextmenu", function(evt) {
+  disableContextMenu : function(node) {
+    mxEvent.addListener(node, "contextmenu", function(evt) {
       if (evt.preventDefault) {
         evt.preventDefault();
       }
@@ -3166,7 +3145,7 @@ var mxEvent = {
     return null != evt.type && (0 == evt.type.indexOf("touch") && (null != evt.touches && 1 < evt.touches.length));
   },
   isMouseEvent : function(evt) {
-    return!mxClient.IS_ANDROID && (mxClient.IS_LINUX && mxClient.IS_GC) ? true : null != evt.pointerType ? "mouse" == evt.pointerType || evt.pointerType === evt.MSPOINTER_TYPE_MOUSE : null != evt.mozInputSource ? 1 == evt.mozInputSource : 0 == evt.type.indexOf("mouse");
+    return null != evt.pointerType ? "mouse" == evt.pointerType || evt.pointerType === evt.MSPOINTER_TYPE_MOUSE : null != evt.mozInputSource ? 1 == evt.mozInputSource : 0 == evt.type.indexOf("mouse");
   },
   isLeftMouseButton : function(evt) {
     return "buttons" in evt && ("mousedown" == evt.type || "mousemove" == evt.type) ? 1 == evt.buttons : "which" in evt ? 1 === evt.which : 1 === evt.button;
@@ -3413,12 +3392,14 @@ mxXmlRequest.prototype.send = function(onload, onerror, timeout, ontimeout) {
         this.request.withCredentials = "true";
       }
     }
-    if (null == document.documentMode || 9 < document.documentMode) {
-      if (window.XMLHttpRequest) {
-        if (null != timeout) {
-          if (null != ontimeout) {
-            this.request.timeout = timeout;
-            this.request.ontimeout = ontimeout;
+    if (!mxClient.IS_QUIRKS) {
+      if (null == document.documentMode || 9 < document.documentMode) {
+        if (window.XMLHttpRequest) {
+          if (null != timeout) {
+            if (null != ontimeout) {
+              this.request.timeout = timeout;
+              this.request.ontimeout = ontimeout;
+            }
           }
         }
       }
@@ -3431,7 +3412,7 @@ mxXmlRequest.prototype.setRequestHeaders = function(request, params) {
     request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
   }
 };
-mxXmlRequest.prototype.simulate = function(doc, pars) {
+mxXmlRequest.prototype.simulate = function(doc, name) {
   doc = doc || document;
   var old = null;
   if (doc == document) {
@@ -3441,12 +3422,12 @@ mxXmlRequest.prototype.simulate = function(doc, pars) {
   var form = doc.createElement("form");
   form.setAttribute("method", this.method);
   form.setAttribute("action", this.url);
-  if (null != pars) {
-    form.setAttribute("target", pars);
+  if (null != name) {
+    form.setAttribute("target", name);
   }
   form.style.display = "none";
   form.style.visibility = "hidden";
-  pars = 0 < this.params.indexOf("&") ? this.params.split("&") : this.params.split();
+  var pars = 0 < this.params.indexOf("&") ? this.params.split("&") : this.params.split();
   for (var i = 0;i < pars.length;i++) {
     var value = pars[i].indexOf("=");
     if (0 < value) {
@@ -3487,15 +3468,15 @@ var mxClipboard = {
   cut : function(graph, cells) {
     cells = mxClipboard.copy(graph, cells);
     mxClipboard.insertCount = 0;
-    mxClipboard.removeCells(graph, cells, false);
+    mxClipboard.removeCells(graph, cells);
     return cells;
   },
-  removeCells : function(graph, cells, includeEdges) {
-    graph.removeCells(cells, includeEdges);
+  removeCells : function(graph, cells) {
+    graph.removeCells(cells);
   },
-  copy : function(graph, cells) {
-    cells = cells || graph.getSelectionCells();
-    cells = graph.getExportableCells(graph.model.getTopmostCells(cells));
+  copy : function(graph, flag) {
+    flag = flag || graph.getSelectionCells();
+    var cells = graph.getExportableCells(graph.model.getTopmostCells(flag));
     mxClipboard.insertCount = 1;
     mxClipboard.setCells(graph.cloneCells(cells));
     return cells;
@@ -3558,11 +3539,15 @@ mxWindow.prototype.init = function(container, tr, width, height, style) {
     this.div.style.touchAction = "none";
   }
   if (null != width) {
-    this.div.style.width = width + "px";
+    if (!mxClient.IS_QUIRKS) {
+      this.div.style.width = width + "px";
+    }
     this.table.style.width = width + "px";
   }
   if (null != height) {
-    this.div.style.height = height + "px";
+    if (!mxClient.IS_QUIRKS) {
+      this.div.style.height = height + "px";
+    }
     this.table.style.height = height + "px";
   }
   container = document.createElement("tbody");
@@ -3587,7 +3572,7 @@ mxWindow.prototype.init = function(container, tr, width, height, style) {
   this.contentWrapper.className = style + "Pane";
   this.contentWrapper.style.width = "100%";
   this.contentWrapper.appendChild(this.content);
-  if ("DIV" != this.content.nodeName.toUpperCase()) {
+  if (mxClient.IS_QUIRKS || "DIV" != this.content.nodeName.toUpperCase()) {
     this.contentWrapper.style.height = "100%";
   }
   this.td.appendChild(this.contentWrapper);
@@ -3645,8 +3630,8 @@ mxWindow.prototype.fit = function() {
 mxWindow.prototype.isResizable = function() {
   return null != this.resize ? "none" != this.resize.style.display : false;
 };
-mxWindow.prototype.setResizable = function(funct) {
-  if (funct) {
+mxWindow.prototype.setResizable = function(paint) {
+  if (paint) {
     if (null == this.resize) {
       this.resize = document.createElement("img");
       this.resize.style.position = "absolute";
@@ -3658,7 +3643,7 @@ mxWindow.prototype.setResizable = function(funct) {
       var startY = null;
       var width = null;
       var height = null;
-      funct = mxUtils.bind(this, function(evt) {
+      paint = mxUtils.bind(this, function(evt) {
         this.activate();
         startX = mxEvent.getClientX(evt);
         startY = mxEvent.getClientY(evt);
@@ -3687,7 +3672,7 @@ mxWindow.prototype.setResizable = function(funct) {
           }
         }
       });
-      mxEvent.addGestureListeners(this.resize, funct, dragHandler, dropHandler);
+      mxEvent.addGestureListeners(this.resize, paint, dragHandler, dropHandler);
       this.div.appendChild(this.resize);
     } else {
       this.resize.style.display = "inline";
@@ -3701,73 +3686,81 @@ mxWindow.prototype.setResizable = function(funct) {
 mxWindow.prototype.setSize = function(width, height) {
   width = Math.max(this.minimumSize.width, width);
   height = Math.max(this.minimumSize.height, height);
-  this.div.style.width = width + "px";
-  this.div.style.height = height + "px";
+  if (!mxClient.IS_QUIRKS) {
+    this.div.style.width = width + "px";
+    this.div.style.height = height + "px";
+  }
   this.table.style.width = width + "px";
   this.table.style.height = height + "px";
-  this.contentWrapper.style.height = this.div.offsetHeight - this.title.offsetHeight - this.contentHeightCorrection + "px";
+  if (!mxClient.IS_QUIRKS) {
+    this.contentWrapper.style.height = this.div.offsetHeight - this.title.offsetHeight - this.contentHeightCorrection + "px";
+  }
 };
 mxWindow.prototype.setMinimizable = function(minimizable) {
-  this.minimizeImg.style.display = minimizable ? "" : "none";
+  this.minimize.style.display = minimizable ? "" : "none";
 };
 mxWindow.prototype.getMinimumSize = function() {
   return new mxRectangle(0, 0, 0, this.title.offsetHeight);
 };
-mxWindow.prototype.toggleMinimized = function(evt) {
-  this.activate();
-  if (this.minimized) {
-    this.minimized = false;
-    this.minimizeImg.setAttribute("src", this.minimizeImage);
-    this.minimizeImg.setAttribute("title", "Minimize");
-    this.contentWrapper.style.display = "";
-    this.maximize.style.display = this.maxDisplay;
-    this.div.style.height = this.height;
-    this.table.style.height = this.height;
-    if (null != this.resize) {
-      this.resize.style.visibility = "";
-    }
-    this.fireEvent(new mxEventObject(mxEvent.NORMALIZE, "event", evt));
-  } else {
-    this.minimized = true;
-    this.minimizeImg.setAttribute("src", this.normalizeImage);
-    this.minimizeImg.setAttribute("title", "Normalize");
-    this.contentWrapper.style.display = "none";
-    this.maxDisplay = this.maximize.style.display;
-    this.maximize.style.display = "none";
-    this.height = this.table.style.height;
-    var minSize = this.getMinimumSize();
-    if (0 < minSize.height) {
-      this.div.style.height = minSize.height + "px";
-      this.table.style.height = minSize.height + "px";
-    }
-    if (0 < minSize.width) {
-      this.div.style.width = minSize.width + "px";
-      this.table.style.width = minSize.width + "px";
-    }
-    if (null != this.resize) {
-      this.resize.style.visibility = "hidden";
-    }
-    this.fireEvent(new mxEventObject(mxEvent.MINIMIZE, "event", evt));
-  }
-};
 mxWindow.prototype.installMinimizeHandler = function() {
-  this.minimizeImg = document.createElement("img");
-  this.minimizeImg.setAttribute("src", this.minimizeImage);
-  this.minimizeImg.setAttribute("title", "Minimize");
-  this.minimizeImg.style.cursor = "pointer";
-  this.minimizeImg.style.marginLeft = "2px";
-  this.minimizeImg.style.display = "none";
-  this.buttons.appendChild(this.minimizeImg);
-  this.minimized = false;
-  this.height = this.maxDisplay = null;
+  this.minimize = document.createElement("img");
+  this.minimize.setAttribute("src", this.minimizeImage);
+  this.minimize.setAttribute("title", "Minimize");
+  this.minimize.style.cursor = "pointer";
+  this.minimize.style.marginLeft = "2px";
+  this.minimize.style.display = "none";
+  this.buttons.appendChild(this.minimize);
+  var a = false;
+  var maxDisplay = null;
+  var height = null;
   var funct = mxUtils.bind(this, function(evt) {
-    this.toggleMinimized(evt);
+    this.activate();
+    if (a) {
+      a = false;
+      this.minimize.setAttribute("src", this.minimizeImage);
+      this.minimize.setAttribute("title", "Minimize");
+      this.contentWrapper.style.display = "";
+      this.maximize.style.display = maxDisplay;
+      if (!mxClient.IS_QUIRKS) {
+        this.div.style.height = height;
+      }
+      this.table.style.height = height;
+      if (null != this.resize) {
+        this.resize.style.visibility = "";
+      }
+      this.fireEvent(new mxEventObject(mxEvent.NORMALIZE, "event", evt));
+    } else {
+      a = true;
+      this.minimize.setAttribute("src", this.normalizeImage);
+      this.minimize.setAttribute("title", "Normalize");
+      this.contentWrapper.style.display = "none";
+      maxDisplay = this.maximize.style.display;
+      this.maximize.style.display = "none";
+      height = this.table.style.height;
+      var minSize = this.getMinimumSize();
+      if (0 < minSize.height) {
+        if (!mxClient.IS_QUIRKS) {
+          this.div.style.height = minSize.height + "px";
+        }
+        this.table.style.height = minSize.height + "px";
+      }
+      if (0 < minSize.width) {
+        if (!mxClient.IS_QUIRKS) {
+          this.div.style.width = minSize.width + "px";
+        }
+        this.table.style.width = minSize.width + "px";
+      }
+      if (null != this.resize) {
+        this.resize.style.visibility = "hidden";
+      }
+      this.fireEvent(new mxEventObject(mxEvent.MINIMIZE, "event", evt));
+    }
     mxEvent.consume(evt);
   });
-  mxEvent.addGestureListeners(this.minimizeImg, funct);
+  mxEvent.addGestureListeners(this.minimize, funct);
 };
-mxWindow.prototype.setMaximizable = function(maximizable) {
-  this.maximize.style.display = maximizable ? "" : "none";
+mxWindow.prototype.setMaximizable = function(visible) {
+  this.maximize.style.display = visible ? "" : "none";
 };
 mxWindow.prototype.installMaximizeHandler = function() {
   this.maximize = document.createElement("img");
@@ -3792,14 +3785,13 @@ mxWindow.prototype.installMaximizeHandler = function() {
         this.maximize.setAttribute("src", this.maximizeImage);
         this.maximize.setAttribute("title", "Maximize");
         this.contentWrapper.style.display = "";
-        this.minimizeImg.style.display = maxDisplay;
+        this.minimize.style.display = maxDisplay;
         this.div.style.left = x + "px";
         this.div.style.top = y + "px";
-        this.div.style.height = height;
-        this.div.style.width = width;
-        style = mxUtils.getCurrentStyle(this.contentWrapper);
-        if ("auto" == style.overflow || null != this.resize) {
-          this.contentWrapper.style.height = this.div.offsetHeight - this.title.offsetHeight - this.contentHeightCorrection + "px";
+        if (!mxClient.IS_QUIRKS) {
+          if (!(this.div.style.height = height, this.div.style.width = width, style = mxUtils.getCurrentStyle(this.contentWrapper), "auto" != style.overflow && null == this.resize)) {
+            this.contentWrapper.style.height = this.div.offsetHeight - this.title.offsetHeight - this.contentHeightCorrection + "px";
+          }
         }
         this.table.style.height = height;
         this.table.style.width = width;
@@ -3812,8 +3804,8 @@ mxWindow.prototype.installMaximizeHandler = function() {
         this.maximize.setAttribute("src", this.normalizeImage);
         this.maximize.setAttribute("title", "Normalize");
         this.contentWrapper.style.display = "";
-        maxDisplay = this.minimizeImg.style.display;
-        this.minimizeImg.style.display = "none";
+        maxDisplay = this.minimize.style.display;
+        this.minimize.style.display = "none";
         x = parseInt(this.div.style.left);
         y = parseInt(this.div.style.top);
         height = this.table.style.height;
@@ -3821,16 +3813,20 @@ mxWindow.prototype.installMaximizeHandler = function() {
         this.div.style.left = "0px";
         this.div.style.top = "0px";
         style = Math.max(document.body.clientHeight || 0, document.documentElement.clientHeight || 0);
-        this.div.style.width = document.body.clientWidth - 2 + "px";
-        this.div.style.height = style - 2 + "px";
+        if (!mxClient.IS_QUIRKS) {
+          this.div.style.width = document.body.clientWidth - 2 + "px";
+          this.div.style.height = style - 2 + "px";
+        }
         this.table.style.width = document.body.clientWidth - 2 + "px";
         this.table.style.height = style - 2 + "px";
         if (null != this.resize) {
           this.resize.style.visibility = "hidden";
         }
-        var style = mxUtils.getCurrentStyle(this.contentWrapper);
-        if ("auto" == style.overflow || null != this.resize) {
-          this.contentWrapper.style.height = this.div.offsetHeight - this.title.offsetHeight - this.contentHeightCorrection + "px";
+        if (!mxClient.IS_QUIRKS) {
+          var style = mxUtils.getCurrentStyle(this.contentWrapper);
+          if ("auto" == style.overflow || null != this.resize) {
+            this.contentWrapper.style.height = this.div.offsetHeight - this.title.offsetHeight - this.contentHeightCorrection + "px";
+          }
         }
         this.fireEvent(new mxEventObject(mxEvent.MAXIMIZE, "event", evt));
       }
@@ -3904,8 +3900,8 @@ mxWindow.prototype.setImage = function(image) {
   this.image.style.marginTop = "-2px";
   this.title.insertBefore(this.image, this.title.firstChild);
 };
-mxWindow.prototype.setClosable = function(visible) {
-  this.closeImg.style.display = visible ? "" : "none";
+mxWindow.prototype.setClosable = function(update) {
+  this.closeImg.style.display = update ? "" : "none";
 };
 mxWindow.prototype.isVisible = function() {
   return null != this.div ? "none" != this.div.style.display : false;
@@ -3918,17 +3914,18 @@ mxWindow.prototype.setVisible = function(visible) {
       } else {
         this.hide();
       }
-    } else {
-      this.fireEvent(new mxEventObject(visible ? mxEvent.SHOW : mxEvent.HIDE));
     }
   }
 };
 mxWindow.prototype.show = function() {
   this.div.style.display = "";
   this.activate();
-  if (!("auto" != mxUtils.getCurrentStyle(this.contentWrapper).overflow && null == this.resize)) {
-    if (!("none" == this.contentWrapper.style.display)) {
-      this.contentWrapper.style.height = this.div.offsetHeight - this.title.offsetHeight - this.contentHeightCorrection + "px";
+  var style = mxUtils.getCurrentStyle(this.contentWrapper);
+  if (!mxClient.IS_QUIRKS) {
+    if (!("auto" != style.overflow && null == this.resize)) {
+      if (!("none" == this.contentWrapper.style.display)) {
+        this.contentWrapper.style.height = this.div.offsetHeight - this.title.offsetHeight - this.contentHeightCorrection + "px";
+      }
     }
   }
   this.fireEvent(new mxEventObject(mxEvent.SHOW));
@@ -4001,19 +3998,19 @@ mxForm.prototype.addTextarea = function(name, value, rows) {
   input.value = value;
   return this.addField(name, input);
 };
-mxForm.prototype.addCombo = function(name, isMultiSelect, size) {
+mxForm.prototype.addCombo = function(style, isMultiSelect, name) {
   var select = document.createElement("select");
-  if (null != size) {
-    select.setAttribute("size", size);
+  if (null != name) {
+    select.setAttribute("size", name);
   }
   if (isMultiSelect) {
     select.setAttribute("multiple", "true");
   }
-  return this.addField(name, select);
+  return this.addField(style, select);
 };
-mxForm.prototype.addOption = function(combo, label, value, isSelected) {
+mxForm.prototype.addOption = function(combo, title, value, isSelected) {
   var option = document.createElement("option");
-  mxUtils.writeln(option, label);
+  mxUtils.writeln(option, title);
   option.setAttribute("value", value);
   if (isSelected) {
     option.setAttribute("selected", isSelected);
@@ -4031,28 +4028,24 @@ mxForm.prototype.addField = function(name, input) {
   this.body.appendChild(tr);
   return input;
 };
-function mxImage(src, width, height, x, y) {
+function mxImage(src, width, height) {
   this.src = src;
-  this.width = null != width ? width : this.width;
-  this.height = null != height ? height : this.height;
-  this.x = null != x ? x : this.x;
-  this.y = null != y ? y : this.y;
+  this.width = width;
+  this.height = height;
 }
 mxImage.prototype.src = null;
-mxImage.prototype.width = 0;
-mxImage.prototype.height = 0;
-mxImage.prototype.x = 0;
-mxImage.prototype.y = 0;
+mxImage.prototype.width = null;
+mxImage.prototype.height = null;
 function mxDivResizer(div, container) {
   if ("div" == div.nodeName.toLowerCase()) {
     if (null == container) {
       container = window;
     }
     this.div = div;
-    div = mxUtils.getCurrentStyle(div);
-    if (null != div) {
-      this.resizeWidth = "auto" == div.width;
-      this.resizeHeight = "auto" == div.height;
+    var style = mxUtils.getCurrentStyle(div);
+    if (null != style) {
+      this.resizeWidth = "auto" == style.width;
+      this.resizeHeight = "auto" == style.height;
     }
     mxEvent.addListener(container, "resize", mxUtils.bind(this, function(flex) {
       if (!this.handlingResize) {
@@ -4110,17 +4103,17 @@ mxDivResizer.prototype.getDocumentHeight = function() {
 function mxDragSource(element, dropHandler) {
   this.element = element;
   this.dropHandler = dropHandler;
-  mxEvent.addGestureListeners(element, mxUtils.bind(this, function(cell) {
-    this.mouseDown(cell);
+  mxEvent.addGestureListeners(element, mxUtils.bind(this, function(evt) {
+    this.mouseDown(evt);
   }));
   mxEvent.addListener(element, "dragstart", function(evt) {
     mxEvent.consume(evt);
   });
-  this.eventConsumer = function(evtName, evt) {
-    evtName = evt.getProperty("eventName");
-    evt = evt.getProperty("event");
+  this.eventConsumer = function(sender, evt) {
+    var evtName = evt.getProperty("eventName");
+    var me = evt.getProperty("event");
     if (evtName != mxEvent.MOUSE_DOWN) {
-      evt.consume();
+      me.consume();
     }
   };
 }
@@ -4233,13 +4226,13 @@ mxDragSource.prototype.graphContainsEvent = function(graph, evt) {
   var y = mxEvent.getClientY(evt);
   var offset = mxUtils.getOffset(graph.container);
   var origin = mxUtils.getScrollOrigin();
-  evt = this.getElementForEvent(evt);
+  var elt = this.getElementForEvent(evt);
   if (this.checkEventSource) {
-    for (;null != evt && evt != graph.container;) {
-      evt = evt.parentNode;
+    for (;null != elt && elt != graph.container;) {
+      elt = elt.parentNode;
     }
   }
-  return null != evt && (x >= offset.x - origin.x && (y >= offset.y - origin.y && (x <= offset.x - origin.x + graph.container.offsetWidth && y <= offset.y - origin.y + graph.container.offsetHeight)));
+  return null != elt && (x >= offset.x - origin.x && (y >= offset.y - origin.y && (x <= offset.x - origin.x + graph.container.offsetWidth && y <= offset.y - origin.y + graph.container.offsetHeight)));
 };
 mxDragSource.prototype.mouseMove = function(evt) {
   var graph = this.getGraphForEvent(evt);
@@ -4367,27 +4360,27 @@ mxDragSource.prototype.dragOver = function(graph, evt) {
       this.previewElement.style.position = "absolute";
     }
     scale = this.isGridEnabled() && graph.isGridEnabledEvent(evt);
-    var h = true;
+    var bounds = true;
     if (null != this.currentGuide && this.currentGuide.isEnabledForEvent(evt)) {
-      graph = parseInt(this.previewElement.style.width);
-      h = parseInt(this.previewElement.style.height);
-      graph = new mxRectangle(0, 0, graph, h);
+      bounds = parseInt(this.previewElement.style.width);
+      var tr = parseInt(this.previewElement.style.height);
+      bounds = new mxRectangle(0, 0, bounds, tr);
       y = new mxPoint(x, y);
-      y = this.currentGuide.move(graph, y, scale, true);
-      h = false;
+      y = this.currentGuide.move(bounds, y, scale, true);
+      bounds = false;
       x = y.x;
       y = y.y;
     } else {
       if (scale) {
         scale = graph.view.scale;
-        evt = graph.view.translate;
+        tr = graph.view.translate;
         var off = graph.gridSize / 2;
-        x = (graph.snap(x / scale - evt.x - off) + evt.x) * scale;
-        y = (graph.snap(y / scale - evt.y - off) + evt.y) * scale;
+        x = (graph.snap(x / scale - tr.x - off) + tr.x) * scale;
+        y = (graph.snap(y / scale - tr.y - off) + tr.y) * scale;
       }
     }
     if (null != this.currentGuide) {
-      if (h) {
+      if (bounds) {
         this.currentGuide.hide();
       }
     }
@@ -4401,7 +4394,7 @@ mxDragSource.prototype.dragOver = function(graph, evt) {
   }
   this.currentPoint = new mxPoint(x, y);
 };
-mxDragSource.prototype.drop = function(graph, evt, dropTarget, y, target) {
+mxDragSource.prototype.drop = function(graph, evt, target, dropTarget, y) {
   this.dropHandler.apply(this, arguments);
   if ("hidden" != graph.container.style.visibility) {
     graph.container.focus();
@@ -4416,9 +4409,9 @@ mxToolbar.prototype.container = null;
 mxToolbar.prototype.enabled = true;
 mxToolbar.prototype.noReset = false;
 mxToolbar.prototype.updateDefaultMode = true;
-mxToolbar.prototype.addItem = function(title, icon, funct, value, style, factoryMethod) {
+mxToolbar.prototype.addItem = function(title, icon, action, pressed, iconCls, factoryMethod) {
   var img = document.createElement(null != icon ? "img" : "button");
-  var initialClassName = style || (null != factoryMethod ? "mxToolbarMode" : "mxToolbarItem");
+  var initialClassName = iconCls || (null != factoryMethod ? "mxToolbarMode" : "mxToolbarItem");
   img.className = initialClassName;
   img.setAttribute("src", icon);
   if (null != title) {
@@ -4429,22 +4422,22 @@ mxToolbar.prototype.addItem = function(title, icon, funct, value, style, factory
     }
   }
   this.container.appendChild(img);
-  if (null != funct) {
-    mxEvent.addListener(img, "click", funct);
+  if (null != action) {
+    mxEvent.addListener(img, "click", action);
     if (mxClient.IS_TOUCH) {
-      mxEvent.addListener(img, "touchend", funct);
+      mxEvent.addListener(img, "touchend", action);
     }
   }
   title = mxUtils.bind(this, function(flex) {
-    if (null != value) {
+    if (null != pressed) {
       img.setAttribute("src", icon);
     } else {
       img.style.backgroundColor = "";
     }
   });
   mxEvent.addGestureListeners(img, mxUtils.bind(this, function(evt) {
-    if (null != value) {
-      img.setAttribute("src", value);
+    if (null != pressed) {
+      img.setAttribute("src", pressed);
     } else {
       img.style.backgroundColor = "gray";
     }
@@ -4500,9 +4493,9 @@ mxToolbar.prototype.addActionCombo = function(title, style) {
   this.container.appendChild(select);
   return select;
 };
-mxToolbar.prototype.addOption = function(combo, label, value) {
+mxToolbar.prototype.addOption = function(combo, title, value) {
   var option = document.createElement("option");
-  mxUtils.writeln(option, label);
+  mxUtils.writeln(option, title);
   if ("function" == typeof value) {
     option.funct = value;
   } else {
@@ -4511,14 +4504,14 @@ mxToolbar.prototype.addOption = function(combo, label, value) {
   combo.appendChild(option);
   return option;
 };
-mxToolbar.prototype.addSwitchMode = function(value, title, funct, pressedIcon, style) {
+mxToolbar.prototype.addSwitchMode = function(title, icon, funct, pressedIcon, style) {
   var img = document.createElement("img");
   img.initialClassName = style || "mxToolbarMode";
   img.className = img.initialClassName;
-  img.setAttribute("src", title);
+  img.setAttribute("src", icon);
   img.altIcon = pressedIcon;
-  if (null != value) {
-    img.setAttribute("title", value);
+  if (null != title) {
+    img.setAttribute("title", title);
   }
   mxEvent.addListener(img, "click", mxUtils.bind(this, function(tmp) {
     tmp = this.selectedMode.altIcon;
@@ -4550,13 +4543,13 @@ mxToolbar.prototype.addSwitchMode = function(value, title, funct, pressedIcon, s
   }
   return img;
 };
-mxToolbar.prototype.addMode = function(title, value, funct, pressedIcon, style, toggle) {
+mxToolbar.prototype.addMode = function(title, icon, funct, pressed, style, toggle) {
   toggle = null != toggle ? toggle : true;
-  var img = document.createElement(null != value ? "img" : "button");
+  var img = document.createElement(null != icon ? "img" : "button");
   img.initialClassName = style || "mxToolbarMode";
   img.className = img.initialClassName;
-  img.setAttribute("src", value);
-  img.altIcon = pressedIcon;
+  img.setAttribute("src", icon);
+  img.altIcon = pressed;
   if (null != title) {
     img.setAttribute("title", title);
   }
@@ -4602,8 +4595,8 @@ mxToolbar.prototype.selectMode = function(domNode, funct) {
     this.fireEvent(new mxEventObject(mxEvent.SELECT, "function", funct));
   }
 };
-mxToolbar.prototype.resetMode = function(forced) {
-  if (!(!forced && this.noReset)) {
+mxToolbar.prototype.resetMode = function(update) {
+  if (!(!update && this.noReset)) {
     if (!(this.selectedMode == this.defaultMode)) {
       this.selectMode(this.defaultMode, this.defaultFunction);
     }
@@ -4806,7 +4799,7 @@ function mxPanningManager(graph) {
   this.scrollbars = false;
   this.scrollTop = this.scrollLeft = 0;
   this.mouseListener = {
-    mouseDown : function(cell, sender) {
+    mouseDown : function(evt, sender) {
     },
     mouseMove : function(sender, me) {
     },
@@ -4949,7 +4942,7 @@ mxPopupMenu.prototype.setEnabled = function(value) {
 mxPopupMenu.prototype.isPopupTrigger = function(me) {
   return me.isPopupTrigger() || this.useLeftButtonForPopup && mxEvent.isLeftMouseButton(me.getEvent());
 };
-mxPopupMenu.prototype.addItem = function(col3, div, funct, parent, iconCls, noHover, pressedIcon, image) {
+mxPopupMenu.prototype.addItem = function(title, icon, funct, parent, iconCls, enabled, noHover, pressedIcon) {
   parent = parent || this;
   this.itemCount++;
   if (parent.willAddSeparator) {
@@ -4963,35 +4956,35 @@ mxPopupMenu.prototype.addItem = function(col3, div, funct, parent, iconCls, noHo
   tr.className = "mxPopupMenuItem";
   var col2 = document.createElement("td");
   col2.className = "mxPopupMenuIcon";
-  if (null != div) {
+  if (null != icon) {
     iconCls = document.createElement("img");
-    iconCls.src = div;
+    iconCls.src = icon;
     col2.appendChild(iconCls);
   } else {
     if (null != iconCls) {
-      div = document.createElement("div");
-      div.className = iconCls;
-      col2.appendChild(div);
+      icon = document.createElement("div");
+      icon.className = iconCls;
+      col2.appendChild(icon);
     }
   }
   tr.appendChild(col2);
   if (this.labels) {
     col2 = document.createElement("td");
-    col2.className = "mxPopupMenuItem" + (null == noHover || noHover ? "" : " mxDisabled");
-    mxUtils.write(col2, col3);
+    col2.className = "mxPopupMenuItem" + (null == enabled || enabled ? "" : " mxDisabled");
+    mxUtils.write(col2, title);
     col2.align = "left";
     tr.appendChild(col2);
-    col3 = document.createElement("td");
-    col3.className = "mxPopupMenuItem" + (null == noHover || noHover ? "" : " mxDisabled");
-    col3.style.paddingRight = "6px";
-    col3.style.textAlign = "right";
-    tr.appendChild(col3);
+    title = document.createElement("td");
+    title.className = "mxPopupMenuItem" + (null == enabled || enabled ? "" : " mxDisabled");
+    title.style.paddingRight = "6px";
+    title.style.textAlign = "right";
+    tr.appendChild(title);
     if (null == parent.div) {
       this.createSubmenu(parent);
     }
   }
   parent.tbody.appendChild(tr);
-  if (0 != pressedIcon && 0 != noHover) {
+  if (0 != noHover && 0 != enabled) {
     var currentSelection = null;
     mxEvent.addGestureListeners(tr, mxUtils.bind(this, function(evt) {
       this.eventReceiver = tr;
@@ -5008,8 +5001,8 @@ mxPopupMenu.prototype.addItem = function(col3, div, funct, parent, iconCls, noHo
           }
         }
       }
-      if (null != document.selection) {
-        if (8 == document.documentMode) {
+      if (!(null == document.selection)) {
+        if (!(!mxClient.IS_QUIRKS && 8 != document.documentMode)) {
           currentSelection = document.selection.createRange();
         }
       }
@@ -5030,7 +5023,7 @@ mxPopupMenu.prototype.addItem = function(col3, div, funct, parent, iconCls, noHo
           }
         }
       }
-      if (!image) {
+      if (!pressedIcon) {
         tr.className = "mxPopupMenuItemHover";
       }
     }), mxUtils.bind(this, function(evt) {
@@ -5052,7 +5045,7 @@ mxPopupMenu.prototype.addItem = function(col3, div, funct, parent, iconCls, noHo
       this.eventReceiver = null;
       mxEvent.consume(evt);
     }));
-    if (!image) {
+    if (!pressedIcon) {
       mxEvent.addListener(tr, "mouseout", mxUtils.bind(this, function(flex) {
         tr.className = "mxPopupMenuItem";
       }));
@@ -5060,11 +5053,11 @@ mxPopupMenu.prototype.addItem = function(col3, div, funct, parent, iconCls, noHo
   }
   return tr;
 };
-mxPopupMenu.prototype.addCheckmark = function(node, img) {
-  node = node.firstChild.nextSibling;
-  node.style.backgroundImage = "url('" + img + "')";
-  node.style.backgroundRepeat = "no-repeat";
-  node.style.backgroundPosition = "2px 50%";
+mxPopupMenu.prototype.addCheckmark = function(item, img) {
+  var td = item.firstChild.nextSibling;
+  td.style.backgroundImage = "url('" + img + "')";
+  td.style.backgroundRepeat = "no-repeat";
+  td.style.backgroundPosition = "2px 50%";
 };
 mxPopupMenu.prototype.createSubmenu = function(parent) {
   parent.table = document.createElement("table");
@@ -5094,9 +5087,6 @@ mxPopupMenu.prototype.showSubmenu = function(parent, row) {
     if (left + width > offset.x + (document.body.clientWidth || d.clientWidth)) {
       row.div.style.left = Math.max(0, parent.div.offsetLeft - width + (mxClient.IS_IE ? 6 : -6)) + "px";
     }
-    row.div.style.overflowY = "auto";
-    row.div.style.overflowX = "hidden";
-    row.div.style.maxHeight = Math.max(document.body.clientHeight, document.documentElement.clientHeight) - 10 + "px";
     mxUtils.fit(row.div);
   }
 };
@@ -5107,19 +5097,19 @@ mxPopupMenu.prototype.addSeparator = function(parent, force) {
   } else {
     if (null != parent.tbody) {
       parent.willAddSeparator = false;
-      force = document.createElement("tr");
+      var tr = document.createElement("tr");
       var col2 = document.createElement("td");
       col2.className = "mxPopupMenuIcon";
       col2.style.padding = "0 0 0 0px";
-      force.appendChild(col2);
+      tr.appendChild(col2);
       col2 = document.createElement("td");
       col2.style.padding = "0 0 0 0px";
       col2.setAttribute("colSpan", "2");
       var hr = document.createElement("hr");
       hr.setAttribute("size", "1");
       col2.appendChild(hr);
-      force.appendChild(col2);
-      parent.tbody.appendChild(force);
+      tr.appendChild(col2);
+      parent.tbody.appendChild(tr);
     }
   }
 };
@@ -5385,13 +5375,10 @@ mxImageExport.prototype.visitStatesRecursive = function(state, canvas, visitor) 
 mxImageExport.prototype.getLinkForCellState = function(state, canvas) {
   return null;
 };
-mxImageExport.prototype.getLinkTargetForCellState = function(state, canvas) {
-  return null;
-};
 mxImageExport.prototype.drawCellState = function(state, canvas) {
   var link = this.getLinkForCellState(state, canvas);
   if (null != link) {
-    canvas.setLink(link, this.getLinkTargetForCellState(state, canvas));
+    canvas.setLink(link);
   }
   this.drawShape(state, canvas);
   this.drawText(state, canvas);
@@ -5401,19 +5388,22 @@ mxImageExport.prototype.drawCellState = function(state, canvas) {
 };
 mxImageExport.prototype.drawShape = function(state, canvas) {
   if (state.shape instanceof mxShape) {
-    this.doDrawShape(state.shape, canvas);
+    if (state.shape.checkBounds()) {
+      canvas.save();
+      state.shape.beforePaint(canvas);
+      state.shape.paint(canvas);
+      state.shape.afterPaint(canvas);
+      canvas.restore();
+    }
   }
 };
 mxImageExport.prototype.drawText = function(state, canvas) {
-  this.doDrawShape(state.text, canvas);
-};
-mxImageExport.prototype.doDrawShape = function(shape, canvas) {
-  if (null != shape) {
-    if (shape.checkBounds()) {
+  if (null != state.text) {
+    if (state.text.checkBounds()) {
       canvas.save();
-      shape.beforePaint(canvas);
-      shape.paint(canvas);
-      shape.afterPaint(canvas);
+      state.text.beforePaint(canvas);
+      state.text.paint(canvas);
+      state.text.afterPaint(canvas);
       canvas.restore();
     }
   }
@@ -5514,7 +5504,7 @@ mxAbstractCanvas2D.prototype.restore = function() {
     this.state = this.states.pop();
   }
 };
-mxAbstractCanvas2D.prototype.setLink = function(link, flex) {
+mxAbstractCanvas2D.prototype.setLink = function(link) {
 };
 mxAbstractCanvas2D.prototype.scale = function(x) {
   this.state.scale *= x;
@@ -5541,12 +5531,6 @@ mxAbstractCanvas2D.prototype.setFillColor = function(fill) {
   }
   this.state.fillColor = fill;
   this.state.gradientColor = null;
-};
-mxAbstractCanvas2D.prototype.setFillStyle = function(value) {
-  if (value == mxConstants.NONE) {
-    value = null;
-  }
-  this.state.fillStyle = value;
 };
 mxAbstractCanvas2D.prototype.setGradient = function(color1, color2, s, y, w, h, direction, alpha1, alpha2) {
   s = this.state;
@@ -5665,7 +5649,8 @@ mxUtils.extend(mxXmlCanvas2D, mxAbstractCanvas2D);
 mxXmlCanvas2D.prototype.textEnabled = true;
 mxXmlCanvas2D.prototype.compressed = true;
 mxXmlCanvas2D.prototype.writeDefaults = function() {
-  var elem = this.createElement("fontfamily");
+  var elem;
+  elem = this.createElement("fontfamily");
   elem.setAttribute("family", mxConstants.DEFAULT_FONTFAMILY);
   this.root.appendChild(elem);
   elem = this.createElement("fontsize");
@@ -5711,14 +5696,14 @@ mxXmlCanvas2D.prototype.translate = function(x, y) {
   elem.setAttribute("dy", this.format(y));
   this.root.appendChild(elem);
 };
-mxXmlCanvas2D.prototype.rotate = function(cx, flipH, flipV, cy, value) {
+mxXmlCanvas2D.prototype.rotate = function(cx, flipH, flipV, cy, dx) {
   var elem = this.createElement("rotate");
   if (0 != cx || (flipH || flipV)) {
     elem.setAttribute("theta", this.format(cx));
     elem.setAttribute("flipH", flipH ? "1" : "0");
     elem.setAttribute("flipV", flipV ? "1" : "0");
     elem.setAttribute("cx", this.format(cy));
-    elem.setAttribute("cy", this.format(value));
+    elem.setAttribute("cy", this.format(dx));
     this.root.appendChild(elem);
   }
 };
@@ -5755,38 +5740,38 @@ mxXmlCanvas2D.prototype.setStrokeAlpha = function(value) {
   elem.setAttribute("alpha", this.format(value));
   this.root.appendChild(elem);
 };
-mxXmlCanvas2D.prototype.setFillColor = function(value) {
-  if (value == mxConstants.NONE) {
-    value = null;
+mxXmlCanvas2D.prototype.setFillColor = function(fill) {
+  if (fill == mxConstants.NONE) {
+    fill = null;
   }
   if (this.compressed) {
-    if (this.state.fillColor == value) {
+    if (this.state.fillColor == fill) {
       return;
     }
     mxAbstractCanvas2D.prototype.setFillColor.apply(this, arguments);
   }
   var elem = this.createElement("fillcolor");
-  elem.setAttribute("color", null != value ? value : mxConstants.NONE);
+  elem.setAttribute("color", null != fill ? fill : mxConstants.NONE);
   this.root.appendChild(elem);
 };
-mxXmlCanvas2D.prototype.setGradient = function(src, str, x, y, h, value, dx, dy, w) {
-  if (null != src && null != str) {
+mxXmlCanvas2D.prototype.setGradient = function(str, value, x, y, w, h, src, name, pts) {
+  if (null != str && null != value) {
     mxAbstractCanvas2D.prototype.setGradient.apply(this, arguments);
     var elem = this.createElement("gradient");
-    elem.setAttribute("c1", src);
-    elem.setAttribute("c2", str);
+    elem.setAttribute("c1", str);
+    elem.setAttribute("c2", value);
     elem.setAttribute("x", this.format(x));
     elem.setAttribute("y", this.format(y));
-    elem.setAttribute("w", this.format(h));
-    elem.setAttribute("h", this.format(value));
-    if (null != dx) {
-      elem.setAttribute("direction", dx);
+    elem.setAttribute("w", this.format(w));
+    elem.setAttribute("h", this.format(h));
+    if (null != src) {
+      elem.setAttribute("direction", src);
     }
-    if (null != dy) {
-      elem.setAttribute("alpha1", dy);
+    if (null != name) {
+      elem.setAttribute("alpha1", name);
     }
-    if (null != w) {
-      elem.setAttribute("alpha2", w);
+    if (null != pts) {
+      elem.setAttribute("alpha2", pts);
     }
     this.root.appendChild(elem);
   }
@@ -6000,16 +5985,16 @@ mxXmlCanvas2D.prototype.setShadowAlpha = function(value) {
   elem.setAttribute("alpha", value);
   this.root.appendChild(elem);
 };
-mxXmlCanvas2D.prototype.setShadowOffset = function(dx, dy) {
+mxXmlCanvas2D.prototype.setShadowOffset = function(dx, value) {
   if (this.compressed) {
-    if (this.state.shadowDx == dx && this.state.shadowDy == dy) {
+    if (this.state.shadowDx == dx && this.state.shadowDy == value) {
       return;
     }
     mxAbstractCanvas2D.prototype.setShadowOffset.apply(this, arguments);
   }
   var elem = this.createElement("shadowoffset");
   elem.setAttribute("dx", dx);
-  elem.setAttribute("dy", dy);
+  elem.setAttribute("dy", value);
   this.root.appendChild(elem);
 };
 mxXmlCanvas2D.prototype.rect = function(x, y, w, h) {
@@ -6020,14 +6005,14 @@ mxXmlCanvas2D.prototype.rect = function(x, y, w, h) {
   elem.setAttribute("h", this.format(h));
   this.root.appendChild(elem);
 };
-mxXmlCanvas2D.prototype.roundrect = function(dx, y, w, h, dy, value) {
+mxXmlCanvas2D.prototype.roundrect = function(x, y, w, h, dx, dy) {
   var elem = this.createElement("roundrect");
-  elem.setAttribute("x", this.format(dx));
+  elem.setAttribute("x", this.format(x));
   elem.setAttribute("y", this.format(y));
   elem.setAttribute("w", this.format(w));
   elem.setAttribute("h", this.format(h));
-  elem.setAttribute("dx", this.format(dy));
-  elem.setAttribute("dy", this.format(value));
+  elem.setAttribute("dx", this.format(dx));
+  elem.setAttribute("dy", this.format(dy));
   this.root.appendChild(elem);
 };
 mxXmlCanvas2D.prototype.ellipse = function(x, y, w, h) {
@@ -6071,22 +6056,22 @@ mxXmlCanvas2D.prototype.lineTo = function(value, y2) {
   this.lastX = value;
   this.lastY = y2;
 };
-mxXmlCanvas2D.prototype.quadTo = function(y1, x2, y2, value) {
+mxXmlCanvas2D.prototype.quadTo = function(value, y1, x2, y2) {
   var elem = this.createElement("quad");
-  elem.setAttribute("x1", this.format(y1));
-  elem.setAttribute("y1", this.format(x2));
-  elem.setAttribute("x2", this.format(y2));
-  elem.setAttribute("y2", this.format(value));
+  elem.setAttribute("x1", this.format(value));
+  elem.setAttribute("y1", this.format(y1));
+  elem.setAttribute("x2", this.format(x2));
+  elem.setAttribute("y2", this.format(y2));
   this.root.appendChild(elem);
-  this.lastX = y2;
-  this.lastY = value;
+  this.lastX = x2;
+  this.lastY = y2;
 };
-mxXmlCanvas2D.prototype.curveTo = function(w, y2, y1, value, x2, dy) {
+mxXmlCanvas2D.prototype.curveTo = function(value, y2, w, y1, x2, dy) {
   var elem = this.createElement("curve");
-  elem.setAttribute("x1", this.format(w));
+  elem.setAttribute("x1", this.format(value));
   elem.setAttribute("y1", this.format(y2));
-  elem.setAttribute("x2", this.format(y1));
-  elem.setAttribute("y2", this.format(value));
+  elem.setAttribute("x2", this.format(w));
+  elem.setAttribute("y2", this.format(y1));
   elem.setAttribute("x3", this.format(x2));
   elem.setAttribute("y3", this.format(dy));
   this.root.appendChild(elem);
@@ -6096,7 +6081,7 @@ mxXmlCanvas2D.prototype.curveTo = function(w, y2, y1, value, x2, dy) {
 mxXmlCanvas2D.prototype.close = function() {
   this.root.appendChild(this.createElement("close"));
 };
-mxXmlCanvas2D.prototype.text = function(x, y, value, dx, str, src, w, clip, format, dy, wrap, h, dir) {
+mxXmlCanvas2D.prototype.text = function(x, y, value, h, str, src, name, clip, format, id, wrap, pts, dir) {
   if (this.textEnabled && null != str) {
     if (mxUtils.isNode(str)) {
       str = mxUtils.getOuterHtml(str);
@@ -6105,27 +6090,27 @@ mxXmlCanvas2D.prototype.text = function(x, y, value, dx, str, src, w, clip, form
     elem.setAttribute("x", this.format(x));
     elem.setAttribute("y", this.format(y));
     elem.setAttribute("w", this.format(value));
-    elem.setAttribute("h", this.format(dx));
+    elem.setAttribute("h", this.format(h));
     elem.setAttribute("str", str);
     if (null != src) {
       elem.setAttribute("align", src);
     }
-    if (null != w) {
-      elem.setAttribute("valign", w);
+    if (null != name) {
+      elem.setAttribute("valign", name);
     }
     elem.setAttribute("wrap", clip ? "1" : "0");
     if (null == format) {
       format = "";
     }
     elem.setAttribute("format", format);
-    if (null != dy) {
-      elem.setAttribute("overflow", dy);
+    if (null != id) {
+      elem.setAttribute("overflow", id);
     }
     if (null != wrap) {
       elem.setAttribute("clip", wrap ? "1" : "0");
     }
-    if (null != h) {
-      elem.setAttribute("rotation", h);
+    if (null != pts) {
+      elem.setAttribute("rotation", pts);
     }
     if (null != dir) {
       elem.setAttribute("dir", dir);
@@ -6142,19 +6127,17 @@ mxXmlCanvas2D.prototype.fill = function() {
 mxXmlCanvas2D.prototype.fillAndStroke = function() {
   this.root.appendChild(this.createElement("fillstroke"));
 };
-function mxSvgCanvas2D(node, svg) {
+function mxSvgCanvas2D(root, styleEnabled) {
   mxAbstractCanvas2D.call(this);
-  this.root = node;
+  this.root = root;
   this.gradients = [];
-  this.fillPatterns = [];
   this.defs = null;
-  this.styleEnabled = null != svg ? svg : false;
-  svg = null;
-  if (node.ownerDocument != document) {
-    for (;null != node && "svg" != node.nodeName;) {
-      node = node.parentNode;
+  this.styleEnabled = null != styleEnabled ? styleEnabled : false;
+  var svg = null;
+  if (root.ownerDocument != document) {
+    for (svg = root;null != svg && "svg" != svg.nodeName;) {
+      svg = svg.parentNode;
     }
-    svg = node;
   }
   if (null != svg) {
     if (0 < svg.getElementsByTagName("defs").length) {
@@ -6200,15 +6183,7 @@ mxSvgCanvas2D.prototype.refCount = 0;
 mxSvgCanvas2D.prototype.lineHeightCorrection = 1;
 mxSvgCanvas2D.prototype.pointerEventsValue = "all";
 mxSvgCanvas2D.prototype.fontMetricsPadding = 10;
-mxSvgCanvas2D.prototype.foreignObjectPadding = 2;
 mxSvgCanvas2D.prototype.cacheOffsetSize = true;
-mxSvgCanvas2D.prototype.setCssText = function(fo, value) {
-  if (mxClient.IS_IE || mxClient.IS_IE11) {
-    fo.setAttribute("style", value);
-  } else {
-    mxUtils.setCssText(fo.style, value);
-  }
-};
 mxSvgCanvas2D.prototype.format = function(value) {
   return parseFloat(parseFloat(value).toFixed(2));
 };
@@ -6223,7 +6198,6 @@ mxSvgCanvas2D.prototype.getBaseUrl = function() {
 mxSvgCanvas2D.prototype.reset = function() {
   mxAbstractCanvas2D.prototype.reset.apply(this, arguments);
   this.gradients = [];
-  this.fillPatterns = [];
 };
 mxSvgCanvas2D.prototype.createStyle = function(style) {
   style = this.createElement("style");
@@ -6231,32 +6205,30 @@ mxSvgCanvas2D.prototype.createStyle = function(style) {
   mxUtils.write(style, "svg{font-family:" + mxConstants.DEFAULT_FONTFAMILY + ";font-size:" + mxConstants.DEFAULT_FONTSIZE + ";fill:none;stroke-miterlimit:10}");
   return style;
 };
-mxSvgCanvas2D.prototype.createElement = function(name, namespace) {
+mxSvgCanvas2D.prototype.createElement = function(tagName, namespace) {
   if (null != this.root.ownerDocument.createElementNS) {
-    return this.root.ownerDocument.createElementNS(namespace || mxConstants.NS_SVG, name);
+    return this.root.ownerDocument.createElementNS(namespace || mxConstants.NS_SVG, tagName);
   }
-  name = this.root.ownerDocument.createElement(name);
+  var elt = this.root.ownerDocument.createElement(tagName);
   if (null != namespace) {
-    name.setAttribute("xmlns", namespace);
+    elt.setAttribute("xmlns", namespace);
   }
-  return name;
+  return elt;
 };
-mxSvgCanvas2D.prototype.getAlternateText = function(fo, x, y, state, h, str, align, valign, wrap, format, overflow, clip, rotation) {
-  return null != str ? this.foAltText : null;
+mxSvgCanvas2D.prototype.getAlternateText = function(fo, x, y, state, str, willCollapse, align, valign, wrap, format, overflow, clip, rotation) {
+  return null != willCollapse ? this.foAltText : null;
 };
-mxSvgCanvas2D.prototype.createAlternateContent = function(fo, x, y, s, h, str, alt, valign, wrap, format, overflow, clip, rotation) {
-  fo = this.getAlternateText(fo, x, y, s, h, str, alt, valign, wrap, format, overflow, clip, rotation);
+mxSvgCanvas2D.prototype.createAlternateContent = function(fo, x, y, s, str, willCollapse, alt, valign, wrap, format, overflow, clip, rotation) {
+  fo = this.getAlternateText(fo, x, y, s, str, willCollapse, alt, valign, wrap, format, overflow, clip, rotation);
   s = this.state;
-  return null != fo && 0 < s.fontSize ? (valign = valign == mxConstants.ALIGN_TOP ? 1 : valign == mxConstants.ALIGN_BOTTOM ? 0 : 0.3, h = alt == mxConstants.ALIGN_RIGHT ? "end" : alt == mxConstants.ALIGN_LEFT ? "start" : "middle", alt = this.createElement("text"), alt.setAttribute("x", Math.round(x + s.dx)), alt.setAttribute("y", Math.round(y + s.dy + valign * s.fontSize)), alt.setAttribute("fill", s.fontColor || "black"), alt.setAttribute("font-family", s.fontFamily), alt.setAttribute("font-size",
-  Math.round(s.fontSize) + "px"), "start" != h && alt.setAttribute("text-anchor", h), (s.fontStyle & mxConstants.FONT_BOLD) == mxConstants.FONT_BOLD && alt.setAttribute("font-weight", "bold"), (s.fontStyle & mxConstants.FONT_ITALIC) == mxConstants.FONT_ITALIC && alt.setAttribute("font-style", "italic"), x = [], (s.fontStyle & mxConstants.FONT_UNDERLINE) == mxConstants.FONT_UNDERLINE && x.push("underline"), (s.fontStyle & mxConstants.FONT_STRIKETHROUGH) == mxConstants.FONT_STRIKETHROUGH && x.push("line-through"),
+  return null != fo && 0 < s.fontSize ? (valign = valign == mxConstants.ALIGN_TOP ? 1 : valign == mxConstants.ALIGN_BOTTOM ? 0 : 0.3, str = alt == mxConstants.ALIGN_RIGHT ? "end" : alt == mxConstants.ALIGN_LEFT ? "start" : "middle", alt = this.createElement("text"), alt.setAttribute("x", Math.round(x + s.dx)), alt.setAttribute("y", Math.round(y + s.dy + valign * s.fontSize)), alt.setAttribute("fill", s.fontColor || "black"), alt.setAttribute("font-family", s.fontFamily), alt.setAttribute("font-size",
+  Math.round(s.fontSize) + "px"), "start" != str && alt.setAttribute("text-anchor", str), (s.fontStyle & mxConstants.FONT_BOLD) == mxConstants.FONT_BOLD && alt.setAttribute("font-weight", "bold"), (s.fontStyle & mxConstants.FONT_ITALIC) == mxConstants.FONT_ITALIC && alt.setAttribute("font-style", "italic"), x = [], (s.fontStyle & mxConstants.FONT_UNDERLINE) == mxConstants.FONT_UNDERLINE && x.push("underline"), (s.fontStyle & mxConstants.FONT_STRIKETHROUGH) == mxConstants.FONT_STRIKETHROUGH && x.push("line-through"),
   0 < x.length && alt.setAttribute("text-decoration", x.join(" ")), mxUtils.write(alt, fo), alt) : null;
 };
 mxSvgCanvas2D.prototype.createGradientId = function(start, end, alpha1, alpha2, direction) {
-  start = mxUtils.rgba2hex(start);
   if ("#" == start.charAt(0)) {
     start = start.substring(1);
   }
-  end = mxUtils.rgba2hex(end);
   if ("#" == end.charAt(0)) {
     end = end.substring(1);
   }
@@ -6269,18 +6241,14 @@ mxSvgCanvas2D.prototype.createGradientId = function(start, end, alpha1, alpha2, 
     if (direction == mxConstants.DIRECTION_EAST) {
       alpha1 = "e";
     } else {
-      if (direction == mxConstants.DIRECTION_RADIAL) {
-        alpha1 = "r";
+      alpha2 = start;
+      start = end;
+      end = alpha2;
+      if (direction == mxConstants.DIRECTION_NORTH) {
+        alpha1 = "s";
       } else {
-        alpha2 = start;
-        start = end;
-        end = alpha2;
-        if (direction == mxConstants.DIRECTION_NORTH) {
-          alpha1 = "s";
-        } else {
-          if (direction == mxConstants.DIRECTION_WEST) {
-            alpha1 = "e";
-          }
+        if (direction == mxConstants.DIRECTION_WEST) {
+          alpha1 = "e";
         }
       }
     }
@@ -6316,7 +6284,7 @@ mxSvgCanvas2D.prototype.getSvgGradient = function(start, end, alpha1, alpha2, di
   return gradient.getAttribute("id");
 };
 mxSvgCanvas2D.prototype.createSvgGradient = function(start, end, alpha1, alpha2, direction) {
-  var gradient = this.createElement(direction == mxConstants.DIRECTION_RADIAL ? "radialGradient" : "linearGradient");
+  var gradient = this.createElement("linearGradient");
   gradient.setAttribute("x1", "0%");
   gradient.setAttribute("y1", "0%");
   gradient.setAttribute("x2", "0%");
@@ -6336,172 +6304,19 @@ mxSvgCanvas2D.prototype.createSvgGradient = function(start, end, alpha1, alpha2,
       }
     }
   }
+  alpha1 = 1 > alpha1 ? ";stop-opacity:" + alpha1 : "";
   direction = this.createElement("stop");
   direction.setAttribute("offset", "0%");
-  direction.style.stopColor = start;
-  direction.style.stopOpacity = alpha1;
+  direction.setAttribute("style", "stop-color:" + start + alpha1);
   gradient.appendChild(direction);
+  alpha1 = 1 > alpha2 ? ";stop-opacity:" + alpha2 : "";
   direction = this.createElement("stop");
   direction.setAttribute("offset", "100%");
-  direction.style.stopColor = end;
-  direction.style.stopOpacity = alpha2;
+  direction.setAttribute("style", "stop-color:" + end + alpha1);
   gradient.appendChild(direction);
   return gradient;
 };
-mxSvgCanvas2D.prototype.createFillPatternId = function(willCollapse, y, str) {
-  str = mxUtils.rgba2hex(str);
-  if ("#" == str.charAt(0)) {
-    str = str.substring(1);
-  }
-  return("mx-pattern-" + willCollapse + "-" + y + "-" + str).toLowerCase();
-};
-mxSvgCanvas2D.prototype.getFillPattern = function(willCollapse, y, str, value) {
-  var id = this.createFillPatternId(willCollapse, y, str);
-  var gradient = this.fillPatterns[id];
-  if (null == gradient) {
-    var svg = this.root.ownerSVGElement;
-    var counter = 0;
-    var tmpId = id + "-" + counter;
-    if (null != svg) {
-      for (gradient = svg.ownerDocument.getElementById(tmpId);null != gradient && gradient.ownerSVGElement != svg;) {
-        tmpId = id + "-" + counter++;
-        gradient = svg.ownerDocument.getElementById(tmpId);
-      }
-    } else {
-      tmpId = "id" + ++this.refCount;
-    }
-    if (null == gradient) {
-      switch(willCollapse) {
-        case "hatch":
-          gradient = this.createHatchPattern(y, str, value);
-          break;
-        case "dots":
-          gradient = this.createDotsPattern(y, str, value);
-          break;
-        case "cross-hatch":
-          gradient = this.createCrossHatchPattern(y, str, value);
-          break;
-        case "dashed":
-          gradient = this.createDashedPattern(y, str, value);
-          break;
-        case "zigzag":
-        ;
-        case "zigzag-line":
-          gradient = this.createZigZagLinePattern(y, str, value);
-          break;
-        default:
-          return "ERROR";
-      }
-      gradient.setAttribute("id", tmpId);
-      if (null != this.defs) {
-        this.defs.appendChild(gradient);
-      } else {
-        svg.appendChild(gradient);
-      }
-    }
-    this.fillPatterns[id] = gradient;
-  }
-  return gradient.getAttribute("id");
-};
-mxSvgCanvas2D.prototype.createHatchPattern = function(y, str, value) {
-  y = 1.5 * y * value;
-  value = this.format((10 + y) * value);
-  var n = this.createElement("pattern");
-  n.setAttribute("patternUnits", "userSpaceOnUse");
-  n.setAttribute("width", value);
-  n.setAttribute("height", value);
-  n.setAttribute("x", "0");
-  n.setAttribute("y", "0");
-  n.setAttribute("patternTransform", "rotate(45)");
-  var elem = this.createElement("line");
-  elem.setAttribute("x1", "0");
-  elem.setAttribute("y1", "0");
-  elem.setAttribute("x2", "0");
-  elem.setAttribute("y2", value);
-  elem.setAttribute("stroke", str);
-  elem.setAttribute("stroke-width", y);
-  n.appendChild(elem);
-  return n;
-};
-mxSvgCanvas2D.prototype.createDashedPattern = function(y, str, value) {
-  y = 1.5 * y * value;
-  value = this.format((10 + y) * value);
-  var n = this.createElement("pattern");
-  n.setAttribute("patternUnits", "userSpaceOnUse");
-  n.setAttribute("width", value);
-  n.setAttribute("height", value);
-  n.setAttribute("x", "0");
-  n.setAttribute("y", "0");
-  n.setAttribute("patternTransform", "rotate(45)");
-  var elem = this.createElement("line");
-  elem.setAttribute("x1", "0");
-  elem.setAttribute("y1", value / 4);
-  elem.setAttribute("x2", "0");
-  elem.setAttribute("y2", 3 * value / 4);
-  elem.setAttribute("stroke", str);
-  elem.setAttribute("stroke-width", y);
-  n.appendChild(elem);
-  return n;
-};
-mxSvgCanvas2D.prototype.createZigZagLinePattern = function(y, str, value) {
-  y = 1.5 * y * value;
-  value = this.format((10 + y) * value);
-  var n = this.createElement("pattern");
-  n.setAttribute("patternUnits", "userSpaceOnUse");
-  n.setAttribute("width", value);
-  n.setAttribute("height", value);
-  n.setAttribute("x", "0");
-  n.setAttribute("y", "0");
-  n.setAttribute("patternTransform", "rotate(45)");
-  var rect = this.createElement("path");
-  var f = value / 4;
-  var g = 3 * value / 4;
-  rect.setAttribute("d", "M " + f + " 0 L " + g + " 0 L " + f + " " + value + " L " + g + " " + value);
-  rect.setAttribute("stroke", str);
-  rect.setAttribute("stroke-width", y);
-  rect.setAttribute("fill", "none");
-  n.appendChild(rect);
-  return n;
-};
-mxSvgCanvas2D.prototype.createCrossHatchPattern = function(y, str, value) {
-  y = 0.5 * y * value;
-  value = this.format(1.5 * (10 + y) * value);
-  var n = this.createElement("pattern");
-  n.setAttribute("patternUnits", "userSpaceOnUse");
-  n.setAttribute("width", value);
-  n.setAttribute("height", value);
-  n.setAttribute("x", "0");
-  n.setAttribute("y", "0");
-  n.setAttribute("patternTransform", "rotate(45)");
-  var rect = this.createElement("rect");
-  rect.setAttribute("x", 0);
-  rect.setAttribute("y", 0);
-  rect.setAttribute("width", value);
-  rect.setAttribute("height", value);
-  rect.setAttribute("stroke", str);
-  rect.setAttribute("stroke-width", y);
-  rect.setAttribute("fill", "none");
-  n.appendChild(rect);
-  return n;
-};
-mxSvgCanvas2D.prototype.createDotsPattern = function(y, str, rect) {
-  y = this.format((10 + y) * rect);
-  rect = this.createElement("pattern");
-  rect.setAttribute("patternUnits", "userSpaceOnUse");
-  rect.setAttribute("width", y);
-  rect.setAttribute("height", y);
-  rect.setAttribute("x", "0");
-  rect.setAttribute("y", "0");
-  var n = this.createElement("circle");
-  n.setAttribute("cx", y / 2);
-  n.setAttribute("cy", y / 2);
-  n.setAttribute("r", y / 4);
-  n.setAttribute("stroke", "none");
-  n.setAttribute("fill", str);
-  rect.appendChild(n);
-  return rect;
-};
-mxSvgCanvas2D.prototype.addNode = function(filled, stroked) {
+mxSvgCanvas2D.prototype.addNode = function(filled, bubble) {
   var node = this.node;
   var s = this.state;
   if (null != node) {
@@ -6524,7 +6339,7 @@ mxSvgCanvas2D.prototype.addNode = function(filled, stroked) {
         filled = false;
       }
     }
-    if (stroked && null != s.strokeColor) {
+    if (bubble && null != s.strokeColor) {
       this.updateStroke();
     } else {
       if (!this.styleEnabled) {
@@ -6536,6 +6351,14 @@ mxSvgCanvas2D.prototype.addNode = function(filled, stroked) {
         node.setAttribute("transform", s.transform);
       }
     }
+    if (s.shadow) {
+      this.root.appendChild(this.createShadow(node));
+    }
+    if (0 < this.strokeTolerance) {
+      if (!filled) {
+        this.root.appendChild(this.createTolerance(node));
+      }
+    }
     if (this.pointerEvents) {
       node.setAttribute("pointer-events", this.pointerEventsValue);
     } else {
@@ -6545,52 +6368,27 @@ mxSvgCanvas2D.prototype.addNode = function(filled, stroked) {
         }
       }
     }
-    if (s.shadow) {
-      this.root.appendChild(this.createShadow(node));
-    }
-    if (0 < this.strokeTolerance) {
-      if (!filled || null == s.fillColor) {
-        this.addTolerance(node);
-      }
-    }
     if ("rect" != node.nodeName && ("path" != node.nodeName && "ellipse" != node.nodeName) || ("none" != node.getAttribute("fill") && "transparent" != node.getAttribute("fill") || ("none" != node.getAttribute("stroke") || "none" != node.getAttribute("pointer-events")))) {
       this.root.appendChild(node);
     }
     this.node = null;
   }
 };
-mxSvgCanvas2D.prototype.addTolerance = function(node) {
-  this.root.appendChild(this.createTolerance(node));
-};
 mxSvgCanvas2D.prototype.updateFill = function() {
   var s = this.state;
   if (1 > s.alpha || 1 > s.fillAlpha) {
     this.node.setAttribute("fill-opacity", s.alpha * s.fillAlpha);
   }
-  var b = false;
   if (null != s.fillColor) {
-    if (null != s.gradientColor && s.gradientColor != mxConstants.NONE) {
-      b = true;
-      var id = this.getSvgGradient(String(s.fillColor), String(s.gradientColor), s.gradientFillAlpha, s.gradientAlpha, s.gradientDirection);
-      if (this.root.ownerDocument == document && this.useAbsoluteIds) {
-        var value = this.getBaseUrl().replace(/([\(\)])/g, "\\$1");
-        value = "url(" + value + "#" + id + ")";
+    if (null != s.gradientColor) {
+      if (s = this.getSvgGradient(String(s.fillColor), String(s.gradientColor), s.gradientFillAlpha, s.gradientAlpha, s.gradientDirection), this.root.ownerDocument == document && this.useAbsoluteIds) {
+        var base = this.getBaseUrl().replace(/([\(\)])/g, "\\$1");
+        this.node.setAttribute("fill", "url(" + base + "#" + s + ")");
       } else {
-        value = "url(#" + id + ")";
+        this.node.setAttribute("fill", "url(#" + s + ")");
       }
     } else {
-      value = String(s.fillColor).toLowerCase();
-    }
-  }
-  if (b || (null == s.fillStyle || ("auto" == s.fillStyle || "solid" == s.fillStyle))) {
-    this.node.setAttribute("fill", value);
-  } else {
-    s = this.getFillPattern(s.fillStyle, this.getCurrentStrokeWidth(), value, s.scale);
-    if (this.root.ownerDocument == document && this.useAbsoluteIds) {
-      value = this.getBaseUrl().replace(/([\(\)])/g, "\\$1");
-      this.node.setAttribute("fill", "url(" + value + "#" + s + ")");
-    } else {
-      this.node.setAttribute("fill", "url(#" + s + ")");
+      this.node.setAttribute("fill", String(s.fillColor).toLowerCase());
     }
   }
 };
@@ -6603,9 +6401,9 @@ mxSvgCanvas2D.prototype.updateStroke = function() {
   if (1 > s.alpha || 1 > s.strokeAlpha) {
     this.node.setAttribute("stroke-opacity", s.alpha * s.strokeAlpha);
   }
-  var value = this.getCurrentStrokeWidth();
-  if (1 != value) {
-    this.node.setAttribute("stroke-width", value);
+  var src = this.getCurrentStrokeWidth();
+  if (1 != src) {
+    this.node.setAttribute("stroke-width", src);
   }
   if ("path" == this.node.nodeName) {
     this.updateStrokeAttributes();
@@ -6648,33 +6446,33 @@ mxSvgCanvas2D.prototype.createDashPattern = function(scale) {
   }
   return pat.join(" ");
 };
-mxSvgCanvas2D.prototype.createTolerance = function(node) {
-  node = node.cloneNode(true);
-  var value = parseFloat(node.getAttribute("stroke-width") || 1) + this.strokeTolerance;
-  node.setAttribute("pointer-events", "stroke");
-  node.setAttribute("visibility", "hidden");
-  node.removeAttribute("stroke-dasharray");
-  node.setAttribute("stroke-width", value);
-  node.setAttribute("fill", "none");
-  node.setAttribute("stroke", mxClient.IS_OT ? "none" : "white");
-  return node;
+mxSvgCanvas2D.prototype.createTolerance = function(tol) {
+  tol = tol.cloneNode(true);
+  var src = parseFloat(tol.getAttribute("stroke-width") || 1) + this.strokeTolerance;
+  tol.setAttribute("pointer-events", "stroke");
+  tol.setAttribute("visibility", "hidden");
+  tol.removeAttribute("stroke-dasharray");
+  tol.setAttribute("stroke-width", src);
+  tol.setAttribute("fill", "none");
+  tol.setAttribute("stroke", mxClient.IS_OT ? "none" : "white");
+  return tol;
 };
-mxSvgCanvas2D.prototype.createShadow = function(shadow) {
-  shadow = shadow.cloneNode(true);
+mxSvgCanvas2D.prototype.createShadow = function(node) {
+  node = node.cloneNode(true);
   var s = this.state;
-  if (!("none" == shadow.getAttribute("fill"))) {
-    if (!(mxClient.IS_FF && "transparent" == shadow.getAttribute("fill"))) {
-      shadow.setAttribute("fill", s.shadowColor);
+  if (!("none" == node.getAttribute("fill"))) {
+    if (!(mxClient.IS_FF && "transparent" == node.getAttribute("fill"))) {
+      node.setAttribute("fill", s.shadowColor);
     }
   }
-  if ("none" != shadow.getAttribute("stroke")) {
-    shadow.setAttribute("stroke", s.shadowColor);
+  if ("none" != node.getAttribute("stroke")) {
+    node.setAttribute("stroke", s.shadowColor);
   }
-  shadow.setAttribute("transform", "translate(" + this.format(s.shadowDx * s.scale) + "," + this.format(s.shadowDy * s.scale) + ")" + (s.transform || ""));
-  shadow.setAttribute("opacity", s.shadowAlpha);
-  return shadow;
+  node.setAttribute("transform", "translate(" + this.format(s.shadowDx * s.scale) + "," + this.format(s.shadowDy * s.scale) + ")" + (s.transform || ""));
+  node.setAttribute("opacity", s.shadowAlpha);
+  return node;
 };
-mxSvgCanvas2D.prototype.setLink = function(link, value) {
+mxSvgCanvas2D.prototype.setLink = function(link) {
   if (null == link) {
     this.root = this.originalRoot;
   } else {
@@ -6684,9 +6482,6 @@ mxSvgCanvas2D.prototype.setLink = function(link, value) {
       node.setAttribute("xlink:href", link);
     } else {
       node.setAttributeNS(mxConstants.NS_XLINK, "xlink:href", link);
-    }
-    if (null != value) {
-      node.setAttribute("target", value);
     }
     this.root.appendChild(node);
     this.root = node;
@@ -6753,7 +6548,7 @@ mxSvgCanvas2D.prototype.ellipse = function(x, y, w, h) {
   n.setAttribute("ry", h / 2 * s.scale);
   this.node = n;
 };
-mxSvgCanvas2D.prototype.image = function(x, y, w, h, src, layer, connectingEdge, isConnect, color) {
+mxSvgCanvas2D.prototype.image = function(x, y, w, h, src, layer, connectingEdge, isConnect) {
   src = this.converter.convert(src);
   layer = null != layer ? layer : true;
   connectingEdge = null != connectingEdge ? connectingEdge : false;
@@ -6779,7 +6574,7 @@ mxSvgCanvas2D.prototype.image = function(x, y, w, h, src, layer, connectingEdge,
   }
   src = this.state.transform || "";
   if (connectingEdge || isConnect) {
-    var p = layer = 1;
+    var n = layer = 1;
     var dy = 0;
     var dx = 0;
     if (connectingEdge) {
@@ -6787,10 +6582,10 @@ mxSvgCanvas2D.prototype.image = function(x, y, w, h, src, layer, connectingEdge,
       dy = -w - 2 * x;
     }
     if (isConnect) {
-      p = -1;
+      n = -1;
       dx = -h - 2 * y;
     }
-    src += "scale(" + layer + "," + p + ")translate(" + dy * s.scale + "," + dx * s.scale + ")";
+    src += "scale(" + layer + "," + n + ")translate(" + dy * s.scale + "," + dx * s.scale + ")";
   }
   if (0 < src.length) {
     node.setAttribute("transform", src);
@@ -6798,27 +6593,7 @@ mxSvgCanvas2D.prototype.image = function(x, y, w, h, src, layer, connectingEdge,
   if (!this.pointerEvents) {
     node.setAttribute("pointer-events", "none");
   }
-  if (null != color) {
-    this.processClipPath(node, color, new mxRectangle(x, y, w, h));
-  }
   this.root.appendChild(node);
-};
-mxSvgCanvas2D.prototype.processClipPath = function(node, y, size) {
-  try {
-    var child = this.createElement("clipPath");
-    child.setAttribute("id", this.createClipPathId(y));
-    child.setAttribute("clipPathUnits", "objectBoundingBox");
-    var bounds = this.appendClipPath(child, y, size);
-    if (null != bounds) {
-      var pgeo = this.state;
-      node.setAttribute("x", size.x * pgeo.scale - size.width * pgeo.scale * bounds.x / bounds.width + this.imageOffset);
-      node.setAttribute("y", size.y * pgeo.scale - size.height * pgeo.scale * bounds.y / bounds.height + this.imageOffset);
-      node.setAttribute("width", size.width * pgeo.scale / bounds.width);
-      node.setAttribute("height", size.height * pgeo.scale / bounds.height);
-    }
-    this.setClip(node, child);
-  } catch (g) {
-  }
 };
 mxSvgCanvas2D.prototype.convertHtml = function(val) {
   if (this.useDomParser) {
@@ -6884,18 +6659,17 @@ mxSvgCanvas2D.prototype.updateText = function(x, y, w, h, align, valign, wrap, o
     }
   }
 };
-mxSvgCanvas2D.prototype.addForeignObject = function(x, y, w, h, str, align, valign, wrap, format, overflow, clip, rotation, group, div, root) {
-  group = this.createElement("g");
+mxSvgCanvas2D.prototype.addForeignObject = function(x, y, w, h, str, align, valign, wrap, format, overflow, clip, rotation, node, div, prev) {
+  node = this.createElement("g");
   var fo = this.createElement("foreignObject");
-  this.setCssText(fo, "overflow: visible; text-align: left;");
-  fo.setAttribute("data-moonspeak-locked", "test-data");
+  fo.setAttribute("style", "overflow: visible; text-align: left;");
   fo.setAttribute("pointer-events", "none");
   if (div.ownerDocument != document) {
     div = mxUtils.importNodeImplementation(fo.ownerDocument, div, true);
   }
   fo.appendChild(div);
-  group.appendChild(fo);
-  this.updateTextNodes(x, y, w, h, align, valign, wrap, overflow, clip, rotation, group);
+  node.appendChild(fo);
+  this.updateTextNodes(x, y, w, h, align, valign, wrap, overflow, clip, rotation, node);
   if (this.root.ownerDocument != document) {
     x = this.createAlternateContent(fo, x, y, w, h, str, align, valign, wrap, format, overflow, clip, rotation);
     if (null != x) {
@@ -6903,107 +6677,95 @@ mxSvgCanvas2D.prototype.addForeignObject = function(x, y, w, h, str, align, vali
       y = this.createElement("switch");
       y.appendChild(fo);
       y.appendChild(x);
-      group.appendChild(y);
+      node.appendChild(y);
     }
   }
-  root.appendChild(group);
+  prev.appendChild(node);
 };
-mxSvgCanvas2D.prototype.updateTextNodes = function(x, y, w, h, align, valign, wrap, overflow, clip, rotation, g) {
+mxSvgCanvas2D.prototype.updateTextNodes = function(x, y, w, h, align, valign, wrap, overflow, clip, rotation, node) {
   var s = this.state.scale;
-  mxSvgCanvas2D.createCss(w + this.foreignObjectPadding, h, align, valign, wrap, overflow, clip, null != this.state.fontBackgroundColor ? this.state.fontBackgroundColor : null, null != this.state.fontBorderColor ? this.state.fontBorderColor : null, "display: flex; align-items: unsafe " + (valign == mxConstants.ALIGN_TOP ? "flex-start" : valign == mxConstants.ALIGN_BOTTOM ? "flex-end" : "center") + "; justify-content: unsafe " + (align == mxConstants.ALIGN_LEFT ? "flex-start" : align == mxConstants.ALIGN_RIGHT ?
-  "flex-end" : "center") + "; ", this.getTextCss(), s, mxUtils.bind(this, function(dx, dy, flex, enabled, connectable) {
+  mxSvgCanvas2D.createCss(w + 2, h, align, valign, wrap, overflow, clip, null != this.state.fontBackgroundColor ? this.state.fontBackgroundColor : null, null != this.state.fontBorderColor ? this.state.fontBorderColor : null, "display: flex; align-items: unsafe " + (valign == mxConstants.ALIGN_TOP ? "flex-start" : valign == mxConstants.ALIGN_BOTTOM ? "flex-end" : "center") + "; justify-content: unsafe " + (align == mxConstants.ALIGN_LEFT ? "flex-start" : align == mxConstants.ALIGN_RIGHT ? "flex-end" :
+  "center") + "; ", this.getTextCss(), s, mxUtils.bind(this, function(dx, name, flex, str, attribute) {
     x += this.state.dx;
     y += this.state.dy;
-    var fo = g.firstChild;
+    var fo = node.firstChild;
     var div = fo.firstChild;
     var box = div.firstChild;
-    var B = (this.rotateHtml ? this.state.rotation : 0) + (null != rotation ? rotation : 0);
-    var value = (0 != this.foOffset ? "translate(" + this.foOffset + " " + this.foOffset + ")" : "") + (1 != s ? "scale(" + s + ")" : "");
-    this.setCssText(box.firstChild, connectable);
-    this.setCssText(box, enabled);
-    box.setAttribute("data-drawio-colors", "color: " + this.state.fontColor + "; " + (null == this.state.fontBackgroundColor ? "" : "background-color: " + this.state.fontBackgroundColor + "; ") + (null == this.state.fontBorderColor ? "" : "border-color: " + this.state.fontBorderColor + "; "));
+    var r = (this.rotateHtml ? this.state.rotation : 0) + (null != rotation ? rotation : 0);
+    var pts = (0 != this.foOffset ? "translate(" + this.foOffset + " " + this.foOffset + ")" : "") + (1 != s ? "scale(" + s + ")" : "");
+    box.firstChild.setAttribute("style", attribute);
+    box.setAttribute("style", str);
     fo.setAttribute("width", Math.ceil(1 / Math.min(1, s) * 100) + "%");
     fo.setAttribute("height", Math.ceil(1 / Math.min(1, s) * 100) + "%");
-    dy = Math.round(y + dy);
-    if (0 > dy) {
-      fo.setAttribute("y", dy);
+    name = Math.round(y + name);
+    if (0 > name) {
+      fo.setAttribute("y", name);
     } else {
       fo.removeAttribute("y");
-      flex += "padding-top: " + dy + "px; ";
+      flex += "padding-top: " + name + "px; ";
     }
-    this.setCssText(div, flex + "margin-left: " + Math.round(x + dx) + "px;");
-    value += 0 != B ? "rotate(" + B + " " + x + " " + y + ")" : "";
-    if ("" != value) {
-      g.setAttribute("transform", value);
+    div.setAttribute("style", flex + "margin-left: " + Math.round(x + dx) + "px;");
+    pts += 0 != r ? "rotate(" + r + " " + x + " " + y + ")" : "";
+    if ("" != pts) {
+      node.setAttribute("transform", pts);
     } else {
-      g.removeAttribute("transform");
+      node.removeAttribute("transform");
     }
     if (1 != this.state.alpha) {
-      g.setAttribute("opacity", this.state.alpha);
+      node.setAttribute("opacity", this.state.alpha);
     } else {
-      g.removeAttribute("opacity");
+      node.removeAttribute("opacity");
     }
   }));
 };
-mxSvgCanvas2D.createCss = function(x, h, align, valign, w, overflow, clip, bg, flex, wrap, border, s, callback) {
+mxSvgCanvas2D.createCss = function(w, length, align, valign, h, overflow, clip, bg, flex, wrap, border, s, callback) {
   s = "box-sizing: border-box; font-size: 0; text-align: " + (align == mxConstants.ALIGN_LEFT ? "left" : align == mxConstants.ALIGN_RIGHT ? "right" : "center") + "; ";
   var pt = mxUtils.getAlignmentAsPoint(align, valign);
   align = "overflow: hidden; ";
-  var fw = "width: 1px; ";
+  valign = "width: 1px; ";
   var fh = "height: 1px; ";
-  var dx = pt.x * x;
-  pt = pt.y * h;
+  var dx = pt.x * w;
+  pt = pt.y * length;
   if (clip) {
-    fw = "width: " + Math.round(x) + "px; ";
-    s += "max-height: " + Math.round(h) + "px; ";
+    valign = "width: " + Math.round(w) + "px; ";
+    s += "max-height: " + Math.round(length) + "px; ";
     pt = 0;
   } else {
     if ("fill" == overflow) {
-      fw = "width: " + Math.round(x) + "px; ";
-      fh = "height: " + Math.round(h) + "px; ";
+      valign = "width: " + Math.round(w) + "px; ";
+      fh = "height: " + Math.round(length) + "px; ";
       border += "width: 100%; height: 100%; ";
-      s += "width: " + Math.round(x - 2) + "px; " + fh;
+      s += valign + fh;
     } else {
       if ("width" == overflow) {
-        fw = "width: " + Math.round(x - 2) + "px; ";
+        valign = "width: " + Math.round(w) + "px; ";
         border += "width: 100%; ";
-        s += fw;
+        s += valign;
         pt = 0;
-        if (0 < h) {
-          s += "max-height: " + Math.round(h) + "px; ";
+        if (0 < length) {
+          s += "max-height: " + Math.round(length) + "px; ";
         }
       } else {
-        if ("block" == overflow) {
-          fw = "width: " + Math.round(x - 2) + "px; ";
-          border += "width: 100%; ";
-          align = "";
-          pt = 0;
-          s += fw;
-          if ("middle" == valign) {
-            s += "max-height: " + Math.round(h) + "px; ";
-          }
-        } else {
-          align = "";
-          pt = 0;
-        }
+        align = "";
+        pt = 0;
       }
     }
   }
-  h = "";
+  length = "";
   if (null != bg) {
-    h += "background-color: " + bg + "; ";
+    length += "background-color: " + bg + "; ";
   }
   if (null != flex) {
-    h += "border: 1px solid " + flex + "; ";
+    length += "border: 1px solid " + flex + "; ";
   }
   if ("" == align || clip) {
-    border += h;
+    border += length;
   } else {
-    s += h;
+    s += length;
   }
-  if (w && 0 < x) {
+  if (h && 0 < w) {
     border += "white-space: normal; word-wrap: " + mxConstants.WORD_WRAP + "; ";
-    fw = "width: " + Math.round(x) + "px; ";
+    valign = "width: " + Math.round(w) + "px; ";
     if ("" != align) {
       if ("fill" != overflow) {
         pt = 0;
@@ -7012,12 +6774,10 @@ mxSvgCanvas2D.createCss = function(x, h, align, valign, w, overflow, clip, bg, f
   } else {
     border += "white-space: nowrap; ";
     if ("" == align) {
-      if ("block" != overflow) {
-        dx = 0;
-      }
+      dx = 0;
     }
   }
-  callback(dx, pt, wrap + fw + fh, s + align, border, align);
+  callback(dx, pt, wrap + valign + fh, s + align, border, align);
 };
 mxSvgCanvas2D.prototype.getTextCss = function() {
   var s = this.state;
@@ -7060,161 +6820,22 @@ mxSvgCanvas2D.prototype.createClip = function(x, y, w, h) {
   y = Math.round(y);
   w = Math.round(w);
   h = Math.round(h);
-  var clip = "mx-clip-" + x + "-" + y + "-" + w + "-" + h;
+  var rect = "mx-clip-" + x + "-" + y + "-" + w + "-" + h;
   var counter = 0;
-  for (var tmp = clip + "-" + counter;null != document.getElementById(tmp);) {
-    tmp = clip + "-" + ++counter;
+  for (var tmp = rect + "-" + counter;null != document.getElementById(tmp);) {
+    tmp = rect + "-" + ++counter;
   }
   clip = this.createElement("clipPath");
   clip.setAttribute("id", tmp);
-  tmp = this.createElement("rect");
-  tmp.setAttribute("x", x);
-  tmp.setAttribute("y", y);
-  tmp.setAttribute("width", w);
-  tmp.setAttribute("height", h);
-  clip.appendChild(tmp);
+  rect = this.createElement("rect");
+  rect.setAttribute("x", x);
+  rect.setAttribute("y", y);
+  rect.setAttribute("width", w);
+  rect.setAttribute("height", h);
+  clip.appendChild(rect);
   return clip;
 };
-mxSvgCanvas2D.prototype.createClipPathId = function(value) {
-  value = "mx-clippath-" + value.replace(/[^a-zA-Z0-9]+/g, "-");
-  var _ = "-" == value.charAt(value.length - 1) ? "" : "-";
-  var counter = 0;
-  for (var tmp = value + _ + counter;null != document.getElementById(tmp);) {
-    tmp = value + _ + ++counter;
-  }
-  return tmp;
-};
-mxSvgCanvas2D.prototype.appendClipPath = function(node, y, into) {
-  var d = y.match(/\(([^)]+)\)/);
-  var obj = null;
-  if ("polygon" == y.substring(0, 7)) {
-    obj = this.appendPolygonClip(d[1], node, into);
-  } else {
-    if ("circle" == y.substring(0, 6)) {
-      obj = this.appendCircleClip(d[1], node, into);
-    } else {
-      if ("ellipse" == y.substring(0, 7)) {
-        obj = this.appendEllipseClip(d[1], node, into);
-      } else {
-        if ("inset" == y.substring(0, 5)) {
-          obj = this.appendInsetClip(d[1], node, into);
-        }
-      }
-    }
-  }
-  return obj;
-};
-mxSvgCanvas2D.prototype.appendPolygonClip = function(value, parent, node) {
-  node = this.createElement("polygon");
-  value = value.split(/[ ,]+/);
-  var x = null;
-  var childrenY = null;
-  var lastChild = null;
-  var maxChildrenY = null;
-  var result = [];
-  for (var i = 0;i < value.length;i++) {
-    var child = this.parseClipValue(value, i);
-    if (0 == i % 2) {
-      if (null == x || x > child) {
-        x = child;
-      }
-      if (null == lastChild || lastChild < child) {
-        lastChild = child;
-      }
-    } else {
-      if (null == childrenY || childrenY > child) {
-        childrenY = child;
-      }
-      if (null == maxChildrenY || maxChildrenY < child) {
-        maxChildrenY = child;
-      }
-    }
-    result.push(child);
-  }
-  node.setAttribute("points", result.join(","));
-  parent.appendChild(node);
-  return new mxRectangle(x, childrenY, lastChild - x, maxChildrenY - childrenY);
-};
-mxSvgCanvas2D.prototype.appendCircleClip = function(str, node, elem) {
-  elem = this.createElement("circle");
-  var value = str.split(/[ ,]+/);
-  str = this.parseClipValue(value, 0);
-  var src = this.parseClipValue(value, 2);
-  value = this.parseClipValue(value, 3);
-  elem.setAttribute("r", str);
-  elem.setAttribute("cx", src);
-  elem.setAttribute("cy", value);
-  node.appendChild(elem);
-  return new mxRectangle(src - str, value - str, 2 * str, 2 * str);
-};
-mxSvgCanvas2D.prototype.appendEllipseClip = function(name, node, n) {
-  n = this.createElement("ellipse");
-  var value = name.split(/[ ,]+/);
-  name = this.parseClipValue(value, 0);
-  var src = this.parseClipValue(value, 1);
-  var size = this.parseClipValue(value, 3);
-  value = this.parseClipValue(value, 4);
-  n.setAttribute("rx", name);
-  n.setAttribute("ry", src);
-  n.setAttribute("cx", size);
-  n.setAttribute("cy", value);
-  node.appendChild(n);
-  return new mxRectangle(size - name, value - src, 2 * name, 2 * src);
-};
-mxSvgCanvas2D.prototype.appendInsetClip = function(name, node, n) {
-  n = this.createElement("rect");
-  var value = name.split(/[ ,]+/);
-  name = this.parseClipValue(value, 0);
-  var src = this.parseClipValue(value, 1);
-  var size = this.parseClipValue(value, 2);
-  var dx = this.parseClipValue(value, 3);
-  src = 1 - src - dx;
-  size = 1 - name - size;
-  n.setAttribute("x", dx);
-  n.setAttribute("y", name);
-  n.setAttribute("width", src);
-  n.setAttribute("height", size);
-  if (4 < value.length) {
-    if ("round" == value[4]) {
-      value = this.parseClipValue(value, 5);
-      n.setAttribute("rx", value);
-      n.setAttribute("ry", value);
-    }
-  }
-  node.appendChild(n);
-  return new mxRectangle(dx, name, src, size);
-};
-mxSvgCanvas2D.prototype.parseClipValue = function(value, index) {
-  index = value[Math.min(index, value.length - 1)];
-  value = 1;
-  if ("center" == index) {
-    value = 0.5;
-  } else {
-    if ("top" == index || "left" == index) {
-      value = 0;
-    } else {
-      index = parseFloat(index);
-      if (!isNaN(index)) {
-        value = Math.max(0, Math.min(1, index / 100));
-      }
-    }
-  }
-  return value;
-};
-mxSvgCanvas2D.prototype.setClip = function(node, c) {
-  if (null != this.defs) {
-    this.defs.appendChild(c);
-  } else {
-    this.root.appendChild(c);
-  }
-  if (mxClient.IS_CHROMEAPP || (mxClient.IS_IE || (mxClient.IS_IE11 || (mxClient.IS_EDGE || this.root.ownerDocument != document)))) {
-    node.setAttribute("clip-path", "url(#" + c.getAttribute("id") + ")");
-  } else {
-    var base = this.getBaseUrl().replace(/([\(\)])/g, "\\$1");
-    node.setAttribute("clip-path", "url(" + base + "#" + c.getAttribute("id") + ")");
-  }
-};
-mxSvgCanvas2D.prototype.plainText = function(x, y, w, h, str, align, valign, s, fill, i, dy, dx) {
+mxSvgCanvas2D.prototype.plainText = function(x, y, w, h, str, align, valign, s, fill, i, dy, dir) {
   dy = null != dy ? dy : 0;
   s = this.state;
   var size = s.fontSize;
@@ -7229,19 +6850,19 @@ mxSvgCanvas2D.prototype.plainText = function(x, y, w, h, str, align, valign, s, 
   if (0 != dy) {
     lines += "rotate(" + dy + "," + this.format(x * s.scale) + "," + this.format(y * s.scale) + ")";
   }
-  if (null != dx) {
-    node.setAttribute("direction", dx);
+  if (null != dir) {
+    node.setAttribute("direction", dir);
   }
   if (i) {
     if (0 < w) {
       if (0 < h) {
-        dx = x;
+        dir = x;
         dy = y;
         if (align == mxConstants.ALIGN_CENTER) {
-          dx -= w / 2;
+          dir -= w / 2;
         } else {
           if (align == mxConstants.ALIGN_RIGHT) {
-            dx -= w;
+            dir -= w;
           }
         }
         if ("fill" != fill) {
@@ -7253,7 +6874,18 @@ mxSvgCanvas2D.prototype.plainText = function(x, y, w, h, str, align, valign, s, 
             }
           }
         }
-        this.setClip(node, this.createClip(dx * s.scale - 2, dy * s.scale - 2, w * s.scale + 4, h * s.scale + 4));
+        dy = this.createClip(dir * s.scale - 2, dy * s.scale - 2, w * s.scale + 4, h * s.scale + 4);
+        if (null != this.defs) {
+          this.defs.appendChild(dy);
+        } else {
+          this.root.appendChild(dy);
+        }
+        if (mxClient.IS_CHROMEAPP || (mxClient.IS_IE || (mxClient.IS_IE11 || (mxClient.IS_EDGE || this.root.ownerDocument != document)))) {
+          node.setAttribute("clip-path", "url(#" + dy.getAttribute("id") + ")");
+        } else {
+          dir = this.getBaseUrl().replace(/([\(\)])/g, "\\$1");
+          node.setAttribute("clip-path", "url(" + dir + "#" + dy.getAttribute("id") + ")");
+        }
       }
     }
   }
@@ -7271,8 +6903,8 @@ mxSvgCanvas2D.prototype.plainText = function(x, y, w, h, str, align, valign, s, 
     node.setAttribute("opacity", s.alpha);
   }
   lines = str.split("\n");
-  dx = Math.round(size * mxConstants.LINE_HEIGHT);
-  var textHeight = size + (lines.length - 1) * dx;
+  dir = Math.round(size * mxConstants.LINE_HEIGHT);
+  var textHeight = size + (lines.length - 1) * dir;
   dy = y + size - 1;
   if (valign == mxConstants.ALIGN_MIDDLE) {
     if ("fill" == fill) {
@@ -7301,7 +6933,7 @@ mxSvgCanvas2D.prototype.plainText = function(x, y, w, h, str, align, valign, s, 
         node.appendChild(size);
       }
     }
-    dy += dx;
+    dy += dir;
   }
   this.root.appendChild(node);
   this.addTextBackground(node, str, x, y, w, "fill" == fill ? h : textHeight, align, valign, fill);
@@ -7367,7 +6999,7 @@ mxSvgCanvas2D.prototype.addTextBackground = function(node, n, x, y, w, h, align,
       div.style.whiteSpace = "nowrap";
       div.style.position = "absolute";
       div.style.visibility = "hidden";
-      div.style.display = "inline-block";
+      div.style.display = mxClient.IS_QUIRKS ? "inline" : "inline-block";
       div.style.zoom = "1";
       if ((s.fontStyle & mxConstants.FONT_BOLD) == mxConstants.FONT_BOLD) {
         div.style.fontWeight = "bold";
@@ -7423,6 +7055,572 @@ mxSvgCanvas2D.prototype.fill = function() {
   this.addNode(true, false);
 };
 mxSvgCanvas2D.prototype.fillAndStroke = function() {
+  this.addNode(true, true);
+};
+var mxVmlCanvas2D = function(root) {
+  mxAbstractCanvas2D.call(this);
+  this.root = root;
+};
+mxUtils.extend(mxVmlCanvas2D, mxAbstractCanvas2D);
+mxVmlCanvas2D.prototype.node = null;
+mxVmlCanvas2D.prototype.textEnabled = true;
+mxVmlCanvas2D.prototype.moveOp = "m";
+mxVmlCanvas2D.prototype.lineOp = "l";
+mxVmlCanvas2D.prototype.curveOp = "c";
+mxVmlCanvas2D.prototype.closeOp = "x";
+mxVmlCanvas2D.prototype.rotatedHtmlBackground = "";
+mxVmlCanvas2D.prototype.vmlScale = 1;
+mxVmlCanvas2D.prototype.createElement = function(name) {
+  return document.createElement(name);
+};
+mxVmlCanvas2D.prototype.createVmlElement = function(name) {
+  return this.createElement(mxClient.VML_PREFIX + ":" + name);
+};
+mxVmlCanvas2D.prototype.addNode = function(filled, stroked) {
+  var node = this.node;
+  var s = this.state;
+  if (null != node) {
+    if ("shape" == node.nodeName) {
+      if (null != this.path && 0 < this.path.length) {
+        node.path = this.path.join(" ") + " e";
+        node.style.width = this.root.style.width;
+        node.style.height = this.root.style.height;
+        node.coordsize = parseInt(node.style.width) + " " + parseInt(node.style.height);
+      } else {
+        return;
+      }
+    }
+    node.strokeweight = this.format(Math.max(1, s.strokeWidth * s.scale / this.vmlScale)) + "px";
+    if (s.shadow) {
+      this.root.appendChild(this.createShadow(node, filled && null != s.fillColor, stroked && null != s.strokeColor));
+    }
+    if (stroked && null != s.strokeColor) {
+      node.stroked = "true";
+      node.strokecolor = s.strokeColor;
+    } else {
+      node.stroked = "false";
+    }
+    node.appendChild(this.createStroke());
+    if (filled && null != s.fillColor) {
+      node.appendChild(this.createFill());
+    } else {
+      if (!this.pointerEvents || "shape" == node.nodeName && this.path[this.path.length - 1] != this.closeOp) {
+        node.filled = "false";
+      } else {
+        node.appendChild(this.createTransparentFill());
+      }
+    }
+    this.root.appendChild(node);
+  }
+};
+mxVmlCanvas2D.prototype.createTransparentFill = function() {
+  var fill = this.createVmlElement("fill");
+  fill.src = mxClient.imageBasePath + "/transparent.gif";
+  fill.type = "tile";
+  return fill;
+};
+mxVmlCanvas2D.prototype.createFill = function() {
+  var s = this.state;
+  var fill = this.createVmlElement("fill");
+  fill.color = s.fillColor;
+  if (null != s.gradientColor) {
+    fill.type = "gradient";
+    fill.method = "none";
+    fill.color2 = s.gradientColor;
+    var angle = 180 - s.rotation;
+    angle = s.gradientDirection == mxConstants.DIRECTION_WEST ? angle - (90 + ("x" == this.root.style.flip ? 180 : 0)) : s.gradientDirection == mxConstants.DIRECTION_EAST ? angle + (90 + ("x" == this.root.style.flip ? 180 : 0)) : s.gradientDirection == mxConstants.DIRECTION_NORTH ? angle - (180 + ("y" == this.root.style.flip ? -180 : 0)) : angle + ("y" == this.root.style.flip ? -180 : 0);
+    if ("x" == this.root.style.flip || "y" == this.root.style.flip) {
+      angle *= -1;
+    }
+    fill.angle = mxUtils.mod(angle, 360);
+    fill.opacity = s.alpha * s.gradientFillAlpha * 100 + "%";
+    fill.setAttribute(mxClient.OFFICE_PREFIX + ":opacity2", s.alpha * s.gradientAlpha * 100 + "%");
+  } else {
+    if (1 > s.alpha || 1 > s.fillAlpha) {
+      fill.opacity = s.alpha * s.fillAlpha * 100 + "%";
+    }
+  }
+  return fill;
+};
+mxVmlCanvas2D.prototype.createStroke = function() {
+  var s = this.state;
+  var stroke = this.createVmlElement("stroke");
+  stroke.endcap = s.lineCap || "flat";
+  stroke.joinstyle = s.lineJoin || "miter";
+  stroke.miterlimit = s.miterLimit || "10";
+  if (1 > s.alpha || 1 > s.strokeAlpha) {
+    stroke.opacity = s.alpha * s.strokeAlpha * 100 + "%";
+  }
+  if (s.dashed) {
+    stroke.dashstyle = this.getVmlDashStyle();
+  }
+  return stroke;
+};
+mxVmlCanvas2D.prototype.getVmlDashStyle = function() {
+  var result = "dash";
+  if ("string" === typeof this.state.dashPattern) {
+    var tok = this.state.dashPattern.split(" ");
+    if (0 < tok.length) {
+      if (1 == tok[0]) {
+        result = "0 2";
+      }
+    }
+  }
+  return result;
+};
+mxVmlCanvas2D.prototype.createShadow = function(node, filled, stroked) {
+  var s = this.state;
+  var sin = Math.PI / 180 * -s.rotation;
+  var cos = Math.cos(sin);
+  sin = Math.sin(sin);
+  var dx = s.shadowDx * s.scale;
+  var dy = s.shadowDy * s.scale;
+  if ("x" == this.root.style.flip) {
+    dx *= -1;
+  } else {
+    if ("y" == this.root.style.flip) {
+      dy *= -1;
+    }
+  }
+  var shadow = node.cloneNode(true);
+  shadow.style.marginLeft = Math.round(dx * cos - dy * sin) + "px";
+  shadow.style.marginTop = Math.round(dx * sin + dy * cos) + "px";
+  if (8 == document.documentMode) {
+    shadow.strokeweight = node.strokeweight;
+    if ("shape" == node.nodeName) {
+      shadow.path = this.path.join(" ") + " e";
+      shadow.style.width = this.root.style.width;
+      shadow.style.height = this.root.style.height;
+      shadow.coordsize = parseInt(node.style.width) + " " + parseInt(node.style.height);
+    }
+  }
+  if (stroked) {
+    shadow.strokecolor = s.shadowColor;
+    shadow.appendChild(this.createShadowStroke());
+  } else {
+    shadow.stroked = "false";
+  }
+  if (filled) {
+    shadow.appendChild(this.createShadowFill());
+  } else {
+    shadow.filled = "false";
+  }
+  return shadow;
+};
+mxVmlCanvas2D.prototype.createShadowFill = function() {
+  var fill = this.createVmlElement("fill");
+  fill.color = this.state.shadowColor;
+  fill.opacity = this.state.alpha * this.state.shadowAlpha * 100 + "%";
+  return fill;
+};
+mxVmlCanvas2D.prototype.createShadowStroke = function() {
+  var stroke = this.createStroke();
+  stroke.opacity = this.state.alpha * this.state.shadowAlpha * 100 + "%";
+  return stroke;
+};
+mxVmlCanvas2D.prototype.rotate = function(angle, flipH, flipV, cx, cy) {
+  if (flipH && flipV) {
+    angle += 180;
+  } else {
+    if (flipH) {
+      this.root.style.flip = "x";
+    } else {
+      if (flipV) {
+        this.root.style.flip = "y";
+      }
+    }
+  }
+  if (flipH ? !flipV : flipV) {
+    angle *= -1;
+  }
+  this.root.style.rotation = angle;
+  this.state.rotation += angle;
+  this.state.rotationCx = cx;
+  this.state.rotationCy = cy;
+};
+mxVmlCanvas2D.prototype.begin = function() {
+  mxAbstractCanvas2D.prototype.begin.apply(this, arguments);
+  this.node = this.createVmlElement("shape");
+  this.node.style.position = "absolute";
+};
+mxVmlCanvas2D.prototype.quadTo = function(x2, y1, x1, y2) {
+  var s = this.state;
+  var y = (this.lastX + s.dx) * s.scale;
+  var sx = (this.lastY + s.dy) * s.scale;
+  x2 = (x2 + s.dx) * s.scale;
+  y1 = (y1 + s.dy) * s.scale;
+  x1 = (x1 + s.dx) * s.scale;
+  y2 = (y2 + s.dy) * s.scale;
+  sx = sx + 2 / 3 * (y1 - sx);
+  var sy = x1 + 2 / 3 * (x2 - x1);
+  y1 = y2 + 2 / 3 * (y1 - y2);
+  this.path.push("c " + this.format(y + 2 / 3 * (x2 - y)) + " " + this.format(sx) + " " + this.format(sy) + " " + this.format(y1) + " " + this.format(x1) + " " + this.format(y2));
+  this.lastX = x1 / s.scale - s.dx;
+  this.lastY = y2 / s.scale - s.dy;
+};
+mxVmlCanvas2D.prototype.createRect = function(nodeName, x, y, w, h) {
+  var s = this.state;
+  nodeName = this.createVmlElement(nodeName);
+  nodeName.style.position = "absolute";
+  nodeName.style.left = this.format((x + s.dx) * s.scale) + "px";
+  nodeName.style.top = this.format((y + s.dy) * s.scale) + "px";
+  nodeName.style.width = this.format(w * s.scale) + "px";
+  nodeName.style.height = this.format(h * s.scale) + "px";
+  return nodeName;
+};
+mxVmlCanvas2D.prototype.rect = function(x, y, w, h) {
+  this.node = this.createRect("rect", x, y, w, h);
+};
+mxVmlCanvas2D.prototype.roundrect = function(x, y, w, h, shape, r) {
+  this.node = this.createRect("roundrect", x, y, w, h);
+  this.node.setAttribute("arcsize", Math.max(100 * shape / w, 100 * r / h) + "%");
+};
+mxVmlCanvas2D.prototype.ellipse = function(x, y, w, h) {
+  this.node = this.createRect("oval", x, y, w, h);
+};
+mxVmlCanvas2D.prototype.image = function(node, fill, w, h, src, layer, connectingEdge, initialX) {
+  if (layer) {
+    node = this.createRect("rect", node, fill, w, h);
+    node.stroked = "false";
+    fill = this.createVmlElement("fill");
+    fill.aspect = layer ? "atmost" : "ignore";
+    fill.rotate = "true";
+    fill.type = "frame";
+    fill.src = src;
+    node.appendChild(fill);
+  } else {
+    node = this.createRect("image", node, fill, w, h);
+    node.src = src;
+  }
+  if (connectingEdge && initialX) {
+    node.style.rotation = "180";
+  } else {
+    if (connectingEdge) {
+      node.style.flip = "x";
+    } else {
+      if (initialX) {
+        node.style.flip = "y";
+      }
+    }
+  }
+  if (1 > this.state.alpha || 1 > this.state.fillAlpha) {
+    node.style.filter += "alpha(opacity=" + this.state.alpha * this.state.fillAlpha * 100 + ")";
+  }
+  this.root.appendChild(node);
+};
+mxVmlCanvas2D.prototype.createDiv = function(style, align, node, div2) {
+  node = this.createElement("div");
+  var state = this.state;
+  var css = "";
+  if (null != state.fontBackgroundColor) {
+    css += "background-color:" + mxUtils.htmlEntities(state.fontBackgroundColor) + ";";
+  }
+  if (null != state.fontBorderColor) {
+    css += "border:1px solid " + mxUtils.htmlEntities(state.fontBorderColor) + ";";
+  }
+  if (mxUtils.isNode(style)) {
+    node.appendChild(style);
+  } else {
+    if ("fill" != div2 && "width" != div2) {
+      div2 = this.createElement("div");
+      div2.style.cssText = css;
+      div2.style.display = mxClient.IS_QUIRKS ? "inline" : "inline-block";
+      div2.style.zoom = "1";
+      div2.style.textDecoration = "inherit";
+      div2.innerHTML = style;
+      node.appendChild(div2);
+    } else {
+      node.style.cssText = css;
+      node.innerHTML = style;
+    }
+  }
+  style = node.style;
+  style.fontSize = state.fontSize / this.vmlScale + "px";
+  style.fontFamily = state.fontFamily;
+  style.color = state.fontColor;
+  style.verticalAlign = "top";
+  style.textAlign = align || "left";
+  style.lineHeight = mxConstants.ABSOLUTE_LINE_HEIGHT ? state.fontSize * mxConstants.LINE_HEIGHT / this.vmlScale + "px" : mxConstants.LINE_HEIGHT;
+  if ((state.fontStyle & mxConstants.FONT_BOLD) == mxConstants.FONT_BOLD) {
+    style.fontWeight = "bold";
+  }
+  if ((state.fontStyle & mxConstants.FONT_ITALIC) == mxConstants.FONT_ITALIC) {
+    style.fontStyle = "italic";
+  }
+  if ((state.fontStyle & mxConstants.FONT_UNDERLINE) == mxConstants.FONT_UNDERLINE) {
+    style.textDecoration = "underline";
+  }
+  return node;
+};
+mxVmlCanvas2D.prototype.text = function(x, y, w, h, div, align, valign, value, abs, node, dir, rotation, str) {
+  if (this.textEnabled && null != div) {
+    var s = this.state;
+    if ("html" == abs) {
+      if (null != s.rotation) {
+        y = this.rotatePoint(x, y, s.rotation, s.rotationCx, s.rotationCy);
+        x = y.x;
+        y = y.y;
+      }
+      if (8 != document.documentMode || mxClient.IS_EM) {
+        x *= s.scale;
+        y *= s.scale;
+      } else {
+        x += s.dx;
+        y += s.dy;
+        if ("fill" != node) {
+          if (valign == mxConstants.ALIGN_TOP) {
+            --y;
+          }
+        }
+      }
+      abs = 8 != document.documentMode || mxClient.IS_EM ? this.createElement("div") : this.createVmlElement("group");
+      abs.style.position = "absolute";
+      abs.style.display = "inline";
+      abs.style.left = this.format(x) + "px";
+      abs.style.top = this.format(y) + "px";
+      abs.style.zoom = s.scale;
+      var oh = this.createElement("div");
+      oh.style.position = "relative";
+      oh.style.display = "inline";
+      var margin = mxUtils.getAlignmentAsPoint(align, valign);
+      var dx = margin.x;
+      margin = margin.y;
+      div = this.createDiv(div, align, valign, node);
+      align = this.createElement("div");
+      if (null != str) {
+        div.setAttribute("dir", str);
+      }
+      if (value && 0 < w) {
+        if (dir || (div.style.width = Math.round(w) + "px"), div.style.wordWrap = mxConstants.WORD_WRAP, div.style.whiteSpace = "normal", "break-word" == div.style.wordWrap) {
+          var rad = div;
+          if (null != rad.firstChild) {
+            if ("DIV" == rad.firstChild.nodeName) {
+              rad.firstChild.style.width = "100%";
+            }
+          }
+        }
+      } else {
+        div.style.whiteSpace = "nowrap";
+      }
+      rotation = s.rotation + (rotation || 0);
+      if (this.rotateHtml && 0 != rotation) {
+        align.style.display = "inline";
+        align.style.zoom = "1";
+        align.appendChild(div);
+        if (8 != document.documentMode || (mxClient.IS_EM || "DIV" == this.root.nodeName)) {
+          abs.appendChild(align);
+        } else {
+          oh.appendChild(align);
+          abs.appendChild(oh);
+        }
+      } else {
+        if (8 != document.documentMode || mxClient.IS_EM) {
+          div.style.display = "inline";
+          abs.appendChild(div);
+        } else {
+          oh.appendChild(div);
+          abs.appendChild(oh);
+        }
+      }
+      if ("DIV" != this.root.nodeName) {
+        str = this.createVmlElement("rect");
+        str.stroked = "false";
+        str.filled = "false";
+        str.appendChild(abs);
+        this.root.appendChild(str);
+      } else {
+        this.root.appendChild(abs);
+      }
+      if (dir) {
+        div.style.overflow = "hidden";
+        div.style.width = Math.round(w) + "px";
+        if (!mxClient.IS_QUIRKS) {
+          div.style.maxHeight = Math.round(h) + "px";
+        }
+      } else {
+        if ("fill" == node) {
+          div.style.overflow = "hidden";
+          div.style.width = Math.max(0, w) + 1 + "px";
+          div.style.height = Math.max(0, h) + 1 + "px";
+        } else {
+          if ("width" == node) {
+            div.style.overflow = "hidden";
+            div.style.width = Math.max(0, w) + 1 + "px";
+            div.style.maxHeight = Math.max(0, h) + 1 + "px";
+          }
+        }
+      }
+      if (this.rotateHtml && 0 != rotation) {
+        rad = Math.PI / 180 * rotation;
+        rotation = parseFloat(parseFloat(Math.cos(rad)).toFixed(8));
+        str = parseFloat(parseFloat(Math.sin(-rad)).toFixed(8));
+        rad %= 2 * Math.PI;
+        if (0 > rad) {
+          rad += 2 * Math.PI;
+        }
+        rad %= Math.PI;
+        if (rad > Math.PI / 2) {
+          rad = Math.PI - rad;
+        }
+        valign = Math.cos(rad);
+        var sin = Math.sin(rad);
+        if (!(8 != document.documentMode)) {
+          if (!mxClient.IS_EM) {
+            div.style.display = "inline-block";
+            align.style.display = "inline-block";
+            oh.style.display = "inline-block";
+          }
+        }
+        div.style.visibility = "hidden";
+        div.style.position = "absolute";
+        document.body.appendChild(div);
+        oh = div;
+        if (null != oh.firstChild) {
+          if ("DIV" == oh.firstChild.nodeName) {
+            oh = oh.firstChild;
+          }
+        }
+        rad = oh.offsetWidth + 3;
+        oh = oh.offsetHeight;
+        if (dir) {
+          w = Math.min(w, rad);
+          oh = Math.min(oh, h);
+        } else {
+          w = rad;
+        }
+        if (value) {
+          div.style.width = w + "px";
+        }
+        if (mxClient.IS_QUIRKS) {
+          if (dir || "width" == node) {
+            if (oh > h) {
+              oh = h;
+              div.style.height = oh + "px";
+            }
+          }
+        }
+        h = oh;
+        dir = (h - h * valign + w * -sin) / 2 - str * w * (dx + 0.5) + rotation * h * (margin + 0.5);
+        value = (w - w * valign + h * -sin) / 2 + rotation * w * (dx + 0.5) + str * h * (margin + 0.5);
+        if ("group" == abs.nodeName && "DIV" == this.root.nodeName) {
+          node = this.createElement("div");
+          node.style.display = "inline-block";
+          node.style.position = "absolute";
+          node.style.left = this.format(x + (value - w / 2) * s.scale) + "px";
+          node.style.top = this.format(y + (dir - h / 2) * s.scale) + "px";
+          abs.parentNode.appendChild(node);
+          node.appendChild(abs);
+        } else {
+          s = 8 != document.documentMode || mxClient.IS_EM ? s.scale : 1;
+          abs.style.left = this.format(x + (value - w / 2) * s) + "px";
+          abs.style.top = this.format(y + (dir - h / 2) * s) + "px";
+        }
+        align.style.filter = "progid:DXImageTransform.Microsoft.Matrix(M11=" + rotation + ", M12=" + str + ", M21=" + -str + ", M22=" + rotation + ", sizingMethod='auto expand')";
+        align.style.backgroundColor = this.rotatedHtmlBackground;
+        if (1 > this.state.alpha) {
+          align.style.filter += "alpha(opacity=" + 100 * this.state.alpha + ")";
+        }
+        align.appendChild(div);
+        div.style.position = "";
+        div.style.visibility = "";
+      } else {
+        if (8 != document.documentMode || mxClient.IS_EM) {
+          div.style.verticalAlign = "top";
+          if (1 > this.state.alpha) {
+            abs.style.filter = "alpha(opacity=" + 100 * this.state.alpha + ")";
+          }
+          s = div.parentNode;
+          div.style.visibility = "hidden";
+          document.body.appendChild(div);
+          w = div.offsetWidth;
+          oh = div.offsetHeight;
+          if (mxClient.IS_QUIRKS) {
+            if (dir) {
+              if (oh > h) {
+                oh = h;
+                div.style.height = oh + "px";
+              }
+            }
+          }
+          h = oh;
+          div.style.visibility = "";
+          s.appendChild(div);
+          abs.style.left = this.format(x + w * dx * this.state.scale) + "px";
+          abs.style.top = this.format(y + h * margin * this.state.scale) + "px";
+        } else {
+          if (1 > this.state.alpha) {
+            div.style.filter = "alpha(opacity=" + 100 * this.state.alpha + ")";
+          }
+          oh.style.left = 100 * dx + "%";
+          oh.style.top = 100 * margin + "%";
+        }
+      }
+    } else {
+      this.plainText(x, y, w, h, mxUtils.htmlEntities(div, false), align, valign, value, abs, node, dir, rotation, str);
+    }
+  }
+};
+mxVmlCanvas2D.prototype.plainText = function(x, y, node, tp, str, align, valign, s, format, clip, dir, rotation, w) {
+  s = this.state;
+  x = (x + s.dx) * s.scale;
+  y = (y + s.dy) * s.scale;
+  node = this.createVmlElement("shape");
+  node.style.width = "1px";
+  node.style.height = "1px";
+  node.stroked = "false";
+  tp = this.createVmlElement("fill");
+  tp.color = s.fontColor;
+  tp.opacity = 100 * s.alpha + "%";
+  node.appendChild(tp);
+  tp = this.createVmlElement("path");
+  tp.textpathok = "true";
+  tp.v = "m " + this.format(0) + " " + this.format(0) + " l " + this.format(1) + " " + this.format(0);
+  node.appendChild(tp);
+  tp = this.createVmlElement("textpath");
+  tp.style.cssText = "v-text-align:" + align;
+  tp.style.align = align;
+  tp.style.fontFamily = s.fontFamily;
+  tp.string = str;
+  tp.on = "true";
+  align = s.fontSize * s.scale / this.vmlScale;
+  tp.style.fontSize = align + "px";
+  if ((s.fontStyle & mxConstants.FONT_BOLD) == mxConstants.FONT_BOLD) {
+    tp.style.fontWeight = "bold";
+  }
+  if ((s.fontStyle & mxConstants.FONT_ITALIC) == mxConstants.FONT_ITALIC) {
+    tp.style.fontStyle = "italic";
+  }
+  if ((s.fontStyle & mxConstants.FONT_UNDERLINE) == mxConstants.FONT_UNDERLINE) {
+    tp.style.textDecoration = "underline";
+  }
+  str = str.split("\n");
+  s = align + (str.length - 1) * align * mxConstants.LINE_HEIGHT;
+  align = str = 0;
+  if (valign == mxConstants.ALIGN_BOTTOM) {
+    align = -s / 2;
+  } else {
+    if (valign != mxConstants.ALIGN_MIDDLE) {
+      align = s / 2;
+    }
+  }
+  if (null != rotation) {
+    node.style.rotation = rotation;
+    valign = Math.PI / 180 * rotation;
+    str = Math.sin(valign) * align;
+    align *= Math.cos(valign);
+  }
+  node.appendChild(tp);
+  node.style.left = this.format(x - str) + "px";
+  node.style.top = this.format(y + align) + "px";
+  this.root.appendChild(node);
+};
+mxVmlCanvas2D.prototype.stroke = function() {
+  this.addNode(false, true);
+};
+mxVmlCanvas2D.prototype.fill = function() {
+  this.addNode(true, false);
+};
+mxVmlCanvas2D.prototype.fillAndStroke = function() {
   this.addNode(true, true);
 };
 function mxGuide(graph, states) {
@@ -7482,7 +7680,7 @@ mxGuide.prototype.move = function(bounds, delta, gridEnabled, snapY) {
         valueY = y;
         if (null == this.guideY) {
           this.guideY = this.createGuideShape(false);
-          this.guideY.dialect = mxConstants.DIALECT_SVG;
+          this.guideY.dialect = this.graph.dialect != mxConstants.DIALECT_SVG ? mxConstants.DIALECT_VML : mxConstants.DIALECT_SVG;
           this.guideY.pointerEvents = false;
           this.guideY.init(this.graph.getView().getOverlayPane());
         }
@@ -7515,7 +7713,7 @@ mxGuide.prototype.move = function(bounds, delta, gridEnabled, snapY) {
         valueX = x;
         if (null == this.guideX) {
           this.guideX = this.createGuideShape(true);
-          this.guideX.dialect = mxConstants.DIALECT_SVG;
+          this.guideX.dialect = this.graph.dialect != mxConstants.DIALECT_SVG ? mxConstants.DIALECT_VML : mxConstants.DIALECT_SVG;
           this.guideX.pointerEvents = false;
           this.guideX.init(this.graph.getView().getOverlayPane());
         }
@@ -7523,7 +7721,7 @@ mxGuide.prototype.move = function(bounds, delta, gridEnabled, snapY) {
       overrideX = overrideX || override;
     };
     var i = this.graph.getView().scale;
-    i *= this.getGuideTolerance(gridEnabled);
+    i = this.getGuideTolerance(gridEnabled) * i;
     var state = bounds.clone();
     state.x += delta.x;
     state.y += delta.y;
@@ -7658,6 +7856,7 @@ mxShape.prototype.pointerEvents = true;
 mxShape.prototype.svgPointerEvents = "all";
 mxShape.prototype.shapePointerEvents = false;
 mxShape.prototype.stencilPointerEvents = false;
+mxShape.prototype.vmlScale = 1;
 mxShape.prototype.outline = false;
 mxShape.prototype.visible = true;
 mxShape.prototype.useSvgBoundingBox = false;
@@ -7675,6 +7874,9 @@ mxShape.prototype.initStyles = function(container) {
   this.strokeOpacity = this.fillOpacity = this.opacity = 100;
   this.flipV = this.flipH = false;
 };
+mxShape.prototype.isParseVml = function() {
+  return true;
+};
 mxShape.prototype.isHtmlAllowed = function() {
   return false;
 };
@@ -7682,10 +7884,15 @@ mxShape.prototype.getSvgScreenOffset = function() {
   return 1 == mxUtils.mod(Math.max(1, Math.round((this.stencil && "inherit" != this.stencil.strokewidth ? Number(this.stencil.strokewidth) : this.strokewidth) * this.scale)), 2) ? 0.5 : 0;
 };
 mxShape.prototype.create = function(cell) {
-  return null != cell && null != cell.ownerSVGElement ? this.createSvg(cell) : this.createHtml(cell);
+  return null != cell && null != cell.ownerSVGElement ? this.createSvg(cell) : 8 == document.documentMode || (!mxClient.IS_VML || this.dialect != mxConstants.DIALECT_VML && this.isHtmlAllowed()) ? this.createHtml(cell) : this.createVml(cell);
 };
 mxShape.prototype.createSvg = function() {
   return document.createElementNS(mxConstants.NS_SVG, "g");
+};
+mxShape.prototype.createVml = function() {
+  var node = document.createElement(mxClient.VML_PREFIX + ":group");
+  node.style.position = "absolute";
+  return node;
 };
 mxShape.prototype.createHtml = function() {
   var node = document.createElement("div");
@@ -7700,10 +7907,10 @@ mxShape.prototype.redraw = function() {
   if (this.visible && this.checkBounds()) {
     this.node.style.visibility = "visible";
     this.clear();
-    if ("DIV" == this.node.nodeName) {
-      this.redrawHtmlShape();
-    } else {
+    if ("DIV" != this.node.nodeName || !this.isHtmlAllowed() && mxClient.IS_VML) {
       this.redrawShape();
+    } else {
+      this.redrawHtmlShape();
     }
     this.updateBoundingBox();
   } else {
@@ -7718,7 +7925,7 @@ mxShape.prototype.clear = function() {
     }
   } else {
     this.node.style.cssText = "position:absolute;" + (null != this.cursor ? "cursor:" + this.cursor + ";" : "");
-    this.node.innerText = "";
+    this.node.innerHTML = "";
   }
 };
 mxShape.prototype.updateBoundsFromPoints = function() {
@@ -7777,6 +7984,13 @@ mxShape.prototype.getLabelMargins = function(rect) {
 mxShape.prototype.checkBounds = function() {
   return!isNaN(this.scale) && (isFinite(this.scale) && (0 < this.scale && (null != this.bounds && (!isNaN(this.bounds.x) && (!isNaN(this.bounds.y) && (!isNaN(this.bounds.width) && (!isNaN(this.bounds.height) && (0 < this.bounds.width && 0 < this.bounds.height))))))));
 };
+mxShape.prototype.createVmlGroup = function() {
+  var node = document.createElement(mxClient.VML_PREFIX + ":group");
+  node.style.position = "absolute";
+  node.style.width = this.node.style.width;
+  node.style.height = this.node.style.height;
+  return node;
+};
 mxShape.prototype.redrawShape = function() {
   var canvas = this.createCanvas();
   if (null != canvas) {
@@ -7800,6 +8014,11 @@ mxShape.prototype.createCanvas = function() {
   var canvas = null;
   if (null != this.node.ownerSVGElement) {
     canvas = this.createSvgCanvas();
+  } else {
+    if (mxClient.IS_VML) {
+      this.updateVmlContainer();
+      canvas = this.createVmlCanvas();
+    }
   }
   if (null != canvas) {
     if (this.outline) {
@@ -7826,7 +8045,7 @@ mxShape.prototype.createCanvas = function() {
 };
 mxShape.prototype.createSvgCanvas = function() {
   var canvas = new mxSvgCanvas2D(this.node, false);
-  canvas.strokeTolerance = this.svgStrokeTolerance;
+  canvas.strokeTolerance = this.pointerEvents ? this.svgStrokeTolerance : 0;
   canvas.pointerEventsValue = this.svgPointerEvents;
   var off = this.getSvgScreenOffset();
   if (0 != off) {
@@ -7841,6 +8060,26 @@ mxShape.prototype.createSvgCanvas = function() {
     };
   }
   return canvas;
+};
+mxShape.prototype.createVmlCanvas = function() {
+  var node = 8 == document.documentMode && this.isParseVml() ? this.createVmlGroup() : this.node;
+  var canvas = new mxVmlCanvas2D(node, false);
+  if ("" != node.tagUrn) {
+    node.coordsize = Math.max(1, Math.round(this.bounds.width)) * this.vmlScale + "," + Math.max(1, Math.round(this.bounds.height)) * this.vmlScale;
+    canvas.scale(this.vmlScale);
+    canvas.vmlScale = this.vmlScale;
+  }
+  node = this.scale;
+  canvas.translate(-Math.round(this.bounds.x / node), -Math.round(this.bounds.y / node));
+  return canvas;
+};
+mxShape.prototype.updateVmlContainer = function() {
+  this.node.style.left = Math.round(this.bounds.x) + "px";
+  this.node.style.top = Math.round(this.bounds.y) + "px";
+  var h = Math.max(1, Math.round(this.bounds.height));
+  this.node.style.width = Math.max(1, Math.round(this.bounds.width)) + "px";
+  this.node.style.height = h + "px";
+  this.node.style.overflow = "visible";
 };
 mxShape.prototype.redrawHtmlShape = function() {
   this.updateHtmlBounds(this.node);
@@ -7940,21 +8179,13 @@ mxShape.prototype.destroyCanvas = function(canvas) {
         gradient.mxRefCount = (gradient.mxRefCount || 0) + 1;
       }
     }
-    for (key in canvas.fillPatterns) {
-      gradient = canvas.fillPatterns[key];
-      if (null != gradient) {
-        gradient.mxRefCount = (gradient.mxRefCount || 0) + 1;
-      }
-    }
     this.releaseSvgGradients(this.oldGradients);
-    this.releaseSvgFillPatterns(this.oldFillPatterns);
     this.oldGradients = canvas.gradients;
-    this.oldFillPatterns = canvas.fillPatterns;
   }
 };
-mxShape.prototype.beforePaint = function(c) {
+mxShape.prototype.beforePaint = function(canvas) {
 };
-mxShape.prototype.afterPaint = function(c) {
+mxShape.prototype.afterPaint = function(canvas) {
 };
 mxShape.prototype.paint = function(c) {
   var b = false;
@@ -7977,8 +8208,8 @@ mxShape.prototype.paint = function(c) {
   var h = this.bounds.height / s;
   if (this.isPaintBoundsInverted()) {
     var bg = (w - h) / 2;
-    x += bg;
-    y -= bg;
+    x = x + bg;
+    y = y - bg;
     bg = w;
     w = h;
     h = bg;
@@ -7987,26 +8218,28 @@ mxShape.prototype.paint = function(c) {
   this.configureCanvas(c, x, y, w, h);
   bg = null;
   if (null == this.stencil && (null == this.points && this.shapePointerEvents) || null != this.stencil && this.stencilPointerEvents) {
-    var bb = this.createBoundingBox();
+    var pts = this.createBoundingBox();
     if (this.dialect == mxConstants.DIALECT_SVG) {
-      bg = this.createTransparentSvgRectangle(bb.x, bb.y, bb.width, bb.height);
+      bg = this.createTransparentSvgRectangle(pts.x, pts.y, pts.width, pts.height);
       this.node.appendChild(bg);
     } else {
-      s = c.createRect("rect", bb.x / s, bb.y / s, bb.width / s, bb.height / s);
-      s.appendChild(c.createTransparentFill());
-      s.stroked = "false";
-      c.root.appendChild(s);
+      pts = c.createRect("rect", pts.x / s, pts.y / s, pts.width / s, pts.height / s);
+      pts.appendChild(c.createTransparentFill());
+      pts.stroked = "false";
+      c.root.appendChild(pts);
     }
   }
   if (null != this.stencil) {
     this.stencil.drawShape(c, this, x, y, w, h);
   } else {
-    c.setStrokeWidth(this.strokewidth);
-    s = this.getWaypoints();
-    if (null != s) {
-      if (1 < s.length) {
-        this.paintEdgeShape(c, s);
+    if (c.setStrokeWidth(this.strokewidth), null != this.points) {
+      pts = [];
+      for (var i = 0;i < this.points.length;i++) {
+        if (null != this.points[i]) {
+          pts.push(new mxPoint(this.points[i].x / s, this.points[i].y / s));
+        }
       }
+      this.paintEdgeShape(c, pts);
     } else {
       this.paintVertexShape(c, x, y, w, h);
     }
@@ -8026,24 +8259,6 @@ mxShape.prototype.paint = function(c) {
       }
     }
   }
-};
-mxShape.prototype.getWaypoints = function() {
-  var pairs = this.points;
-  var result = null;
-  if (null != pairs && (result = [], 0 < pairs.length)) {
-    var s = this.scale;
-    var tol = Math.max(s, 1);
-    var pt = pairs[0];
-    result.push(new mxPoint(pt.x / s, pt.y / s));
-    for (var i = 1;i < pairs.length;i++) {
-      var tmp = pairs[i];
-      if (Math.abs(pt.x - tmp.x) >= tol || Math.abs(pt.y - tmp.y) >= tol) {
-        result.push(new mxPoint(tmp.x / s, tmp.y / s));
-      }
-      pt = tmp;
-    }
-  }
-  return result;
 };
 mxShape.prototype.configureCanvas = function(c, b, y, w, h) {
   var value = null;
@@ -8067,19 +8282,8 @@ mxShape.prototype.configureCanvas = function(c, b, y, w, h) {
     c.setGradient(this.fill, this.gradient, b.x, b.y, b.width, b.height, this.gradientDirection);
   } else {
     c.setFillColor(this.fill);
-    c.setFillStyle(this.fillStyle);
   }
   c.setStrokeColor(this.stroke);
-  this.configurePointerEvents(c);
-};
-mxShape.prototype.configurePointerEvents = function(c) {
-  if (!(null == this.style)) {
-    if (!(null != this.fill && (this.fill != mxConstants.NONE && (0 != this.opacity && 0 != this.fillOpacity)))) {
-      if (!("0" != mxUtils.getValue(this.style, mxConstants.STYLE_POINTER_EVENTS, "1"))) {
-        c.pointerEvents = false;
-      }
-    }
-  }
 };
 mxShape.prototype.getGradientBounds = function(c, x, y, w, h) {
   return new mxRectangle(x, y, w, h);
@@ -8102,13 +8306,14 @@ mxShape.prototype.paintForeground = function(c, x, y, w, h) {
 mxShape.prototype.paintEdgeShape = function(c, pts) {
 };
 mxShape.prototype.getArcSize = function(w, h) {
+  var f;
   if ("1" == mxUtils.getValue(this.style, mxConstants.STYLE_ABSOLUTE_ARCSIZE, 0)) {
-    w = Math.min(w / 2, Math.min(h / 2, mxUtils.getValue(this.style, mxConstants.STYLE_ARCSIZE, mxConstants.LINE_ARCSIZE) / 2));
+    f = Math.min(w / 2, Math.min(h / 2, mxUtils.getValue(this.style, mxConstants.STYLE_ARCSIZE, mxConstants.LINE_ARCSIZE) / 2));
   } else {
-    var f = mxUtils.getValue(this.style, mxConstants.STYLE_ARCSIZE, 100 * mxConstants.RECTANGLE_ROUNDING_FACTOR) / 100;
-    w = Math.min(w * f, h * f);
+    f = mxUtils.getValue(this.style, mxConstants.STYLE_ARCSIZE, 100 * mxConstants.RECTANGLE_ROUNDING_FACTOR) / 100;
+    f = Math.min(w * f, h * f);
   }
-  return w;
+  return f;
 };
 mxShape.prototype.paintGlassEffect = function(c, x, y, w, h, arc) {
   var sw = Math.ceil(this.strokewidth / 2);
@@ -8205,7 +8410,6 @@ mxShape.prototype.apply = function(state) {
     this.gradientDirection = mxUtils.getValue(this.style, mxConstants.STYLE_GRADIENT_DIRECTION, this.gradientDirection);
     this.opacity = mxUtils.getValue(this.style, mxConstants.STYLE_OPACITY, this.opacity);
     this.fillOpacity = mxUtils.getValue(this.style, mxConstants.STYLE_FILL_OPACITY, this.fillOpacity);
-    this.fillStyle = mxUtils.getValue(this.style, mxConstants.STYLE_FILL_STYLE, this.fillStyle);
     this.strokeOpacity = mxUtils.getValue(this.style, mxConstants.STYLE_STROKE_OPACITY, this.strokeOpacity);
     this.stroke = mxUtils.getValue(this.style, mxConstants.STYLE_STROKECOLOR, this.stroke);
     this.strokewidth = mxUtils.getNumber(this.style, mxConstants.STYLE_STROKEWIDTH, this.strokewidth);
@@ -8325,12 +8529,12 @@ mxShape.prototype.getShapeRotation = function() {
   }
   return rot;
 };
-mxShape.prototype.createTransparentSvgRectangle = function(y, value, h, w) {
+mxShape.prototype.createTransparentSvgRectangle = function(value, y, w, h) {
   var rect = document.createElementNS(mxConstants.NS_SVG, "rect");
-  rect.setAttribute("x", y);
-  rect.setAttribute("y", value);
-  rect.setAttribute("width", h);
-  rect.setAttribute("height", w);
+  rect.setAttribute("x", value);
+  rect.setAttribute("y", y);
+  rect.setAttribute("width", w);
+  rect.setAttribute("height", h);
   rect.setAttribute("fill", "none");
   rect.setAttribute("stroke", "none");
   rect.setAttribute("pointer-events", "all");
@@ -8339,25 +8543,7 @@ mxShape.prototype.createTransparentSvgRectangle = function(y, value, h, w) {
 mxShape.prototype.setTransparentBackgroundImage = function(node) {
   node.style.backgroundImage = "url('" + mxClient.imageBasePath + "/transparent.gif')";
 };
-mxShape.prototype.intersectsRectangle = function(x) {
-  return null != x && (null != this.node && ("hidden" != this.node.style.visibility && ("none" != this.node.style.display && mxUtils.intersects(this.bounds, x))));
-};
 mxShape.prototype.releaseSvgGradients = function(grads) {
-  if (null != grads) {
-    for (var key in grads) {
-      var gradient = grads[key];
-      if (null != gradient) {
-        gradient.mxRefCount = (gradient.mxRefCount || 0) - 1;
-        if (0 == gradient.mxRefCount) {
-          if (null != gradient.parentNode) {
-            gradient.parentNode.removeChild(gradient);
-          }
-        }
-      }
-    }
-  }
-};
-mxShape.prototype.releaseSvgFillPatterns = function(grads) {
   if (null != grads) {
     for (var key in grads) {
       var gradient = grads[key];
@@ -8381,8 +8567,7 @@ mxShape.prototype.destroy = function() {
     this.node = null;
   }
   this.releaseSvgGradients(this.oldGradients);
-  this.releaseSvgFillPatterns(this.oldFillPatterns);
-  this.oldFillPatterns = this.oldGradients = null;
+  this.oldGradients = null;
 };
 function mxStencil(desc) {
   this.desc = desc;
@@ -8503,23 +8688,13 @@ mxStencil.prototype.computeAspect = function(x, sx, y, w, h, direction) {
   }
   return new mxRectangle(x, y, sx, sy);
 };
-mxStencil.prototype.parseColor = function(canvas, shape, node, flex) {
-  if ("stroke" == flex) {
-    flex = shape.stroke;
-  } else {
-    if ("fill" == flex) {
-      flex = shape.fill;
-    }
-  }
-  return flex;
-};
-mxStencil.prototype.drawNode = function(canvas, shape, node, aspect, disableShadow, h) {
+mxStencil.prototype.drawNode = function(canvas, shape, node, w, disableShadow, h) {
   var name = node.nodeName;
-  var x0 = aspect.x;
-  var y0 = aspect.y;
-  var sx = aspect.width;
-  var sy = aspect.height;
-  var minScale = Math.min(sx, sy);
+  var x0 = w.x;
+  var y0 = w.y;
+  var sx = w.width;
+  var sy = w.height;
+  var stencil = Math.min(sx, sy);
   if ("save" == name) {
     canvas.save();
   } else {
@@ -8529,9 +8704,9 @@ mxStencil.prototype.drawNode = function(canvas, shape, node, aspect, disableShad
       if (h) {
         if ("path" == name) {
           canvas.begin();
-          minScale = true;
+          stencil = true;
           if ("1" == node.getAttribute("rounded")) {
-            minScale = false;
+            stencil = false;
             var arcSize = Number(node.getAttribute("arcSize"));
             var r = 0;
             var segs = [];
@@ -8545,13 +8720,13 @@ mxStencil.prototype.drawNode = function(canvas, shape, node, aspect, disableShad
                   segs[segs.length - 1].push(new mxPoint(x0 + Number(childNode.getAttribute("x")) * sx, y0 + Number(childNode.getAttribute("y")) * sy));
                   r++;
                 } else {
-                  minScale = true;
+                  stencil = true;
                   break;
                 }
               }
               childNode = childNode.nextSibling;
             }
-            if (!minScale && 0 < r) {
+            if (!stencil && 0 < r) {
               for (sx = 0;sx < segs.length;sx++) {
                 sy = false;
                 y0 = segs[sx][0];
@@ -8565,13 +8740,13 @@ mxStencil.prototype.drawNode = function(canvas, shape, node, aspect, disableShad
                 this.addPoints(canvas, segs[sx], true, arcSize, sy);
               }
             } else {
-              minScale = true;
+              stencil = true;
             }
           }
-          if (minScale) {
+          if (stencil) {
             for (childNode = node.firstChild;null != childNode;) {
               if (childNode.nodeType == mxConstants.NODETYPE_ELEMENT) {
-                this.drawNode(canvas, shape, childNode, aspect, disableShadow, h);
+                this.drawNode(canvas, shape, childNode, w, disableShadow, h);
               }
               childNode = childNode.nextSibling;
             }
@@ -8603,11 +8778,11 @@ mxStencil.prototype.drawNode = function(canvas, shape, node, aspect, disableShad
                           if (0 == shape) {
                             shape = 100 * mxConstants.RECTANGLE_ROUNDING_FACTOR;
                           }
-                          aspect = Number(node.getAttribute("w")) * sx;
+                          w = Number(node.getAttribute("w")) * sx;
                           h = Number(node.getAttribute("h")) * sy;
                           shape = Number(shape) / 100;
-                          shape = Math.min(aspect * shape, h * shape);
-                          canvas.roundrect(x0 + Number(node.getAttribute("x")) * sx, y0 + Number(node.getAttribute("y")) * sy, aspect, h, shape, shape);
+                          shape = Math.min(w * shape, h * shape);
+                          canvas.roundrect(x0 + Number(node.getAttribute("x")) * sx, y0 + Number(node.getAttribute("y")) * sy, w, h, shape, shape);
                         } else {
                           if ("ellipse" == name) {
                             canvas.ellipse(x0 + Number(node.getAttribute("x")) * sx, y0 + Number(node.getAttribute("y")) * sy, Number(node.getAttribute("w")) * sx, Number(node.getAttribute("h")) * sy);
@@ -8620,26 +8795,26 @@ mxStencil.prototype.drawNode = function(canvas, shape, node, aspect, disableShad
                             } else {
                               if ("text" == name) {
                                 if (!shape.outline) {
-                                  aspect = this.evaluateTextAttribute(node, "str", shape);
+                                  w = this.evaluateTextAttribute(node, "str", shape);
                                   h = "1" == node.getAttribute("vertical") ? -90 : 0;
                                   if ("0" == node.getAttribute("align-shape")) {
-                                    minScale = shape.rotation;
+                                    stencil = shape.rotation;
                                     arcSize = 1 == mxUtils.getValue(shape.style, mxConstants.STYLE_FLIPH, 0);
                                     shape = 1 == mxUtils.getValue(shape.style, mxConstants.STYLE_FLIPV, 0);
-                                    h = arcSize && shape ? h - minScale : arcSize || shape ? h + minScale : h - minScale;
+                                    h = arcSize && shape ? h - stencil : arcSize || shape ? h + stencil : h - stencil;
                                   }
                                   h -= node.getAttribute("rotation");
-                                  canvas.text(x0 + Number(node.getAttribute("x")) * sx, y0 + Number(node.getAttribute("y")) * sy, 0, 0, aspect, node.getAttribute("align") || "left", node.getAttribute("valign") || "top", false, "", null, false, h);
+                                  canvas.text(x0 + Number(node.getAttribute("x")) * sx, y0 + Number(node.getAttribute("y")) * sy, 0, 0, w, node.getAttribute("align") || "left", node.getAttribute("valign") || "top", false, "", null, false, h);
                                 }
                               } else {
                                 if ("include-shape" == name) {
-                                  minScale = mxStencilRegistry.getStencil(node.getAttribute("name"));
-                                  if (null != minScale) {
+                                  stencil = mxStencilRegistry.getStencil(node.getAttribute("name"));
+                                  if (null != stencil) {
                                     x0 += Number(node.getAttribute("x")) * sx;
                                     y0 += Number(node.getAttribute("y")) * sy;
-                                    aspect = Number(node.getAttribute("w")) * sx;
+                                    w = Number(node.getAttribute("w")) * sx;
                                     h = Number(node.getAttribute("h")) * sy;
-                                    minScale.drawShape(canvas, shape, x0, y0, aspect, h);
+                                    stencil.drawShape(canvas, shape, x0, y0, w, h);
                                   }
                                 } else {
                                   if ("fillstroke" == name) {
@@ -8652,7 +8827,7 @@ mxStencil.prototype.drawNode = function(canvas, shape, node, aspect, disableShad
                                         canvas.stroke();
                                       } else {
                                         if ("strokewidth" == name) {
-                                          sx = "1" == node.getAttribute("fixed") ? 1 : minScale;
+                                          sx = "1" == node.getAttribute("fixed") ? 1 : stencil;
                                           canvas.setStrokeWidth(Number(node.getAttribute("width")) * sx);
                                         } else {
                                           if ("dashed" == name) {
@@ -8664,7 +8839,7 @@ mxStencil.prototype.drawNode = function(canvas, shape, node, aspect, disableShad
                                                 sy = [];
                                                 for (sx = 0;sx < node.length;sx++) {
                                                   if (0 < node[sx].length) {
-                                                    sy.push(Number(node[sx]) * minScale);
+                                                    sy.push(Number(node[sx]) * stencil);
                                                   }
                                                 }
                                                 node = sy.join(" ");
@@ -8672,7 +8847,7 @@ mxStencil.prototype.drawNode = function(canvas, shape, node, aspect, disableShad
                                               }
                                             } else {
                                               if ("strokecolor" == name) {
-                                                canvas.setStrokeColor(this.parseColor(canvas, shape, node, node.getAttribute("color")));
+                                                canvas.setStrokeColor(node.getAttribute("color"));
                                               } else {
                                                 if ("linecap" == name) {
                                                   canvas.setLineCap(node.getAttribute("cap"));
@@ -8684,7 +8859,7 @@ mxStencil.prototype.drawNode = function(canvas, shape, node, aspect, disableShad
                                                       canvas.setMiterLimit(Number(node.getAttribute("limit")));
                                                     } else {
                                                       if ("fillcolor" == name) {
-                                                        canvas.setFillColor(this.parseColor(canvas, shape, node, node.getAttribute("color")));
+                                                        canvas.setFillColor(node.getAttribute("color"));
                                                       } else {
                                                         if ("alpha" == name) {
                                                           canvas.setAlpha(node.getAttribute("alpha"));
@@ -8696,7 +8871,7 @@ mxStencil.prototype.drawNode = function(canvas, shape, node, aspect, disableShad
                                                               canvas.setAlpha(node.getAttribute("alpha"));
                                                             } else {
                                                               if ("fontcolor" == name) {
-                                                                canvas.setFontColor(this.parseColor(canvas, shape, node, node.getAttribute("color")));
+                                                                canvas.setFontColor(node.getAttribute("color"));
                                                               } else {
                                                                 if ("fontstyle" == name) {
                                                                   canvas.setFontStyle(node.getAttribute("style"));
@@ -8705,7 +8880,7 @@ mxStencil.prototype.drawNode = function(canvas, shape, node, aspect, disableShad
                                                                     canvas.setFontFamily(node.getAttribute("family"));
                                                                   } else {
                                                                     if ("fontsize" == name) {
-                                                                      canvas.setFontSize(Number(node.getAttribute("size")) * minScale);
+                                                                      canvas.setFontSize(Number(node.getAttribute("size")) * stencil);
                                                                     }
                                                                   }
                                                                 }
@@ -8760,9 +8935,9 @@ var mxMarker = {
   addMarker : function(type, funct) {
     mxMarker.markers[type] = funct;
   },
-  createMarker : function(c, pts, type, pe, unitX, unitY, size, source, sw, filled) {
+  createMarker : function(c, shape, type, pe, unitX, pts, size, source, sw, filled) {
     var funct = mxMarker.markers[type];
-    return null != funct ? funct(c, pts, type, pe, unitX, unitY, size, source, sw, filled) : null;
+    return null != funct ? funct(c, shape, type, pe, unitX, pts, size, source, sw, filled) : null;
   }
 };
 (function() {
@@ -8863,44 +9038,6 @@ var mxMarker = {
       }
     };
   });
-  mxMarker.addMarker("baseDash", function(canvas, type, id, pt, flex, editor, y, eo, dy, layer) {
-    var unitX = flex * (y + dy + 1);
-    var unitY = editor * (y + dy + 1);
-    return function() {
-      canvas.begin();
-      canvas.moveTo(pt.x - unitY / 2, pt.y + unitX / 2);
-      canvas.lineTo(pt.x + unitY / 2, pt.y - unitX / 2);
-      canvas.stroke();
-    };
-  });
-  mxMarker.addMarker("doubleBlock", function(canvas, endOffsetX, type, pe, unitX, unitY, x, endOffsetY, a, flex) {
-    endOffsetX = unitX * a * 1.118;
-    endOffsetY = unitY * a * 1.118;
-    unitX *= x + a;
-    unitY *= x + a;
-    var pt = pe.clone();
-    pt.x -= endOffsetX;
-    pt.y -= endOffsetY;
-    type = type != mxConstants.ARROW_CLASSIC && type != mxConstants.ARROW_CLASSIC_THIN ? 1 : 0.75;
-    pe.x += -unitX * type * 2 - endOffsetX;
-    pe.y += -unitY * type * 2 - endOffsetY;
-    return function() {
-      canvas.begin();
-      canvas.moveTo(pt.x, pt.y);
-      canvas.lineTo(pt.x - unitX - unitY / 2, pt.y - unitY + unitX / 2);
-      canvas.lineTo(pt.x + unitY / 2 - unitX, pt.y - unitY - unitX / 2);
-      canvas.close();
-      canvas.moveTo(pt.x - unitX, pt.y - unitY);
-      canvas.lineTo(pt.x - 2 * unitX - 0.5 * unitY, pt.y + 0.5 * unitX - 2 * unitY);
-      canvas.lineTo(pt.x - 2 * unitX + 0.5 * unitY, pt.y - 0.5 * unitX - 2 * unitY);
-      canvas.close();
-      if (flex) {
-        canvas.fillAndStroke();
-      } else {
-        canvas.stroke();
-      }
-    };
-  });
   mxMarker.addMarker("diamond", diamond);
   mxMarker.addMarker("diamondThin", diamond);
 })();
@@ -8961,20 +9098,31 @@ mxRectangleShape.prototype.isHtmlAllowed = function() {
   return!this.isRounded && (!this.glass && (0 == this.rotation && (a || null != this.fill && this.fill != mxConstants.NONE)));
 };
 mxRectangleShape.prototype.paintBackground = function(c, x, y, w, h) {
-  if (this.isRounded) {
-    if ("1" == mxUtils.getValue(this.style, mxConstants.STYLE_ABSOLUTE_ARCSIZE, 0)) {
-      var dy = Math.min(w / 2, Math.min(h / 2, mxUtils.getValue(this.style, mxConstants.STYLE_ARCSIZE, mxConstants.LINE_ARCSIZE) / 2))
-    } else {
-      dy = mxUtils.getValue(this.style, mxConstants.STYLE_ARCSIZE, 100 * mxConstants.RECTANGLE_ROUNDING_FACTOR) / 100;
-      dy = Math.min(w * dy, h * dy);
-    }
-    c.roundrect(x, y, w, h, dy, dy);
-  } else {
-    c.rect(x, y, w, h);
+  var r = true;
+  if (null != this.style) {
+    r = "1" == mxUtils.getValue(this.style, mxConstants.STYLE_POINTER_EVENTS, "1");
   }
-  c.fillAndStroke();
+  if (r || (null != this.fill && this.fill != mxConstants.NONE || null != this.stroke && this.stroke != mxConstants.NONE)) {
+    if (!r) {
+      if (!(null != this.fill && this.fill != mxConstants.NONE)) {
+        c.pointerEvents = false;
+      }
+    }
+    if (this.isRounded) {
+      if ("1" == mxUtils.getValue(this.style, mxConstants.STYLE_ABSOLUTE_ARCSIZE, 0)) {
+        r = Math.min(w / 2, Math.min(h / 2, mxUtils.getValue(this.style, mxConstants.STYLE_ARCSIZE, mxConstants.LINE_ARCSIZE) / 2));
+      } else {
+        r = mxUtils.getValue(this.style, mxConstants.STYLE_ARCSIZE, 100 * mxConstants.RECTANGLE_ROUNDING_FACTOR) / 100;
+        r = Math.min(w * r, h * r);
+      }
+      c.roundrect(x, y, w, h, r, r);
+    } else {
+      c.rect(x, y, w, h);
+    }
+    c.fillAndStroke();
+  }
 };
-mxRectangleShape.prototype.isRoundable = function() {
+mxRectangleShape.prototype.isRoundable = function(x, h, w, c, y) {
   return true;
 };
 mxRectangleShape.prototype.paintForeground = function(c, x, y, w, h) {
@@ -9008,6 +9156,7 @@ function mxDoubleEllipse(bounds, fill, stroke, strokewidth) {
   this.strokewidth = null != strokewidth ? strokewidth : 1;
 }
 mxUtils.extend(mxDoubleEllipse, mxShape);
+mxDoubleEllipse.prototype.vmlScale = 10;
 mxDoubleEllipse.prototype.paintBackground = function(c, x, y, w, h) {
   c.ellipse(x, y, w, h);
   c.fillAndStroke();
@@ -9015,13 +9164,11 @@ mxDoubleEllipse.prototype.paintBackground = function(c, x, y, w, h) {
 mxDoubleEllipse.prototype.paintForeground = function(c, x, y, w, h) {
   if (!this.outline) {
     var margin = mxUtils.getValue(this.style, mxConstants.STYLE_MARGIN, Math.min(3 + this.strokewidth, Math.min(w / 5, h / 5)));
-    x += margin;
-    y += margin;
     w -= 2 * margin;
     h -= 2 * margin;
     if (0 < w) {
       if (0 < h) {
-        c.ellipse(x, y, w, h);
+        c.ellipse(x + margin, y + margin, w, h);
       }
     }
     c.stroke();
@@ -9112,17 +9259,17 @@ mxArrow.prototype.augmentBoundingBox = function(bbox) {
   mxShape.prototype.augmentBoundingBox.apply(this, arguments);
   bbox.grow((Math.max(this.arrowWidth, this.endSize) / 2 + this.strokewidth) * this.scale);
 };
-mxArrow.prototype.paintEdgeShape = function(c, pe) {
+mxArrow.prototype.paintEdgeShape = function(c, pts) {
   var spacing = mxConstants.ARROW_SPACING;
   var floory = mxConstants.ARROW_WIDTH;
-  var p0 = pe[0];
-  pe = pe[pe.length - 1];
+  var p0 = pts[0];
+  var pe = pts[pts.length - 1];
   var dx = pe.x - p0.x;
   var dy = pe.y - p0.y;
   var floorx = Math.sqrt(dx * dx + dy * dy);
   var y2 = floorx - 2 * spacing - mxConstants.ARROW_SIZE;
-  dx /= floorx;
-  dy /= floorx;
+  dx = dx / floorx;
+  dy = dy / floorx;
   floorx = floory * dy / 3;
   floory = -floory * dx / 3;
   var p0x = p0.x - floorx / 2 + spacing * dx;
@@ -9200,16 +9347,21 @@ mxArrowConnector.prototype.paintEdgeShape = function(c, pts) {
   strokeWidth = this.endSize + strokeWidth;
   var isRounded = this.isArrowRounded();
   var pe = pts[pts.length - 1];
-  var dx = pts[1].x - pts[0].x;
-  var dy = pts[1].y - pts[0].y;
+  for (var dy = 1;dy < pts.length - 1 && (pts[dy].x == pts[0].x && pts[dy].y == pts[0].y);) {
+    dy++;
+  }
+  var dx = pts[dy].x - pts[0].x;
+  dy = pts[dy].y - pts[0].y;
   var i = Math.sqrt(dx * dx + dy * dy);
   if (0 != i) {
     var nx = dx / i;
+    var y;
     var nx1 = nx;
     var ny = dy / i;
+    var inX;
     var ny1 = ny;
     i = edgeWidth * ny;
-    var ix = -edgeWidth * nx;
+    var x2 = -edgeWidth * nx;
     var fns = [];
     if (isRounded) {
       c.setLineJoin("round");
@@ -9224,71 +9376,71 @@ mxArrowConnector.prototype.paintEdgeShape = function(c, pts) {
     if (markerStart && !openEnded) {
       this.paintMarker(c, pts[0].x, pts[0].y, nx, ny, startSize, startWidth, edgeWidth, spacing, true);
     } else {
-      var x2 = pts[0].x + i / 2 + spacing * nx;
-      var y2 = pts[0].y + ix / 2 + spacing * ny;
-      var x1 = pts[0].x - i / 2 + spacing * nx;
-      var outStartY = pts[0].y - ix / 2 + spacing * ny;
+      y = pts[0].x + i / 2 + spacing * nx;
+      inX = pts[0].y + x2 / 2 + spacing * ny;
+      var value = pts[0].x - i / 2 + spacing * nx;
+      var outStartY = pts[0].y - x2 / 2 + spacing * ny;
       if (openEnded) {
-        c.moveTo(x2, y2);
+        c.moveTo(y, inX);
         fns.push(function() {
-          c.lineTo(x1, outStartY);
+          c.lineTo(value, outStartY);
         });
       } else {
-        c.moveTo(x1, outStartY);
-        c.lineTo(x2, y2);
+        c.moveTo(value, outStartY);
+        c.lineTo(y, inX);
       }
     }
-    var tmp = y2 = x2 = 0;
+    var y2 = inX = y = 0;
     for (i = 0;i < pts.length - 2;i++) {
-      if (ix = mxUtils.relativeCcw(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, pts[i + 2].x, pts[i + 2].y), x2 = pts[i + 2].x - pts[i + 1].x, y2 = pts[i + 2].y - pts[i + 1].y, tmp = Math.sqrt(x2 * x2 + y2 * y2), 0 != tmp) {
-        nx1 = x2 / tmp;
-        ny1 = y2 / tmp;
-        tmp = Math.max(Math.sqrt((nx * nx1 + ny * ny1 + 1) / 2), 0.04);
-        x2 = nx + nx1;
-        y2 = ny + ny1;
-        var strokeWidthFactor = Math.sqrt(x2 * x2 + y2 * y2);
+      if (x2 = mxUtils.relativeCcw(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, pts[i + 2].x, pts[i + 2].y), y = pts[i + 2].x - pts[i + 1].x, inX = pts[i + 2].y - pts[i + 1].y, y2 = Math.sqrt(y * y + inX * inX), 0 != y2) {
+        nx1 = y / y2;
+        ny1 = inX / y2;
+        y2 = Math.max(Math.sqrt((nx * nx1 + ny * ny1 + 1) / 2), 0.04);
+        y = nx + nx1;
+        inX = ny + ny1;
+        var strokeWidthFactor = Math.sqrt(y * y + inX * inX);
         if (0 != strokeWidthFactor) {
-          x2 /= strokeWidthFactor;
-          y2 /= strokeWidthFactor;
-          strokeWidthFactor = Math.max(tmp, Math.min(this.strokewidth / 200 + 0.04, 0.35));
-          tmp = 0 != ix && isRounded ? Math.max(0.1, strokeWidthFactor) : Math.max(tmp, 0.06);
-          var outX = pts[i + 1].x + y2 * edgeWidth / 2 / tmp;
-          var outY = pts[i + 1].y - x2 * edgeWidth / 2 / tmp;
-          y2 = pts[i + 1].x - y2 * edgeWidth / 2 / tmp;
-          x2 = pts[i + 1].y + x2 * edgeWidth / 2 / tmp;
-          if (0 != ix && isRounded) {
-            if (-1 == ix) {
-              ix = y2 + ny1 * edgeWidth;
-              tmp = x2 - nx1 * edgeWidth;
-              c.lineTo(y2 + ny * edgeWidth, x2 - nx * edgeWidth);
-              c.quadTo(outX, outY, ix, tmp);
-              (function(y2, y) {
+          y /= strokeWidthFactor;
+          inX /= strokeWidthFactor;
+          strokeWidthFactor = Math.max(y2, Math.min(this.strokewidth / 200 + 0.04, 0.35));
+          y2 = 0 != x2 && isRounded ? Math.max(0.1, strokeWidthFactor) : Math.max(y2, 0.06);
+          var x1 = pts[i + 1].x + inX * edgeWidth / 2 / y2;
+          var outY = pts[i + 1].y - y * edgeWidth / 2 / y2;
+          inX = pts[i + 1].x - inX * edgeWidth / 2 / y2;
+          y = pts[i + 1].y + y * edgeWidth / 2 / y2;
+          if (0 != x2 && isRounded) {
+            if (-1 == x2) {
+              x2 = inX + ny1 * edgeWidth;
+              y2 = y - nx1 * edgeWidth;
+              c.lineTo(inX + ny * edgeWidth, y - nx * edgeWidth);
+              c.quadTo(x1, outY, x2, y2);
+              (function(x, y) {
                 fns.push(function() {
-                  c.lineTo(y2, y);
+                  c.lineTo(x, y);
                 });
-              })(y2, x2);
+              })(inX, y);
             } else {
-              c.lineTo(outX, outY);
-              (function(x, x2) {
-                var c1x = outX - ny * edgeWidth;
+              c.lineTo(x1, outY);
+              (function(x, y) {
+                var x2 = x1 - ny * edgeWidth;
                 var y2 = outY + nx * edgeWidth;
-                var x1 = outX - ny1 * edgeWidth;
-                var y = outY + nx1 * edgeWidth;
+                var sx = x1 - ny1 * edgeWidth;
+                var c2y = outY + nx1 * edgeWidth;
                 fns.push(function() {
-                  c.quadTo(x, x2, c1x, y2);
+                  c.quadTo(x, y, x2, y2);
                 });
                 fns.push(function() {
-                  c.lineTo(x1, y);
+                  c.lineTo(sx, c2y);
                 });
-              })(y2, x2);
+              })(inX, y);
             }
           } else {
-            c.lineTo(outX, outY);
-            (function(y2, y) {
+            c.lineTo(x1, outY);
+            (function(x, y) {
               fns.push(function() {
-                c.lineTo(y2, y);
+                c.lineTo(x, y);
               });
-            })(y2, x2);
+            })(inX, y);
           }
           nx = nx1;
           ny = ny1;
@@ -9296,20 +9448,20 @@ mxArrowConnector.prototype.paintEdgeShape = function(c, pts) {
       }
     }
     i = edgeWidth * ny1;
-    ix = -edgeWidth * nx1;
+    x2 = -edgeWidth * nx1;
     if (markerEnd && !openEnded) {
       this.paintMarker(c, pe.x, pe.y, -nx, -ny, strokeWidth, endWidth, edgeWidth, spacing, false);
     } else {
-      c.lineTo(pe.x - spacing * nx1 + i / 2, pe.y - spacing * ny1 + ix / 2);
-      var value = pe.x - spacing * nx1 - i / 2;
-      var y = pe.y - spacing * ny1 - ix / 2;
+      c.lineTo(pe.x - spacing * nx1 + i / 2, pe.y - spacing * ny1 + x2 / 2);
+      var sx = pe.x - spacing * nx1 - i / 2;
+      var inStartY = pe.y - spacing * ny1 - x2 / 2;
       if (openEnded) {
-        c.moveTo(value, y);
+        c.moveTo(sx, inStartY);
         fns.splice(0, 0, function() {
-          c.moveTo(value, y);
+          c.moveTo(sx, inStartY);
         });
       } else {
-        c.lineTo(value, y);
+        c.lineTo(sx, inStartY);
       }
     }
     for (i = fns.length - 1;0 <= i;i--) {
@@ -9423,6 +9575,9 @@ mxText.prototype.ignoreStringSize = false;
 mxText.prototype.textWidthPadding = 8 != document.documentMode || mxClient.IS_EM ? 3 : 4;
 mxText.prototype.lastValue = null;
 mxText.prototype.cacheEnabled = true;
+mxText.prototype.isParseVml = function() {
+  return false;
+};
 mxText.prototype.isHtmlAllowed = function() {
   return 8 != document.documentMode || mxClient.IS_EM;
 };
@@ -9431,8 +9586,6 @@ mxText.prototype.getSvgScreenOffset = function() {
 };
 mxText.prototype.checkBounds = function() {
   return!isNaN(this.scale) && (isFinite(this.scale) && (0 < this.scale && (null != this.bounds && (!isNaN(this.bounds.x) && (!isNaN(this.bounds.y) && (!isNaN(this.bounds.width) && !isNaN(this.bounds.height)))))));
-};
-mxText.prototype.configurePointerEvents = function(c) {
 };
 mxText.prototype.paint = function(c, update) {
   var h = this.scale;
@@ -9445,9 +9598,10 @@ mxText.prototype.paint = function(c, update) {
   if (update) {
     c.updateText(x, y, w, h, this.align, this.valign, this.wrap, this.overflow, this.clipped, this.getTextRotation(), this.node);
   } else {
-    var format = (update = mxUtils.isNode(this.value) || this.dialect == mxConstants.DIALECT_STRICTHTML) ? "html" : "";
+    var realHtml = mxUtils.isNode(this.value) || this.dialect == mxConstants.DIALECT_STRICTHTML;
+    var format = realHtml || c instanceof mxVmlCanvas2D ? "html" : "";
     var val = this.value;
-    if (!update) {
+    if (!realHtml) {
       if (!("html" != format)) {
         val = mxUtils.htmlEntities(val, false);
       }
@@ -9460,7 +9614,7 @@ mxText.prototype.paint = function(c, update) {
     val = !mxUtils.isNode(this.value) && (this.replaceLinefeeds && "html" == format) ? val.replace(/\n/g, "<br/>") : val;
     var dir = this.textDirection;
     if (!(dir != mxConstants.TEXT_DIRECTION_AUTO)) {
-      if (!update) {
+      if (!realHtml) {
         dir = this.getAutoDirection();
       }
     }
@@ -9474,7 +9628,17 @@ mxText.prototype.paint = function(c, update) {
 };
 mxText.prototype.redraw = function() {
   if (this.visible && (this.checkBounds() && (this.cacheEnabled && (this.lastValue == this.value && (mxUtils.isNode(this.value) || this.dialect == mxConstants.DIALECT_STRICTHTML))))) {
-    if ("DIV" == this.node.nodeName) {
+    if ("DIV" != this.node.nodeName || !this.isHtmlAllowed() && mxClient.IS_VML) {
+      var canvas = this.createCanvas();
+      if (null != canvas && null != canvas.updateText) {
+        canvas.pointerEvents = this.pointerEvents;
+        this.paint(canvas, true);
+        this.destroyCanvas(canvas);
+        this.updateBoundingBox();
+      } else {
+        mxShape.prototype.redraw.apply(this, arguments);
+      }
+    } else {
       if (mxClient.IS_SVG) {
         this.redrawHtmlShapeWithCss3();
       } else {
@@ -9486,16 +9650,6 @@ mxText.prototype.redraw = function() {
         }
       }
       this.updateBoundingBox();
-    } else {
-      var canvas = this.createCanvas();
-      if (null != canvas && null != canvas.updateText) {
-        canvas.pointerEvents = this.pointerEvents;
-        this.paint(canvas, true);
-        this.destroyCanvas(canvas);
-        this.updateBoundingBox();
-      } else {
-        mxShape.prototype.redraw.apply(this, arguments);
-      }
     }
   } else {
     mxShape.prototype.redraw.apply(this, arguments);
@@ -9546,7 +9700,7 @@ mxText.prototype.apply = function(state) {
   this.flipH = this.flipV = null;
 };
 mxText.prototype.getAutoDirection = function() {
-  var tmp = /[A-Za-z\u05d0-\u065f\u066a-\u06ef\u06fa-\u07ff\ufb1d-\ufdff\ufe70-\ufefc]/.exec(this.value);
+  var tmp = /[A-Za-z\U000005d0-\U0000065f\U0000066a-\U000006ef\U000006fa-\U000007ff\U0000fb1d-\U0000fdff\U0000fe70-\U0000fefc]/.exec(this.value);
   return null != tmp && (0 < tmp.length && "z" < tmp[0]) ? mxConstants.TEXT_DIRECTION_RTL : mxConstants.TEXT_DIRECTION_LTR;
 };
 mxText.prototype.getContentNode = function() {
@@ -9667,6 +9821,13 @@ mxText.prototype.configureCanvas = function(c, x, y, w, h) {
   c.setFontSize(this.size);
   c.setFontStyle(this.fontStyle);
 };
+mxText.prototype.updateVmlContainer = function() {
+  this.node.style.left = Math.round(this.bounds.x) + "px";
+  this.node.style.top = Math.round(this.bounds.y) + "px";
+  this.node.style.width = "1px";
+  this.node.style.height = "1px";
+  this.node.style.overflow = "visible";
+};
 mxText.prototype.getHtmlValue = function() {
   var val = this.value;
   if (this.dialect != mxConstants.DIALECT_STRICTHTML) {
@@ -9720,19 +9881,14 @@ mxText.prototype.redrawHtmlShapeWithCss3 = function() {
   var h = Math.max(0, Math.round(this.bounds.height / this.scale));
   var flex = "position: absolute; left: " + Math.round(this.bounds.x) + "px; top: " + Math.round(this.bounds.y) + "px; pointer-events: none; ";
   var border = this.getTextCss();
-  mxSvgCanvas2D.createCss(w + 2, h, this.align, this.valign, this.wrap, this.overflow, this.clipped, null != this.background ? mxUtils.htmlEntities(this.background) : null, null != this.border ? mxUtils.htmlEntities(this.border) : null, flex, border, this.scale, mxUtils.bind(this, function(tr, flex, value, item, name, editor) {
+  mxSvgCanvas2D.createCss(w + 2, h, this.align, this.valign, this.wrap, this.overflow, this.clipped, null != this.background ? mxUtils.htmlEntities(this.background) : null, null != this.border ? mxUtils.htmlEntities(this.border) : null, flex, border, this.scale, mxUtils.bind(this, function(tr, flex, name, item, str, editor) {
     tr = this.getTextRotation();
     tr = (1 != this.scale ? "scale(" + this.scale + ") " : "") + (0 != tr ? "rotate(" + tr + "deg) " : "") + (0 != this.margin.x || 0 != this.margin.y ? "translate(" + 100 * this.margin.x + "%," + 100 * this.margin.y + "%)" : "");
     if ("" != tr) {
       tr = "transform-origin: 0 0; transform: " + tr + "; ";
     }
-    if ("block" == this.overflow) {
-      if (this.valign == mxConstants.ALIGN_MIDDLE) {
-        tr += "max-height: " + (h + 1) + "px;";
-      }
-    }
     if ("" == editor) {
-      value += item;
+      name += item;
       item = "display:inline-block; min-width: 100%; " + tr;
     } else {
       item += tr;
@@ -9740,38 +9896,17 @@ mxText.prototype.redrawHtmlShapeWithCss3 = function() {
         item += "-webkit-clip-path: content-box;";
       }
     }
-    if ("block" == this.overflow) {
-      item += "width: 100%; ";
-    }
     if (100 > this.opacity) {
-      name += "opacity: " + this.opacity / 100 + "; ";
+      str += "opacity: " + this.opacity / 100 + "; ";
     }
-    this.node.setAttribute("style", value);
-    value = mxUtils.isNode(this.value) ? this.value.outerHTML : this.getHtmlValue();
+    this.node.setAttribute("style", name);
+    name = mxUtils.isNode(this.value) ? this.value.outerHTML : this.getHtmlValue();
     if (null == this.node.firstChild) {
-      this.node.innerHTML = "<div><div>" + value + "</div></div>";
-      if (mxClient.IS_IE11) {
-        this.fixFlexboxForIe11(this.node);
-      }
+      this.node.innerHTML = "<div><div>" + name + "</div></div>";
     }
-    this.node.firstChild.firstChild.setAttribute("style", name);
+    this.node.firstChild.firstChild.setAttribute("style", str);
     this.node.firstChild.setAttribute("style", item);
   }));
-};
-mxText.prototype.fixFlexboxForIe11 = function(dx) {
-  var internalNodes = dx.querySelectorAll('div[style*="display: flex; justify-content: flex-end;"]');
-  for (var i = 0;i < internalNodes.length;i++) {
-    internalNodes[i].style.justifyContent = "flex-start";
-    internalNodes[i].style.flexDirection = "row-reverse";
-  }
-  if (!this.wrap) {
-    internalNodes = dx.querySelectorAll('div[style*="display: flex; justify-content: center;"]');
-    dx = -window.innerWidth;
-    for (i = 0;i < internalNodes.length;i++) {
-      internalNodes[i].style.marginLeft = dx + "px";
-      internalNodes[i].style.marginRight = dx + "px";
-    }
-  }
 };
 mxText.prototype.updateHtmlTransform = function() {
   var theta = this.getTextRotation();
@@ -9808,6 +9943,7 @@ mxText.prototype.updateHtmlFilter = function() {
   var dy = this.margin.y;
   var s = this.scale;
   mxUtils.setOpacity(this.node, this.opacity);
+  var ow;
   var oh = 0;
   var td = null != this.state ? this.state.view.textDiv : null;
   var sizeDiv = this.node;
@@ -9822,7 +9958,7 @@ mxText.prototype.updateHtmlFilter = function() {
     if (this.wrap && 0 < w) {
       td.style.whiteSpace = "normal";
       td.style.wordWrap = mxConstants.WORD_WRAP;
-      var ow = w;
+      ow = w;
       if (this.clipped) {
         ow = Math.min(ow, this.bounds.width);
       }
@@ -9850,6 +9986,13 @@ mxText.prototype.updateHtmlFilter = function() {
       }
     }
     oh = sizeDiv.offsetHeight + 2;
+    if (mxClient.IS_QUIRKS) {
+      if (null != this.border) {
+        if (this.border != mxConstants.NONE) {
+          oh += 3;
+        }
+      }
+    }
   } else {
     if (null != sizeDiv.firstChild) {
       if ("DIV" == sizeDiv.firstChild.nodeName) {
@@ -9875,19 +10018,21 @@ mxText.prototype.updateHtmlFilter = function() {
   }
   this.offsetWidth = ow;
   this.offsetHeight = oh;
+  if (mxClient.IS_QUIRKS && (this.clipped || "width" == this.overflow && 0 < td)) {
+    td = Math.min(td, oh);
+    style.height = Math.round(td) + "px";
+  } else {
+    td = oh;
+  }
   if ("fill" != this.overflow) {
     if ("width" != this.overflow) {
-      if (this.clipped) {
-        ow = Math.min(w, ow);
-      }
-      w = ow;
-      if (this.wrap) {
+      if (this.clipped && (ow = Math.min(w, ow)), w = ow, mxClient.IS_QUIRKS && this.clipped || this.wrap) {
         style.width = Math.round(w) + "px";
       }
     }
   }
-  td = oh * s;
-  w *= s;
+  td = td * s;
+  w = w * s;
   var rad = this.getTextRotation() * (Math.PI / 180);
   ow = parseFloat(parseFloat(Math.cos(rad)).toFixed(8));
   oh = parseFloat(parseFloat(Math.sin(-rad)).toFixed(8));
@@ -9902,18 +10047,24 @@ mxText.prototype.updateHtmlFilter = function() {
   sizeDiv = Math.cos(rad);
   var sin = Math.sin(-rad);
   dx = w * -(dx + 0.5);
-  dy = td * -(dy + 0.5);
+  var scale = td * -(dy + 0.5);
   if (0 != rad) {
-    rad = "progid:DXImageTransform.Microsoft.Matrix(M11=" + ow + ", M12=" + oh + ", M21=" + -oh + ", M22=" + ow + ", sizingMethod='auto expand')";
-    style.filter = null != style.filter && 0 < style.filter.length ? style.filter + (" " + rad) : rad;
+    dy = "progid:DXImageTransform.Microsoft.Matrix(M11=" + ow + ", M12=" + oh + ", M21=" + -oh + ", M22=" + ow + ", sizingMethod='auto expand')";
+    style.filter = null != style.filter && 0 < style.filter.length ? style.filter + (" " + dy) : dy;
+  }
+  dy = 0;
+  if ("fill" != this.overflow) {
+    if (mxClient.IS_QUIRKS) {
+      dy = this.valign == mxConstants.ALIGN_TOP ? dy - 1 : this.valign == mxConstants.ALIGN_BOTTOM ? dy + 2 : dy + 1;
+    }
   }
   style.zoom = s;
-  style.left = Math.round(this.bounds.x + ((w - w * sizeDiv + td * sin) / 2 - ow * dx - oh * dy) - w / 2) + "px";
-  style.top = Math.round(this.bounds.y + ((td - td * sizeDiv + w * sin) / 2 + oh * dx - ow * dy) - td / 2) + "px";
+  style.left = Math.round(this.bounds.x + ((w - w * sizeDiv + td * sin) / 2 - ow * dx - oh * scale) - w / 2) + "px";
+  style.top = Math.round(this.bounds.y + ((td - td * sizeDiv + w * sin) / 2 + oh * dx - ow * scale) - td / 2 + dy) + "px";
 };
 mxText.prototype.updateValue = function() {
   if (mxUtils.isNode(this.value)) {
-    this.node.innerText = "";
+    this.node.innerHTML = "";
     this.node.appendChild(this.value);
   } else {
     var val = this.value;
@@ -9977,33 +10128,33 @@ mxText.prototype.updateFont = function(style) {
   style.textDecoration = txtDecor.join(" ");
   style.textAlign = this.align == mxConstants.ALIGN_CENTER ? "center" : this.align == mxConstants.ALIGN_RIGHT ? "right" : "left";
 };
-mxText.prototype.updateSize = function(node, sizeDiv) {
+mxText.prototype.updateSize = function(node, enableWrap) {
   var w = Math.max(0, Math.round(this.bounds.width / this.scale));
-  var tmp = Math.max(0, Math.round(this.bounds.height / this.scale));
+  var sizeDiv = Math.max(0, Math.round(this.bounds.height / this.scale));
   var style = node.style;
   if (this.clipped) {
     style.overflow = "hidden";
-    style.maxHeight = tmp + "px";
-    style.maxWidth = w + "px";
+    if (mxClient.IS_QUIRKS) {
+      style.width = w + "px";
+    } else {
+      style.maxHeight = sizeDiv + "px";
+      style.maxWidth = w + "px";
+    }
   } else {
     if ("fill" == this.overflow) {
       style.width = w + 1 + "px";
-      style.height = tmp + 1 + "px";
+      style.height = sizeDiv + 1 + "px";
       style.overflow = "hidden";
     } else {
       if ("width" == this.overflow) {
         style.width = w + 1 + "px";
-        style.maxHeight = tmp + 1 + "px";
+        style.maxHeight = sizeDiv + 1 + "px";
         style.overflow = "hidden";
-      } else {
-        if ("block" == this.overflow) {
-          style.width = w + 1 + "px";
-        }
       }
     }
   }
   if (this.wrap && 0 < w) {
-    if (style.wordWrap = mxConstants.WORD_WRAP, style.whiteSpace = "normal", style.width = w + "px", sizeDiv && ("fill" != this.overflow && "width" != this.overflow)) {
+    if (style.wordWrap = mxConstants.WORD_WRAP, style.whiteSpace = "normal", style.width = w + "px", enableWrap && ("fill" != this.overflow && "width" != this.overflow)) {
       sizeDiv = node;
       if (null != sizeDiv.firstChild) {
         if ("DIV" == sizeDiv.firstChild.nodeName) {
@@ -10013,7 +10164,7 @@ mxText.prototype.updateSize = function(node, sizeDiv) {
           }
         }
       }
-      tmp = sizeDiv.offsetWidth;
+      var tmp = sizeDiv.offsetWidth;
       if (0 == tmp) {
         var prev = node.parentNode;
         node.style.visibility = "hidden";
@@ -10035,8 +10186,8 @@ mxText.prototype.updateSize = function(node, sizeDiv) {
 mxText.prototype.updateMargin = function() {
   this.margin = mxUtils.getAlignmentAsPoint(this.align, this.valign);
 };
-mxText.prototype.getSpacing = function(flex) {
-  return new mxPoint(this.align == mxConstants.ALIGN_CENTER ? (this.spacingLeft - this.spacingRight) / 2 : this.align == mxConstants.ALIGN_RIGHT ? -this.spacingRight - (flex ? 0 : this.baseSpacingRight) : this.spacingLeft + (flex ? 0 : this.baseSpacingLeft), this.valign == mxConstants.ALIGN_MIDDLE ? (this.spacingTop - this.spacingBottom) / 2 : this.valign == mxConstants.ALIGN_BOTTOM ? -this.spacingBottom - (flex ? 0 : this.baseSpacingBottom) : this.spacingTop + (flex ? 0 : this.baseSpacingTop));
+mxText.prototype.getSpacing = function() {
+  return new mxPoint(this.align == mxConstants.ALIGN_CENTER ? (this.spacingLeft - this.spacingRight) / 2 : this.align == mxConstants.ALIGN_RIGHT ? -this.spacingRight - this.baseSpacingRight : this.spacingLeft + this.baseSpacingLeft, this.valign == mxConstants.ALIGN_MIDDLE ? (this.spacingTop - this.spacingBottom) / 2 : this.valign == mxConstants.ALIGN_BOTTOM ? -this.spacingBottom - this.baseSpacingBottom : this.spacingTop + this.baseSpacingTop);
 };
 function mxTriangle() {
   mxActor.call(this);
@@ -10098,11 +10249,8 @@ mxImageShape.prototype.apply = function(state) {
   this.gradient = this.stroke = this.fill = null;
   if (null != this.style) {
     this.preserveImageAspect = 1 == mxUtils.getNumber(this.style, mxConstants.STYLE_IMAGE_ASPECT, 1);
-    this.imageBackground = mxUtils.getValue(this.style, mxConstants.STYLE_IMAGE_BACKGROUND, null);
-    this.imageBorder = mxUtils.getValue(this.style, mxConstants.STYLE_IMAGE_BORDER, null);
     this.flipH = this.flipH || 1 == mxUtils.getValue(this.style, "imageFlipH", 0);
     this.flipV = this.flipV || 1 == mxUtils.getValue(this.style, "imageFlipV", 0);
-    this.clipPath = mxUtils.getValue(this.style, mxConstants.STYLE_CLIP_PATH, null);
   }
 };
 mxImageShape.prototype.isHtmlAllowed = function() {
@@ -10113,26 +10261,24 @@ mxImageShape.prototype.createHtml = function() {
   node.style.position = "absolute";
   return node;
 };
-mxImageShape.prototype.isRoundable = function() {
+mxImageShape.prototype.isRoundable = function(x, h, w, c, y) {
   return false;
-};
-mxImageShape.prototype.getImageDataUri = function() {
-  return this.image;
-};
-mxImageShape.prototype.configurePointerEvents = function(c) {
 };
 mxImageShape.prototype.paintVertexShape = function(c, x, y, w, h) {
   if (null != this.image) {
-    if (null != this.imageBackground) {
-      c.setFillColor(this.imageBackground);
-      c.setStrokeColor(this.imageBorder);
+    var fill = mxUtils.getValue(this.style, mxConstants.STYLE_IMAGE_BACKGROUND, null);
+    var x1 = mxUtils.getValue(this.style, mxConstants.STYLE_IMAGE_BORDER, null);
+    if (null != fill) {
+      c.setFillColor(fill);
+      c.setStrokeColor(x1);
       c.rect(x, y, w, h);
       c.fillAndStroke();
     }
-    c.image(x, y, w, h, this.getImageDataUri(), this.preserveImageAspect, false, false, this.clipPath);
-    if (null != this.imageBorder) {
+    c.image(x, y, w, h, this.image, this.preserveImageAspect, false, false);
+    x1 = mxUtils.getValue(this.style, mxConstants.STYLE_IMAGE_BORDER, null);
+    if (null != x1) {
       c.setShadow(false);
-      c.setStrokeColor(this.imageBorder);
+      c.setStrokeColor(x1);
       c.rect(x, y, w, h);
       c.stroke();
     }
@@ -10145,13 +10291,13 @@ mxImageShape.prototype.redrawHtmlShape = function() {
   this.node.style.top = Math.round(this.bounds.y) + "px";
   this.node.style.width = Math.max(0, Math.round(this.bounds.width)) + "px";
   this.node.style.height = Math.max(0, Math.round(this.bounds.height)) + "px";
-  this.node.innerText = "";
+  this.node.innerHTML = "";
   if (null != this.image) {
     var img = mxUtils.getValue(this.style, mxConstants.STYLE_IMAGE_BACKGROUND, "");
     var stroke = mxUtils.getValue(this.style, mxConstants.STYLE_IMAGE_BORDER, "");
     this.node.style.backgroundColor = img;
     this.node.style.borderColor = stroke;
-    img = document.createElement("img");
+    img = document.createElement(mxClient.IS_IE6 || (null == document.documentMode || 8 >= document.documentMode) && 0 != this.rotation ? mxClient.VML_PREFIX + ":image" : "img");
     img.setAttribute("border", "0");
     img.style.position = "absolute";
     img.src = this.image;
@@ -10225,8 +10371,7 @@ mxLabel.prototype.paintForeground = function(c, x, y, w, h) {
 mxLabel.prototype.paintImage = function(c, bounds, y, w, h) {
   if (null != this.image) {
     bounds = this.getImageBounds(bounds, y, w, h);
-    y = mxUtils.getValue(this.style, mxConstants.STYLE_CLIP_PATH, null);
-    c.image(bounds.x, bounds.y, bounds.width, bounds.height, this.image, false, false, false, y);
+    c.image(bounds.x, bounds.y, bounds.width, bounds.height, this.image, false, false, false);
   }
 };
 mxLabel.prototype.getImageBounds = function(x, y, w, h) {
@@ -10288,6 +10433,7 @@ function mxCylinder(bounds, fill, stroke, strokewidth) {
 }
 mxUtils.extend(mxCylinder, mxShape);
 mxCylinder.prototype.maxHeight = 40;
+mxCylinder.prototype.svgStrokeTolerance = 0;
 mxCylinder.prototype.paintVertexShape = function(c, x, y, w, h) {
   c.translate(x, y);
   c.begin();
@@ -10343,20 +10489,24 @@ mxConnector.prototype.paintEdgeShape = function(c, pts) {
     targetMarker();
   }
 };
-mxConnector.prototype.createMarker = function(c, pe, source) {
+mxConnector.prototype.createMarker = function(c, pts, source) {
   var result = null;
-  var size = pe.length;
+  var size = pts.length;
   var type = mxUtils.getValue(this.style, source ? mxConstants.STYLE_STARTARROW : mxConstants.STYLE_ENDARROW);
-  var p0 = source ? pe[1] : pe[size - 2];
-  pe = source ? pe[0] : pe[size - 1];
+  var p0 = source ? pts[1] : pts[size - 2];
+  var pe = source ? pts[0] : pts[size - 1];
   if (null != type && (null != p0 && null != pe)) {
-    result = pe.x - p0.x;
+    for (result = 1;result < size - 1 && (0 == Math.round(p0.x - pe.x) && 0 == Math.round(p0.y - pe.y));) {
+      p0 = source ? pts[1 + result] : pts[size - 2 - result];
+      result++;
+    }
+    pts = pe.x - p0.x;
     size = pe.y - p0.y;
-    var k = Math.sqrt(result * result + size * size);
-    p0 = result / k;
-    result = size / k;
+    result = Math.max(1, Math.sqrt(pts * pts + size * size));
+    p0 = pts / result;
+    pts = size / result;
     size = mxUtils.getNumber(this.style, source ? mxConstants.STYLE_STARTSIZE : mxConstants.STYLE_ENDSIZE, mxConstants.DEFAULT_MARKERSIZE);
-    result = mxMarker.createMarker(c, this, type, pe, p0, result, size, source, this.strokewidth, 0 != this.style[source ? mxConstants.STYLE_STARTFILL : mxConstants.STYLE_ENDFILL]);
+    result = mxMarker.createMarker(c, this, type, pe, p0, pts, size, source, this.strokewidth, 0 != this.style[source ? mxConstants.STYLE_STARTFILL : mxConstants.STYLE_ENDFILL]);
   }
   return result;
 };
@@ -10380,24 +10530,18 @@ function mxSwimlane(bounds, fill, stroke, strokewidth) {
 }
 mxUtils.extend(mxSwimlane, mxShape);
 mxSwimlane.prototype.imageSize = 16;
-mxSwimlane.prototype.apply = function(state) {
-  mxShape.prototype.apply.apply(this, arguments);
-  if (null != this.style) {
-    this.laneFill = mxUtils.getValue(this.style, mxConstants.STYLE_SWIMLANE_FILLCOLOR, mxConstants.NONE);
-  }
-};
-mxSwimlane.prototype.isRoundable = function() {
+mxSwimlane.prototype.isRoundable = function(x, h, w, c, y) {
   return true;
 };
 mxSwimlane.prototype.getTitleSize = function() {
   return Math.max(0, mxUtils.getValue(this.style, mxConstants.STYLE_STARTSIZE, mxConstants.DEFAULT_STARTSIZE));
 };
 mxSwimlane.prototype.getLabelBounds = function(bounds) {
-  var sourceEdge = 1 == mxUtils.getValue(this.style, mxConstants.STYLE_FLIPH, 0);
-  var targetEdge = 1 == mxUtils.getValue(this.style, mxConstants.STYLE_FLIPV, 0);
+  var tmp = this.getTitleSize();
   bounds = new mxRectangle(bounds.x, bounds.y, bounds.width, bounds.height);
   var horizontal = this.isHorizontal();
-  var tmp = this.getTitleSize();
+  var sourceEdge = 1 == mxUtils.getValue(this.style, mxConstants.STYLE_FLIPH, 0);
+  var targetEdge = 1 == mxUtils.getValue(this.style, mxConstants.STYLE_FLIPV, 0);
   var shapeVertical = this.direction == mxConstants.DIRECTION_NORTH || this.direction == mxConstants.DIRECTION_SOUTH;
   horizontal = horizontal == !shapeVertical;
   sourceEdge = !horizontal && sourceEdge != (this.direction == mxConstants.DIRECTION_SOUTH || this.direction == mxConstants.DIRECTION_WEST);
@@ -10417,9 +10561,13 @@ mxSwimlane.prototype.getLabelBounds = function(bounds) {
   }
   return bounds;
 };
-mxSwimlane.prototype.getGradientBounds = function(w, x, y, width, h) {
-  w = this.getTitleSize();
-  return this.isHorizontal() ? new mxRectangle(x, y, width, Math.min(w, h)) : new mxRectangle(x, y, Math.min(w, width), h);
+mxSwimlane.prototype.getGradientBounds = function(start, x, y, w, h) {
+  start = this.getTitleSize();
+  if (this.isHorizontal()) {
+    return start = Math.min(start, h), new mxRectangle(x, y, w, start);
+  }
+  start = Math.min(start, w);
+  return new mxRectangle(x, y, start, h);
 };
 mxSwimlane.prototype.getSwimlaneArcSize = function(w, h, start) {
   if ("1" == mxUtils.getValue(this.style, mxConstants.STYLE_ABSOLUTE_ARCSIZE, 0)) {
@@ -10432,69 +10580,49 @@ mxSwimlane.prototype.isHorizontal = function() {
   return 1 == mxUtils.getValue(this.style, mxConstants.STYLE_HORIZONTAL, 1);
 };
 mxSwimlane.prototype.paintVertexShape = function(c, x, y, w, h) {
-  if (!this.outline) {
-    var start = this.getTitleSize();
-    var r = 0;
-    start = this.isHorizontal() ? Math.min(start, h) : Math.min(start, w);
-    c.translate(x, y);
-    if (this.isRounded) {
-      r = this.getSwimlaneArcSize(w, h, start);
-      r = Math.min((this.isHorizontal() ? h : w) - start, Math.min(start, r));
-      this.paintRoundedSwimlane(c, x, y, w, h, start, r);
-    } else {
-      this.paintSwimlane(c, x, y, w, h, start);
-    }
-    var sep = mxUtils.getValue(this.style, mxConstants.STYLE_SEPARATORCOLOR, mxConstants.NONE);
-    this.paintSeparator(c, x, y, w, h, start, sep);
-    if (null != this.image) {
-      h = this.getImageBounds(x, y, w, h);
-      sep = mxUtils.getValue(this.style, mxConstants.STYLE_CLIP_PATH, null);
-      c.image(h.x - x, h.y - y, h.width, h.height, this.image, false, false, false, sep);
-    }
-    if (this.glass) {
-      c.setShadow(false);
-      this.paintGlassEffect(c, 0, 0, w, start, r);
-    }
+  var start = this.getTitleSize();
+  var fill = mxUtils.getValue(this.style, mxConstants.STYLE_SWIMLANE_FILLCOLOR, mxConstants.NONE);
+  var swimlaneLine = 1 == mxUtils.getValue(this.style, mxConstants.STYLE_SWIMLANE_LINE, 1);
+  var r = 0;
+  start = this.isHorizontal() ? Math.min(start, h) : Math.min(start, w);
+  c.translate(x, y);
+  if (this.isRounded) {
+    r = this.getSwimlaneArcSize(w, h, start);
+    r = Math.min((this.isHorizontal() ? h : w) - start, Math.min(start, r));
+    this.paintRoundedSwimlane(c, x, y, w, h, start, r, fill, swimlaneLine);
+  } else {
+    this.paintSwimlane(c, x, y, w, h, start, fill, swimlaneLine);
+  }
+  fill = mxUtils.getValue(this.style, mxConstants.STYLE_SEPARATORCOLOR, mxConstants.NONE);
+  this.paintSeparator(c, x, y, w, h, start, fill);
+  if (null != this.image) {
+    h = this.getImageBounds(x, y, w, h);
+    c.image(h.x - x, h.y - y, h.width, h.height, this.image, false, false, false);
+  }
+  if (this.glass) {
+    c.setShadow(false);
+    this.paintGlassEffect(c, 0, 0, w, start, r);
   }
 };
-mxSwimlane.prototype.configurePointerEvents = function(c) {
-  var b = true;
-  var sourceEdge = true;
-  var targetEdge = true;
-  if (null != this.style) {
-    b = "1" == mxUtils.getValue(this.style, mxConstants.STYLE_POINTER_EVENTS, "1");
-    sourceEdge = 1 == mxUtils.getValue(this.style, mxConstants.STYLE_SWIMLANE_HEAD, 1);
-    targetEdge = 1 == mxUtils.getValue(this.style, mxConstants.STYLE_SWIMLANE_BODY, 1);
-  }
-  if (b || (sourceEdge || targetEdge)) {
-    mxShape.prototype.configurePointerEvents.apply(this, arguments);
-  }
-};
-mxSwimlane.prototype.paintSwimlane = function(c, x, y, w, h, y2) {
-  var fill = this.laneFill;
-  var k = true;
+mxSwimlane.prototype.paintSwimlane = function(c, x, y, w, h, y2, fill, swimlaneLine) {
+  c.begin();
   var l = true;
-  var m = true;
-  var n = true;
   if (null != this.style) {
-    k = "1" == mxUtils.getValue(this.style, mxConstants.STYLE_POINTER_EVENTS, "1");
-    l = 1 == mxUtils.getValue(this.style, mxConstants.STYLE_SWIMLANE_LINE, 1);
-    m = 1 == mxUtils.getValue(this.style, mxConstants.STYLE_SWIMLANE_HEAD, 1);
-    n = 1 == mxUtils.getValue(this.style, mxConstants.STYLE_SWIMLANE_BODY, 1);
+    l = "1" == mxUtils.getValue(this.style, mxConstants.STYLE_POINTER_EVENTS, "1");
+  }
+  if (!l) {
+    if (!(null != this.fill && this.fill != mxConstants.NONE)) {
+      c.pointerEvents = false;
+    }
   }
   if (this.isHorizontal()) {
-    c.begin();
     c.moveTo(0, y2);
     c.lineTo(0, 0);
     c.lineTo(w, 0);
     c.lineTo(w, y2);
-    if (m) {
-      c.fillAndStroke();
-    } else {
-      c.fill();
-    }
+    c.fillAndStroke();
     if (y2 < h) {
-      if (!(fill != mxConstants.NONE && k)) {
+      if (!(fill != mxConstants.NONE && l)) {
         c.pointerEvents = false;
       }
       if (fill != mxConstants.NONE) {
@@ -10505,33 +10633,20 @@ mxSwimlane.prototype.paintSwimlane = function(c, x, y, w, h, y2) {
       c.lineTo(0, h);
       c.lineTo(w, h);
       c.lineTo(w, y2);
-      if (n) {
-        if (fill == mxConstants.NONE) {
-          c.stroke();
-        } else {
-          if (n) {
-            c.fillAndStroke();
-          }
-        }
+      if (fill == mxConstants.NONE) {
+        c.stroke();
       } else {
-        if (fill != mxConstants.NONE) {
-          c.fill();
-        }
+        c.fillAndStroke();
       }
     }
   } else {
-    c.begin();
     c.moveTo(y2, 0);
     c.lineTo(0, 0);
     c.lineTo(0, h);
     c.lineTo(y2, h);
-    if (m) {
-      c.fillAndStroke();
-    } else {
-      c.fill();
-    }
+    c.fillAndStroke();
     if (y2 < w) {
-      if (!(fill != mxConstants.NONE && k)) {
+      if (!(fill != mxConstants.NONE && l)) {
         c.pointerEvents = false;
       }
       if (fill != mxConstants.NONE) {
@@ -10542,52 +10657,38 @@ mxSwimlane.prototype.paintSwimlane = function(c, x, y, w, h, y2) {
       c.lineTo(w, 0);
       c.lineTo(w, h);
       c.lineTo(y2, h);
-      if (n) {
-        if (fill == mxConstants.NONE) {
-          c.stroke();
-        } else {
-          if (n) {
-            c.fillAndStroke();
-          }
-        }
+      if (fill == mxConstants.NONE) {
+        c.stroke();
       } else {
-        if (fill != mxConstants.NONE) {
-          c.fill();
-        }
+        c.fillAndStroke();
       }
     }
   }
-  if (l) {
+  if (swimlaneLine) {
     this.paintDivider(c, x, y, w, h, y2, fill == mxConstants.NONE);
   }
 };
-mxSwimlane.prototype.paintRoundedSwimlane = function(c, x, y, w, h, y2, r) {
-  var fill = this.laneFill;
-  var l = true;
+mxSwimlane.prototype.paintRoundedSwimlane = function(c, x, willCollapse, w, y, y2, r, fill, swimlaneLine) {
+  c.begin();
   var m = true;
-  var n = true;
-  var p = true;
   if (null != this.style) {
-    l = "1" == mxUtils.getValue(this.style, mxConstants.STYLE_POINTER_EVENTS, "1");
-    m = 1 == mxUtils.getValue(this.style, mxConstants.STYLE_SWIMLANE_LINE, 1);
-    n = 1 == mxUtils.getValue(this.style, mxConstants.STYLE_SWIMLANE_HEAD, 1);
-    p = 1 == mxUtils.getValue(this.style, mxConstants.STYLE_SWIMLANE_BODY, 1);
+    m = "1" == mxUtils.getValue(this.style, mxConstants.STYLE_POINTER_EVENTS, "1");
+  }
+  if (!m) {
+    if (!(null != this.fill && this.fill != mxConstants.NONE)) {
+      c.pointerEvents = false;
+    }
   }
   if (this.isHorizontal()) {
-    c.begin();
     c.moveTo(w, y2);
     c.lineTo(w, r);
     c.quadTo(w, 0, w - Math.min(w / 2, r), 0);
     c.lineTo(Math.min(w / 2, r), 0);
     c.quadTo(0, 0, 0, r);
     c.lineTo(0, y2);
-    if (n) {
-      c.fillAndStroke();
-    } else {
-      c.fill();
-    }
-    if (y2 < h) {
-      if (!(fill != mxConstants.NONE && l)) {
+    c.fillAndStroke();
+    if (y2 < y) {
+      if (!(fill != mxConstants.NONE && m)) {
         c.pointerEvents = false;
       }
       if (fill != mxConstants.NONE) {
@@ -10595,95 +10696,72 @@ mxSwimlane.prototype.paintRoundedSwimlane = function(c, x, y, w, h, y2, r) {
       }
       c.begin();
       c.moveTo(0, y2);
-      c.lineTo(0, h - r);
-      c.quadTo(0, h, Math.min(w / 2, r), h);
-      c.lineTo(w - Math.min(w / 2, r), h);
-      c.quadTo(w, h, w, h - r);
+      c.lineTo(0, y - r);
+      c.quadTo(0, y, Math.min(w / 2, r), y);
+      c.lineTo(w - Math.min(w / 2, r), y);
+      c.quadTo(w, y, w, y - r);
       c.lineTo(w, y2);
-      if (p) {
-        if (fill == mxConstants.NONE) {
-          c.stroke();
-        } else {
-          if (p) {
-            c.fillAndStroke();
-          }
-        }
+      if (fill == mxConstants.NONE) {
+        c.stroke();
       } else {
-        if (fill != mxConstants.NONE) {
-          c.fill();
-        }
+        c.fillAndStroke();
       }
     }
   } else {
-    c.begin();
     c.moveTo(y2, 0);
     c.lineTo(r, 0);
-    c.quadTo(0, 0, 0, Math.min(h / 2, r));
-    c.lineTo(0, h - Math.min(h / 2, r));
-    c.quadTo(0, h, r, h);
-    c.lineTo(y2, h);
-    if (n) {
-      c.fillAndStroke();
-    } else {
-      c.fill();
-    }
+    c.quadTo(0, 0, 0, Math.min(y / 2, r));
+    c.lineTo(0, y - Math.min(y / 2, r));
+    c.quadTo(0, y, r, y);
+    c.lineTo(y2, y);
+    c.fillAndStroke();
     if (y2 < w) {
-      if (!(fill != mxConstants.NONE && l)) {
+      if (!(fill != mxConstants.NONE && m)) {
         c.pointerEvents = false;
       }
       if (fill != mxConstants.NONE) {
         c.setFillColor(fill);
       }
       c.begin();
-      c.moveTo(y2, h);
-      c.lineTo(w - r, h);
-      c.quadTo(w, h, w, h - Math.min(h / 2, r));
-      c.lineTo(w, Math.min(h / 2, r));
+      c.moveTo(y2, y);
+      c.lineTo(w - r, y);
+      c.quadTo(w, y, w, y - Math.min(y / 2, r));
+      c.lineTo(w, Math.min(y / 2, r));
       c.quadTo(w, 0, w - r, 0);
       c.lineTo(y2, 0);
-      if (p) {
-        if (fill == mxConstants.NONE) {
-          c.stroke();
-        } else {
-          if (p) {
-            c.fillAndStroke();
-          }
-        }
+      if (fill == mxConstants.NONE) {
+        c.stroke();
       } else {
-        if (fill != mxConstants.NONE) {
-          c.fill();
-        }
+        c.fillAndStroke();
       }
     }
   }
-  if (m) {
-    this.paintDivider(c, x, y, w, h, y2, fill == mxConstants.NONE);
+  if (swimlaneLine) {
+    this.paintDivider(c, x, willCollapse, w, y, y2, fill == mxConstants.NONE);
   }
 };
-mxSwimlane.prototype.paintDivider = function(c, x, y, w, h, y2, shadow) {
-  if (0 != y2) {
-    if (!shadow) {
-      c.setShadow(false);
-    }
-    c.begin();
-    if (this.isHorizontal()) {
-      c.moveTo(0, y2);
-      c.lineTo(w, y2);
-    } else {
-      c.moveTo(y2, 0);
-      c.lineTo(y2, h);
-    }
-    c.stroke();
+mxSwimlane.prototype.paintDivider = function(c, x, willCollapse, w, y, y2, shadow) {
+  if (!shadow) {
+    c.setShadow(false);
   }
+  c.begin();
+  if (this.isHorizontal()) {
+    c.moveTo(0, y2);
+    c.lineTo(w, y2);
+  } else {
+    c.moveTo(y2, 0);
+    c.lineTo(y2, y);
+  }
+  c.stroke();
 };
-mxSwimlane.prototype.paintSeparator = function(c, x, y, w, h, y2, color) {
-  if (color != mxConstants.NONE) {
-    c.setStrokeColor(color);
+mxSwimlane.prototype.paintSeparator = function(c, x, color, w, y, y2, fill) {
+  if (fill != mxConstants.NONE) {
+    c.setStrokeColor(fill);
     c.setDashed(true);
     c.begin();
     if (this.isHorizontal()) {
       c.moveTo(w, y2);
-      c.lineTo(w, h);
+      c.lineTo(w, y);
     } else {
       c.moveTo(y2, 0);
       c.lineTo(w, 0);
@@ -10713,9 +10791,9 @@ mxGraphLayout.prototype.getGraph = function() {
 mxGraphLayout.prototype.getConstraint = function(key, cell, edge, source) {
   return this.graph.getCurrentCellStyle(cell)[key];
 };
-mxGraphLayout.traverse = function(cell, directed, y2, edge, currentComp) {
-  if (null != y2 && (null != cell && ((directed = null != directed ? directed : true, currentComp = currentComp || new mxDictionary, !currentComp.get(cell) && (currentComp.put(cell, true), edge = y2(cell, edge), null == edge || edge)) && (edge = this.graph.model.getEdgeCount(cell), 0 < edge)))) {
-    for (var i = 0;i < edge;i++) {
+mxGraphLayout.traverse = function(cell, directed, y2, isSource, currentComp) {
+  if (null != y2 && (null != cell && ((directed = null != directed ? directed : true, currentComp = currentComp || new mxDictionary, !currentComp.get(cell) && (currentComp.put(cell, true), isSource = y2(cell, isSource), null == isSource || isSource)) && (isSource = this.graph.model.getEdgeCount(cell), 0 < isSource)))) {
+    for (var i = 0;i < isSource;i++) {
       var source = this.graph.model.getEdgeAt(cell, i);
       var next = this.graph.model.getTerminal(source, true) == cell;
       if (!directed || next) {
@@ -10741,11 +10819,11 @@ mxGraphLayout.prototype.isVertexMovable = function(cell) {
   return this.graph.isCellMovable(cell);
 };
 mxGraphLayout.prototype.isVertexIgnored = function(cell) {
-  return!this.graph.getModel().isVertex(cell) || !this.graph.getModel().isVisible(cell);
+  return!this.graph.getModel().isVertex(cell) || !this.graph.isCellVisible(cell);
 };
 mxGraphLayout.prototype.isEdgeIgnored = function(cell) {
   var model = this.graph.getModel();
-  return!model.isEdge(cell) || (!this.graph.getModel().isVisible(cell) || (null == model.getTerminal(cell, true) || null == model.getTerminal(cell, false)));
+  return!model.isEdge(cell) || (!this.graph.isCellVisible(cell) || (null == model.getTerminal(cell, true) || null == model.getTerminal(cell, false)));
 };
 mxGraphLayout.prototype.setEdgeStyleEnabled = function(edge, value) {
   this.graph.setCellStyles(mxConstants.STYLE_NOEDGESTYLE, value ? "0" : "1", [edge]);
@@ -10952,9 +11030,9 @@ mxStackLayout.prototype.getLayoutCells = function(cell) {
     }
   }
   if (this.allowGaps) {
-    cells.sort(mxUtils.bind(this, function(geo1, geo2) {
-      geo1 = this.graph.getCellGeometry(geo1);
-      geo2 = this.graph.getCellGeometry(geo2);
+    cells.sort(mxUtils.bind(this, function(c1, c2) {
+      var geo1 = this.graph.getCellGeometry(c1);
+      var geo2 = this.graph.getCellGeometry(c2);
       return this.horizontal ? geo1.x == geo2.x ? 0 : geo1.x > geo2.x > 0 ? 1 : -1 : geo1.y == geo2.y ? 0 : geo1.y > geo2.y > 0 ? 1 : -1;
     }));
   }
@@ -10976,7 +11054,7 @@ mxStackLayout.prototype.execute = function(parent) {
     if (null != pgeo) {
       fillValue = horizontal ? pgeo.height - this.marginTop - this.marginBottom : pgeo.width - this.marginLeft - this.marginRight;
     }
-    fillValue -= 2 * this.border;
+    fillValue = fillValue - 2 * this.border;
     var x0 = this.x0 + this.border + this.marginLeft;
     var y0 = this.y0 + this.border + this.marginTop;
     if (this.graph.isSwimlane(parent)) {
@@ -11174,7 +11252,7 @@ mxPartitionLayout.prototype.execute = function(parent) {
       var x0 = this.border;
       var y0 = this.border;
       var other = horizontal ? pgeo.height : pgeo.width;
-      other -= 2 * this.border;
+      other = other - 2 * this.border;
       parent = this.graph.isSwimlane(parent) ? this.graph.getStartSize(parent) : new mxRectangle;
       other -= horizontal ? parent.height : parent.width;
       x0 += parent.width;
@@ -11252,14 +11330,15 @@ mxCompactTreeLayout.prototype.isVertexIgnored = function(cell) {
 mxCompactTreeLayout.prototype.isHorizontal = function() {
   return this.horizontal;
 };
-mxCompactTreeLayout.prototype.execute = function(parent, roots) {
+mxCompactTreeLayout.prototype.execute = function(parent, cell) {
   this.parent = parent;
   var model = this.graph.getModel();
-  if (null == roots) {
+  if (null == cell) {
     if (0 < this.graph.getEdges(parent, model.getParent(parent), this.invert, !this.invert, false).length) {
       this.root = parent;
     } else {
-      if (roots = this.graph.findTreeRoots(parent, true, this.invert), 0 < roots.length) {
+      var roots = this.graph.findTreeRoots(parent, true, this.invert);
+      if (0 < roots.length) {
         for (var i = 0;i < roots.length;i++) {
           if (!this.isVertexIgnored(roots[i]) && 0 < this.graph.getEdges(roots[i], null, this.invert, !this.invert, false).length) {
             this.root = roots[i];
@@ -11269,7 +11348,7 @@ mxCompactTreeLayout.prototype.execute = function(parent, roots) {
       }
     }
   } else {
-    this.root = roots;
+    this.root = cell;
   }
   if (null != this.root) {
     this.parentsChanged = this.resizeParent ? {} : null;
@@ -11341,30 +11420,30 @@ mxCompactTreeLayout.prototype.moveNode = function(state, dx, dy) {
   }
 };
 mxCompactTreeLayout.prototype.sortOutgoingEdges = function(source, edges) {
-  var dict = new mxDictionary;
-  edges.sort(function(p1, cell) {
-    var terminal = p1.getTerminal(p1.getTerminal(false) == source);
-    p1 = dict.get(terminal);
+  var lookup = new mxDictionary;
+  edges.sort(function(e2, e1) {
+    var cell = e2.getTerminal(e2.getTerminal(false) == source);
+    var p1 = lookup.get(cell);
     if (null == p1) {
-      p1 = mxCellPath.create(terminal).split(mxCellPath.PATH_SEPARATOR);
-      dict.put(terminal, p1);
+      p1 = mxCellPath.create(cell).split(mxCellPath.PATH_SEPARATOR);
+      lookup.put(cell, p1);
     }
-    cell = cell.getTerminal(cell.getTerminal(false) == source);
-    terminal = dict.get(cell);
-    if (null == terminal) {
-      terminal = mxCellPath.create(cell).split(mxCellPath.PATH_SEPARATOR);
-      dict.put(cell, terminal);
+    cell = e1.getTerminal(e1.getTerminal(false) == source);
+    var p2 = lookup.get(cell);
+    if (null == p2) {
+      p2 = mxCellPath.create(cell).split(mxCellPath.PATH_SEPARATOR);
+      lookup.put(cell, p2);
     }
-    return mxCellPath.compare(p1, terminal);
+    return mxCellPath.compare(p1, p2);
   });
 };
 mxCompactTreeLayout.prototype.findRankHeights = function(node, rank) {
   if (null == this.maxRankHeight[rank] || this.maxRankHeight[rank] < node.height) {
     this.maxRankHeight[rank] = node.height;
   }
-  for (node = node.child;null != node;) {
-    this.findRankHeights(node, rank + 1);
-    node = node.next;
+  for (var child = node.child;null != child;) {
+    this.findRankHeights(child, rank + 1);
+    child = child.next;
   }
 };
 mxCompactTreeLayout.prototype.setCellHeights = function(node, rank) {
@@ -11373,9 +11452,9 @@ mxCompactTreeLayout.prototype.setCellHeights = function(node, rank) {
       node.height = this.maxRankHeight[rank];
     }
   }
-  for (node = node.child;null != node;) {
-    this.setCellHeights(node, rank + 1);
-    node = node.next;
+  for (var child = node.child;null != child;) {
+    this.setCellHeights(child, rank + 1);
+    child = child.next;
   }
 };
 mxCompactTreeLayout.prototype.dfs = function(cell, parent) {
@@ -11391,21 +11470,21 @@ mxCompactTreeLayout.prototype.dfs = function(cell, parent) {
     if (this.sortEdges) {
       this.sortOutgoingEdges(cell, out);
     }
-    for (cell = 0;cell < out.length;cell++) {
-      var edge = out[cell];
-      if (!this.isEdgeIgnored(edge)) {
+    for (var i = 0;i < out.length;i++) {
+      var source = out[i];
+      if (!this.isEdgeIgnored(source)) {
         if (this.resetEdges) {
-          this.setEdgePoints(edge, null);
+          this.setEdgePoints(source, null);
         }
         if (this.edgeRouting) {
-          this.setEdgeStyleEnabled(edge, false);
-          this.setEdgePoints(edge, null);
+          this.setEdgeStyleEnabled(source, false);
+          this.setEdgePoints(source, null);
         }
-        var tmp = view.getState(edge);
-        edge = null != tmp ? tmp.getVisibleTerminal(this.invert) : view.getVisibleTerminal(edge, this.invert);
-        tmp = this.dfs(edge, parent);
+        var tmp = view.getState(source);
+        source = null != tmp ? tmp.getVisibleTerminal(this.invert) : view.getVisibleTerminal(source, this.invert);
+        tmp = this.dfs(source, parent);
         if (null != tmp) {
-          if (null != id.getGeometry(edge)) {
+          if (null != id.getGeometry(source)) {
             if (null == prev) {
               node.child = tmp;
             } else {
@@ -11464,10 +11543,10 @@ mxCompactTreeLayout.prototype.verticalLayout = function(node, child, x0, s, boun
   }
   return bounds;
 };
-mxCompactTreeLayout.prototype.attachParent = function(node, y1) {
+mxCompactTreeLayout.prototype.attachParent = function(node, height) {
   var x = this.nodeDistance + this.levelDistance;
-  var y2 = (y1 - node.width) / 2 - this.nodeDistance;
-  y1 = y2 + node.width + 2 * this.nodeDistance - y1;
+  var y2 = (height - node.width) / 2 - this.nodeDistance;
+  var y1 = y2 + node.width + 2 * this.nodeDistance - height;
   node.child.offsetX = x + node.height;
   node.child.offsetY = y1;
   node.contour.upperHead = this.createLine(node.height, 0, this.createLine(x, y1, node.contour.upperHead));
@@ -11499,12 +11578,12 @@ mxCompactTreeLayout.prototype.join = function(node) {
 mxCompactTreeLayout.prototype.merge = function(p1, p2) {
   var x = 0;
   var y = 0;
-  var total = 0;
+  var top = 0;
   var upper = p1.lowerHead;
   for (var lower = p2.upperHead;null != lower && null != upper;) {
-    var d = this.offset(x, y, lower.dx, lower.dy, upper.dx, upper.dy);
-    y += d;
-    total += d;
+    var dy = this.offset(x, y, lower.dx, lower.dy, upper.dx, upper.dy);
+    y = y + dy;
+    top = top + dy;
     if (x + lower.dx <= upper.dx) {
       x += lower.dx;
       y += lower.dy;
@@ -11526,7 +11605,7 @@ mxCompactTreeLayout.prototype.merge = function(p1, p2) {
     }
   }
   p1.lowerHead = p2.lowerHead;
-  return total;
+  return top;
 };
 mxCompactTreeLayout.prototype.offset = function(p1, y, a1, a2, b1, b2) {
   if (b1 <= p1 || 0 >= p1 + a1) {
@@ -11570,18 +11649,18 @@ mxCompactTreeLayout.prototype.createNode = function(cell) {
   return node;
 };
 mxCompactTreeLayout.prototype.apply = function(state, bounds) {
-  var model = this.graph.getModel();
+  var parent = this.graph.getModel();
   var cell = state.cell;
-  var g = model.getGeometry(cell);
+  var g = parent.getGeometry(cell);
   if (null != cell) {
     if (null != g) {
       if (this.isVertexMovable(cell)) {
         g = this.setVertexLocation(cell, state.x, state.y);
         if (this.resizeParent) {
-          state = model.getParent(cell);
-          model = mxCellPath.create(state);
-          if (null == this.parentsChanged[model]) {
-            this.parentsChanged[model] = state;
+          parent = parent.getParent(cell);
+          cell = mxCellPath.create(parent);
+          if (null == this.parentsChanged[cell]) {
+            this.parentsChanged[cell] = parent;
           }
         }
       }
@@ -11693,7 +11772,7 @@ mxRadialTreeLayout.prototype.row = [];
 mxRadialTreeLayout.prototype.isVertexIgnored = function(cell) {
   return mxGraphLayout.prototype.isVertexIgnored.apply(this, arguments) || 0 == this.graph.getConnections(cell).length;
 };
-mxRadialTreeLayout.prototype.execute = function(parent, evt) {
+mxRadialTreeLayout.prototype.execute = function(parent, cell) {
   this.parent = parent;
   this.edgeRouting = this.useBoundingBox = false;
   mxCompactTreeLayout.prototype.execute.apply(this, arguments);
@@ -11933,7 +12012,7 @@ mxFastOrganicLayout.prototype.calcAttraction = function() {
           deltaLengthSquared = this.minDistanceLimitSquared;
         }
         var deltaLength = Math.sqrt(deltaLengthSquared);
-        deltaLengthSquared /= this.forceConstant;
+        deltaLengthSquared = deltaLengthSquared / this.forceConstant;
         xDelta = xDelta / deltaLength * deltaLengthSquared;
         yDelta = yDelta / deltaLength * deltaLengthSquared;
         this.dispX[i] -= xDelta;
@@ -12039,7 +12118,7 @@ mxCircleLayout.prototype.circle = function(vertices, r, left, top) {
   var phi = 2 * Math.PI / vertexCount;
   for (var i = 0;i < vertexCount;i++) {
     if (this.isVertexMovable(vertices[i])) {
-      this.setVertexLocation(vertices[i], Math.round(left + r + r * Math.cos(i * phi - Math.PI / 2)), Math.round(top + r + r * Math.sin(i * phi - Math.PI / 2)));
+      this.setVertexLocation(vertices[i], Math.round(left + r + r * Math.sin(i * phi)), Math.round(top + r + r * Math.cos(i * phi)));
     }
   }
 };
@@ -12050,12 +12129,12 @@ mxParallelEdgeLayout.prototype = new mxGraphLayout;
 mxParallelEdgeLayout.prototype.constructor = mxParallelEdgeLayout;
 mxParallelEdgeLayout.prototype.spacing = 20;
 mxParallelEdgeLayout.prototype.checkOverlap = false;
-mxParallelEdgeLayout.prototype.execute = function(parent, cells) {
-  parent = this.findParallels(parent, cells);
+mxParallelEdgeLayout.prototype.execute = function(parent, cell) {
+  var lookup = this.findParallels(parent, cell);
   this.graph.model.beginUpdate();
   try {
-    for (var i in parent) {
-      var parallels = parent[i];
+    for (var i in lookup) {
+      var parallels = lookup[i];
       if (1 < parallels.length) {
         this.layout(parallels);
       }
@@ -12082,10 +12161,10 @@ mxParallelEdgeLayout.prototype.findParallels = function(cell, cells) {
       addCell(cells[i]);
     }
   } else {
-    cells = this.graph.getModel();
-    var childCount = cells.getChildCount(cell);
+    var model = this.graph.getModel();
+    var childCount = model.getChildCount(cell);
     for (i = 0;i < childCount;i++) {
-      addCell(cells.getChildAt(cell, i));
+      addCell(model.getChildAt(cell, i));
     }
   }
   return lookup;
@@ -12228,26 +12307,26 @@ mxEdgeLabelLayout.prototype.avoid = function(edge, x) {
   var state = edge.text.boundingBox;
   if (mxUtils.intersects(state, x)) {
     var dy = -state.y - state.height + x.y;
-    var dist = -state.y + x.y + x.height;
-    dy = Math.abs(dy) < Math.abs(dist) ? dy : dist;
-    dist = -state.x - state.width + x.x;
-    x = -state.x + x.x + x.width;
-    x = Math.abs(dist) < Math.abs(x) ? dist : x;
-    if (Math.abs(x) < Math.abs(dy)) {
+    var geo = -state.y + x.y + x.height;
+    dy = Math.abs(dy) < Math.abs(geo) ? dy : geo;
+    geo = -state.x - state.width + x.x;
+    state = -state.x + x.x + x.width;
+    state = Math.abs(geo) < Math.abs(state) ? geo : state;
+    if (Math.abs(state) < Math.abs(dy)) {
       dy = 0;
     } else {
-      x = 0;
+      state = 0;
     }
-    state = model.getGeometry(edge.cell);
-    if (null != state) {
-      state = state.clone();
-      if (null != state.offset) {
-        state.offset.x += x;
-        state.offset.y += dy;
+    geo = model.getGeometry(edge.cell);
+    if (null != geo) {
+      geo = geo.clone();
+      if (null != geo.offset) {
+        geo.offset.x += state;
+        geo.offset.y += dy;
       } else {
-        state.offset = new mxPoint(x, dy);
+        geo.offset = new mxPoint(state, dy);
       }
-      model.setGeometry(edge.cell, state);
+      model.setGeometry(edge.cell, geo);
     }
   }
 };
@@ -12542,8 +12621,10 @@ mxGraphHierarchyModel.prototype.initialRank = function() {
   }
   for (var startNodesCopy = startNodes.slice();0 < startNodes.length;) {
     internalNode = startNodes[0];
-    var layerDeterminingEdges = internalNode.connectsAsTarget;
-    var incomingEdges = internalNode.connectsAsSource;
+    var layerDeterminingEdges;
+    var edgesToBeMarked;
+    layerDeterminingEdges = internalNode.connectsAsTarget;
+    edgesToBeMarked = internalNode.connectsAsSource;
     var k = true;
     var minimumLayer = this.SOURCESCANSTARTRANK;
     for (i = 0;i < layerDeterminingEdges.length;i++) {
@@ -12559,9 +12640,9 @@ mxGraphHierarchyModel.prototype.initialRank = function() {
     if (k) {
       internalNode.temp[0] = minimumLayer;
       this.maxRank = Math.min(this.maxRank, minimumLayer);
-      if (null != incomingEdges) {
-        for (i = 0;i < incomingEdges.length;i++) {
-          internalEdge = incomingEdges[i];
+      if (null != edgesToBeMarked) {
+        for (i = 0;i < edgesToBeMarked.length;i++) {
+          internalEdge = edgesToBeMarked[i];
           internalEdge.temp[0] = 5270620;
           internalEdge = internalEdge.target;
           if (-1 == internalEdge.temp[0]) {
@@ -12805,12 +12886,14 @@ mxSwimlaneModel.prototype.initialRank = function() {
   }
   for (startNodes.slice();0 < startNodes.length;) {
     internalNode = startNodes[0];
-    var outgoingEdges = internalNode.connectsAsTarget;
-    var incomingEdges = internalNode.connectsAsSource;
+    var layerDeterminingEdges;
+    var edgesToBeMarked;
+    layerDeterminingEdges = internalNode.connectsAsTarget;
+    edgesToBeMarked = internalNode.connectsAsSource;
     var g = true;
     var minimumLayer = upperRank[0];
-    for (i = 0;i < outgoingEdges.length;i++) {
-      var internalEdge = outgoingEdges[i];
+    for (i = 0;i < layerDeterminingEdges.length;i++) {
+      var internalEdge = layerDeterminingEdges[i];
       if (5270620 == internalEdge.temp[0]) {
         internalEdge = internalEdge.source;
         minimumLayer = Math.min(minimumLayer, internalEdge.temp[0] - 1);
@@ -12824,9 +12907,9 @@ mxSwimlaneModel.prototype.initialRank = function() {
         minimumLayer = upperRank[internalNode.swimlaneIndex];
       }
       internalNode.temp[0] = minimumLayer;
-      if (null != incomingEdges) {
-        for (i = 0;i < incomingEdges.length;i++) {
-          internalEdge = incomingEdges[i];
+      if (null != edgesToBeMarked) {
+        for (i = 0;i < edgesToBeMarked.length;i++) {
+          internalEdge = edgesToBeMarked[i];
           internalEdge.temp[0] = 5270620;
           internalEdge = internalEdge.target;
           if (-1 == internalEdge.temp[0]) {
@@ -13038,18 +13121,18 @@ mxMedianHybridCrossingReduction.prototype.calculateCrossings = function(model) {
   }
   return totalCrossings;
 };
-mxMedianHybridCrossingReduction.prototype.calculateRankCrossing = function(i, j) {
+mxMedianHybridCrossingReduction.prototype.calculateRankCrossing = function(i, model) {
   var totalCrossings = 0;
-  var rank = j.ranks[i];
-  var tree = j.ranks[i - 1];
+  var indices = model.ranks[i];
+  var tree = model.ranks[i - 1];
   var tmpIndices = [];
-  for (j = 0;j < rank.length;j++) {
-    var node = rank[j];
-    var rankPosition = node.getGeneralPurposeVariable(i);
-    node = node.getPreviousLayerConnectedCells(i);
+  for (var j = 0;j < indices.length;j++) {
+    var rightCellAboveConnections = indices[j];
+    var rankPosition = rightCellAboveConnections.getGeneralPurposeVariable(i);
+    rightCellAboveConnections = rightCellAboveConnections.getPreviousLayerConnectedCells(i);
     var nodeIndices = [];
-    for (var k = 0;k < node.length;k++) {
-      var otherCellRankPosition = node[k].getGeneralPurposeVariable(i - 1);
+    for (var k = 0;k < rightCellAboveConnections.length;k++) {
+      var otherCellRankPosition = rightCellAboveConnections[k].getGeneralPurposeVariable(i - 1);
       nodeIndices.push(otherCellRankPosition);
     }
     nodeIndices.sort(function(a, b) {
@@ -13057,27 +13140,27 @@ mxMedianHybridCrossingReduction.prototype.calculateRankCrossing = function(i, j)
     });
     tmpIndices[rankPosition] = nodeIndices;
   }
-  i = [];
+  indices = [];
   for (j = 0;j < tmpIndices.length;j++) {
-    i = i.concat(tmpIndices[j]);
+    indices = indices.concat(tmpIndices[j]);
   }
-  for (rank = 1;rank < tree.length;) {
-    rank <<= 1;
+  for (tmpIndices = 1;tmpIndices < tree.length;) {
+    tmpIndices <<= 1;
   }
-  tmpIndices = 2 * rank - 1;
-  --rank;
+  rankPosition = 2 * tmpIndices - 1;
+  --tmpIndices;
   tree = [];
-  for (j = 0;j < tmpIndices;++j) {
+  for (j = 0;j < rankPosition;++j) {
     tree[j] = 0;
   }
-  for (j = 0;j < i.length;j++) {
-    tmpIndices = i[j] + rank;
-    for (++tree[tmpIndices];0 < tmpIndices;) {
-      if (tmpIndices % 2) {
-        totalCrossings += tree[tmpIndices + 1];
+  for (j = 0;j < indices.length;j++) {
+    rankPosition = indices[j] + tmpIndices;
+    for (++tree[rankPosition];0 < rankPosition;) {
+      if (rankPosition % 2) {
+        totalCrossings += tree[rankPosition + 1];
       }
-      tmpIndices = tmpIndices - 1 >> 1;
-      ++tree[tmpIndices];
+      rankPosition = rankPosition - 1 >> 1;
+      ++tree[rankPosition];
     }
   }
   return totalCrossings;
@@ -13100,16 +13183,19 @@ mxMedianHybridCrossingReduction.prototype.transpose = function(mainLoopIteration
       }
       var temp = null;
       var rightCellAboveConnections = null;
+      var leftAbovePositions;
+      var leftBelowPositions;
       var rightAbovePositions = null;
       var rightBelowPositions = null;
+      var leftCell;
       var rightCell = null;
       for (j = 0;j < rank.length - 1;j++) {
         if (0 == j) {
-          var leftCell = orderedCells[j];
+          leftCell = orderedCells[j];
           cell = leftCell.getNextLayerConnectedCells(i);
           leftCellAboveConnections = leftCell.getPreviousLayerConnectedCells(i);
-          var leftAbovePositions = [];
-          var leftBelowPositions = [];
+          leftAbovePositions = [];
+          leftBelowPositions = [];
           for (var k = 0;k < cell.length;k++) {
             leftAbovePositions[k] = cell[k].getGeneralPurposeVariable(i + 1);
           }
@@ -13173,8 +13259,9 @@ mxMedianHybridCrossingReduction.prototype.transpose = function(mainLoopIteration
     }
   }
 };
-mxMedianHybridCrossingReduction.prototype.weightedMedian = function(downwardSweep, model) {
-  if (downwardSweep = 0 == downwardSweep % 2) {
+mxMedianHybridCrossingReduction.prototype.weightedMedian = function(iteration, model) {
+  var downwardSweep = 0 == iteration % 2;
+  if (downwardSweep) {
     for (var j = model.maxRank - 1;0 <= j;j--) {
       this.medianRank(j, downwardSweep);
     }
@@ -13192,8 +13279,10 @@ mxMedianHybridCrossingReduction.prototype.medianRank = function(rankValue, downw
     var cell = this.nestedBestRanks[rankValue][i];
     var sorterEntry = new MedianCellSorter;
     sorterEntry.cell = cell;
-    var nextLevelConnectedCells = downwardSweep ? cell.getNextLayerConnectedCells(rankValue) : cell.getPreviousLayerConnectedCells(rankValue);
-    var nextRankValue = downwardSweep ? rankValue + 1 : rankValue - 1;
+    var nextLevelConnectedCells;
+    nextLevelConnectedCells = downwardSweep ? cell.getNextLayerConnectedCells(rankValue) : cell.getPreviousLayerConnectedCells(rankValue);
+    var nextRankValue;
+    nextRankValue = downwardSweep ? rankValue + 1 : rankValue - 1;
     if (null != nextLevelConnectedCells && 0 != nextLevelConnectedCells.length) {
       sorterEntry.medianValue = this.medianValue(nextLevelConnectedCells, nextRankValue);
       medianValues.push(sorterEntry);
@@ -13225,10 +13314,10 @@ mxMedianHybridCrossingReduction.prototype.medianValue = function(connectedCells,
   if (2 == arrayCount) {
     return(medianValues[0] + medianValues[1]) / 2;
   }
-  connectedCells = arrayCount / 2;
-  rankValue = medianValues[connectedCells - 1] - medianValues[0];
-  arrayCount = medianValues[arrayCount - 1] - medianValues[connectedCells];
-  return(medianValues[connectedCells - 1] * arrayCount + medianValues[connectedCells] * rankValue) / (rankValue + arrayCount);
+  i = arrayCount / 2;
+  cell = medianValues[i - 1] - medianValues[0];
+  arrayCount = medianValues[arrayCount - 1] - medianValues[i];
+  return(medianValues[i - 1] * arrayCount + medianValues[i] * cell) / (cell + arrayCount);
 };
 function MedianCellSorter() {
 }
@@ -13469,9 +13558,9 @@ mxCoordinateAssignment.prototype.minNode = function(model) {
     j++;
   }
 };
-mxCoordinateAssignment.prototype.medianPos = function(j, model) {
-  if (0 == j % 2) {
-    for (j = model.maxRank;0 < j;j--) {
+mxCoordinateAssignment.prototype.medianPos = function(i, model) {
+  if (0 == i % 2) {
+    for (var j = model.maxRank;0 < j;j--) {
       this.rankMedianPosition(j - 1, model, j);
     }
   } else {
@@ -13490,13 +13579,15 @@ mxCoordinateAssignment.prototype.rankMedianPosition = function(rankValue, model,
     weightedValues[i].cell = currentCell;
     weightedValues[i].rankIndex = i;
     cellMap[currentCell.id] = weightedValues[i];
-    var leftLimit = nextRankValue < rankValue ? currentCell.getPreviousLayerConnectedCells(rankValue) : currentCell.getNextLayerConnectedCells(rankValue);
+    var leftLimit;
+    leftLimit = nextRankValue < rankValue ? currentCell.getPreviousLayerConnectedCells(rankValue) : currentCell.getNextLayerConnectedCells(rankValue);
     weightedValues[i].weightedValue = this.calculatedWeightedValue(currentCell, leftLimit);
   }
   weightedValues.sort(WeightedCellSorter.prototype.compare);
   for (i = 0;i < weightedValues.length;i++) {
+    var medianNextLevel;
     currentCell = weightedValues[i].cell;
-    var medianNextLevel = 0;
+    medianNextLevel = 0;
     leftLimit = nextRankValue < rankValue ? currentCell.getPreviousLayerConnectedCells(rankValue).slice() : currentCell.getNextLayerConnectedCells(rankValue).slice();
     if (null != leftLimit) {
       medianNextLevel = leftLimit.length;
@@ -13573,8 +13664,8 @@ mxCoordinateAssignment.prototype.medianXValue = function(connectedCells, rankVal
   if (1 == connectedCells.length % 2) {
     return medianValues[Math.floor(connectedCells.length / 2)];
   }
-  connectedCells = connectedCells.length / 2;
-  return(medianValues[connectedCells - 1] + medianValues[connectedCells]) / 2;
+  i = connectedCells.length / 2;
+  return(medianValues[i - 1] + medianValues[i]) / 2;
 };
 mxCoordinateAssignment.prototype.initialCoords = function(facade, model) {
   this.calculateWidestRank(facade, model);
@@ -13629,8 +13720,8 @@ mxCoordinateAssignment.prototype.rankCoordinates = function(rankValue, row, valu
     mxLog.warn("At least one cell has no bounds");
   }
 };
-mxCoordinateAssignment.prototype.calculateWidestRank = function(y, model) {
-  y = -this.interRankCellSpacing;
+mxCoordinateAssignment.prototype.calculateWidestRank = function(graph, model) {
+  var y = -this.interRankCellSpacing;
   var lastRankMaxCellHeight = 0;
   this.rankWidths = [];
   this.rankY = [];
@@ -13638,7 +13729,7 @@ mxCoordinateAssignment.prototype.calculateWidestRank = function(y, model) {
     var maxCellHeight = 0;
     var rank = model.ranks[rankValue];
     var value = this.initialX;
-    var k = false;
+    var l = false;
     for (var i = 0;i < rank.length;i++) {
       var node = rank[i];
       if (node.isVertex()) {
@@ -13652,7 +13743,7 @@ mxCoordinateAssignment.prototype.calculateWidestRank = function(y, model) {
             node.height = bounds.width;
           }
         } else {
-          k = true;
+          l = true;
         }
         maxCellHeight = Math.max(maxCellHeight, node.height);
       } else {
@@ -13677,7 +13768,7 @@ mxCoordinateAssignment.prototype.calculateWidestRank = function(y, model) {
       }
       this.rankWidths[rankValue] = value;
     }
-    if (1 == k) {
+    if (1 == l) {
       mxLog.warn("At least one cell has no bounds");
     }
     this.rankY[rankValue] = y;
@@ -13689,8 +13780,8 @@ mxCoordinateAssignment.prototype.calculateWidestRank = function(y, model) {
     }
   }
 };
-mxCoordinateAssignment.prototype.minPath = function(edges, model) {
-  edges = model.edgeMapper.getValues();
+mxCoordinateAssignment.prototype.minPath = function(graph, model) {
+  var edges = model.edgeMapper.getValues();
   for (var j = 0;j < edges.length;j++) {
     var cell = edges[j];
     if (!(1 > cell.maxRank - cell.minRank - 1)) {
@@ -13698,30 +13789,30 @@ mxCoordinateAssignment.prototype.minPath = function(edges, model) {
       var downSegCount = true;
       var refSegCount = 0;
       for (var i = cell.minRank + 2;i < cell.maxRank;i++) {
-        var upXPositions = cell.getGeneralPurposeVariable(i);
-        if (upSegCount != upXPositions) {
+        var downXPositions = cell.getGeneralPurposeVariable(i);
+        if (upSegCount != downXPositions) {
           downSegCount = false;
-          upSegCount = upXPositions;
+          upSegCount = downXPositions;
         } else {
           refSegCount++;
         }
       }
       if (!downSegCount) {
         downSegCount = upSegCount = 0;
-        upXPositions = [];
-        var downXPositions = [];
+        downXPositions = [];
+        var upXPositions = [];
         var currentX = cell.getGeneralPurposeVariable(cell.minRank + 1);
         for (i = cell.minRank + 1;i < cell.maxRank - 1;i++) {
           var nextX = cell.getX(i + 1);
           if (currentX == nextX) {
-            upXPositions[i - cell.minRank - 1] = currentX;
+            downXPositions[i - cell.minRank - 1] = currentX;
             upSegCount++;
           } else {
             if (this.repositionValid(model, cell, i + 1, currentX)) {
-              upXPositions[i - cell.minRank - 1] = currentX;
+              downXPositions[i - cell.minRank - 1] = currentX;
               upSegCount++;
             } else {
-              currentX = upXPositions[i - cell.minRank - 1] = nextX;
+              currentX = downXPositions[i - cell.minRank - 1] = nextX;
             }
           }
         }
@@ -13729,14 +13820,14 @@ mxCoordinateAssignment.prototype.minPath = function(edges, model) {
         for (i = cell.maxRank - 1;i > cell.minRank + 1;i--) {
           nextX = cell.getX(i - 1);
           if (currentX == nextX) {
-            downXPositions[i - cell.minRank - 2] = currentX;
+            upXPositions[i - cell.minRank - 2] = currentX;
             downSegCount++;
           } else {
             if (this.repositionValid(model, cell, i - 1, currentX)) {
-              downXPositions[i - cell.minRank - 2] = currentX;
+              upXPositions[i - cell.minRank - 2] = currentX;
               downSegCount++;
             } else {
-              downXPositions[i - cell.minRank - 2] = cell.getX(i - 1);
+              upXPositions[i - cell.minRank - 2] = cell.getX(i - 1);
               currentX = nextX;
             }
           }
@@ -13744,12 +13835,12 @@ mxCoordinateAssignment.prototype.minPath = function(edges, model) {
         if (downSegCount > refSegCount || upSegCount > refSegCount) {
           if (downSegCount >= upSegCount) {
             for (i = cell.maxRank - 2;i > cell.minRank;i--) {
-              cell.setX(i, downXPositions[i - cell.minRank - 1]);
+              cell.setX(i, upXPositions[i - cell.minRank - 1]);
             }
           } else {
             if (upSegCount > downSegCount) {
               for (i = cell.minRank + 2;i < cell.maxRank;i++) {
-                cell.setX(i, upXPositions[i - cell.minRank - 2]);
+                cell.setX(i, downXPositions[i - cell.minRank - 2]);
               }
             }
           }
@@ -13796,23 +13887,23 @@ mxCoordinateAssignment.prototype.repositionValid = function(rankArray, cell, ran
   }
   return true;
 };
-mxCoordinateAssignment.prototype.setCellLocations = function(i, model) {
+mxCoordinateAssignment.prototype.setCellLocations = function(graph, model) {
   this.rankTopY = [];
   this.rankBottomY = [];
-  for (i = 0;i < model.ranks.length;i++) {
+  for (var i = 0;i < model.ranks.length;i++) {
     this.rankTopY[i] = Number.MAX_VALUE;
     this.rankBottomY[i] = -Number.MAX_VALUE;
   }
-  var vertices = model.vertexMapper.getValues();
-  for (i = 0;i < vertices.length;i++) {
-    this.setVertexLocation(vertices[i]);
+  var edges = model.vertexMapper.getValues();
+  for (i = 0;i < edges.length;i++) {
+    this.setVertexLocation(edges[i]);
   }
   if (!(this.layout.edgeStyle != mxHierarchicalEdgeStyle.ORTHOGONAL && (this.layout.edgeStyle != mxHierarchicalEdgeStyle.POLYLINE && this.layout.edgeStyle != mxHierarchicalEdgeStyle.CURVE))) {
     this.localEdgeProcessing(model);
   }
-  model = model.edgeMapper.getValues();
-  for (i = 0;i < model.length;i++) {
-    this.setEdgePosition(model[i]);
+  edges = model.edgeMapper.getValues();
+  for (i = 0;i < edges.length;i++) {
+    this.setEdgePosition(edges[i]);
   }
 };
 mxCoordinateAssignment.prototype.localEdgeProcessing = function(model) {
@@ -13837,8 +13928,9 @@ mxCoordinateAssignment.prototype.localEdgeProcessing = function(model) {
             connectedEdges = [];
             for (j = 0;j < sortedCells.length;j++) {
               var innerCell = sortedCells[j].cell;
+              var connections;
               if (innerCell.isVertex()) {
-                var connections = 0 == k ? node.connectsAsSource : node.connectsAsTarget;
+                connections = 0 == k ? node.connectsAsSource : node.connectsAsTarget;
                 for (var connIndex = 0;connIndex < connections.length;connIndex++) {
                   if (connections[connIndex].source == innerCell || connections[connIndex].target == innerCell) {
                     currentCells += connections[connIndex].edges.length;
@@ -13916,7 +14008,7 @@ mxCoordinateAssignment.prototype.setEdgePosition = function(cell) {
         if (modelSource != layoutReversed) {
           jetty = -jetty;
         }
-        y += jetty;
+        y = y + jetty;
         bottomChannelY = jettys[4 * e + bottomChannelY];
         var modelTarget = graph.model.getTerminal(source, true);
         if (this.layout.isPort(modelTarget)) {
@@ -14151,12 +14243,12 @@ mxHierarchicalLayout.prototype.execute = function(parent, roots) {
 mxHierarchicalLayout.prototype.findRoots = function(parent, vertices) {
   var roots = [];
   if (null != parent && null != vertices) {
-    parent = this.graph.model;
+    var model = this.graph.model;
     var best = null;
-    var e = -1E5;
+    var f = -1E5;
     for (var i in vertices) {
       var cell = vertices[i];
-      if (parent.isVertex(cell) && this.graph.isCellVisible(cell)) {
+      if (model.isVertex(cell) && this.graph.isCellVisible(cell)) {
         var conns = this.getEdges(cell);
         var tcy = 0;
         var scy = 0;
@@ -14173,8 +14265,8 @@ mxHierarchicalLayout.prototype.findRoots = function(parent, vertices) {
           }
         }
         conns = tcy - scy;
-        if (conns > e) {
-          e = conns;
+        if (conns > f) {
+          f = conns;
           best = cell;
         }
       }
@@ -14218,25 +14310,25 @@ mxHierarchicalLayout.prototype.getEdges = function(cell) {
   this.edgesCache.put(cell, model);
   return model;
 };
-mxHierarchicalLayout.prototype.getVisibleTerminal = function(cell, source) {
+mxHierarchicalLayout.prototype.getVisibleTerminal = function(source, isOutgoing) {
   var terminalCache = this.edgesTargetTermCache;
-  if (source) {
+  if (isOutgoing) {
     terminalCache = this.edgeSourceTermCache;
   }
-  var state = terminalCache.get(cell);
-  if (null != state) {
-    return state;
+  var edge = terminalCache.get(source);
+  if (null != edge) {
+    return edge;
   }
-  state = this.graph.view.getState(cell);
-  var terminal = null != state ? state.getVisibleTerminal(source) : this.graph.view.getVisibleTerminal(cell, source);
+  edge = this.graph.view.getState(source);
+  var terminal = null != edge ? edge.getVisibleTerminal(isOutgoing) : this.graph.view.getVisibleTerminal(source, isOutgoing);
   if (null == terminal) {
-    terminal = null != state ? state.getVisibleTerminal(source) : this.graph.view.getVisibleTerminal(cell, source);
+    terminal = null != edge ? edge.getVisibleTerminal(isOutgoing) : this.graph.view.getVisibleTerminal(source, isOutgoing);
   }
   if (null != terminal) {
     if (this.isPort(terminal)) {
       terminal = this.graph.model.getParent(terminal);
     }
-    terminalCache.put(cell, terminal);
+    terminalCache.put(source, terminal);
   }
   return terminal;
 };
@@ -14393,10 +14485,10 @@ mxHierarchicalLayout.prototype.crossingStage = function(parent) {
   (new mxMedianHybridCrossingReduction(this)).execute(parent);
 };
 mxHierarchicalLayout.prototype.placementStage = function(initialX, parent) {
-  initialX = new mxCoordinateAssignment(this, this.intraCellSpacing, this.interRankCellSpacing, this.orientation, initialX, this.parallelEdgeSpacing);
-  initialX.fineTuning = this.fineTuning;
-  initialX.execute(parent);
-  return initialX.limitX + this.interHierarchySpacing;
+  var placementStage = new mxCoordinateAssignment(this, this.intraCellSpacing, this.interRankCellSpacing, this.orientation, initialX, this.parallelEdgeSpacing);
+  placementStage.fineTuning = this.fineTuning;
+  placementStage.execute(parent);
+  return placementStage.limitX + this.interHierarchySpacing;
 };
 function mxSwimlaneLayout(graph, orientation, deterministic) {
   mxGraphLayout.call(this, graph);
@@ -14484,7 +14576,7 @@ mxSwimlaneLayout.prototype.execute = function(parent, swimlanes) {
 mxSwimlaneLayout.prototype.updateGroupBounds = function() {
   var layoutBounds = [];
   var childBounds = this.model;
-  for (geo in childBounds.edgeMapper) {
+  for (var geo in childBounds.edgeMapper) {
     var childrenY = childBounds.edgeMapper[geo];
     for (var i = 0;i < childrenY.edges.length;i++) {
       layoutBounds.push(childrenY.edges[i]);
@@ -14493,15 +14585,15 @@ mxSwimlaneLayout.prototype.updateGroupBounds = function() {
   layoutBounds = this.graph.getBoundingBoxFromGeometry(layoutBounds, true);
   childBounds = [];
   for (i = 0;i < this.swimlanes.length;i++) {
-    var cell = this.swimlanes[i];
-    var geo = this.graph.getCellGeometry(cell);
+    var parent = this.swimlanes[i];
+    geo = this.graph.getCellGeometry(parent);
     if (null != geo) {
-      var cells = this.graph.getChildCells(cell);
-      childrenY = this.graph.isSwimlane(cell) ? this.graph.getStartSize(cell) : new mxRectangle;
-      cell = this.graph.getBoundingBoxFromGeometry(cells);
-      childBounds[i] = cell;
-      childrenY = cell.y + geo.y - childrenY.height - this.parentBorder;
-      geo = cell.y + geo.y + cell.height;
+      var cells = this.graph.getChildCells(parent);
+      childrenY = this.graph.isSwimlane(parent) ? this.graph.getStartSize(parent) : new mxRectangle;
+      parent = this.graph.getBoundingBoxFromGeometry(cells);
+      childBounds[i] = parent;
+      childrenY = parent.y + geo.y - childrenY.height - this.parentBorder;
+      geo = parent.y + geo.y + parent.height;
       if (null == layoutBounds) {
         layoutBounds = new mxRectangle(0, childrenY, 0, geo - childrenY);
       } else {
@@ -14511,9 +14603,9 @@ mxSwimlaneLayout.prototype.updateGroupBounds = function() {
     }
   }
   for (i = 0;i < this.swimlanes.length;i++) {
-    if (cell = this.swimlanes[i], geo = this.graph.getCellGeometry(cell), null != geo) {
-      cells = this.graph.getChildCells(cell);
-      childrenY = this.graph.isSwimlane(cell) ? this.graph.getStartSize(cell) : new mxRectangle;
+    if (parent = this.swimlanes[i], geo = this.graph.getCellGeometry(parent), null != geo) {
+      cells = this.graph.getChildCells(parent);
+      childrenY = this.graph.isSwimlane(parent) ? this.graph.getStartSize(parent) : new mxRectangle;
       var newGeo = geo.clone();
       var w = childrenY.width + (0 == i ? this.parentBorder : this.interRankCellSpacing / 2);
       var x = childBounds[i].x - w;
@@ -14522,7 +14614,7 @@ mxSwimlaneLayout.prototype.updateGroupBounds = function() {
       newGeo.y = y;
       newGeo.width = childBounds[i].width + w + this.interRankCellSpacing / 2;
       newGeo.height = layoutBounds.height + childrenY.height + 2 * this.parentBorder;
-      this.graph.model.setGeometry(cell, newGeo);
+      this.graph.model.setGeometry(parent, newGeo);
       this.graph.moveCells(cells, -x, geo.y - y);
     }
   }
@@ -14603,25 +14695,25 @@ mxSwimlaneLayout.prototype.getEdges = function(cell) {
   this.edgesCache.put(cell, model);
   return model;
 };
-mxSwimlaneLayout.prototype.getVisibleTerminal = function(cell, source) {
+mxSwimlaneLayout.prototype.getVisibleTerminal = function(source, isOutgoing) {
   var terminalCache = this.edgesTargetTermCache;
-  if (source) {
+  if (isOutgoing) {
     terminalCache = this.edgeSourceTermCache;
   }
-  var state = terminalCache.get(cell);
-  if (null != state) {
-    return state;
+  var edge = terminalCache.get(source);
+  if (null != edge) {
+    return edge;
   }
-  state = this.graph.view.getState(cell);
-  var terminal = null != state ? state.getVisibleTerminal(source) : this.graph.view.getVisibleTerminal(cell, source);
+  edge = this.graph.view.getState(source);
+  var terminal = null != edge ? edge.getVisibleTerminal(isOutgoing) : this.graph.view.getVisibleTerminal(source, isOutgoing);
   if (null == terminal) {
-    terminal = null != state ? state.getVisibleTerminal(source) : this.graph.view.getVisibleTerminal(cell, source);
+    terminal = null != edge ? edge.getVisibleTerminal(isOutgoing) : this.graph.view.getVisibleTerminal(source, isOutgoing);
   }
   if (null != terminal) {
     if (this.isPort(terminal)) {
       terminal = this.graph.model.getParent(terminal);
     }
-    terminalCache.put(cell, terminal);
+    terminalCache.put(source, terminal);
   }
   return terminal;
 };
@@ -14733,17 +14825,17 @@ mxSwimlaneLayout.prototype.traverse = function(vertex, directed, i, source, curr
       var edges = this.getEdges(vertex);
       vertexID = this.graph.model;
       for (i = 0;i < edges.length;i++) {
-        var otherVertex = this.getVisibleTerminal(edges[i], true);
-        var isSource = otherVertex == vertex;
+        var next = this.getVisibleTerminal(edges[i], true);
+        var isSource = next == vertex;
         if (isSource) {
-          otherVertex = this.getVisibleTerminal(edges[i], false);
+          next = this.getVisibleTerminal(edges[i], false);
         }
-        for (var otherIndex = 0;otherIndex < this.swimlanes.length && !vertexID.isAncestor(this.swimlanes[otherIndex], otherVertex);) {
-          otherIndex++;
+        var otherIndex;
+        for (otherIndex = 0;otherIndex < this.swimlanes.length && !vertexID.isAncestor(this.swimlanes[otherIndex], next);otherIndex++) {
         }
         if (!(otherIndex >= this.swimlanes.length)) {
           if (!!(otherIndex > swimlaneIndex || (!directed || isSource) && otherIndex == swimlaneIndex)) {
-            currentComp = this.traverse(otherVertex, directed, edges[i], source, currentComp, hierarchyVertices, filledVertexSet, otherIndex);
+            currentComp = this.traverse(next, directed, edges[i], source, currentComp, hierarchyVertices, filledVertexSet, otherIndex);
           }
         }
       }
@@ -14774,10 +14866,10 @@ mxSwimlaneLayout.prototype.crossingStage = function(parent) {
   (new mxMedianHybridCrossingReduction(this)).execute(parent);
 };
 mxSwimlaneLayout.prototype.placementStage = function(initialX, parent) {
-  initialX = new mxCoordinateAssignment(this, this.intraCellSpacing, this.interRankCellSpacing, this.orientation, initialX, this.parallelEdgeSpacing);
-  initialX.fineTuning = this.fineTuning;
-  initialX.execute(parent);
-  return initialX.limitX + this.interHierarchySpacing;
+  var placementStage = new mxCoordinateAssignment(this, this.intraCellSpacing, this.interRankCellSpacing, this.orientation, initialX, this.parallelEdgeSpacing);
+  placementStage.fineTuning = this.fineTuning;
+  placementStage.execute(parent);
+  return placementStage.limitX + this.interHierarchySpacing;
 };
 function mxGraphModel(root) {
   this.currentEdit = this.createUndoableEdit();
@@ -14947,37 +15039,38 @@ mxGraphModel.prototype.updateEdgeParents = function(cell, root) {
     edges.push(this.getEdgeAt(cell, i));
   }
   for (i = 0;i < edges.length;i++) {
-    cell = edges[i];
-    if (this.isAncestor(root, cell)) {
-      this.updateEdgeParent(cell, root);
+    child = edges[i];
+    if (this.isAncestor(root, child)) {
+      this.updateEdgeParent(child, root);
     }
   }
 };
-mxGraphModel.prototype.updateEdgeParent = function(edge, cell) {
-  var source = this.getTerminal(edge, true);
-  for (var target = this.getTerminal(edge, false);null != source && (!this.isEdge(source) && (null != source.geometry && source.geometry.relative));) {
-    source = this.getParent(source);
+mxGraphModel.prototype.updateEdgeParent = function(edge, root) {
+  var cell = this.getTerminal(edge, true);
+  for (var target = this.getTerminal(edge, false);null != cell && (!this.isEdge(cell) && (null != cell.geometry && cell.geometry.relative));) {
+    cell = this.getParent(cell);
   }
   for (;null != target && (this.ignoreRelativeEdgeParent && (!this.isEdge(target) && (null != target.geometry && target.geometry.relative)));) {
     target = this.getParent(target);
   }
-  if (this.isAncestor(cell, source) && (this.isAncestor(cell, target) && (cell = source == target ? this.getParent(source) : this.getNearestCommonAncestor(source, target), null != cell && ((this.getParent(cell) != this.root || this.isAncestor(cell, edge)) && this.getParent(edge) != cell)))) {
-    source = this.getGeometry(edge);
-    if (null != source) {
+  if (this.isAncestor(root, cell) && (this.isAncestor(root, target) && (cell = cell == target ? this.getParent(cell) : this.getNearestCommonAncestor(cell, target), null != cell && ((this.getParent(cell) != this.root || this.isAncestor(cell, edge)) && this.getParent(edge) != cell)))) {
+    target = this.getGeometry(edge);
+    if (null != target) {
       var origin1 = this.getOrigin(this.getParent(edge));
       var origin2 = this.getOrigin(cell);
-      target = origin2.x - origin1.x;
+      var dx = origin2.x - origin1.x;
       origin1 = origin2.y - origin1.y;
-      source = source.clone();
-      source.translate(-target, -origin1);
-      this.setGeometry(edge, source);
+      target = target.clone();
+      target.translate(-dx, -origin1);
+      this.setGeometry(edge, target);
     }
     this.add(cell, edge, this.getChildCount(cell));
   }
 };
 mxGraphModel.prototype.getOrigin = function(cell) {
+  var result;
   if (null != cell) {
-    var result = this.getOrigin(this.getParent(cell));
+    result = this.getOrigin(this.getParent(cell));
     if (!this.isEdge(cell)) {
       cell = this.getGeometry(cell);
       if (null != cell) {
@@ -14990,24 +15083,25 @@ mxGraphModel.prototype.getOrigin = function(cell) {
   }
   return result;
 };
-mxGraphModel.prototype.getNearestCommonAncestor = function(cell, cell2) {
-  if (null != cell && null != cell2) {
+mxGraphModel.prototype.getNearestCommonAncestor = function(cell1, cell2) {
+  if (null != cell1 && null != cell2) {
     var path = mxCellPath.create(cell2);
     if (null != path && 0 < path.length) {
+      var cell = cell1;
       var current = mxCellPath.create(cell);
       if (path.length < current.length) {
         cell = cell2;
-        cell2 = current;
+        var parent = current;
         current = path;
-        path = cell2;
+        path = parent;
       }
       for (;null != cell;) {
-        cell2 = this.getParent(cell);
-        if (0 == path.indexOf(current + mxCellPath.PATH_SEPARATOR) && null != cell2) {
+        parent = this.getParent(cell);
+        if (0 == path.indexOf(current + mxCellPath.PATH_SEPARATOR) && null != parent) {
           return cell;
         }
         current = mxCellPath.getParentPath(current);
-        cell = cell2;
+        cell = parent;
       }
     }
   }
@@ -15149,9 +15243,9 @@ mxGraphModel.prototype.getIncomingEdges = function(cell) {
 mxGraphModel.prototype.getOutgoingEdges = function(cell) {
   return this.getEdges(cell, false, true, false);
 };
-mxGraphModel.prototype.getEdges = function(cell, outgoing, incoming, includeLoops) {
-  outgoing = null != outgoing ? outgoing : true;
+mxGraphModel.prototype.getEdges = function(cell, incoming, outgoing, includeLoops) {
   incoming = null != incoming ? incoming : true;
+  outgoing = null != outgoing ? outgoing : true;
   includeLoops = null != includeLoops ? includeLoops : true;
   var edgeCount = this.getEdgeCount(cell);
   var result = [];
@@ -15159,7 +15253,7 @@ mxGraphModel.prototype.getEdges = function(cell, outgoing, incoming, includeLoop
     var edge = this.getEdgeAt(cell, i);
     var source = this.getTerminal(edge, true);
     var target = this.getTerminal(edge, false);
-    if (includeLoops && source == target || source != target && (outgoing && target == cell || incoming && source == cell)) {
+    if (includeLoops && source == target || source != target && (incoming && target == cell || outgoing && source == cell)) {
       result.push(edge);
     }
   }
@@ -15219,17 +15313,17 @@ mxGraphModel.prototype.getTopmostCells = function(cells) {
     dict.put(cells[i], true);
   }
   for (i = 0;i < cells.length;i++) {
-    var child = cells[i];
+    var cell = cells[i];
     var f = true;
-    for (var cell = this.getParent(child);null != cell;) {
-      if (dict.get(cell)) {
+    for (var child = this.getParent(cell);null != child;) {
+      if (dict.get(child)) {
         f = false;
         break;
       }
-      cell = this.getParent(cell);
+      child = this.getParent(child);
     }
     if (f) {
-      tmp.push(child);
+      tmp.push(cell);
     }
   }
   return tmp;
@@ -15298,11 +15392,11 @@ mxGraphModel.prototype.collapsedStateForCellChanged = function(cell, collapsed) 
 mxGraphModel.prototype.isVisible = function(cell) {
   return null != cell ? cell.isVisible() : false;
 };
-mxGraphModel.prototype.setVisible = function(visible, child) {
-  if (child != this.isVisible(visible)) {
-    this.execute(new mxVisibleChange(this, visible, child));
+mxGraphModel.prototype.setVisible = function(edges, visible) {
+  if (visible != this.isVisible(edges)) {
+    this.execute(new mxVisibleChange(this, edges, visible));
   }
-  return child;
+  return visible;
 };
 mxGraphModel.prototype.visibleStateForCellChanged = function(cell, visible) {
   var previous = this.isVisible(cell);
@@ -15417,17 +15511,16 @@ mxGraphModel.prototype.getParents = function(cells) {
   }
   return parents;
 };
-mxGraphModel.prototype.cloneCell = function(cell, includeChildren, keepPosition) {
-  return null != cell ? this.cloneCells([cell], includeChildren, null, keepPosition)[0] : null;
+mxGraphModel.prototype.cloneCell = function(cell, includeChildren) {
+  return null != cell ? this.cloneCells([cell], includeChildren)[0] : null;
 };
-mxGraphModel.prototype.cloneCells = function(cells, includeChildren, mapping, keepPosition) {
+mxGraphModel.prototype.cloneCells = function(cells, includeChildren, mapping) {
   includeChildren = null != includeChildren ? includeChildren : true;
   mapping = null != mapping ? mapping : {};
-  keepPosition = null != keepPosition ? keepPosition : false;
   var clones = [];
   for (var i = 0;i < cells.length;i++) {
     if (null != cells[i]) {
-      clones.push(this.cloneCellImpl(cells[i], mapping, includeChildren, keepPosition));
+      clones.push(this.cloneCellImpl(cells[i], mapping, includeChildren));
     } else {
       clones.push(null);
     }
@@ -15439,13 +15532,13 @@ mxGraphModel.prototype.cloneCells = function(cells, includeChildren, mapping, ke
   }
   return clones;
 };
-mxGraphModel.prototype.cloneCellImpl = function(cell, mapping, includeChildren, keepPosition) {
+mxGraphModel.prototype.cloneCellImpl = function(cell, mapping, includeChildren) {
   var i = mxObjectIdentity.get(cell);
   var clone = mapping[i];
-  if (null == clone && (clone = this.cellCloned(cell), mapping[i] = clone, keepPosition && (clone.id = cell.id), includeChildren)) {
+  if (null == clone && (clone = this.cellCloned(cell), mapping[i] = clone, includeChildren)) {
     includeChildren = this.getChildCount(cell);
     for (i = 0;i < includeChildren;i++) {
-      var cloneChild = this.cloneCellImpl(this.getChildAt(cell, i), mapping, true, keepPosition);
+      var cloneChild = this.cloneCellImpl(this.getChildAt(cell, i), mapping, true);
       clone.insert(cloneChild);
     }
   }
@@ -15505,19 +15598,19 @@ mxChildChange.prototype.execute = function() {
     this.previousIndex = tmp2;
   }
 };
-mxChildChange.prototype.connect = function(cell, isConnect) {
-  isConnect = null != isConnect ? isConnect : true;
+mxChildChange.prototype.connect = function(cell, terminal) {
+  terminal = null != terminal ? terminal : true;
   var source = cell.getTerminal(true);
   var i = cell.getTerminal(false);
   if (null != source) {
-    if (isConnect) {
+    if (terminal) {
       this.model.terminalForCellChanged(cell, source, true);
     } else {
       this.model.terminalForCellChanged(cell, null, true);
     }
   }
   if (null != i) {
-    if (isConnect) {
+    if (terminal) {
       this.model.terminalForCellChanged(cell, i, false);
     } else {
       this.model.terminalForCellChanged(cell, null, false);
@@ -15527,7 +15620,7 @@ mxChildChange.prototype.connect = function(cell, isConnect) {
   cell.setTerminal(i, false);
   source = this.model.getChildCount(cell);
   for (i = 0;i < source;i++) {
-    this.connect(this.model.getChildAt(cell, i), isConnect);
+    this.connect(this.model.getChildAt(cell, i), terminal);
   }
 };
 function mxTerminalChange(model, cell, terminal, source) {
@@ -15662,8 +15755,8 @@ mxCell.prototype.setGeometry = function(cell) {
 mxCell.prototype.getStyle = function() {
   return this.style;
 };
-mxCell.prototype.setStyle = function(style) {
-  this.style = style;
+mxCell.prototype.setStyle = function(cell) {
+  this.style = cell;
 };
 mxCell.prototype.isVertex = function() {
   return 0 != this.vertex;
@@ -15803,14 +15896,14 @@ mxCell.prototype.hasAttribute = function(name) {
 };
 mxCell.prototype.getAttribute = function(value, defaultValue) {
   var entry = this.getValue();
-  value = null != entry && entry.nodeType == mxConstants.NODETYPE_ELEMENT ? entry.getAttribute(value) : null;
-  return null != value ? value : defaultValue;
+  entry = null != entry && entry.nodeType == mxConstants.NODETYPE_ELEMENT ? entry.getAttribute(value) : null;
+  return null != entry ? entry : defaultValue;
 };
-mxCell.prototype.setAttribute = function(node, value) {
+mxCell.prototype.setAttribute = function(value, attribute) {
   var userObject = this.getValue();
   if (null != userObject) {
     if (userObject.nodeType == mxConstants.NODETYPE_ELEMENT) {
-      userObject.setAttribute(node, value);
+      userObject.setAttribute(value, attribute);
     }
   }
 };
@@ -15819,8 +15912,8 @@ mxCell.prototype.clone = function() {
   clone.setValue(this.cloneValue());
   return clone;
 };
-mxCell.prototype.cloneValue = function(value) {
-  value = null != value ? value : this.getValue();
+mxCell.prototype.cloneValue = function() {
+  var value = this.getValue();
   if (null != value) {
     if ("function" == typeof value.clone) {
       value = value.clone();
@@ -15867,28 +15960,28 @@ mxGeometry.prototype.setTerminalPoint = function(point, isSource) {
 };
 mxGeometry.prototype.rotate = function(angle, cx) {
   var rad = mxUtils.toRadians(angle);
-  angle = Math.cos(rad);
+  var cos = Math.cos(rad);
   rad = Math.sin(rad);
   if (!this.relative) {
     var pt = new mxPoint(this.getCenterX(), this.getCenterY());
-    pt = mxUtils.getRotatedPoint(pt, angle, rad, cx);
+    pt = mxUtils.getRotatedPoint(pt, cos, rad, cx);
     this.x = Math.round(pt.x - this.width / 2);
     this.y = Math.round(pt.y - this.height / 2);
   }
   if (null != this.sourcePoint) {
-    pt = mxUtils.getRotatedPoint(this.sourcePoint, angle, rad, cx);
+    pt = mxUtils.getRotatedPoint(this.sourcePoint, cos, rad, cx);
     this.sourcePoint.x = Math.round(pt.x);
     this.sourcePoint.y = Math.round(pt.y);
   }
   if (null != this.targetPoint) {
-    pt = mxUtils.getRotatedPoint(this.targetPoint, angle, rad, cx);
+    pt = mxUtils.getRotatedPoint(this.targetPoint, cos, rad, cx);
     this.targetPoint.x = Math.round(pt.x);
     this.targetPoint.y = Math.round(pt.y);
   }
   if (null != this.points) {
     for (var i = 0;i < this.points.length;i++) {
       if (null != this.points[i]) {
-        pt = mxUtils.getRotatedPoint(this.points[i], angle, rad, cx);
+        pt = mxUtils.getRotatedPoint(this.points[i], cos, rad, cx);
         this.points[i].x = Math.round(pt.x);
         this.points[i].y = Math.round(pt.y);
       }
@@ -15981,11 +16074,12 @@ var mxCellPath = {
     }
     return null;
   },
-  resolve : function(parent, path) {
+  resolve : function(root, path) {
+    var parent = root;
     if (null != path) {
-      path = path.split(mxCellPath.PATH_SEPARATOR);
-      for (var i = 0;i < path.length;i++) {
-        parent = parent.getChildAt(parseInt(path[i]));
+      var tokens = path.split(mxCellPath.PATH_SEPARATOR);
+      for (var i = 0;i < tokens.length;i++) {
+        parent = parent.getChildAt(parseInt(tokens[i]));
       }
     }
     return parent;
@@ -16549,11 +16643,15 @@ mxPrintPreview.prototype.getWindow = function() {
 };
 mxPrintPreview.prototype.getDoctype = function() {
   var dt = "";
-  if (8 == document.documentMode) {
-    dt = '<meta http-equiv="X-UA-Compatible" content="IE=8">';
+  if (5 == document.documentMode) {
+    dt = '<meta http-equiv="X-UA-Compatible" content="IE=5">';
   } else {
-    if (8 < document.documentMode) {
-      dt = '\x3c!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]--\x3e';
+    if (8 == document.documentMode) {
+      dt = '<meta http-equiv="X-UA-Compatible" content="IE=8">';
+    } else {
+      if (8 < document.documentMode) {
+        dt = '\x3c!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]--\x3e';
+      }
     }
   }
   return dt;
@@ -16594,10 +16692,14 @@ mxPrintPreview.prototype.open = function(css, targetWindow, forcePageBreaks, kee
           doc.writeln(html);
         }
       }
-      if ("CSS1Compat" === document.compatMode) {
-        doc.writeln("<!DOCTYPE html>");
+      if (mxClient.IS_VML) {
+        doc.writeln('<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">');
+      } else {
+        if ("CSS1Compat" === document.compatMode) {
+          doc.writeln("<!DOCTYPE html>");
+        }
+        doc.writeln("<html>");
       }
-      doc.writeln("<html>");
       doc.writeln("<head>");
       this.writeHead(doc, css);
       doc.writeln("</head>");
@@ -16741,6 +16843,9 @@ mxPrintPreview.prototype.writeHead = function(doc, css) {
   if (null != this.title) {
     doc.writeln("<title>" + this.title + "</title>");
   }
+  if (mxClient.IS_VML) {
+    doc.writeln('<style type="text/css">v\\:*{behavior:url(#default#VML)}o\\:*{behavior:url(#default#VML)}</style>');
+  }
   mxClient.link("stylesheet", mxClient.basePath + "/css/common.css", doc);
   doc.writeln('<style type="text/css">');
   doc.writeln("@media print {");
@@ -16841,6 +16946,9 @@ mxPrintPreview.prototype.renderPage = function(w, h, dx, dy, content, pageNumber
         innerDiv.style.marginTop = this.border + "px";
         innerDiv.style.marginLeft = this.border + "px";
       }
+      if (this.graph.dialect == mxConstants.DIALECT_VML) {
+        innerDiv.style.position = "absolute";
+      }
       div.appendChild(innerDiv);
       document.body.appendChild(div);
       arg = innerDiv;
@@ -16861,9 +16969,6 @@ mxPrintPreview.prototype.getRoot = function() {
 mxPrintPreview.prototype.useCssTransforms = function() {
   return!mxClient.NO_FO && !mxClient.IS_SF;
 };
-mxPrintPreview.prototype.isCellVisible = function(cell) {
-  return true;
-};
 mxPrintPreview.prototype.addGraphFragment = function(s, dy, tmp, pageNumber, div, clip) {
   var view = this.graph.getView();
   pageNumber = this.graph.container;
@@ -16883,7 +16988,11 @@ mxPrintPreview.prototype.addGraphFragment = function(s, dy, tmp, pageNumber, div
       dy = s = 0;
     }
   } else {
-    view.createHtml();
+    if (this.graph.dialect == mxConstants.DIALECT_VML) {
+      view.createVml();
+    } else {
+      view.createHtml();
+    }
   }
   g = view.isEventsEnabled();
   view.setEventsEnabled(false);
@@ -16896,11 +17005,10 @@ mxPrintPreview.prototype.addGraphFragment = function(s, dy, tmp, pageNumber, div
   s = view.scale;
   if (this.clipping) {
     var childState = new mxRectangle((clip.x + translate.x) * s, (clip.y + translate.y) * s, clip.width * s / realScale, clip.height * s / realScale);
-    var graph = this;
     this.graph.cellRenderer.redraw = function(state, bubble, rendering) {
       if (null != state) {
         var x = states.get(state.cell);
-        if (null != x && (x = view.getBoundingBox(x, false), null != x && (0 < x.width && (0 < x.height && !mxUtils.intersects(childState, x)))) || !graph.isCellVisible(state.cell)) {
+        if (null != x && (x = view.getBoundingBox(x, false), null != x && (0 < x.width && (0 < x.height && !mxUtils.intersects(childState, x))))) {
           return;
         }
       }
@@ -16915,7 +17023,7 @@ mxPrintPreview.prototype.addGraphFragment = function(s, dy, tmp, pageNumber, div
     }));
   } finally {
     if (mxClient.IS_IE) {
-      view.overlayPane.innerText = "";
+      view.overlayPane.innerHTML = "";
       view.canvas.style.overflow = "hidden";
       view.canvas.style.position = "relative";
       view.canvas.style.top = this.marginTop + "px";
@@ -16970,10 +17078,10 @@ mxPrintPreview.prototype.insertBackgroundImage = function(div, dx, dy) {
   if (null != bg) {
     var img = document.createElement("img");
     img.style.position = "absolute";
-    img.style.marginLeft = Math.round((dx + bg.x) * this.scale) + "px";
-    img.style.marginTop = Math.round((dy + bg.y) * this.scale) + "px";
-    img.setAttribute("width", Math.round(bg.width * this.scale));
-    img.setAttribute("height", Math.round(bg.height * this.scale));
+    img.style.marginLeft = Math.round(dx * this.scale) + "px";
+    img.style.marginTop = Math.round(dy * this.scale) + "px";
+    img.setAttribute("width", Math.round(this.scale * bg.width));
+    img.setAttribute("height", Math.round(this.scale * bg.height));
     img.src = bg.src;
     div.insertBefore(img, div.firstChild);
   }
@@ -17037,18 +17145,18 @@ mxStylesheet.prototype.getDefaultEdgeStyle = function() {
 mxStylesheet.prototype.putCellStyle = function(name, style) {
   this.styles[name] = style;
 };
-mxStylesheet.prototype.getCellStyle = function(cell, style, directed) {
-  directed = null != directed ? directed : true;
+mxStylesheet.prototype.getCellStyle = function(cell, defaultStyle) {
+  var style = defaultStyle;
   if (null != cell && 0 < cell.length) {
-    var tok = cell.split(";");
+    var internalNodes = cell.split(";");
     style = null != style && ";" != cell.charAt(0) ? mxUtils.clone(style) : {};
-    for (cell = 0;cell < tok.length;cell++) {
-      var value = tok[cell];
+    for (var i = 0;i < internalNodes.length;i++) {
+      var value = internalNodes[i];
       var index = value.indexOf("=");
       if (0 <= index) {
         var key = value.substring(0, index);
         value = value.substring(index + 1);
-        if (value == mxConstants.NONE && directed) {
+        if (value == mxConstants.NONE) {
           delete style[key];
         } else {
           if (mxUtils.isNumeric(value)) {
@@ -17140,14 +17248,6 @@ mxCellState.prototype.setCursor = function(cursor) {
   if (null != this.text) {
     this.text.setCursor(cursor);
   }
-};
-mxCellState.prototype.isFloatingTerminalPoint = function(source) {
-  var tmp = this.getVisibleTerminalState(source);
-  if (null == tmp) {
-    return false;
-  }
-  source = this.view.graph.getConnectionConstraint(this, tmp, source);
-  return null == source || null == source.point;
 };
 mxCellState.prototype.getVisibleTerminal = function(source) {
   source = this.getVisibleTerminalState(source);
@@ -17322,13 +17422,13 @@ mxGraphSelectionModel.prototype.removeCells = function(cells) {
     this.changeSelection(null, tmp);
   }
 };
-mxGraphSelectionModel.prototype.changeSelection = function(parent, removed) {
-  if (null != parent && (0 < parent.length && null != parent[0]) || null != removed && (0 < removed.length && null != removed[0])) {
-    parent = new mxSelectionChange(this, parent, removed);
+mxGraphSelectionModel.prototype.changeSelection = function(added, removed) {
+  if (null != added && (0 < added.length && null != added[0]) || null != removed && (0 < removed.length && null != removed[0])) {
+    var parent = new mxSelectionChange(this, added, removed);
     parent.execute();
-    removed = new mxUndoableEdit(this, false);
-    removed.add(parent);
-    this.fireEvent(new mxEventObject(mxEvent.UNDO, "edit", removed));
+    var edit = new mxUndoableEdit(this, false);
+    edit.add(parent);
+    this.fireEvent(new mxEventObject(mxEvent.UNDO, "edit", edit));
   }
 };
 mxGraphSelectionModel.prototype.cellAdded = function(cell) {
@@ -17380,13 +17480,10 @@ function mxCellEditor(graph) {
   });
   this.graph.view.addListener(mxEvent.SCALE, this.zoomHandler);
   this.graph.view.addListener(mxEvent.SCALE_AND_TRANSLATE, this.zoomHandler);
-  this.changeHandler = mxUtils.bind(this, function(state) {
+  this.changeHandler = mxUtils.bind(this, function(flex) {
     if (null != this.editingCell) {
-      state = this.graph.getView().getState(this.editingCell);
-      if (null == state) {
+      if (null == this.graph.getView().getState(this.editingCell)) {
         this.stopEditing(true);
-      } else {
-        this.updateTextAreaStyle(state);
       }
     }
   });
@@ -17402,9 +17499,9 @@ mxCellEditor.prototype.selectText = true;
 mxCellEditor.prototype.emptyLabelText = mxClient.IS_FF ? "<br>" : "";
 mxCellEditor.prototype.escapeCancelsEditing = true;
 mxCellEditor.prototype.textNode = "";
-mxCellEditor.prototype.zIndex = 1;
+mxCellEditor.prototype.zIndex = 5;
 mxCellEditor.prototype.minResize = new mxRectangle(0, 20);
-mxCellEditor.prototype.wordWrapPadding = 0;
+mxCellEditor.prototype.wordWrapPadding = mxClient.IS_QUIRKS ? 2 : mxClient.IS_IE11 ? 0 : 1;
 mxCellEditor.prototype.blurEnabled = false;
 mxCellEditor.prototype.initialValue = null;
 mxCellEditor.prototype.align = null;
@@ -17428,16 +17525,18 @@ mxCellEditor.prototype.setAlign = function(align) {
   this.align = align;
   this.resize();
 };
-mxCellEditor.prototype.getInitialValue = function(result, trigger) {
-  result = mxUtils.htmlEntities(this.graph.getEditingValue(result.cell, trigger), false);
-  if (8 != document.documentMode) {
-    if (9 != document.documentMode) {
-      if (10 != document.documentMode) {
-        result = mxUtils.replaceTrailingNewlines(result, "<div><br></div>");
+mxCellEditor.prototype.getInitialValue = function(state, trigger) {
+  var val = mxUtils.htmlEntities(this.graph.getEditingValue(state.cell, trigger), false);
+  if (!mxClient.IS_QUIRKS) {
+    if (!(8 == document.documentMode)) {
+      if (!(9 == document.documentMode)) {
+        if (!(10 == document.documentMode)) {
+          val = mxUtils.replaceTrailingNewlines(val, "<div><br></div>");
+        }
       }
     }
   }
-  return result.replace(/\n/g, "<br>");
+  return val.replace(/\n/g, "<br>");
 };
 mxCellEditor.prototype.getCurrentValue = function(cancel) {
   return mxUtils.extractTextWithWhitespace(this.textarea.childNodes);
@@ -17445,17 +17544,17 @@ mxCellEditor.prototype.getCurrentValue = function(cancel) {
 mxCellEditor.prototype.isCancelEditingKeyEvent = function(evt) {
   return this.escapeCancelsEditing || (mxEvent.isShiftDown(evt) || (mxEvent.isControlDown(evt) || mxEvent.isMetaDown(evt)));
 };
-mxCellEditor.prototype.installListeners = function(node) {
-  mxEvent.addListener(node, "dragstart", mxUtils.bind(this, function(evt) {
+mxCellEditor.prototype.installListeners = function(elt) {
+  mxEvent.addListener(elt, "dragstart", mxUtils.bind(this, function(evt) {
     this.graph.stopEditing(false);
     mxEvent.consume(evt);
   }));
-  mxEvent.addListener(node, "blur", mxUtils.bind(this, function(evt) {
+  mxEvent.addListener(elt, "blur", mxUtils.bind(this, function(evt) {
     if (this.blurEnabled) {
       this.focusLost(evt);
     }
   }));
-  mxEvent.addListener(node, "keydown", mxUtils.bind(this, function(evt) {
+  mxEvent.addListener(elt, "keydown", mxUtils.bind(this, function(evt) {
     if (!mxEvent.isConsumed(evt)) {
       if (this.isStopEditingEvent(evt)) {
         this.graph.stopEditing(false);
@@ -17471,17 +17570,17 @@ mxCellEditor.prototype.installListeners = function(node) {
   var funct = mxUtils.bind(this, function(evt) {
     if (null != this.editingCell) {
       if (this.clearOnChange) {
-        if (node.innerHTML == this.getEmptyLabelText()) {
+        if (elt.innerHTML == this.getEmptyLabelText()) {
           if (!mxClient.IS_FF || 8 != evt.keyCode && 46 != evt.keyCode) {
             this.clearOnChange = false;
-            node.innerText = "";
+            elt.innerHTML = "";
           }
         }
       }
     }
   });
-  mxEvent.addListener(node, "keypress", funct);
-  mxEvent.addListener(node, "paste", funct);
+  mxEvent.addListener(elt, "keypress", funct);
+  mxEvent.addListener(elt, "paste", funct);
   funct = mxUtils.bind(this, function(flex) {
     if (null != this.editingCell) {
       if (0 == this.textarea.innerHTML.length || "<br>" == this.textarea.innerHTML) {
@@ -17492,9 +17591,9 @@ mxCellEditor.prototype.installListeners = function(node) {
       }
     }
   });
-  mxEvent.addListener(node, mxClient.IS_IE11 || mxClient.IS_IE ? "keyup" : "input", funct);
-  mxEvent.addListener(node, "cut", funct);
-  mxEvent.addListener(node, "paste", funct);
+  mxEvent.addListener(elt, mxClient.IS_IE11 || mxClient.IS_IE ? "keyup" : "input", funct);
+  mxEvent.addListener(elt, "cut", funct);
+  mxEvent.addListener(elt, "paste", funct);
   funct = mxClient.IS_IE11 || mxClient.IS_IE ? "keydown" : "input";
   var resizeHandler = mxUtils.bind(this, function(evt) {
     if (null != this.editingCell) {
@@ -17511,14 +17610,14 @@ mxCellEditor.prototype.installListeners = function(node) {
       }
     }
   });
-  mxEvent.addListener(node, funct, resizeHandler);
+  mxEvent.addListener(elt, funct, resizeHandler);
   mxEvent.addListener(window, "resize", resizeHandler);
   if (9 <= document.documentMode) {
-    mxEvent.addListener(node, "DOMNodeRemoved", resizeHandler);
-    mxEvent.addListener(node, "DOMNodeInserted", resizeHandler);
+    mxEvent.addListener(elt, "DOMNodeRemoved", resizeHandler);
+    mxEvent.addListener(elt, "DOMNodeInserted", resizeHandler);
   } else {
-    mxEvent.addListener(node, "cut", resizeHandler);
-    mxEvent.addListener(node, "paste", resizeHandler);
+    mxEvent.addListener(elt, "cut", resizeHandler);
+    mxEvent.addListener(elt, "paste", resizeHandler);
   }
 };
 mxCellEditor.prototype.isStopEditingEvent = function(evt) {
@@ -17537,14 +17636,15 @@ mxCellEditor.prototype.resize = function() {
       var scale = this.graph.getView().scale;
       var m = null;
       if (this.autoSize && "fill" != state.style[mxConstants.STYLE_OVERFLOW]) {
-        var oh = mxUtils.getValue(state.style, mxConstants.STYLE_LABEL_WIDTH, null);
+        var tmp = mxUtils.getValue(state.style, mxConstants.STYLE_LABEL_WIDTH, null);
         m = null != state.text && null == this.align ? state.text.margin : null;
         if (null == m) {
           m = mxUtils.getAlignmentAsPoint(this.align || mxUtils.getValue(state.style, mxConstants.STYLE_ALIGN, mxConstants.ALIGN_CENTER), mxUtils.getValue(state.style, mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_MIDDLE));
         }
         if (bds) {
-          if (this.bounds = new mxRectangle(state.absoluteOffset.x, state.absoluteOffset.y, 0, 0), null != oh) {
-            var tmp = (parseFloat(oh) + 2) * scale;
+          this.bounds = new mxRectangle(state.absoluteOffset.x, state.absoluteOffset.y, 0, 0);
+          if (null != tmp) {
+            tmp = (parseFloat(tmp) + 2) * scale;
             this.bounds.width = tmp;
             this.bounds.x += m.x * tmp;
           }
@@ -17553,42 +17653,29 @@ mxCellEditor.prototype.resize = function() {
           var spacing = mxUtils.getValue(state.style, mxConstants.STYLE_LABEL_POSITION, mxConstants.ALIGN_CENTER);
           var vpos = mxUtils.getValue(state.style, mxConstants.STYLE_VERTICAL_LABEL_POSITION, mxConstants.ALIGN_MIDDLE);
           bds = null != state.shape && (spacing == mxConstants.ALIGN_CENTER && vpos == mxConstants.ALIGN_MIDDLE) ? state.shape.getLabelBounds(bds) : bds;
-          if (null != oh) {
-            bds.width = parseFloat(oh) * scale;
+          if (null != tmp) {
+            bds.width = parseFloat(tmp) * scale;
           }
-          if (!state.view.graph.cellRenderer.legacySpacing || "width" != state.style[mxConstants.STYLE_OVERFLOW] && "block" != state.style[mxConstants.STYLE_OVERFLOW]) {
-            spacing = parseFloat(mxUtils.getValue(state.style, mxConstants.STYLE_SPACING, 2)) * scale;
-            var spacingTop = (parseFloat(mxUtils.getValue(state.style, mxConstants.STYLE_SPACING_TOP, 0)) + mxText.prototype.baseSpacingTop) * scale + spacing;
-            var spacingRight = (parseFloat(mxUtils.getValue(state.style, mxConstants.STYLE_SPACING_RIGHT, 0)) + mxText.prototype.baseSpacingRight) * scale + spacing;
-            var spacingBottom = (parseFloat(mxUtils.getValue(state.style, mxConstants.STYLE_SPACING_BOTTOM, 0)) + mxText.prototype.baseSpacingBottom) * scale + spacing;
-            var spacingLeft = (parseFloat(mxUtils.getValue(state.style, mxConstants.STYLE_SPACING_LEFT, 0)) + mxText.prototype.baseSpacingLeft) * scale + spacing;
+          if (!state.view.graph.cellRenderer.legacySpacing || "width" != state.style[mxConstants.STYLE_OVERFLOW]) {
+            spacing = parseInt(state.style[mxConstants.STYLE_SPACING] || 2) * scale;
+            var spacingTop = (parseInt(state.style[mxConstants.STYLE_SPACING_TOP] || 0) + mxText.prototype.baseSpacingTop) * scale + spacing;
+            var spacingRight = (parseInt(state.style[mxConstants.STYLE_SPACING_RIGHT] || 0) + mxText.prototype.baseSpacingRight) * scale + spacing;
+            var spacingBottom = (parseInt(state.style[mxConstants.STYLE_SPACING_BOTTOM] || 0) + mxText.prototype.baseSpacingBottom) * scale + spacing;
+            var spacingLeft = (parseInt(state.style[mxConstants.STYLE_SPACING_LEFT] || 0) + mxText.prototype.baseSpacingLeft) * scale + spacing;
             spacing = mxUtils.getValue(state.style, mxConstants.STYLE_LABEL_POSITION, mxConstants.ALIGN_CENTER);
             vpos = mxUtils.getValue(state.style, mxConstants.STYLE_VERTICAL_LABEL_POSITION, mxConstants.ALIGN_MIDDLE);
-            bds = new mxRectangle(bds.x + spacingLeft, bds.y + spacingTop, bds.width - (spacing == mxConstants.ALIGN_CENTER && null == oh ? spacingLeft + spacingRight : 0), bds.height - (vpos == mxConstants.ALIGN_MIDDLE ? spacingTop + spacingBottom : 0));
-            if (this.graph.isHtmlLabel(state.cell)) {
-              bds.x -= mxSvgCanvas2D.prototype.foreignObjectPadding / 2;
-              bds.y -= mxSvgCanvas2D.prototype.foreignObjectPadding / 2;
-              bds.width += mxSvgCanvas2D.prototype.foreignObjectPadding;
-            }
+            bds = new mxRectangle(bds.x + spacingLeft, bds.y + spacingTop, bds.width - (spacing == mxConstants.ALIGN_CENTER && null == tmp ? spacingLeft + spacingRight : 0), bds.height - (vpos == mxConstants.ALIGN_MIDDLE ? spacingTop + spacingBottom : 0));
           }
           this.bounds = new mxRectangle(bds.x + state.absoluteOffset.x, bds.y + state.absoluteOffset.y, bds.width, bds.height);
         }
-        if (this.graph.isWrapping(state.cell) && (2 <= this.bounds.width || 2 <= this.bounds.height)) {
-          if (this.textarea.style.wordWrap = mxConstants.WORD_WRAP, this.textarea.style.whiteSpace = "normal", this.textarea.innerHTML != this.getEmptyLabelText()) {
-            if (tmp = Math.round(this.bounds.width / scale) + this.wordWrapPadding, "relative" != this.textarea.style.position) {
-              this.textarea.style.width = tmp + "px";
-              if (this.textarea.scrollWidth > tmp) {
-                this.textarea.style.width = this.textarea.scrollWidth + "px";
-              }
-            } else {
-              if ("block" == state.style[mxConstants.STYLE_OVERFLOW] || "width" == state.style[mxConstants.STYLE_OVERFLOW]) {
-                if (-0.5 == m.y || "width" == state.style[mxConstants.STYLE_OVERFLOW]) {
-                  this.textarea.style.maxHeight = this.bounds.height + "px";
-                }
-                this.textarea.style.width = tmp + "px";
-              } else {
-                this.textarea.style.maxWidth = tmp + "px";
-              }
+        if (this.graph.isWrapping(state.cell) && ((2 <= this.bounds.width || 2 <= this.bounds.height) && this.textarea.innerHTML != this.getEmptyLabelText())) {
+          this.textarea.style.wordWrap = mxConstants.WORD_WRAP;
+          this.textarea.style.whiteSpace = "normal";
+          tmp = Math.round(this.bounds.width / scale) + this.wordWrapPadding;
+          if ("relative" != this.textarea.style.position) {
+            this.textarea.style.width = tmp + "px";
+            if (this.textarea.scrollWidth > tmp) {
+              this.textarea.style.width = this.textarea.scrollWidth + "px";
             }
           } else {
             this.textarea.style.maxWidth = tmp + "px";
@@ -17601,22 +17688,27 @@ mxCellEditor.prototype.resize = function() {
           this.textarea.style.zoom = "1";
           this.textarea.style.height = "auto";
         }
+        state = this.textarea.scrollWidth;
+        tmp = this.textarea.scrollHeight;
         if (8 == document.documentMode) {
-          state = this.textarea.scrollWidth;
-          oh = this.textarea.scrollHeight;
           this.textarea.style.left = Math.max(0, Math.ceil((this.bounds.x - m.x * (this.bounds.width - (state + 1) * scale) + state * (scale - 1) * 0 + 2 * (m.x + 0.5)) / scale)) + "px";
-          this.textarea.style.top = Math.max(0, Math.ceil((this.bounds.y - m.y * (this.bounds.height - (oh + 0.5) * scale) + oh * (scale - 1) * 0 + 1 * Math.abs(m.y + 0.5)) / scale)) + "px";
+          this.textarea.style.top = Math.max(0, Math.ceil((this.bounds.y - m.y * (this.bounds.height - (tmp + 0.5) * scale) + tmp * (scale - 1) * 0 + 1 * Math.abs(m.y + 0.5)) / scale)) + "px";
           this.textarea.style.width = Math.round(state * scale) + "px";
-          this.textarea.style.height = Math.round(oh * scale) + "px";
+          this.textarea.style.height = Math.round(tmp * scale) + "px";
         } else {
-          this.textarea.style.left = Math.max(0, Math.round(this.bounds.x - m.x * (this.bounds.width - 2)) + 1) + "px";
-          this.textarea.style.top = Math.max(0, Math.round(this.bounds.y - m.y * (this.bounds.height - 4) + (-1 == m.y ? 3 : 0)) + 1) + "px";
+          if (mxClient.IS_QUIRKS) {
+            this.textarea.style.left = Math.max(0, Math.ceil(this.bounds.x - m.x * (this.bounds.width - (state + 1) * scale) + state * (scale - 1) * 0 + 2 * (m.x + 0.5))) + "px";
+            this.textarea.style.top = Math.max(0, Math.ceil(this.bounds.y - m.y * (this.bounds.height - (tmp + 0.5) * scale) + tmp * (scale - 1) * 0 + 1 * Math.abs(m.y + 0.5))) + "px";
+          } else {
+            this.textarea.style.left = Math.max(0, Math.round(this.bounds.x - m.x * (this.bounds.width - 2)) + 1) + "px";
+            this.textarea.style.top = Math.max(0, Math.round(this.bounds.y - m.y * (this.bounds.height - 4) + (-1 == m.y ? 3 : 0)) + 1) + "px";
+          }
         }
       } else {
         this.bounds = this.getEditorBounds(state);
         this.textarea.style.width = Math.round(this.bounds.width / scale) + "px";
         this.textarea.style.height = Math.round(this.bounds.height / scale) + "px";
-        if (8 == document.documentMode) {
+        if (8 == document.documentMode || mxClient.IS_QUIRKS) {
           this.textarea.style.left = Math.round(this.bounds.x) + "px";
           this.textarea.style.top = Math.round(this.bounds.y) + "px";
         } else {
@@ -17636,8 +17728,12 @@ mxCellEditor.prototype.resize = function() {
           }
         }
       }
-      mxUtils.setPrefixedStyle(this.textarea.style, "transformOrigin", "0px 0px");
-      mxUtils.setPrefixedStyle(this.textarea.style, "transform", "scale(" + scale + "," + scale + ")" + (null == m ? "" : " translate(" + 100 * m.x + "%," + 100 * m.y + "%)"));
+      if (mxClient.IS_VML) {
+        this.textarea.style.zoom = scale;
+      } else {
+        mxUtils.setPrefixedStyle(this.textarea.style, "transformOrigin", "0px 0px");
+        mxUtils.setPrefixedStyle(this.textarea.style, "transform", "scale(" + scale + "," + scale + ")" + (null == m ? "" : " translate(" + 100 * m.x + "%," + 100 * m.y + "%)"));
+      }
     }
   }
 };
@@ -17647,10 +17743,10 @@ mxCellEditor.prototype.focusLost = function() {
 mxCellEditor.prototype.getBackgroundColor = function(state) {
   return null;
 };
-mxCellEditor.prototype.getBorderColor = function(state) {
-  return null;
-};
 mxCellEditor.prototype.isLegacyEditor = function() {
+  if (mxClient.IS_VML) {
+    return true;
+  }
   var a = false;
   if (mxClient.IS_SVG) {
     var root = this.graph.view.getDrawPane().ownerSVGElement;
@@ -17663,52 +17759,6 @@ mxCellEditor.prototype.isLegacyEditor = function() {
   }
   return!a;
 };
-mxCellEditor.prototype.updateTextAreaStyle = function(state) {
-  this.graph.getView();
-  var size = mxUtils.getValue(state.style, mxConstants.STYLE_FONTSIZE, mxConstants.DEFAULT_FONTSIZE);
-  var family = mxUtils.getValue(state.style, mxConstants.STYLE_FONTFAMILY, mxConstants.DEFAULT_FONTFAMILY);
-  var color = mxUtils.getValue(state.style, mxConstants.STYLE_FONTCOLOR, "black");
-  var align = mxUtils.getValue(state.style, mxConstants.STYLE_ALIGN, mxConstants.ALIGN_LEFT);
-  var bold = (mxUtils.getValue(state.style, mxConstants.STYLE_FONTSTYLE, 0) & mxConstants.FONT_BOLD) == mxConstants.FONT_BOLD;
-  var italic = (mxUtils.getValue(state.style, mxConstants.STYLE_FONTSTYLE, 0) & mxConstants.FONT_ITALIC) == mxConstants.FONT_ITALIC;
-  var txtDecor = [];
-  if ((mxUtils.getValue(state.style, mxConstants.STYLE_FONTSTYLE, 0) & mxConstants.FONT_UNDERLINE) == mxConstants.FONT_UNDERLINE) {
-    txtDecor.push("underline");
-  }
-  if ((mxUtils.getValue(state.style, mxConstants.STYLE_FONTSTYLE, 0) & mxConstants.FONT_STRIKETHROUGH) == mxConstants.FONT_STRIKETHROUGH) {
-    txtDecor.push("line-through");
-  }
-  this.textarea.style.lineHeight = mxConstants.ABSOLUTE_LINE_HEIGHT ? Math.round(size * mxConstants.LINE_HEIGHT) + "px" : mxConstants.LINE_HEIGHT;
-  this.textarea.style.backgroundColor = this.getBackgroundColor(state);
-  this.textarea.style.textDecoration = txtDecor.join(" ");
-  this.textarea.style.fontWeight = bold ? "bold" : "normal";
-  this.textarea.style.fontStyle = italic ? "italic" : "";
-  this.textarea.style.fontSize = Math.round(size) + "px";
-  this.textarea.style.zIndex = this.zIndex;
-  this.textarea.style.fontFamily = family;
-  this.textarea.style.textAlign = align;
-  this.textarea.style.outline = "none";
-  this.textarea.style.color = color;
-  size = this.getBorderColor(state);
-  this.textarea.style.border = null != size ? "1px solid " + size : "none";
-  size = this.textDirection = mxUtils.getValue(state.style, mxConstants.STYLE_TEXT_DIRECTION, mxConstants.DEFAULT_TEXT_DIRECTION);
-  if (size == mxConstants.TEXT_DIRECTION_AUTO) {
-    if (!(null == state)) {
-      if (!(null == state.text)) {
-        if (!(state.text.dialect == mxConstants.DIALECT_STRICTHTML)) {
-          if (!mxUtils.isNode(state.text.value)) {
-            size = state.text.getAutoDirection();
-          }
-        }
-      }
-    }
-  }
-  if (size == mxConstants.TEXT_DIRECTION_LTR || size == mxConstants.TEXT_DIRECTION_RTL) {
-    this.textarea.setAttribute("dir", size);
-  } else {
-    this.textarea.removeAttribute("dir");
-  }
-};
 mxCellEditor.prototype.startEditing = function(cell, trigger) {
   this.stopEditing(true);
   this.align = null;
@@ -17720,7 +17770,48 @@ mxCellEditor.prototype.startEditing = function(cell, trigger) {
   }
   var state = this.graph.getView().getState(cell);
   if (null != state) {
-    this.updateTextAreaStyle(state);
+    this.graph.getView();
+    var size = mxUtils.getValue(state.style, mxConstants.STYLE_FONTSIZE, mxConstants.DEFAULT_FONTSIZE);
+    var family = mxUtils.getValue(state.style, mxConstants.STYLE_FONTFAMILY, mxConstants.DEFAULT_FONTFAMILY);
+    var color = mxUtils.getValue(state.style, mxConstants.STYLE_FONTCOLOR, "black");
+    var align = mxUtils.getValue(state.style, mxConstants.STYLE_ALIGN, mxConstants.ALIGN_LEFT);
+    var bold = (mxUtils.getValue(state.style, mxConstants.STYLE_FONTSTYLE, 0) & mxConstants.FONT_BOLD) == mxConstants.FONT_BOLD;
+    var italic = (mxUtils.getValue(state.style, mxConstants.STYLE_FONTSTYLE, 0) & mxConstants.FONT_ITALIC) == mxConstants.FONT_ITALIC;
+    var txtDecor = [];
+    if ((mxUtils.getValue(state.style, mxConstants.STYLE_FONTSTYLE, 0) & mxConstants.FONT_UNDERLINE) == mxConstants.FONT_UNDERLINE) {
+      txtDecor.push("underline");
+    }
+    if ((mxUtils.getValue(state.style, mxConstants.STYLE_FONTSTYLE, 0) & mxConstants.FONT_STRIKETHROUGH) == mxConstants.FONT_STRIKETHROUGH) {
+      txtDecor.push("line-through");
+    }
+    this.textarea.style.lineHeight = mxConstants.ABSOLUTE_LINE_HEIGHT ? Math.round(size * mxConstants.LINE_HEIGHT) + "px" : mxConstants.LINE_HEIGHT;
+    this.textarea.style.backgroundColor = this.getBackgroundColor(state);
+    this.textarea.style.textDecoration = txtDecor.join(" ");
+    this.textarea.style.fontWeight = bold ? "bold" : "normal";
+    this.textarea.style.fontStyle = italic ? "italic" : "";
+    this.textarea.style.fontSize = Math.round(size) + "px";
+    this.textarea.style.zIndex = this.zIndex;
+    this.textarea.style.fontFamily = family;
+    this.textarea.style.textAlign = align;
+    this.textarea.style.outline = "none";
+    this.textarea.style.color = color;
+    size = this.textDirection = mxUtils.getValue(state.style, mxConstants.STYLE_TEXT_DIRECTION, mxConstants.DEFAULT_TEXT_DIRECTION);
+    if (size == mxConstants.TEXT_DIRECTION_AUTO) {
+      if (!(null == state)) {
+        if (!(null == state.text)) {
+          if (!(state.text.dialect == mxConstants.DIALECT_STRICTHTML)) {
+            if (!mxUtils.isNode(state.text.value)) {
+              size = state.text.getAutoDirection();
+            }
+          }
+        }
+      }
+    }
+    if (size == mxConstants.TEXT_DIRECTION_LTR || size == mxConstants.TEXT_DIRECTION_RTL) {
+      this.textarea.setAttribute("dir", size);
+    } else {
+      this.textarea.removeAttribute("dir");
+    }
     this.textarea.innerHTML = this.getInitialValue(state, trigger) || "";
     this.initialValue = this.textarea.innerHTML;
     if (0 == this.textarea.innerHTML.length || "<br>" == this.textarea.innerHTML) {
@@ -17756,7 +17847,7 @@ mxCellEditor.prototype.startEditing = function(cell, trigger) {
           }
         }
       }
-    } catch (d) {
+    } catch (n) {
     }
   }
 };
@@ -17798,7 +17889,7 @@ mxCellEditor.prototype.stopEditing = function(cancel) {
     }
     if (this.clearOnChange) {
       if (this.textarea.innerHTML == this.getEmptyLabelText()) {
-        this.textarea.innerText = "";
+        this.textarea.innerHTML = "";
         this.clearOnChange = false;
       }
     }
@@ -17844,17 +17935,14 @@ mxCellEditor.prototype.getEditorBounds = function(state) {
   if (!align && (state.view.graph.cellRenderer.legacySpacing && "fill" == state.style[mxConstants.STYLE_OVERFLOW])) {
     result = state.shape.getLabelBounds(mxRectangle.fromRectangle(state));
   } else {
-    var spacingLeft = parseFloat(mxUtils.getValue(style, mxConstants.STYLE_SPACING, 2)) * result;
-    var spacingTop = (parseFloat(mxUtils.getValue(style, mxConstants.STYLE_SPACING_TOP, 0)) + mxText.prototype.baseSpacingTop) * result + spacingLeft;
-    var hpos = (parseFloat(mxUtils.getValue(style, mxConstants.STYLE_SPACING_RIGHT, 0)) + mxText.prototype.baseSpacingRight) * result + spacingLeft;
-    var vpos = (parseFloat(mxUtils.getValue(style, mxConstants.STYLE_SPACING_BOTTOM, 0)) + mxText.prototype.baseSpacingBottom) * result + spacingLeft;
-    spacingLeft = (parseFloat(mxUtils.getValue(style, mxConstants.STYLE_SPACING_LEFT, 0)) + mxText.prototype.baseSpacingLeft) * result + spacingLeft;
+    var spacingLeft = parseInt(state.style[mxConstants.STYLE_SPACING] || 0) * result;
+    var spacingTop = (parseInt(state.style[mxConstants.STYLE_SPACING_TOP] || 0) + mxText.prototype.baseSpacingTop) * result + spacingLeft;
+    var hpos = (parseInt(state.style[mxConstants.STYLE_SPACING_RIGHT] || 0) + mxText.prototype.baseSpacingRight) * result + spacingLeft;
+    var vpos = (parseInt(state.style[mxConstants.STYLE_SPACING_BOTTOM] || 0) + mxText.prototype.baseSpacingBottom) * result + spacingLeft;
+    spacingLeft = (parseInt(state.style[mxConstants.STYLE_SPACING_LEFT] || 0) + mxText.prototype.baseSpacingLeft) * result + spacingLeft;
     result = new mxRectangle(state.x, state.y, Math.max(minWidth, state.width - spacingLeft - hpos), Math.max(tmp, state.height - spacingTop - vpos));
     hpos = mxUtils.getValue(state.style, mxConstants.STYLE_LABEL_POSITION, mxConstants.ALIGN_CENTER);
     vpos = mxUtils.getValue(state.style, mxConstants.STYLE_VERTICAL_LABEL_POSITION, mxConstants.ALIGN_MIDDLE);
-    if (this.graph.isHtmlLabel(state.cell)) {
-      result.width += mxSvgCanvas2D.prototype.foreignObjectPadding;
-    }
     result = null != state.shape && (hpos == mxConstants.ALIGN_CENTER && vpos == mxConstants.ALIGN_MIDDLE) ? state.shape.getLabelBounds(result) : result;
     if (align) {
       result.x = state.absoluteOffset.x;
@@ -17970,13 +18058,12 @@ mxCellRenderer.prototype.initializeShape = function(state) {
   state.shape.init(state.view.getDrawPane());
 };
 mxCellRenderer.prototype.createShape = function(state) {
-  var name = null;
+  var shape = null;
   if (null != state.style) {
-    name = state.style[mxConstants.STYLE_SHAPE];
-    name = null == mxCellRenderer.defaultShapes[name] ? mxStencilRegistry.getStencil(name) : null;
-    name = null != name ? new mxShape(name) : new (this.getShapeConstructor(state));
+    shape = mxStencilRegistry.getStencil(state.style[mxConstants.STYLE_SHAPE]);
+    shape = null != shape ? new mxShape(shape) : new (this.getShapeConstructor(state));
   }
-  return name;
+  return shape;
 };
 mxCellRenderer.prototype.createIndicatorShape = function(state) {
   state.shape.indicatorShape = this.getShape(state.view.graph.getIndicatorShape(state));
@@ -18079,7 +18166,6 @@ mxCellRenderer.prototype.createLabel = function(state, value) {
     state.text.style = state.style;
     state.text.state = state;
     this.initializeLabel(state, state.text);
-    this.configureShape(state);
     var forceGetCell = false;
     var getState = function(evt) {
       var gridEnabled = state;
@@ -18140,10 +18226,8 @@ mxCellRenderer.prototype.createCellOverlays = function(state) {
         if (null != overlays[i].cursor) {
           tmp.node.style.cursor = overlays[i].cursor;
         }
-        dict.put(overlays[i], tmp);
-      } else {
-        dict.put(overlays[i], tmp);
       }
+      dict.put(overlays[i], tmp);
     }
   }
   if (null != state.overlays) {
@@ -18323,7 +18407,6 @@ mxCellRenderer.prototype.redrawLabel = function(state, force) {
       }
       state.text.resetStyles();
       state.text.apply(state);
-      this.configureShape(state);
       state.text.valign = bounds.getVerticalAlign(state);
     }
     bounds = this.getLabelBounds(state);
@@ -18337,9 +18420,9 @@ mxCellRenderer.prototype.redrawLabel = function(state, force) {
       state.text.wrap = wrapping;
       state.text.clipped = clipping;
       state.text.overflow = overflow;
-      force = state.text.node.style.visibility;
+      value = state.text.node.style.visibility;
       this.redrawLabelShape(state.text);
-      state.text.node.style.visibility = force;
+      state.text.node.style.visibility = value;
     }
   }
 };
@@ -18410,26 +18493,26 @@ mxCellRenderer.prototype.getLabelBounds = function(state) {
 mxCellRenderer.prototype.rotateLabelBounds = function(state, bounds) {
   bounds.y -= state.text.margin.y * bounds.height;
   bounds.x -= state.text.margin.x * bounds.width;
-  if (!this.legacySpacing || "fill" != state.style[mxConstants.STYLE_OVERFLOW] && ("width" != state.style[mxConstants.STYLE_OVERFLOW] && ("block" != state.style[mxConstants.STYLE_OVERFLOW] || "1" == state.style[mxConstants.STYLE_BLOCK_SPACING]))) {
+  if (!this.legacySpacing || "fill" != state.style[mxConstants.STYLE_OVERFLOW] && "width" != state.style[mxConstants.STYLE_OVERFLOW]) {
     var s = state.view.scale;
-    var rad = state.text.getSpacing("1" == state.style[mxConstants.STYLE_BLOCK_SPACING]);
-    bounds.x += rad.x * s;
-    bounds.y += rad.y * s;
-    rad = mxUtils.getValue(state.style, mxConstants.STYLE_LABEL_POSITION, mxConstants.ALIGN_CENTER);
-    var vpos = mxUtils.getValue(state.style, mxConstants.STYLE_VERTICAL_LABEL_POSITION, mxConstants.ALIGN_MIDDLE);
+    var cy = state.text.getSpacing();
+    bounds.x += cy.x * s;
+    bounds.y += cy.y * s;
+    cy = mxUtils.getValue(state.style, mxConstants.STYLE_LABEL_POSITION, mxConstants.ALIGN_CENTER);
+    var rad = mxUtils.getValue(state.style, mxConstants.STYLE_VERTICAL_LABEL_POSITION, mxConstants.ALIGN_MIDDLE);
     var f = mxUtils.getValue(state.style, mxConstants.STYLE_LABEL_WIDTH, null);
-    bounds.width = Math.max(0, bounds.width - (rad == mxConstants.ALIGN_CENTER && null == f ? state.text.spacingLeft * s + state.text.spacingRight * s : 0));
-    bounds.height = Math.max(0, bounds.height - (vpos == mxConstants.ALIGN_MIDDLE ? state.text.spacingTop * s + state.text.spacingBottom * s : 0));
+    bounds.width = Math.max(0, bounds.width - (cy == mxConstants.ALIGN_CENTER && null == f ? state.text.spacingLeft * s + state.text.spacingRight * s : 0));
+    bounds.height = Math.max(0, bounds.height - (rad == mxConstants.ALIGN_MIDDLE ? state.text.spacingTop * s + state.text.spacingBottom * s : 0));
   }
   rad = state.text.getTextRotation();
   if (0 != rad) {
     if (null != state) {
       if (state.view.graph.model.isVertex(state.cell)) {
-        if (s = state.getCenterX(), state = state.getCenterY(), bounds.x != s || bounds.y != state) {
+        if (s = state.getCenterX(), cy = state.getCenterY(), bounds.x != s || bounds.y != cy) {
           rad *= Math.PI / 180;
-          state = mxUtils.getRotatedPoint(new mxPoint(bounds.x, bounds.y), Math.cos(rad), Math.sin(rad), new mxPoint(s, state));
-          bounds.x = state.x;
-          bounds.y = state.y;
+          s = mxUtils.getRotatedPoint(new mxPoint(bounds.x, bounds.y), Math.cos(rad), Math.sin(rad), new mxPoint(s, cy));
+          bounds.x = s.x;
+          bounds.y = s.y;
         }
       }
     }
@@ -18442,8 +18525,8 @@ mxCellRenderer.prototype.redrawCellOverlays = function(state, force) {
     var rad = mxUtils.toRadians(rotation);
     var cos = Math.cos(rad);
     var sin = Math.sin(rad);
-    state.overlays.visit(function(bounds, shape) {
-      bounds = shape.overlay.getBounds(state);
+    state.overlays.visit(function(flex, shape) {
+      var bounds = shape.overlay.getBounds(state);
       if (!state.view.graph.getModel().isEdge(state.cell) && (null != state.shape && 0 != rotation)) {
         var cx = bounds.getCenterX();
         var cy = bounds.getCenterY();
@@ -18487,8 +18570,8 @@ mxCellRenderer.prototype.getControlBounds = function(state, w, h) {
       } else {
         if (state.shape.isPaintBoundsInverted()) {
           var rad = (state.width - state.height) / 2;
-          cx += rad;
-          cy -= rad;
+          cx = cx + rad;
+          cy = cy - rad;
         }
       }
       if (0 != cos) {
@@ -18958,13 +19041,22 @@ var mxEdgeStyle = {
       }
     }
   },
-  SegmentConnector : function(state, source, result, hint, hints) {
+  SegmentConnector : function(state, source, target, controlHints, result) {
+    function pushPoint(pt) {
+      pt.x = Math.round(pt.x * state.view.scale * 10) / 10;
+      pt.y = Math.round(pt.y * state.view.scale * 10) / 10;
+      if (null == lastPushed || (1 <= Math.abs(lastPushed.x - pt.x) || Math.abs(lastPushed.y - pt.y) >= Math.max(1, state.view.scale))) {
+        result.push(pt);
+        lastPushed = pt;
+      }
+      return lastPushed;
+    }
     var pts = mxEdgeStyle.scalePointArray(state.absolutePoints, state.view.scale);
     source = mxEdgeStyle.scaleCellState(source, state.view.scale);
-    var target = mxEdgeStyle.scaleCellState(result, state.view.scale);
-    result = [];
-    var bbox = 0 < hints.length ? hints[0] : null;
+    target = mxEdgeStyle.scaleCellState(target, state.view.scale);
+    var lastPushed = 0 < result.length ? result[0] : null;
     var horizontal = true;
+    var hint = null;
     var pt = pts[0];
     if (null == pt && null != source) {
       pt = new mxPoint(state.view.getRoutingCenterX(source), state.view.getRoutingCenterY(source));
@@ -18974,83 +19066,85 @@ var mxEdgeStyle = {
       }
     }
     var lastInx = pts.length - 1;
-    if (null != hint && 0 < hint.length) {
-      var children = [];
-      for (var i = 0;i < hint.length;i++) {
-        var tmp = state.view.transformControlPoint(state, hint[i], true);
+    if (null != controlHints && 0 < controlHints.length) {
+      var hints = [];
+      for (var i = 0;i < controlHints.length;i++) {
+        var tmp = state.view.transformControlPoint(state, controlHints[i], true);
         if (null != tmp) {
-          children.push(tmp);
+          hints.push(tmp);
         }
       }
-      if (0 == children.length) {
+      if (0 == hints.length) {
         return;
       }
       if (null != pt) {
-        if (null != children[0]) {
-          if (1 > Math.abs(children[0].x - pt.x)) {
-            children[0].x = pt.x;
+        if (null != hints[0]) {
+          if (1 > Math.abs(hints[0].x - pt.x)) {
+            hints[0].x = pt.x;
           }
-          if (1 > Math.abs(children[0].y - pt.y)) {
-            children[0].y = pt.y;
+          if (1 > Math.abs(hints[0].y - pt.y)) {
+            hints[0].y = pt.y;
           }
         }
       }
       tmp = pts[lastInx];
       if (null != tmp) {
-        if (null != children[children.length - 1]) {
-          if (1 > Math.abs(children[children.length - 1].x - tmp.x)) {
-            children[children.length - 1].x = tmp.x;
+        if (null != hints[hints.length - 1]) {
+          if (1 > Math.abs(hints[hints.length - 1].x - tmp.x)) {
+            hints[hints.length - 1].x = tmp.x;
           }
-          if (1 > Math.abs(children[children.length - 1].y - tmp.y)) {
-            children[children.length - 1].y = tmp.y;
+          if (1 > Math.abs(hints[hints.length - 1].y - tmp.y)) {
+            hints[hints.length - 1].y = tmp.y;
           }
         }
       }
-      hint = children[0];
+      hint = hints[0];
       var currentTerm = source;
-      var currentPt = pts[0];
-      var currentHint = hint;
-      if (null != currentPt) {
+      controlHints = pts[0];
+      var currentHint = false;
+      var vertChan = false;
+      currentHint = hint;
+      if (null != controlHints) {
         currentTerm = null;
       }
       for (i = 0;2 > i;i++) {
-        var fixedVertAlign = null != currentPt && currentPt.x == currentHint.x;
-        var fixedHozAlign = null != currentPt && currentPt.y == currentHint.y;
+        var fixedVertAlign = null != controlHints && controlHints.x == currentHint.x;
+        var fixedHozAlign = null != controlHints && controlHints.y == currentHint.y;
         var inHozChan = null != currentTerm && (currentHint.y >= currentTerm.y && currentHint.y <= currentTerm.y + currentTerm.height);
-        var inVertChan = null != currentTerm && (currentHint.x >= currentTerm.x && currentHint.x <= currentTerm.x + currentTerm.width);
-        currentTerm = fixedHozAlign || null == currentPt && inHozChan;
-        currentHint = fixedVertAlign || null == currentPt && inVertChan;
-        if (0 != i || !(currentTerm && currentHint || fixedVertAlign && fixedHozAlign)) {
-          if (null != currentPt && (!fixedHozAlign && (!fixedVertAlign && (inHozChan || inVertChan)))) {
+        currentTerm = null != currentTerm && (currentHint.x >= currentTerm.x && currentHint.x <= currentTerm.x + currentTerm.width);
+        currentHint = fixedHozAlign || null == controlHints && inHozChan;
+        vertChan = fixedVertAlign || null == controlHints && currentTerm;
+        if (0 != i || !(currentHint && vertChan || fixedVertAlign && fixedHozAlign)) {
+          if (null != controlHints && (!fixedHozAlign && (!fixedVertAlign && (inHozChan || currentTerm)))) {
             horizontal = inHozChan ? false : true;
             break;
           }
-          if (currentHint || currentTerm) {
-            horizontal = currentTerm;
+          if (vertChan || currentHint) {
+            horizontal = currentHint;
             if (1 == i) {
-              horizontal = 0 == children.length % 2 ? currentTerm : currentHint;
+              horizontal = 0 == hints.length % 2 ? currentHint : vertChan;
             }
             break;
           }
         }
         currentTerm = target;
-        currentPt = pts[lastInx];
-        if (null != currentPt) {
+        controlHints = pts[lastInx];
+        if (null != controlHints) {
           currentTerm = null;
         }
-        currentHint = children[children.length - 1];
+        currentHint = hints[hints.length - 1];
         if (fixedVertAlign) {
           if (fixedHozAlign) {
-            children = children.slice(1);
+            hints = hints.slice(1);
           }
         }
       }
       if (horizontal && (null != pts[0] && pts[0].y != hint.y || null == pts[0] && (null != source && (hint.y < source.y || hint.y > source.y + source.height)))) {
-        result.push(new mxPoint(pt.x, hint.y));
+        pushPoint(new mxPoint(pt.x, hint.y));
       } else {
         if (!horizontal) {
           if (null != pts[0] && pts[0].x != hint.x || null == pts[0] && (null != source && (hint.x < source.x || hint.x > source.x + source.width))) {
-            result.push(new mxPoint(hint.x, pt.y));
+            pushPoint(new mxPoint(hint.x, pt.y));
           }
         }
       }
@@ -19059,15 +19153,15 @@ var mxEdgeStyle = {
       } else {
         pt.x = hint.x;
       }
-      for (i = 0;i < children.length;i++) {
+      for (i = 0;i < hints.length;i++) {
         horizontal = !horizontal;
-        hint = children[i];
+        hint = hints[i];
         if (horizontal) {
           pt.y = hint.y;
         } else {
           pt.x = hint.x;
         }
-        result.push(pt.clone());
+        pushPoint(pt.clone());
       }
     } else {
       hint = pt;
@@ -19082,43 +19176,37 @@ var mxEdgeStyle = {
     if (null != pt) {
       if (null != hint) {
         if (horizontal && (null != pts[lastInx] && pts[lastInx].y != hint.y || null == pts[lastInx] && (null != target && (hint.y < target.y || hint.y > target.y + target.height)))) {
-          result.push(new mxPoint(pt.x, hint.y));
+          pushPoint(new mxPoint(pt.x, hint.y));
         } else {
           if (!horizontal) {
             if (null != pts[lastInx] && pts[lastInx].x != hint.x || null == pts[lastInx] && (null != target && (hint.x < target.x || hint.x > target.x + target.width))) {
-              result.push(new mxPoint(hint.x, pt.y));
+              pushPoint(new mxPoint(hint.x, pt.y));
             }
           }
         }
       }
     }
     if (null == pts[0] && null != source) {
-      for (;0 < result.length && (null != result[0] && mxUtils.contains(source, result[0].x, result[0].y));) {
-        result.splice(0, 1);
+      for (;1 < result.length && (null != result[1] && mxUtils.contains(source, result[1].x, result[1].y));) {
+        result.splice(1, 1);
       }
     }
     if (null == pts[lastInx] && null != target) {
-      for (;0 < result.length && (null != result[result.length - 1] && mxUtils.contains(target, result[result.length - 1].x, result[result.length - 1].y));) {
+      for (;1 < result.length && (null != result[result.length - 1] && mxUtils.contains(target, result[result.length - 1].x, result[result.length - 1].y));) {
         result.splice(result.length - 1, 1);
       }
     }
-    for (i = 0;i < result.length;i++) {
-      if (pts = result[i], pts.x = Math.round(pts.x * state.view.scale * 10) / 10, pts.y = Math.round(pts.y * state.view.scale * 10) / 10, null == bbox || (1 <= Math.abs(bbox.x - pts.x) || Math.abs(bbox.y - pts.y) >= Math.max(1, state.view.scale))) {
-        hints.push(pts);
-        bbox = pts;
-      }
-    }
     if (null != tmp) {
-      if (null != hints[hints.length - 1]) {
-        if (1 >= Math.abs(tmp.x - hints[hints.length - 1].x)) {
-          if (1 >= Math.abs(tmp.y - hints[hints.length - 1].y)) {
-            hints.splice(hints.length - 1, 1);
-            if (null != hints[hints.length - 1]) {
-              if (1 > Math.abs(hints[hints.length - 1].x - tmp.x)) {
-                hints[hints.length - 1].x = tmp.x;
+      if (null != result[result.length - 1]) {
+        if (1 >= Math.abs(tmp.x - result[result.length - 1].x)) {
+          if (1 >= Math.abs(tmp.y - result[result.length - 1].y)) {
+            result.splice(result.length - 1, 1);
+            if (null != result[result.length - 1]) {
+              if (1 > Math.abs(result[result.length - 1].x - tmp.x)) {
+                result[result.length - 1].x = tmp.x;
               }
-              if (1 > Math.abs(hints[hints.length - 1].y - tmp.y)) {
-                hints[hints.length - 1].y = tmp.y;
+              if (1 > Math.abs(result[result.length - 1].y - tmp.y)) {
+                result[result.length - 1].y = tmp.y;
               }
             }
           }
@@ -19149,16 +19237,16 @@ var mxEdgeStyle = {
   TARGET_MASK : 2048,
   VERTEX_MASK : 3072,
   getJettySize : function(state, isSource) {
-    var value = mxUtils.getValue(state.style, isSource ? mxConstants.STYLE_SOURCE_JETTY_SIZE : mxConstants.STYLE_TARGET_JETTY_SIZE, mxUtils.getValue(state.style, mxConstants.STYLE_JETTY_SIZE, mxEdgeStyle.orthBuffer));
-    if ("auto" == value) {
+    var size = mxUtils.getValue(state.style, isSource ? mxConstants.STYLE_SOURCE_JETTY_SIZE : mxConstants.STYLE_TARGET_JETTY_SIZE, mxUtils.getValue(state.style, mxConstants.STYLE_JETTY_SIZE, mxEdgeStyle.orthBuffer));
+    if ("auto" == size) {
       if (mxUtils.getValue(state.style, isSource ? mxConstants.STYLE_STARTARROW : mxConstants.STYLE_ENDARROW, mxConstants.NONE) != mxConstants.NONE) {
-        state = mxUtils.getNumber(state.style, isSource ? mxConstants.STYLE_STARTSIZE : mxConstants.STYLE_ENDSIZE, mxConstants.DEFAULT_MARKERSIZE);
-        value = Math.max(2, Math.ceil((state + mxEdgeStyle.orthBuffer) / mxEdgeStyle.orthBuffer)) * mxEdgeStyle.orthBuffer;
+        size = mxUtils.getNumber(state.style, isSource ? mxConstants.STYLE_STARTSIZE : mxConstants.STYLE_ENDSIZE, mxConstants.DEFAULT_MARKERSIZE);
+        size = Math.max(2, Math.ceil((size + mxEdgeStyle.orthBuffer) / mxEdgeStyle.orthBuffer)) * mxEdgeStyle.orthBuffer;
       } else {
-        value = 2 * mxEdgeStyle.orthBuffer;
+        size = 2 * mxEdgeStyle.orthBuffer;
       }
     }
-    return value;
+    return size;
   },
   scalePointArray : function(points, scale) {
     var result = [];
@@ -19176,22 +19264,23 @@ var mxEdgeStyle = {
     }
     return result;
   },
-  scaleCellState : function(result, scale) {
-    if (null != result) {
-      var state = result.clone();
-      state.setRect(Math.round(result.x / scale * 10) / 10, Math.round(result.y / scale * 10) / 10, Math.round(result.width / scale * 10) / 10, Math.round(result.height / scale * 10) / 10);
+  scaleCellState : function(state, scale) {
+    var result;
+    if (null != state) {
+      result = state.clone();
+      result.setRect(Math.round(state.x / scale * 10) / 10, Math.round(state.y / scale * 10) / 10, Math.round(state.width / scale * 10) / 10, Math.round(state.height / scale * 10) / 10);
     } else {
-      state = null;
+      result = null;
     }
-    return state;
+    return result;
   },
-  OrthConnector : function(index, newRect, routePattern, controlHints, result) {
+  OrthConnector : function(index, newRect, targetScaled, controlHints, result) {
     var scaledSourceBuffer = index.view.graph;
     var sourceEdge = null == pState ? false : scaledSourceBuffer.getModel().isEdge(pState.cell);
     var targetEdge = null == state ? false : scaledSourceBuffer.getModel().isEdge(state.cell);
     scaledSourceBuffer = mxEdgeStyle.scalePointArray(index.absolutePoints, index.view.scale);
     var pState = mxEdgeStyle.scaleCellState(newRect, index.view.scale);
-    var state = mxEdgeStyle.scaleCellState(routePattern, index.view.scale);
+    var state = mxEdgeStyle.scaleCellState(targetScaled, index.view.scale);
     var tmp = scaledSourceBuffer[0];
     var sourceLeftDist = scaledSourceBuffer[scaledSourceBuffer.length - 1];
     var sourceX = null != pState ? pState.x : tmp.x;
@@ -19217,11 +19306,11 @@ var mxEdgeStyle = {
       i = i * i + dotprod * dotprod < totalBuffer * totalBuffer;
     }
     if (i || (mxEdgeStyle.orthPointsFallback && (null != controlHints && 0 < controlHints.length) || (sourceEdge || targetEdge))) {
-      mxEdgeStyle.SegmentConnector(index, newRect, routePattern, controlHints, result);
+      mxEdgeStyle.SegmentConnector(index, newRect, targetScaled, controlHints, result);
     } else {
-      routePattern = [mxConstants.DIRECTION_MASK_ALL, mxConstants.DIRECTION_MASK_ALL];
+      targetScaled = [mxConstants.DIRECTION_MASK_ALL, mxConstants.DIRECTION_MASK_ALL];
       if (null != pState) {
-        routePattern[0] = mxUtils.getPortConstraints(pState, index, true, mxConstants.DIRECTION_MASK_ALL);
+        targetScaled[0] = mxUtils.getPortConstraints(pState, index, true, mxConstants.DIRECTION_MASK_ALL);
         newRect = mxUtils.getValue(pState.style, mxConstants.STYLE_ROTATION, 0);
         if (0 != newRect) {
           newRect = mxUtils.getBoundingBox(new mxRectangle(sourceX, sourceBottomDist, sourceRightDist, targetHeight), newRect);
@@ -19232,7 +19321,7 @@ var mxEdgeStyle = {
         }
       }
       if (null != state) {
-        routePattern[1] = mxUtils.getPortConstraints(state, index, false, mxConstants.DIRECTION_MASK_ALL);
+        targetScaled[1] = mxUtils.getPortConstraints(state, index, false, mxConstants.DIRECTION_MASK_ALL);
         newRect = mxUtils.getValue(state.style, mxConstants.STYLE_ROTATION, 0);
         if (0 != newRect) {
           newRect = mxUtils.getBoundingBox(new mxRectangle(targetX, sourceY, sourceWidth, sourceHeight), newRect);
@@ -19316,10 +19405,10 @@ var mxEdgeStyle = {
       targetHeight = false;
       for (i = 0;2 > i;i++) {
         if (0 == newRect[i]) {
-          if (0 == (state[i] & routePattern[i])) {
+          if (0 == (state[i] & targetScaled[i])) {
             state[i] = mxUtils.reversePortConstraints(state[i]);
           }
-          if (0 == (tmp[i] & routePattern[i])) {
+          if (0 == (tmp[i] & targetScaled[i])) {
             tmp[i] = mxUtils.reversePortConstraints(tmp[i]);
           }
           sourceRightDist[i][0] = tmp[i];
@@ -19328,15 +19417,15 @@ var mxEdgeStyle = {
       }
       if (0 < sourceBottomDist) {
         if (0 < sourceLeftDist) {
-          if (0 < (state[0] & routePattern[0]) && 0 < (tmp[1] & routePattern[1])) {
+          if (0 < (state[0] & targetScaled[0]) && 0 < (tmp[1] & targetScaled[1])) {
             sourceRightDist[0][0] = state[0];
             sourceRightDist[0][1] = tmp[0];
             sourceRightDist[1][0] = tmp[1];
             sourceRightDist[1][1] = state[1];
             targetHeight = true;
           } else {
-            if (0 < (tmp[0] & routePattern[0])) {
-              if (0 < (state[1] & routePattern[1])) {
+            if (0 < (tmp[0] & targetScaled[0])) {
+              if (0 < (state[1] & targetScaled[1])) {
                 sourceRightDist[0][0] = tmp[0];
                 sourceRightDist[0][1] = state[0];
                 sourceRightDist[1][0] = state[1];
@@ -19366,23 +19455,23 @@ var mxEdgeStyle = {
       }
       for (i = 0;2 > i;i++) {
         if (0 == newRect[i]) {
-          if (0 == (sourceRightDist[i][0] & routePattern[i]) && (sourceRightDist[i][0] = sourceRightDist[i][1]), totalBuffer[i] = sourceRightDist[i][0] & routePattern[i], totalBuffer[i] |= (sourceRightDist[i][1] & routePattern[i]) << 8, totalBuffer[i] |= (sourceRightDist[1 - i][i] & routePattern[i]) << 16, totalBuffer[i] |= (sourceRightDist[1 - i][1 - i] & routePattern[i]) << 24, 0 == (totalBuffer[i] & 15) && (totalBuffer[i] <<= 8), 0 == (totalBuffer[i] & 3840) && (totalBuffer[i] = totalBuffer[i] &
-          15 | totalBuffer[i] >> 8), 0 == (totalBuffer[i] & 983040) && (totalBuffer[i] = totalBuffer[i] & 65535 | (totalBuffer[i] & 251658240) >> 8), newRect[i] = totalBuffer[i] & 15, routePattern[i] == mxConstants.DIRECTION_MASK_WEST || (routePattern[i] == mxConstants.DIRECTION_MASK_NORTH || (routePattern[i] == mxConstants.DIRECTION_MASK_EAST || routePattern[i] == mxConstants.DIRECTION_MASK_SOUTH))) {
-            newRect[i] = routePattern[i];
+          if (0 == (sourceRightDist[i][0] & targetScaled[i]) && (sourceRightDist[i][0] = sourceRightDist[i][1]), totalBuffer[i] = sourceRightDist[i][0] & targetScaled[i], totalBuffer[i] |= (sourceRightDist[i][1] & targetScaled[i]) << 8, totalBuffer[i] |= (sourceRightDist[1 - i][i] & targetScaled[i]) << 16, totalBuffer[i] |= (sourceRightDist[1 - i][1 - i] & targetScaled[i]) << 24, 0 == (totalBuffer[i] & 15) && (totalBuffer[i] <<= 8), 0 == (totalBuffer[i] & 3840) && (totalBuffer[i] = totalBuffer[i] &
+          15 | totalBuffer[i] >> 8), 0 == (totalBuffer[i] & 983040) && (totalBuffer[i] = totalBuffer[i] & 65535 | (totalBuffer[i] & 251658240) >> 8), newRect[i] = totalBuffer[i] & 15, targetScaled[i] == mxConstants.DIRECTION_MASK_WEST || (targetScaled[i] == mxConstants.DIRECTION_MASK_NORTH || (targetScaled[i] == mxConstants.DIRECTION_MASK_EAST || targetScaled[i] == mxConstants.DIRECTION_MASK_SOUTH))) {
+            newRect[i] = targetScaled[i];
           }
         }
       }
-      routePattern = newRect[0] == mxConstants.DIRECTION_MASK_EAST ? 3 : newRect[0];
+      targetScaled = newRect[0] == mxConstants.DIRECTION_MASK_EAST ? 3 : newRect[0];
       totalBuffer = newRect[1] == mxConstants.DIRECTION_MASK_EAST ? 3 : newRect[1];
-      routePattern -= scaledTargetBuffer;
+      targetScaled -= scaledTargetBuffer;
       totalBuffer -= scaledTargetBuffer;
-      if (1 > routePattern) {
-        routePattern += 4;
+      if (1 > targetScaled) {
+        targetScaled += 4;
       }
       if (1 > totalBuffer) {
         totalBuffer += 4;
       }
-      routePattern = mxEdgeStyle.routePatterns[routePattern - 1][totalBuffer - 1];
+      targetScaled = mxEdgeStyle.routePatterns[targetScaled - 1][totalBuffer - 1];
       mxEdgeStyle.wayPoints1[0][0] = sourceX[0][0];
       mxEdgeStyle.wayPoints1[0][1] = sourceX[0][1];
       switch(newRect[0]) {
@@ -19404,8 +19493,8 @@ var mxEdgeStyle = {
       }
       scaledSourceBuffer = 0;
       state = totalBuffer = 0 < (newRect[0] & (mxConstants.DIRECTION_MASK_EAST | mxConstants.DIRECTION_MASK_WEST)) ? 0 : 1;
-      for (i = 0;i < routePattern.length;i++) {
-        tmp = routePattern[i] & 15;
+      for (i = 0;i < targetScaled.length;i++) {
+        tmp = targetScaled[i] & 15;
         targetHeight = tmp == mxConstants.DIRECTION_MASK_EAST ? 3 : tmp;
         targetHeight += scaledTargetBuffer;
         if (4 < targetHeight) {
@@ -19418,14 +19507,14 @@ var mxEdgeStyle = {
           mxEdgeStyle.wayPoints1[scaledSourceBuffer][0] = mxEdgeStyle.wayPoints1[scaledSourceBuffer - 1][0];
           mxEdgeStyle.wayPoints1[scaledSourceBuffer][1] = mxEdgeStyle.wayPoints1[scaledSourceBuffer - 1][1];
         }
-        targetX = 0 < (routePattern[i] & mxEdgeStyle.TARGET_MASK);
-        sourceY = 0 < (routePattern[i] & mxEdgeStyle.SOURCE_MASK);
-        sourceBottomDist = (routePattern[i] & mxEdgeStyle.SIDE_MASK) >> 5;
+        targetX = 0 < (targetScaled[i] & mxEdgeStyle.TARGET_MASK);
+        sourceY = 0 < (targetScaled[i] & mxEdgeStyle.SOURCE_MASK);
+        sourceBottomDist = (targetScaled[i] & mxEdgeStyle.SIDE_MASK) >> 5;
         sourceBottomDist <<= scaledTargetBuffer;
         if (15 < sourceBottomDist) {
           sourceBottomDist >>= 4;
         }
-        sourceRightDist = 0 < (routePattern[i] & mxEdgeStyle.CENTER_MASK);
+        sourceRightDist = 0 < (targetScaled[i] & mxEdgeStyle.CENTER_MASK);
         if ((sourceY || targetX) && 9 > sourceBottomDist) {
           targetHeight = sourceY ? 0 : 1;
           sourceBottomDist = sourceRightDist && 0 == tmp ? sourceX[targetHeight][0] + pState[targetHeight][0] * sourceX[targetHeight][2] : sourceRightDist ? sourceX[targetHeight][1] + pState[targetHeight][1] * sourceX[targetHeight][3] : mxEdgeStyle.limits[targetHeight][sourceBottomDist];
@@ -19526,6 +19615,7 @@ mxGraphView.prototype.doneResource = "none" != mxClient.language ? "done" : "";
 mxGraphView.prototype.updatingDocumentResource = "none" != mxClient.language ? "updatingDocument" : "";
 mxGraphView.prototype.allowEval = false;
 mxGraphView.prototype.captureDocumentGesture = true;
+mxGraphView.prototype.optimizeVmlReflows = true;
 mxGraphView.prototype.rendering = true;
 mxGraphView.prototype.graph = null;
 mxGraphView.prototype.currentRoot = null;
@@ -19675,10 +19765,10 @@ mxGraphView.prototype.validate = function(cell) {
   window.status = mxResources.get(this.updatingDocumentResource) || this.updatingDocumentResource;
   this.resetValidationState();
   var maxDisplay = null;
-  if (!(null == this.canvas)) {
-    if (!(null != this.textDiv)) {
-      if (!(8 != document.documentMode)) {
-        if (!mxClient.IS_EM) {
+  if (this.optimizeVmlReflows) {
+    if (null != this.canvas) {
+      if (null == this.textDiv) {
+        if (8 == document.documentMode && !mxClient.IS_EM || mxClient.IS_QUIRKS) {
           this.placeholder = document.createElement("div");
           this.placeholder.style.position = "absolute";
           this.placeholder.style.width = this.canvas.clientWidth + "px";
@@ -19690,7 +19780,7 @@ mxGraphView.prototype.validate = function(cell) {
           this.textDiv.style.position = "absolute";
           this.textDiv.style.whiteSpace = "nowrap";
           this.textDiv.style.visibility = "hidden";
-          this.textDiv.style.display = "inline-block";
+          this.textDiv.style.display = mxClient.IS_QUIRKS ? "inline" : "inline-block";
           this.textDiv.style.zoom = "1";
           document.body.appendChild(this.textDiv);
         }
@@ -19715,11 +19805,11 @@ mxGraphView.prototype.validate = function(cell) {
 mxGraphView.prototype.getEmptyBounds = function() {
   return new mxRectangle(this.translate.x * this.scale, this.translate.y * this.scale);
 };
-mxGraphView.prototype.getBoundingBox = function(state, model) {
-  model = null != model ? model : true;
+mxGraphView.prototype.getBoundingBox = function(state, recurse) {
+  recurse = null != recurse ? recurse : true;
   var bbox = null;
-  if (null != state && (null != state.shape && (null != state.shape.boundingBox && (bbox = state.shape.boundingBox.clone())), null != state.text && (null != state.text.boundingBox && (null != bbox ? bbox.add(state.text.boundingBox) : bbox = state.text.boundingBox.clone())), model)) {
-    model = this.graph.getModel();
+  if (null != state && (null != state.shape && (null != state.shape.boundingBox && (bbox = state.shape.boundingBox.clone())), null != state.text && (null != state.text.boundingBox && (null != bbox ? bbox.add(state.text.boundingBox) : bbox = state.text.boundingBox.clone())), recurse)) {
+    var model = this.graph.getModel();
     var childCount = model.getChildCount(state.cell);
     for (var i = 0;i < childCount;i++) {
       var parent = this.getBoundingBox(this.getState(model.getChildAt(state.cell, i)));
@@ -19823,8 +19913,8 @@ mxGraphView.prototype.getBackgroundPageBounds = function() {
 };
 mxGraphView.prototype.redrawBackgroundImage = function(backgroundImage, bg) {
   backgroundImage.scale = this.scale;
-  backgroundImage.bounds.x = this.scale * (this.translate.x + bg.x);
-  backgroundImage.bounds.y = this.scale * (this.translate.y + bg.y);
+  backgroundImage.bounds.x = this.scale * this.translate.x;
+  backgroundImage.bounds.y = this.scale * this.translate.y;
   backgroundImage.bounds.width = this.scale * bg.width;
   backgroundImage.bounds.height = this.scale * bg.height;
   backgroundImage.redraw();
@@ -19871,8 +19961,8 @@ mxGraphView.prototype.validateCellState = function(cell, recurse) {
       if (null != state.shape) {
         this.stateValidated(state);
       }
-      recurse = model.getChildCount(cell);
-      for (var i = 0;i < recurse;i++) {
+      var childCount = model.getChildCount(cell);
+      for (var i = 0;i < childCount;i++) {
         this.validateCellState(model.getChildAt(cell, i));
       }
     }
@@ -19940,17 +20030,20 @@ mxGraphView.prototype.updateCellState = function(state) {
 mxGraphView.prototype.isCellCollapsed = function(cell) {
   return this.graph.isCellCollapsed(cell);
 };
-mxGraphView.prototype.updateVertexState = function(state, cos) {
-  var rad = this.graph.getModel();
-  var pState = this.getState(rad.getParent(state.cell));
-  if (cos.relative && (null != pState && (!rad.isEdge(pState.cell) && (rad = mxUtils.toRadians(pState.style[mxConstants.STYLE_ROTATION] || "0"), 0 != rad)))) {
-    cos = Math.cos(rad);
-    rad = Math.sin(rad);
-    var ct = new mxPoint(state.getCenterX(), state.getCenterY());
-    pState = new mxPoint(pState.getCenterX(), pState.getCenterY());
-    pState = mxUtils.getRotatedPoint(ct, cos, rad, pState);
-    state.x = pState.x - state.width / 2;
-    state.y = pState.y - state.height / 2;
+mxGraphView.prototype.updateVertexState = function(state, geo) {
+  var cos = this.graph.getModel();
+  var pState = this.getState(cos.getParent(state.cell));
+  if (geo.relative && (null != pState && !cos.isEdge(pState.cell))) {
+    var rad = mxUtils.toRadians(pState.style[mxConstants.STYLE_ROTATION] || "0");
+    if (0 != rad) {
+      cos = Math.cos(rad);
+      rad = Math.sin(rad);
+      var ct = new mxPoint(state.getCenterX(), state.getCenterY());
+      pState = new mxPoint(pState.getCenterX(), pState.getCenterY());
+      pState = mxUtils.getRotatedPoint(ct, cos, rad, pState);
+      state.x = pState.x - state.width / 2;
+      state.y = pState.y - state.height / 2;
+    }
   }
   this.updateVertexLabelOffset(state);
 };
@@ -19963,8 +20056,8 @@ mxGraphView.prototype.updateEdgeState = function(state, geo) {
     this.updateFixedTerminalPoints(state, source, target);
     this.updatePoints(state, geo.points, source, target);
     this.updateFloatingTerminalPoints(state, source, target);
-    geo = state.absolutePoints;
-    if (state.cell != this.currentRoot && (null == geo || (2 > geo.length || (null == geo[0] || null == geo[geo.length - 1])))) {
+    source = state.absolutePoints;
+    if (state.cell != this.currentRoot && (null == source || (2 > source.length || (null == source[0] || null == source[source.length - 1])))) {
       this.clear(state.cell, true);
     } else {
       this.updateEdgeBounds(state);
@@ -20193,9 +20286,9 @@ mxGraphView.prototype.getPerimeterPoint = function(terminal, next, orthogonal, b
   }
   return point;
 };
-mxGraphView.prototype.getRoutingCenterX = function(cell) {
-  var f = null != cell.style ? parseFloat(cell.style[mxConstants.STYLE_ROUTING_CENTER_X]) || 0 : 0;
-  return cell.getCenterX() + f * cell.width;
+mxGraphView.prototype.getRoutingCenterX = function(terminal) {
+  var f = null != terminal.style ? parseFloat(terminal.style[mxConstants.STYLE_ROUTING_CENTER_X]) || 0 : 0;
+  return terminal.getCenterX() + f * terminal.width;
 };
 mxGraphView.prototype.getRoutingCenterY = function(cell) {
   var f = null != cell.style ? parseFloat(cell.style[mxConstants.STYLE_ROUTING_CENTER_Y]) || 0 : 0;
@@ -20237,20 +20330,21 @@ mxGraphView.prototype.getNextPoint = function(edge, opposite, source) {
   }
   return count;
 };
-mxGraphView.prototype.getVisibleTerminal = function(cell, source) {
+mxGraphView.prototype.getVisibleTerminal = function(source, isOutgoing) {
   var model = this.graph.getModel();
-  for (source = cell = model.getTerminal(cell, source);null != cell && cell != this.currentRoot;) {
-    if (!this.graph.isCellVisible(source) || this.isCellCollapsed(cell)) {
-      source = cell;
+  var parent = model.getTerminal(source, isOutgoing);
+  for (var cell = parent;null != parent && parent != this.currentRoot;) {
+    if (!this.graph.isCellVisible(cell) || this.isCellCollapsed(parent)) {
+      cell = parent;
     }
-    cell = model.getParent(cell);
+    parent = model.getParent(parent);
   }
-  if (!(null == source)) {
-    if (!(model.contains(source) && (model.getParent(source) != model.getRoot() && source != this.currentRoot))) {
-      source = null;
+  if (!(null == cell)) {
+    if (!(model.contains(cell) && (model.getParent(cell) != model.getRoot() && cell != this.currentRoot))) {
+      cell = null;
     }
   }
-  return source;
+  return cell;
 };
 mxGraphView.prototype.updateEdgeBounds = function(state) {
   var points = state.absolutePoints;
@@ -20299,40 +20393,38 @@ mxGraphView.prototype.getPoint = function(state, geometry) {
   var y = state.getCenterY();
   if (null == state.segments || null != geometry && !geometry.relative) {
     if (null != geometry) {
-      geometry = geometry.offset;
-      if (null != geometry) {
-        x += geometry.x;
-        y += geometry.y;
+      offset = geometry.offset;
+      if (null != offset) {
+        x += offset.x;
+        y += offset.y;
       }
     }
   } else {
-    var pointCount = state.absolutePoints.length;
-    var tmp = Math.round(((null != geometry ? geometry.x / 2 : 0) + 0.5) * state.length);
+    var factor = state.absolutePoints.length;
+    var p0 = Math.round(((null != geometry ? geometry.x / 2 : 0) + 0.5) * state.length);
     var segment = state.segments[0];
     var length = 0;
-    for (var index = 1;tmp >= Math.round(length + segment) && index < pointCount - 1;) {
+    for (var index = 1;p0 >= Math.round(length + segment) && index < factor - 1;) {
       length += segment;
       segment = state.segments[index++];
     }
-    pointCount = 0 == segment ? 0 : (tmp - length) / segment;
-    tmp = state.absolutePoints[index - 1];
-    state = state.absolutePoints[index];
-    if (null != tmp) {
-      if (null != state) {
-        index = x = y = 0;
-        if (null != geometry) {
-          y = geometry.y;
-          geometry = geometry.offset;
-          if (null != geometry) {
-            x = geometry.x;
-            index = geometry.y;
-          }
+    factor = 0 == segment ? 0 : (p0 - length) / segment;
+    p0 = state.absolutePoints[index - 1];
+    index = state.absolutePoints[index];
+    if (null != p0 && null != index) {
+      length = x = y = 0;
+      if (null != geometry) {
+        y = geometry.y;
+        var offset = geometry.offset;
+        if (null != offset) {
+          x = offset.x;
+          length = offset.y;
         }
-        geometry = state.x - tmp.x;
-        state = state.y - tmp.y;
-        x = tmp.x + geometry * pointCount + ((0 == segment ? 0 : state / segment) * y + x) * this.scale;
-        y = tmp.y + state * pointCount - ((0 == segment ? 0 : geometry / segment) * y - index) * this.scale;
       }
+      offset = index.x - p0.x;
+      index = index.y - p0.y;
+      x = p0.x + offset * factor + ((0 == segment ? 0 : index / segment) * y + x) * this.scale;
+      y = p0.y + index * factor - ((0 == segment ? 0 : offset / segment) * y - length) * this.scale;
     }
   }
   return new mxPoint(x, y);
@@ -20347,19 +20439,19 @@ mxGraphView.prototype.getRelativePoint = function(edgeState, x, y) {
       var p0 = edgeState.absolutePoints[0];
       var pe = edgeState.absolutePoints[1];
       var cx = mxUtils.ptSegDistSq(p0.x, p0.y, pe.x, pe.y, x, y);
-      var value = 0;
       var index = 0;
       var tmp = 0;
+      var value = 0;
       for (var i = 2;i < yDistance;i++) {
-        p0 = pe;
+        tmp += segments[i - 2];
         pe = edgeState.absolutePoints[i];
         p0 = mxUtils.ptSegDistSq(p0.x, p0.y, pe.x, pe.y, x, y);
-        tmp += segments[i - 2];
         if (p0 <= cx) {
           cx = p0;
           index = i - 1;
           value = tmp;
         }
+        p0 = pe;
       }
       yDistance = segments[index];
       p0 = edgeState.absolutePoints[index];
@@ -20513,52 +20605,72 @@ mxGraphView.prototype.isScrollEvent = function(evt) {
 };
 mxGraphView.prototype.init = function() {
   this.installListeners();
-  if (this.graph.dialect == mxConstants.DIALECT_SVG) {
+  var graph = this.graph;
+  if (graph.dialect == mxConstants.DIALECT_SVG) {
     this.createSvg();
   } else {
-    this.createHtml();
+    if (graph.dialect == mxConstants.DIALECT_VML) {
+      this.createVml();
+    } else {
+      this.createHtml();
+    }
   }
 };
 mxGraphView.prototype.installListeners = function() {
   var graph = this.graph;
-  var node = graph.container;
-  if (null != node) {
+  var container = graph.container;
+  if (null != container) {
     if (mxClient.IS_TOUCH) {
-      mxEvent.addListener(node, "gesturestart", mxUtils.bind(this, function(evt) {
+      mxEvent.addListener(container, "gesturestart", mxUtils.bind(this, function(evt) {
         graph.fireGestureEvent(evt);
         mxEvent.consume(evt);
       }));
-      mxEvent.addListener(node, "gesturechange", mxUtils.bind(this, function(evt) {
+      mxEvent.addListener(container, "gesturechange", mxUtils.bind(this, function(evt) {
         graph.fireGestureEvent(evt);
         mxEvent.consume(evt);
       }));
-      mxEvent.addListener(node, "gestureend", mxUtils.bind(this, function(evt) {
+      mxEvent.addListener(container, "gestureend", mxUtils.bind(this, function(evt) {
         graph.fireGestureEvent(evt);
         mxEvent.consume(evt);
       }));
     }
-    mxEvent.addGestureListeners(node, mxUtils.bind(this, function(evt) {
+    var pointerId = null;
+    mxEvent.addGestureListeners(container, mxUtils.bind(this, function(evt) {
       if (!!this.isContainerEvent(evt)) {
         if (!((mxClient.IS_IE || (mxClient.IS_IE11 || (mxClient.IS_GC || (mxClient.IS_OP || mxClient.IS_SF)))) && this.isScrollEvent(evt))) {
           graph.fireMouseEvent(mxEvent.MOUSE_DOWN, new mxMouseEvent(evt));
+          pointerId = evt.pointerId;
         }
       }
     }), mxUtils.bind(this, function(evt) {
-      if (this.isContainerEvent(evt)) {
-        graph.fireMouseEvent(mxEvent.MOUSE_MOVE, new mxMouseEvent(evt));
+      if (!!this.isContainerEvent(evt)) {
+        if (!(null != pointerId && evt.pointerId != pointerId)) {
+          graph.fireMouseEvent(mxEvent.MOUSE_MOVE, new mxMouseEvent(evt));
+        }
       }
     }), mxUtils.bind(this, function(evt) {
       if (this.isContainerEvent(evt)) {
         graph.fireMouseEvent(mxEvent.MOUSE_UP, new mxMouseEvent(evt));
       }
+      pointerId = null;
     }));
-    mxEvent.addListener(node, "dblclick", mxUtils.bind(this, function(evt) {
+    mxEvent.addListener(container, "dblclick", mxUtils.bind(this, function(evt) {
       if (this.isContainerEvent(evt)) {
         graph.dblClick(evt);
       }
     }));
+    var getState = function(evt) {
+      var gridEnabled = null;
+      if (mxClient.IS_TOUCH) {
+        gridEnabled = mxEvent.getClientX(evt);
+        evt = mxEvent.getClientY(evt);
+        evt = mxUtils.convertPoint(container, gridEnabled, evt);
+        gridEnabled = graph.view.getState(graph.getCellAt(evt.x, evt.y));
+      }
+      return gridEnabled;
+    };
     graph.addMouseListener({
-      mouseDown : function(cell, sender) {
+      mouseDown : function(evt, sender) {
         graph.popupMenuHandler.hideMenu();
       },
       mouseMove : function() {
@@ -20572,17 +20684,20 @@ mxGraphView.prototype.installListeners = function() {
           graph.tooltipHandler.hide();
         }
       }
-      if (this.captureDocumentGesture && (graph.isMouseDown && (null != graph.container && (!this.isContainerEvent(evt) && ("none" != graph.container.style.display && ("hidden" != graph.container.style.visibility && !mxEvent.isConsumed(evt))))))) {
-        var mxEffects = graph.fireMouseEvent;
-        var child = mxEvent.MOUSE_MOVE;
-        var pt = null;
-        if (mxClient.IS_TOUCH) {
-          pt = mxEvent.getClientX(evt);
-          var y = mxEvent.getClientY(evt);
-          pt = mxUtils.convertPoint(node, pt, y);
-          pt = graph.view.getState(graph.getCellAt(pt.x, pt.y));
+      if (this.captureDocumentGesture) {
+        if (graph.isMouseDown) {
+          if (null != graph.container) {
+            if (!this.isContainerEvent(evt)) {
+              if ("none" != graph.container.style.display) {
+                if ("hidden" != graph.container.style.visibility) {
+                  if (!mxEvent.isConsumed(evt)) {
+                    graph.fireMouseEvent(mxEvent.MOUSE_MOVE, new mxMouseEvent(evt, getState(evt)));
+                  }
+                }
+              }
+            }
+          }
         }
-        mxEffects.call(graph, child, new mxMouseEvent(evt, pt));
       }
     });
     this.endHandler = mxUtils.bind(this, function(evt) {
@@ -20618,6 +20733,13 @@ mxGraphView.prototype.createHtml = function() {
     this.canvas.appendChild(this.decoratorPane);
     container.appendChild(this.canvas);
     this.updateContainerStyle(container);
+    if (mxClient.IS_QUIRKS) {
+      container = mxUtils.bind(this, function(bounds) {
+        bounds = this.getGraphBounds();
+        this.updateHtmlCanvasSize(bounds.x + bounds.width + this.graph.border, bounds.y + bounds.height + this.graph.border);
+      });
+      mxEvent.addListener(window, "resize", container);
+    }
   }
 };
 mxGraphView.prototype.updateHtmlCanvasSize = function(width, height) {
@@ -20638,6 +20760,35 @@ mxGraphView.prototype.createHtmlPane = function(width, height) {
   } else {
     pane.style.position = "relative";
   }
+  return pane;
+};
+mxGraphView.prototype.createVml = function() {
+  var container = this.graph.container;
+  if (null != container) {
+    var width = container.offsetWidth;
+    var height = container.offsetHeight;
+    this.canvas = this.createVmlPane(width, height);
+    this.canvas.style.overflow = "hidden";
+    this.backgroundPane = this.createVmlPane(width, height);
+    this.drawPane = this.createVmlPane(width, height);
+    this.overlayPane = this.createVmlPane(width, height);
+    this.decoratorPane = this.createVmlPane(width, height);
+    this.canvas.appendChild(this.backgroundPane);
+    this.canvas.appendChild(this.drawPane);
+    this.canvas.appendChild(this.overlayPane);
+    this.canvas.appendChild(this.decoratorPane);
+    container.appendChild(this.canvas);
+  }
+};
+mxGraphView.prototype.createVmlPane = function(width, height) {
+  var pane = document.createElement(mxClient.VML_PREFIX + ":group");
+  pane.style.position = "absolute";
+  pane.style.left = "0px";
+  pane.style.top = "0px";
+  pane.style.width = width + "px";
+  pane.style.height = height + "px";
+  pane.setAttribute("coordsize", width + "," + height);
+  pane.setAttribute("coordorigin", "0,0");
   return pane;
 };
 mxGraphView.prototype.createSvg = function() {
@@ -20692,18 +20843,18 @@ mxGraphView.prototype.destroy = function() {
     }
   }
 };
-function mxCurrentRootChange(next, root) {
-  this.view = next;
+function mxCurrentRootChange(view, root) {
+  this.view = view;
   this.previous = this.root = root;
   this.isUp = null == root;
   if (!this.isUp) {
-    next = this.view.currentRoot;
-    for (var model = this.view.graph.getModel();null != next;) {
-      if (next == root) {
+    var tmp = this.view.currentRoot;
+    for (var model = this.view.graph.getModel();null != tmp;) {
+      if (tmp == root) {
         this.isUp = true;
         break;
       }
-      next = model.getParent(next);
+      tmp = model.getParent(tmp);
     }
   }
 }
@@ -20724,10 +20875,10 @@ mxCurrentRootChange.prototype.execute = function() {
   this.view.fireEvent(new mxEventObject(this.isUp ? mxEvent.UP : mxEvent.DOWN, "root", this.view.currentRoot, "previous", this.previous));
   this.isUp = !this.isUp;
 };
-function mxGraph(container, model, renderHint, stylesheet, rendering) {
+function mxGraph(container, model, renderHint, stylesheet) {
   this.mouseListeners = null;
   this.renderHint = renderHint;
-  this.dialect = mxClient.IS_SVG ? mxConstants.DIALECT_SVG : renderHint == mxConstants.RENDERING_HINT_FASTEST ? mxConstants.DIALECT_STRICTHTML : renderHint == mxConstants.RENDERING_HINT_FASTER ? mxConstants.DIALECT_PREFERHTML : mxConstants.DIALECT_MIXEDHTML;
+  this.dialect = mxClient.IS_SVG ? mxConstants.DIALECT_SVG : renderHint == mxConstants.RENDERING_HINT_EXACT && mxClient.IS_VML ? mxConstants.DIALECT_VML : renderHint == mxConstants.RENDERING_HINT_FASTEST ? mxConstants.DIALECT_STRICTHTML : renderHint == mxConstants.RENDERING_HINT_FASTER ? mxConstants.DIALECT_PREFERHTML : mxConstants.DIALECT_MIXEDHTML;
   this.model = null != model ? model : new mxGraphModel;
   this.multiplicities = [];
   this.imageBundles = [];
@@ -20735,7 +20886,6 @@ function mxGraph(container, model, renderHint, stylesheet, rendering) {
   this.setSelectionModel(this.createSelectionModel());
   this.setStylesheet(null != stylesheet ? stylesheet : this.createStylesheet());
   this.view = this.createGraphView();
-  this.view.rendering = null != rendering ? rendering : this.view.rendering;
   this.graphModelChangeListener = mxUtils.bind(this, function(flex, evt) {
     this.graphModelChanged(evt.getProperty("edit").changes);
   });
@@ -20744,9 +20894,7 @@ function mxGraph(container, model, renderHint, stylesheet, rendering) {
   if (null != container) {
     this.init(container);
   }
-  if (this.view.rendering) {
-    this.view.revalidate();
-  }
+  this.view.revalidate();
 }
 if (mxLoadResources) {
   mxResources.add(mxClient.basePath + "/resources/graph");
@@ -20891,6 +21039,9 @@ mxGraph.prototype.init = function(container) {
     mxEvent.addListener(container, "selectstart", mxUtils.bind(this, function(evt) {
       return this.isEditing() || !this.isMouseDown && !mxEvent.isShiftDown(evt);
     }));
+  }
+  if (8 == document.documentMode) {
+    container.insertAdjacentHTML("beforeend", "<" + mxClient.VML_PREFIX + ':group style="DISPLAY: none;"></' + mxClient.VML_PREFIX + ":group>");
   }
 };
 mxGraph.prototype.createHandlers = function() {
@@ -21334,12 +21485,11 @@ mxGraph.prototype.scrollPointToVisible = function(x, y, extend, border) {
           if (this.dialect == mxConstants.DIALECT_SVG) {
             x = this.view.getDrawPane().ownerSVGElement;
             var width = this.container.scrollWidth + border - dx;
-            x.style.width = width + "px";
           } else {
             width = Math.max(c.clientWidth, c.scrollWidth) + border - dx;
             x = this.view.getCanvas();
-            x.style.width = width + "px";
           }
+          x.style.width = width + "px";
           c.scrollLeft += border - dx;
         }
       } else {
@@ -21357,12 +21507,11 @@ mxGraph.prototype.scrollPointToVisible = function(x, y, extend, border) {
             if (this.dialect == mxConstants.DIALECT_SVG) {
               x = this.view.getDrawPane().ownerSVGElement;
               y = this.container.scrollHeight + border - dx;
-              x.style.height = y + "px";
             } else {
               y = Math.max(c.clientHeight, c.scrollHeight) + border - dx;
               x = this.view.getCanvas();
-              x.style.height = y + "px";
             }
+            x.style.height = y + "px";
             c.scrollTop += border - dx;
           }
         }
@@ -21400,7 +21549,7 @@ mxGraph.prototype.fit = function(border, keepOrigin, margin, enabled, s2, ignore
     ignoreHeight = null != ignoreHeight ? ignoreHeight : false;
     var s = this.getBorderSizes();
     var w1 = this.container.offsetWidth - s.x - s.width - 1;
-    var h1 = null != bounds ? bounds : this.container.offsetHeight - s.y - s.height - 1;
+    var h = null != bounds ? bounds : this.container.offsetHeight - s.y - s.height - 1;
     bounds = this.view.getGraphBounds();
     if (0 < bounds.width && 0 < bounds.height) {
       if (keepOrigin) {
@@ -21418,17 +21567,13 @@ mxGraph.prototype.fit = function(border, keepOrigin, margin, enabled, s2, ignore
       var w2 = bounds.width / s;
       var h2 = bounds.height / s;
       if (null != this.backgroundImage) {
-        if (null != this.backgroundImage.width) {
-          if (null != this.backgroundImage.height) {
-            w2 = Math.max(w2, this.backgroundImage.width - bounds.x / s);
-            h2 = Math.max(h2, this.backgroundImage.height - bounds.y / s);
-          }
-        }
+        w2 = Math.max(w2, this.backgroundImage.width - bounds.x / s);
+        h2 = Math.max(h2, this.backgroundImage.height - bounds.y / s);
       }
-      var b = (keepOrigin ? border : 2 * border) + margin + 1;
-      w1 -= b;
-      h1 -= b;
-      s2 = s2 ? h1 / h2 : ignoreHeight ? w1 / w2 : Math.min(w1 / w2, h1 / h2);
+      var height = (keepOrigin ? border : 2 * border) + margin + 1;
+      w1 = w1 - height;
+      h = h - height;
+      s2 = s2 ? h / h2 : ignoreHeight ? w1 / w2 : Math.min(w1 / w2, h / h2);
       if (null != this.minFitScale) {
         s2 = Math.max(s2, this.minFitScale);
       }
@@ -21496,8 +21641,12 @@ mxGraph.prototype.sizeDidChange = function() {
         size.style.height = "100%";
       }
     } else {
-      this.view.canvas.style.minWidth = Math.max(1, width) + "px";
-      this.view.canvas.style.minHeight = Math.max(1, height) + "px";
+      if (mxClient.IS_QUIRKS) {
+        this.view.updateHtmlCanvasSize(Math.max(1, width), Math.max(1, height));
+      } else {
+        this.view.canvas.style.minWidth = Math.max(1, width) + "px";
+        this.view.canvas.style.minHeight = Math.max(1, height) + "px";
+      }
     }
     this.updatePageBreaks(this.pageBreaksVisible, width, height);
   }
@@ -21566,33 +21715,24 @@ mxGraph.prototype.updatePageBreaks = function(visible, scale, spacing) {
   visible(this.verticalPageBreaks);
 };
 mxGraph.prototype.getCurrentCellStyle = function(cell, ignoreState) {
-  ignoreState = ignoreState ? null : this.view.getState(cell);
-  return null != ignoreState ? ignoreState.style : this.getCellStyle(cell);
+  var state = ignoreState ? null : this.view.getState(cell);
+  return null != state ? state.style : this.getCellStyle(cell);
 };
-mxGraph.prototype.getCellStyle = function(cell, directed) {
-  directed = null != directed ? directed : true;
+mxGraph.prototype.getCellStyle = function(cell) {
   var stylename = this.model.getStyle(cell);
-  var style = this.model.isEdge(cell) ? this.stylesheet.getDefaultEdgeStyle() : this.stylesheet.getDefaultVertexStyle();
+  cell = this.model.isEdge(cell) ? this.stylesheet.getDefaultEdgeStyle() : this.stylesheet.getDefaultVertexStyle();
   if (null != stylename) {
-    style = this.stylesheet.getCellStyle(stylename, style, directed);
-  } else {
-    if (null != style) {
-      style = mxUtils.clone(style);
-    }
+    cell = this.postProcessCellStyle(this.stylesheet.getCellStyle(stylename, cell));
   }
-  if (null == style) {
-    style = {};
-  } else {
-    if (directed) {
-      style = this.postProcessCellStyle(cell, style);
-    }
+  if (null == cell) {
+    cell = {};
   }
-  return style;
+  return cell;
 };
-mxGraph.prototype.postProcessCellStyle = function(image, style) {
+mxGraph.prototype.postProcessCellStyle = function(style) {
   if (null != style) {
     var comma = style[mxConstants.STYLE_IMAGE];
-    image = this.getImageFromBundles(comma);
+    var image = this.getImageFromBundles(comma);
     if (null != image) {
       style[mxConstants.STYLE_IMAGE] = image;
     } else {
@@ -21635,28 +21775,28 @@ mxGraph.prototype.toggleCellStyle = function(key, defaultValue, cell) {
   cell = cell || this.getSelectionCell();
   return this.toggleCellStyles(key, defaultValue, [cell]);
 };
-mxGraph.prototype.toggleCellStyles = function(cells, defaultValue, key) {
+mxGraph.prototype.toggleCellStyles = function(key, defaultValue, cells) {
   defaultValue = null != defaultValue ? defaultValue : false;
-  key = key || this.getEditableCells(this.getSelectionCells());
+  cells = cells || this.getSelectionCells();
   var style = null;
-  if (null != key) {
-    if (0 < key.length) {
-      style = this.getCurrentCellStyle(key[0]);
-      style = mxUtils.getValue(style, cells, defaultValue) ? 0 : 1;
-      this.setCellStyles(cells, style, key);
+  if (null != cells) {
+    if (0 < cells.length) {
+      style = this.getCurrentCellStyle(cells[0]);
+      style = mxUtils.getValue(style, key, defaultValue) ? 0 : 1;
+      this.setCellStyles(key, style, cells);
     }
   }
   return style;
 };
 mxGraph.prototype.setCellStyles = function(key, value, cells) {
-  cells = cells || this.getEditableCells(this.getSelectionCells());
+  cells = cells || this.getSelectionCells();
   mxUtils.setCellStyles(this.model, cells, key, value);
 };
 mxGraph.prototype.toggleCellStyleFlags = function(key, flag, cells) {
   this.setCellStyleFlags(key, flag, null, cells);
 };
 mxGraph.prototype.setCellStyleFlags = function(key, flag, value, cells) {
-  cells = cells || this.getEditableCells(this.getSelectionCells());
+  cells = cells || this.getSelectionCells();
   if (null != cells) {
     if (0 < cells.length) {
       if (null == value) {
@@ -21667,83 +21807,67 @@ mxGraph.prototype.setCellStyleFlags = function(key, flag, value, cells) {
     }
   }
 };
-mxGraph.prototype.getOriginForCell = function(cell) {
-  cell = this.model.getParent(cell);
-  for (var result = new mxPoint;null != cell;) {
-    var geo = this.getCellGeometry(cell);
-    if (!(null == geo)) {
-      if (!geo.relative) {
-        result.x += geo.x;
-        result.y += geo.y;
-      }
-    }
-    cell = this.model.getParent(cell);
-  }
-  return result;
-};
 mxGraph.prototype.alignCells = function(align, cells, param) {
   if (null == cells) {
-    cells = this.getMovableCells(this.getSelectionCells());
+    cells = this.getSelectionCells();
   }
   if (null != cells && 1 < cells.length) {
     if (null == param) {
       for (var i = 0;i < cells.length;i++) {
-        var result = this.getOriginForCell(cells[i]);
-        var geo = this.getCellGeometry(cells[i]);
-        if (!this.model.isEdge(cells[i]) && (null != geo && !geo.relative)) {
+        var state = this.view.getState(cells[i]);
+        if (null != state && !this.model.isEdge(cells[i])) {
           if (null == param) {
             if (align == mxConstants.ALIGN_CENTER) {
-              param = result.x + geo.x + geo.width / 2;
+              param = state.x + state.width / 2;
               break;
             } else {
               if (align == mxConstants.ALIGN_RIGHT) {
-                param = result.x + geo.x + geo.width;
+                param = state.x + state.width;
               } else {
                 if (align == mxConstants.ALIGN_TOP) {
-                  param = result.y + geo.y;
+                  param = state.y;
                 } else {
                   if (align == mxConstants.ALIGN_MIDDLE) {
-                    param = result.y + geo.y + geo.height / 2;
+                    param = state.y + state.height / 2;
                     break;
                   } else {
-                    param = align == mxConstants.ALIGN_BOTTOM ? result.y + geo.y + geo.height : result.x + geo.x;
+                    param = align == mxConstants.ALIGN_BOTTOM ? state.y + state.height : state.x;
                   }
                 }
               }
             }
           } else {
-            param = align == mxConstants.ALIGN_RIGHT ? Math.max(param, result.x + geo.x + geo.width) : align == mxConstants.ALIGN_TOP ? Math.min(param, result.y + geo.y) : align == mxConstants.ALIGN_BOTTOM ? Math.max(param, result.y + geo.y + geo.height) : Math.min(param, result.x + geo.x);
+            param = align == mxConstants.ALIGN_RIGHT ? Math.max(param, state.x + state.width) : align == mxConstants.ALIGN_TOP ? Math.min(param, state.y) : align == mxConstants.ALIGN_BOTTOM ? Math.max(param, state.y + state.height) : Math.min(param, state.x);
           }
         }
       }
     }
     if (null != param) {
-      cells = mxUtils.sortCells(cells);
+      var s = this.view.scale;
       this.model.beginUpdate();
       try {
         for (i = 0;i < cells.length;i++) {
-          result = this.getOriginForCell(cells[i]);
-          geo = this.getCellGeometry(cells[i]);
-          if (!this.model.isEdge(cells[i])) {
+          if (state = this.view.getState(cells[i]), null != state) {
+            var geo = this.getCellGeometry(cells[i]);
             if (!(null == geo)) {
-              if (!geo.relative) {
+              if (!this.model.isEdge(cells[i])) {
                 geo = geo.clone();
                 if (align == mxConstants.ALIGN_CENTER) {
-                  geo.x = param - result.x - geo.width / 2;
+                  geo.x += (param - state.x - state.width / 2) / s;
                 } else {
                   if (align == mxConstants.ALIGN_RIGHT) {
-                    geo.x = param - result.x - geo.width;
+                    geo.x += (param - state.x - state.width) / s;
                   } else {
                     if (align == mxConstants.ALIGN_TOP) {
-                      geo.y = param - result.y;
+                      geo.y += (param - state.y) / s;
                     } else {
                       if (align == mxConstants.ALIGN_MIDDLE) {
-                        geo.y = param - result.y - geo.height / 2;
+                        geo.y += (param - state.y - state.height / 2) / s;
                       } else {
                         if (align == mxConstants.ALIGN_BOTTOM) {
-                          geo.y = param - result.y - geo.height;
+                          geo.y += (param - state.y - state.height) / s;
                         } else {
-                          geo.x = param - result.x;
+                          geo.x += (param - state.x) / s;
                         }
                       }
                     }
@@ -21803,40 +21927,32 @@ mxGraph.prototype.getImageFromBundles = function(state) {
   }
   return null;
 };
-mxGraph.prototype.orderCells = function(back, cells, recurse) {
+mxGraph.prototype.orderCells = function(back, cells) {
   if (null == cells) {
-    cells = mxUtils.sortCells(this.getEditableCells(this.getSelectionCells()), true);
+    cells = mxUtils.sortCells(this.getSelectionCells(), true);
   }
   this.model.beginUpdate();
   try {
-    this.cellsOrdered(cells, back, recurse);
-    this.fireEvent(new mxEventObject(mxEvent.ORDER_CELLS, "back", back, "cells", cells, "increment", recurse));
+    this.cellsOrdered(cells, back);
+    this.fireEvent(new mxEventObject(mxEvent.ORDER_CELLS, "back", back, "cells", cells));
   } finally {
     this.model.endUpdate();
   }
   return cells;
 };
-mxGraph.prototype.cellsOrdered = function(cells, back, recurse) {
+mxGraph.prototype.cellsOrdered = function(cells, back) {
   if (null != cells) {
     this.model.beginUpdate();
     try {
       for (var i = 0;i < cells.length;i++) {
         var parent = this.model.getParent(cells[i]);
         if (back) {
-          if (recurse) {
-            this.model.add(parent, cells[i], Math.max(0, parent.getIndex(cells[i]) - 1));
-          } else {
-            this.model.add(parent, cells[i], i);
-          }
+          this.model.add(parent, cells[i], i);
         } else {
-          if (recurse) {
-            this.model.add(parent, cells[i], Math.min(this.model.getChildCount(parent) - 1, parent.getIndex(cells[i]) + 1));
-          } else {
-            this.model.add(parent, cells[i], this.model.getChildCount(parent) - 1);
-          }
+          this.model.add(parent, cells[i], this.model.getChildCount(parent) - 1);
         }
       }
-      this.fireEvent(new mxEventObject(mxEvent.CELLS_ORDERED, "back", back, "cells", cells, "increment", recurse));
+      this.fireEvent(new mxEventObject(mxEvent.CELLS_ORDERED, "back", back, "cells", cells));
     } finally {
       this.model.endUpdate();
     }
@@ -21920,27 +22036,25 @@ mxGraph.prototype.ungroupCells = function(cells) {
   if (null != cells && 0 < cells.length) {
     this.model.beginUpdate();
     try {
-      for (var j = 0;j < cells.length;j++) {
-        var children = this.model.getChildren(cells[j]);
+      for (var i = 0;i < cells.length;i++) {
+        var children = this.model.getChildren(cells[i]);
         if (null != children && 0 < children.length) {
           children = children.slice();
-          var parent = this.model.getParent(cells[j]);
+          var parent = this.model.getParent(cells[i]);
           var index = this.model.getChildCount(parent);
           this.cellsAdded(children, parent, index, null, null, true);
           result = result.concat(children);
-          for (var i = 0;i < children.length;i++) {
-            if (this.model.isVertex(children[i])) {
-              var pstate = this.view.getState(children[i]);
-              var geo = this.getCellGeometry(children[i]);
-              if (null != pstate) {
-                if (null != geo) {
-                  if (geo.relative) {
-                    geo = geo.clone();
-                    geo.x = pstate.origin.x;
-                    geo.y = pstate.origin.y;
-                    geo.relative = false;
-                    this.model.setGeometry(children[i], geo);
-                  }
+          for (var j = 0;j < children.length;j++) {
+            var pstate = this.view.getState(children[j]);
+            var geo = this.getCellGeometry(children[j]);
+            if (null != pstate) {
+              if (null != geo) {
+                if (geo.relative) {
+                  geo = geo.clone();
+                  geo.x = pstate.origin.x;
+                  geo.y = pstate.origin.y;
+                  geo.relative = false;
+                  this.model.setGeometry(children[j], geo);
                 }
               }
             }
@@ -21956,7 +22070,7 @@ mxGraph.prototype.ungroupCells = function(cells) {
   return result;
 };
 mxGraph.prototype.getCellsForUngroup = function() {
-  var cells = this.getEditableCells(this.getSelectionCells());
+  var cells = this.getSelectionCells();
   var tmp = [];
   for (var i = 0;i < cells.length;i++) {
     if (this.model.isVertex(cells[i])) {
@@ -22120,16 +22234,16 @@ mxGraph.prototype.createVertex = function(result, id, vertex, x, y, width, heigh
   vertex.setConnectable(true);
   return vertex;
 };
-mxGraph.prototype.insertEdge = function(parent, edge, value, source, target, style) {
-  edge = this.createEdge(parent, edge, value, source, target, style);
-  return this.addEdge(edge, parent, source, target);
+mxGraph.prototype.insertEdge = function(cell, edge, value, source, target, style) {
+  edge = this.createEdge(cell, edge, value, source, target, style);
+  return this.addEdge(edge, cell, source, target);
 };
-mxGraph.prototype.createEdge = function(edge, id, target, source, to, style) {
-  edge = new mxCell(target, new mxGeometry, style);
-  edge.setId(id);
-  edge.setEdge(true);
-  edge.geometry.relative = true;
-  return edge;
+mxGraph.prototype.createEdge = function(source, id, target, cell, to, style) {
+  source = new mxCell(target, new mxGeometry, style);
+  source.setId(id);
+  source.setEdge(true);
+  source.geometry.relative = true;
+  return source;
 };
 mxGraph.prototype.addEdge = function(edge, parent, source, target, index) {
   return this.addCell(edge, parent, index, source, target);
@@ -22220,8 +22334,8 @@ mxGraph.prototype.cellsAdded = function(cells, parent, index, source, target, ab
 };
 mxGraph.prototype.autoSizeCell = function(cell, recurse) {
   if (null != recurse ? recurse : 1) {
-    recurse = this.model.getChildCount(cell);
-    for (var i = 0;i < recurse;i++) {
+    var childCount = this.model.getChildCount(cell);
+    for (var i = 0;i < childCount;i++) {
       this.autoSizeCell(this.model.getChildAt(cell, i));
     }
   }
@@ -22499,145 +22613,124 @@ mxGraph.prototype.cellSizeUpdated = function(cell, ignoreChildren) {
   if (null != cell) {
     this.model.beginUpdate();
     try {
-      var terminal = this.getCellStyle(cell);
+      var size = this.getPreferredSizeForCell(cell);
       var geo = this.model.getGeometry(cell);
-      if (null != geo) {
-        var fontSize = null;
-        var tstate = mxUtils.getValue(terminal, mxConstants.STYLE_FIXED_WIDTH, false);
-        if (tstate) {
-          fontSize = geo.width - 2 * parseFloat(mxUtils.getValue(terminal, mxConstants.STYLE_SPACING, 2)) - parseFloat(mxUtils.getValue(terminal, mxConstants.STYLE_SPACING_LEFT, 0)) - parseFloat(mxUtils.getValue(terminal, mxConstants.STYLE_SPACING_RIGHT, 0));
-        }
-        var size = this.getPreferredSizeForCell(cell, fontSize);
-        if (null != size) {
-          var collapsed = this.isCellCollapsed(cell);
-          geo = geo.clone();
-          if (this.isSwimlane(cell)) {
-            var style = this.model.getStyle(cell);
-            if (null == style) {
-              style = "";
+      if (null != size && null != geo) {
+        var collapsed = this.isCellCollapsed(cell);
+        geo = geo.clone();
+        if (this.isSwimlane(cell)) {
+          var terminal = this.getCellStyle(cell);
+          var style = this.model.getStyle(cell);
+          if (null == style) {
+            style = "";
+          }
+          if (mxUtils.getValue(terminal, mxConstants.STYLE_HORIZONTAL, true)) {
+            style = mxUtils.setStyle(style, mxConstants.STYLE_STARTSIZE, size.height + 8);
+            if (collapsed) {
+              geo.height = size.height + 8;
             }
-            if (mxUtils.getValue(terminal, mxConstants.STYLE_HORIZONTAL, true)) {
-              style = mxUtils.setStyle(style, mxConstants.STYLE_STARTSIZE, size.height + 8);
-              if (collapsed) {
-                geo.height = size.height + 8;
-              }
-              if (!tstate) {
-                geo.width = size.width;
-              }
-            } else {
-              style = mxUtils.setStyle(style, mxConstants.STYLE_STARTSIZE, size.width + 8);
-              if (collapsed) {
-                if (!tstate) {
-                  geo.width = size.width + 8;
-                }
-              }
-              geo.height = size.height;
-            }
-            this.model.setStyle(cell, style);
+            geo.width = size.width;
           } else {
-            var state = this.view.createState(cell);
-            var align = state.style[mxConstants.STYLE_ALIGN] || mxConstants.ALIGN_CENTER;
-            var valign = this.getVerticalAlign(state);
-            if ("fixed" == state.style[mxConstants.STYLE_ASPECT]) {
-              size.height = Math.round(geo.height * size.width * 100 / geo.width) / 100;
-            }
-            if (valign == mxConstants.ALIGN_BOTTOM) {
-              geo.y += geo.height - size.height;
-            } else {
-              if (valign == mxConstants.ALIGN_MIDDLE) {
-                geo.y += Math.round((geo.height - size.height) / 2);
-              }
+            style = mxUtils.setStyle(style, mxConstants.STYLE_STARTSIZE, size.width + 8);
+            if (collapsed) {
+              geo.width = size.width + 8;
             }
             geo.height = size.height;
-            if (!tstate) {
-              if (align == mxConstants.ALIGN_RIGHT) {
-                geo.x += geo.width - size.width;
-              } else {
-                if (align == mxConstants.ALIGN_CENTER) {
-                  geo.x += Math.round((geo.width - size.width) / 2);
-                }
-              }
-              geo.width = size.width;
+          }
+          this.model.setStyle(cell, style);
+        } else {
+          var state = this.view.createState(cell);
+          var align = state.style[mxConstants.STYLE_ALIGN] || mxConstants.ALIGN_CENTER;
+          if (align == mxConstants.ALIGN_RIGHT) {
+            geo.x += geo.width - size.width;
+          } else {
+            if (align == mxConstants.ALIGN_CENTER) {
+              geo.x += Math.round((geo.width - size.width) / 2);
             }
           }
-          if (!ignoreChildren && !collapsed) {
-            var bounds = this.view.getBounds(this.model.getChildren(cell));
-            if (null != bounds) {
-              var tr = this.view.translate;
-              var scale = this.view.scale;
-              var width = (bounds.x + bounds.width) / scale - geo.x - tr.x;
-              geo.height = Math.max(geo.height, (bounds.y + bounds.height) / scale - geo.y - tr.y);
-              if (!tstate) {
-                geo.width = Math.max(geo.width, width);
-              }
+          var valign = this.getVerticalAlign(state);
+          if (valign == mxConstants.ALIGN_BOTTOM) {
+            geo.y += geo.height - size.height;
+          } else {
+            if (valign == mxConstants.ALIGN_MIDDLE) {
+              geo.y += Math.round((geo.height - size.height) / 2);
             }
           }
-          this.cellsResized([cell], [geo], false);
+          geo.width = size.width;
+          geo.height = size.height;
         }
+        if (!ignoreChildren && !collapsed) {
+          var bounds = this.view.getBounds(this.model.getChildren(cell));
+          if (null != bounds) {
+            var tr = this.view.translate;
+            var scale = this.view.scale;
+            var height = (bounds.y + bounds.height) / scale - geo.y - tr.y;
+            geo.width = Math.max(geo.width, (bounds.x + bounds.width) / scale - geo.x - tr.x);
+            geo.height = Math.max(geo.height, height);
+          }
+        }
+        this.cellsResized([cell], [geo], false);
       }
     } finally {
       this.model.endUpdate();
     }
   }
 };
-mxGraph.prototype.getPreferredSizeForCell = function(cell, width) {
-  var result = null;
+mxGraph.prototype.getPreferredSizeForCell = function(cell, textWidth) {
+  var height = null;
   if (null != cell) {
     var state = this.view.createState(cell);
     var style = state.style;
     if (!this.model.isEdge(cell)) {
-      var fontSize = style[mxConstants.STYLE_FONTSIZE] || mxConstants.DEFAULT_FONTSIZE;
-      cell = result = 0;
+      var bounds = style[mxConstants.STYLE_FONTSIZE] || mxConstants.DEFAULT_FONTSIZE;
+      var x0 = 0;
+      height = 0;
       if (!(null == this.getImage(state) && null == style[mxConstants.STYLE_IMAGE])) {
         if (!(style[mxConstants.STYLE_SHAPE] != mxConstants.SHAPE_LABEL)) {
           if (style[mxConstants.STYLE_VERTICAL_ALIGN] == mxConstants.ALIGN_MIDDLE) {
-            result += parseFloat(mxUtils.getValue(style, mxConstants.STYLE_IMAGE_WIDTH, mxLabel.prototype.imageSize));
+            x0 += parseFloat(style[mxConstants.STYLE_IMAGE_WIDTH]) || mxLabel.prototype.imageSize;
           }
           if (style[mxConstants.STYLE_ALIGN] != mxConstants.ALIGN_CENTER) {
-            cell += parseFloat(mxUtils.getValue(style, mxConstants.STYLE_IMAGE_HEIGHT, mxLabel.prototype.imageSize));
+            height += parseFloat(style[mxConstants.STYLE_IMAGE_HEIGHT]) || mxLabel.prototype.imageSize;
           }
         }
       }
-      result += 2 * parseFloat(mxUtils.getValue(style, mxConstants.STYLE_SPACING, 2));
-      result += parseFloat(mxUtils.getValue(style, mxConstants.STYLE_SPACING_LEFT, 2));
-      result += parseFloat(mxUtils.getValue(style, mxConstants.STYLE_SPACING_RIGHT, 2));
-      cell += 2 * parseFloat(mxUtils.getValue(style, mxConstants.STYLE_SPACING, 2));
-      cell += parseFloat(mxUtils.getValue(style, mxConstants.STYLE_SPACING_TOP, 2));
-      cell += parseFloat(mxUtils.getValue(style, mxConstants.STYLE_SPACING_BOTTOM, 2));
+      x0 = x0 + 2 * (style[mxConstants.STYLE_SPACING] || 0);
+      x0 = x0 + (style[mxConstants.STYLE_SPACING_LEFT] || 0);
+      x0 = x0 + (style[mxConstants.STYLE_SPACING_RIGHT] || 0);
+      height = height + 2 * (style[mxConstants.STYLE_SPACING] || 0);
+      height = height + (style[mxConstants.STYLE_SPACING_TOP] || 0);
+      height = height + (style[mxConstants.STYLE_SPACING_BOTTOM] || 0);
       var value = this.getFoldingImage(state);
       if (null != value) {
-        result += value.width + 8;
+        x0 += value.width + 8;
       }
       value = this.cellRenderer.getLabelValue(state);
       if (null != value && 0 < value.length) {
-        if (this.isHtmlLabel(state.cell)) {
-          if (null != width) {
-            width += mxSvgCanvas2D.prototype.foreignObjectPadding;
-          }
-        } else {
+        if (!this.isHtmlLabel(state.cell)) {
           value = mxUtils.htmlEntities(value, false);
         }
         value = value.replace(/\n/g, "<br>");
-        state = mxUtils.getSizeForString(value, fontSize, style[mxConstants.STYLE_FONTFAMILY], width, style[mxConstants.STYLE_FONTSTYLE]);
-        width = state.width + result;
-        state = state.height + cell;
+        bounds = mxUtils.getSizeForString(value, bounds, style[mxConstants.STYLE_FONTFAMILY], textWidth, style[mxConstants.STYLE_FONTSTYLE]);
+        state = bounds.width + x0;
+        height = bounds.height + height;
         if (!mxUtils.getValue(style, mxConstants.STYLE_HORIZONTAL, true)) {
-          style = state;
-          state = width;
-          width = style;
+          style = height;
+          height = state;
+          state = style;
         }
         if (this.gridEnabled) {
-          width = this.snap(width + this.gridSize / 2);
           state = this.snap(state + this.gridSize / 2);
+          height = this.snap(height + this.gridSize / 2);
         }
-        result = new mxRectangle(0, 0, width, state);
+        height = new mxRectangle(0, 0, state, height);
       } else {
         style = 4 * this.gridSize;
-        result = new mxRectangle(0, 0, style, style);
+        height = new mxRectangle(0, 0, style, style);
       }
     }
   }
-  return result;
+  return height;
 };
 mxGraph.prototype.resizeCell = function(cell, bounds, recurse) {
   return this.resizeCells([cell], [bounds], recurse)[0];
@@ -22716,10 +22809,10 @@ mxGraph.prototype.cellResized = function(cell, bounds, ignoreRelative, recurse) 
 mxGraph.prototype.resizeChildCells = function(cell, newGeo) {
   var geo = this.model.getGeometry(cell);
   var dx = 0 != geo.width ? newGeo.width / geo.width : 1;
-  newGeo = 0 != geo.height ? newGeo.height / geo.height : 1;
-  geo = this.model.getChildCount(cell);
-  for (var i = 0;i < geo;i++) {
-    this.scaleCell(this.model.getChildAt(cell, i), dx, newGeo, true);
+  geo = 0 != geo.height ? newGeo.height / geo.height : 1;
+  var childCount = this.model.getChildCount(cell);
+  for (var i = 0;i < childCount;i++) {
+    this.scaleCell(this.model.getChildAt(cell, i), dx, geo, true);
   }
 };
 mxGraph.prototype.constrainChildCells = function(cell) {
@@ -22728,16 +22821,16 @@ mxGraph.prototype.constrainChildCells = function(cell) {
     this.constrainChild(this.model.getChildAt(cell, i));
   }
 };
-mxGraph.prototype.scaleCell = function(cell, dx, dy, recurse) {
+mxGraph.prototype.scaleCell = function(cell, dx, y, recurse) {
   var geo = this.model.getGeometry(cell);
   if (null != geo) {
     var style = this.getCurrentCellStyle(cell);
     geo = geo.clone();
     var x = geo.x;
-    var y = geo.y;
+    var y0 = geo.y;
     var w = geo.width;
     var h = geo.height;
-    geo.scale(dx, dy, "fixed" == style[mxConstants.STYLE_ASPECT]);
+    geo.scale(dx, y, "fixed" == style[mxConstants.STYLE_ASPECT]);
     if ("1" == style[mxConstants.STYLE_RESIZE_WIDTH]) {
       geo.width = w * dx;
     } else {
@@ -22746,7 +22839,7 @@ mxGraph.prototype.scaleCell = function(cell, dx, dy, recurse) {
       }
     }
     if ("1" == style[mxConstants.STYLE_RESIZE_HEIGHT]) {
-      geo.height = h * dy;
+      geo.height = h * y;
     } else {
       if ("0" == style[mxConstants.STYLE_RESIZE_HEIGHT]) {
         geo.height = h;
@@ -22754,7 +22847,7 @@ mxGraph.prototype.scaleCell = function(cell, dx, dy, recurse) {
     }
     if (!this.isCellMovable(cell)) {
       geo.x = x;
-      geo.y = y;
+      geo.y = y0;
     }
     if (!this.isCellResizable(cell)) {
       geo.width = w;
@@ -22919,10 +23012,10 @@ mxGraph.prototype.translateCell = function(cell, x, y) {
         y = y.y;
       }
       if (null == geo.offset) {
-        geo.offset = new mxPoint(Math.round(x), Math.round(y));
+        geo.offset = new mxPoint(x, y);
       } else {
-        geo.offset.x = Math.round(parseFloat(geo.offset.x + x));
-        geo.offset.y = Math.round(parseFloat(geo.offset.y + y));
+        geo.offset.x = parseFloat(geo.offset.x) + x;
+        geo.offset.y = parseFloat(geo.offset.y) + y;
       }
     }
     this.model.setGeometry(cell, geo);
@@ -22964,83 +23057,86 @@ mxGraph.prototype.getCellContainmentArea = function(tmp) {
 mxGraph.prototype.getMaximumGraphBounds = function() {
   return this.maximumGraphBounds;
 };
-mxGraph.prototype.constrainChild = function(cell, geo) {
-  if (null != cell && (geo = this.getCellGeometry(cell), null != geo && (this.isConstrainRelativeChildren() || !geo.relative))) {
-    var tmp = this.model.getParent(cell);
-    this.getCellGeometry(tmp);
-    var max = this.getMaximumGraphBounds();
-    if (null != max) {
-      tmp = this.getBoundingBoxFromGeometry([tmp], false);
-      if (null != tmp) {
-        max = mxRectangle.fromRectangle(max);
-        max.x -= tmp.x;
-        max.y -= tmp.y;
-      }
-    }
-    if (this.isConstrainChild(cell) && (tmp = this.getCellContainmentArea(cell), null != tmp)) {
-      var overlap = this.getOverlap(cell);
-      if (0 < overlap) {
-        tmp = mxRectangle.fromRectangle(tmp);
-        tmp.x -= tmp.width * overlap;
-        tmp.y -= tmp.height * overlap;
-        tmp.width += 2 * tmp.width * overlap;
-        tmp.height += 2 * tmp.height * overlap;
-      }
-      if (null == max) {
-        max = tmp;
-      } else {
-        max = mxRectangle.fromRectangle(max);
-        max.intersect(tmp);
-      }
-    }
-    if (null != max) {
-      tmp = [cell];
-      if (!this.isCellCollapsed(cell)) {
-        overlap = this.model.getDescendants(cell);
-        for (var i = 0;i < overlap.length;i++) {
-          if (this.isCellVisible(overlap[i])) {
-            tmp.push(overlap[i]);
-          }
+mxGraph.prototype.constrainChild = function(cell, sizeFirst) {
+  if (null != cell) {
+    var geo = this.getCellGeometry(cell);
+    if (null != geo && (this.isConstrainRelativeChildren() || !geo.relative)) {
+      var tmp = this.model.getParent(cell);
+      this.getCellGeometry(tmp);
+      var max = this.getMaximumGraphBounds();
+      if (null != max) {
+        tmp = this.getBoundingBoxFromGeometry([tmp], false);
+        if (null != tmp) {
+          max = mxRectangle.fromRectangle(max);
+          max.x -= tmp.x;
+          max.y -= tmp.y;
         }
       }
-      tmp = this.getBoundingBoxFromGeometry(tmp, false);
-      if (null != tmp) {
-        geo = geo.clone();
-        overlap = 0;
-        if (geo.width > max.width) {
-          overlap = geo.width - max.width;
-          geo.width -= overlap;
+      if (this.isConstrainChild(cell) && (tmp = this.getCellContainmentArea(cell), null != tmp)) {
+        var overlap = this.getOverlap(cell);
+        if (0 < overlap) {
+          tmp = mxRectangle.fromRectangle(tmp);
+          tmp.x -= tmp.width * overlap;
+          tmp.y -= tmp.height * overlap;
+          tmp.width += 2 * tmp.width * overlap;
+          tmp.height += 2 * tmp.height * overlap;
         }
-        if (tmp.x + tmp.width > max.x + max.width) {
-          overlap -= tmp.x + tmp.width - max.x - max.width - overlap;
+        if (null == max) {
+          max = tmp;
+        } else {
+          max = mxRectangle.fromRectangle(max);
+          max.intersect(tmp);
         }
-        i = 0;
-        if (geo.height > max.height) {
-          i = geo.height - max.height;
-          geo.height -= i;
-        }
-        if (tmp.y + tmp.height > max.y + max.height) {
-          i -= tmp.y + tmp.height - max.y - max.height - i;
-        }
-        if (tmp.x < max.x) {
-          overlap -= tmp.x - max.x;
-        }
-        if (tmp.y < max.y) {
-          i -= tmp.y - max.y;
-        }
-        if (0 != overlap || 0 != i) {
-          if (geo.relative) {
-            if (null == geo.offset) {
-              geo.offset = new mxPoint;
+      }
+      if (null != max) {
+        tmp = [cell];
+        if (!this.isCellCollapsed(cell)) {
+          overlap = this.model.getDescendants(cell);
+          for (var i = 0;i < overlap.length;i++) {
+            if (this.isCellVisible(overlap[i])) {
+              tmp.push(overlap[i]);
             }
-            geo.offset.x += overlap;
-            geo.offset.y += i;
-          } else {
-            geo.x += overlap;
-            geo.y += i;
           }
         }
-        this.model.setGeometry(cell, geo);
+        tmp = this.getBoundingBoxFromGeometry(tmp, false);
+        if (null != tmp) {
+          geo = geo.clone();
+          overlap = 0;
+          if (geo.width > max.width) {
+            overlap = geo.width - max.width;
+            geo.width -= overlap;
+          }
+          if (tmp.x + tmp.width > max.x + max.width) {
+            overlap -= tmp.x + tmp.width - max.x - max.width - overlap;
+          }
+          i = 0;
+          if (geo.height > max.height) {
+            i = geo.height - max.height;
+            geo.height -= i;
+          }
+          if (tmp.y + tmp.height > max.y + max.height) {
+            i -= tmp.y + tmp.height - max.y - max.height - i;
+          }
+          if (tmp.x < max.x) {
+            overlap -= tmp.x - max.x;
+          }
+          if (tmp.y < max.y) {
+            i -= tmp.y - max.y;
+          }
+          if (0 != overlap || 0 != i) {
+            if (geo.relative) {
+              if (null == geo.offset) {
+                geo.offset = new mxPoint;
+              }
+              geo.offset.x += overlap;
+              geo.offset.y += i;
+            } else {
+              geo.x += overlap;
+              geo.y += i;
+            }
+          }
+          this.model.setGeometry(cell, geo);
+        }
       }
     }
   }
@@ -23058,9 +23154,9 @@ mxGraph.prototype.resetEdges = function(cells) {
         if (null != edges) {
           for (var j = 0;j < edges.length;j++) {
             var state = this.view.getState(edges[j]);
-            var cell = null != state ? state.getVisibleTerminal(true) : this.view.getVisibleTerminal(edges[j], true);
-            var source = null != state ? state.getVisibleTerminal(false) : this.view.getVisibleTerminal(edges[j], false);
-            if (!(dict.get(cell) && dict.get(source))) {
+            var source = null != state ? state.getVisibleTerminal(true) : this.view.getVisibleTerminal(edges[j], true);
+            var cell = null != state ? state.getVisibleTerminal(false) : this.view.getVisibleTerminal(edges[j], false);
+            if (!(dict.get(source) && dict.get(cell))) {
               this.resetEdge(edges[j]);
             }
           }
@@ -23137,25 +23233,25 @@ mxGraph.prototype.getOutlineConstraint = function(point, terminalState, bounds) 
 mxGraph.prototype.getAllConnectionConstraints = function(state, mainLoopIteration) {
   return null != state && (null != state.shape && null != state.shape.stencil) ? state.shape.stencil.constraints : null;
 };
-mxGraph.prototype.getConnectionConstraint = function(edge, cell, source) {
-  cell = null;
+mxGraph.prototype.getConnectionConstraint = function(edge, isSource, source) {
+  isSource = null;
   var x = edge.style[source ? mxConstants.STYLE_EXIT_X : mxConstants.STYLE_ENTRY_X];
   if (null != x) {
     var dx = edge.style[source ? mxConstants.STYLE_EXIT_Y : mxConstants.STYLE_ENTRY_Y];
     if (null != dx) {
-      cell = new mxPoint(parseFloat(x), parseFloat(dx));
+      isSource = new mxPoint(parseFloat(x), parseFloat(dx));
     }
   }
   x = false;
   var dy = dx = 0;
-  if (null != cell) {
+  if (null != isSource) {
     x = mxUtils.getValue(edge.style, source ? mxConstants.STYLE_EXIT_PERIMETER : mxConstants.STYLE_ENTRY_PERIMETER, true);
     dx = parseFloat(edge.style[source ? mxConstants.STYLE_EXIT_DX : mxConstants.STYLE_ENTRY_DX]);
     dy = parseFloat(edge.style[source ? mxConstants.STYLE_EXIT_DY : mxConstants.STYLE_ENTRY_DY]);
     dx = isFinite(dx) ? dx : 0;
     dy = isFinite(dy) ? dy : 0;
   }
-  return new mxConnectionConstraint(cell, x, null, dx, dy);
+  return new mxConnectionConstraint(isSource, x, null, dx, dy);
 };
 mxGraph.prototype.setConnectionConstraint = function(edge, terminal, source, constraint) {
   if (null != constraint) {
@@ -23674,51 +23770,48 @@ mxGraph.prototype.center = function(horizontal, vertical, cx, cy) {
     this.container.scrollLeft = (horizontal - cw) / 2;
     this.container.scrollTop = (vertical - padding) / 2;
   } else {
-    this.view.setTranslate(horizontal ? Math.floor(t.x - bounds.x / s + dx * cx / s) : t.x, vertical ? Math.floor(t.y - bounds.y / s + dy * cy / s) : t.y);
+    this.view.setTranslate(horizontal ? Math.floor(t.x - bounds.x * s + dx * cx / s) : t.x, vertical ? Math.floor(t.y - bounds.y * s + dy * cy / s) : t.y);
   }
 };
-mxGraph.prototype.zoom = function(x, y, dx) {
+mxGraph.prototype.zoom = function(x, y) {
   y = null != y ? y : this.centerZoom;
   var scale = Math.round(this.view.scale * x * 100) / 100;
-  if (null != dx) {
-    scale = Math.round(scale * dx) / dx;
-  }
-  dx = this.view.getState(this.getSelectionCell());
+  var bounds = this.view.getState(this.getSelectionCell());
   x = scale / this.view.scale;
-  if (this.keepSelectionVisibleOnZoom && null != dx) {
-    x = new mxRectangle(dx.x * x, dx.y * x, dx.width * x, dx.height * x);
+  if (this.keepSelectionVisibleOnZoom && null != bounds) {
+    bounds = new mxRectangle(bounds.x * x, bounds.y * x, bounds.width * x, bounds.height * x);
     this.view.scale = scale;
-    if (!this.scrollRectToVisible(x)) {
+    if (!this.scrollRectToVisible(bounds)) {
       this.view.revalidate();
       this.view.setScale(scale);
     }
   } else {
-    if (dx = mxUtils.hasScrollbars(this.container), y && !dx) {
-      dx = this.container.offsetWidth;
+    if (bounds = mxUtils.hasScrollbars(this.container), y && !bounds) {
+      bounds = this.container.offsetWidth;
       var dy = this.container.offsetHeight;
       if (1 < x) {
-        x = (x - 1) / (2 * scale);
-        dx *= -x;
-        dy *= -x;
+        var tx = (x - 1) / (2 * scale);
+        bounds = bounds * -tx;
+        dy = dy * -tx;
       } else {
-        x = (1 / x - 1) / (2 * this.view.scale);
-        dx *= x;
-        dy *= x;
+        tx = (1 / x - 1) / (2 * this.view.scale);
+        bounds *= tx;
+        dy *= tx;
       }
-      this.view.scaleAndTranslate(scale, this.view.translate.x + dx, this.view.translate.y + dy);
+      this.view.scaleAndTranslate(scale, this.view.translate.x + bounds, this.view.translate.y + dy);
     } else {
-      var tx = this.view.translate.x;
+      tx = this.view.translate.x;
       var ty = this.view.translate.y;
       var sl = this.container.scrollLeft;
       var st = this.container.scrollTop;
       this.view.setScale(scale);
-      if (dx) {
-        dy = dx = 0;
+      if (bounds) {
+        dy = bounds = 0;
         if (y) {
-          dx = this.container.offsetWidth * (x - 1) / 2;
+          bounds = this.container.offsetWidth * (x - 1) / 2;
           dy = this.container.offsetHeight * (x - 1) / 2;
         }
-        this.container.scrollLeft = (this.view.translate.x - tx) * this.view.scale + Math.round(sl * x + dx);
+        this.container.scrollLeft = (this.view.translate.x - tx) * this.view.scale + Math.round(sl * x + bounds);
         this.container.scrollTop = (this.view.translate.y - ty) * this.view.scale + Math.round(st * x + dy);
       }
     }
@@ -23757,20 +23850,20 @@ mxGraph.prototype.zoomToRect = function(rect) {
     this.view.scaleAndTranslate(s2, this.view.translate.x - rect.x / this.view.scale, this.view.translate.y - rect.y / this.view.scale);
   }
 };
-mxGraph.prototype.scrollCellToVisible = function(cell, tmp) {
+mxGraph.prototype.scrollCellToVisible = function(cell, center) {
   var bounds = -this.view.translate.x;
-  var h = -this.view.translate.y;
-  cell = this.view.getState(cell);
-  if (null != cell) {
-    bounds = new mxRectangle(bounds + cell.x, h + cell.y, cell.width, cell.height);
-    if (tmp) {
+  var tmp = -this.view.translate.y;
+  var geometry = this.view.getState(cell);
+  if (null != geometry) {
+    bounds = new mxRectangle(bounds + geometry.x, tmp + geometry.y, geometry.width, geometry.height);
+    if (center) {
       if (null != this.container) {
         tmp = this.container.clientWidth;
-        h = this.container.clientHeight;
+        geometry = this.container.clientHeight;
         bounds.x = bounds.getCenterX() - tmp / 2;
         bounds.width = tmp;
-        bounds.y = bounds.getCenterY() - h / 2;
-        bounds.height = h;
+        bounds.y = bounds.getCenterY() - geometry / 2;
+        bounds.height = geometry;
       }
     }
     tmp = new mxPoint(this.view.translate.x, this.view.translate.y);
@@ -23885,8 +23978,8 @@ mxGraph.prototype.isToggleEvent = function(evt) {
 mxGraph.prototype.isGridEnabledEvent = function(evt) {
   return null != evt && !mxEvent.isAltDown(evt);
 };
-mxGraph.prototype.isConstrainedEvent = function(me) {
-  return mxEvent.isShiftDown(me);
+mxGraph.prototype.isConstrainedEvent = function(evt) {
+  return mxEvent.isShiftDown(evt);
 };
 mxGraph.prototype.isIgnoreTerminalEvent = function(evt) {
   return false;
@@ -23894,8 +23987,8 @@ mxGraph.prototype.isIgnoreTerminalEvent = function(evt) {
 mxGraph.prototype.validationAlert = function(message) {
   mxUtils.alert(message);
 };
-mxGraph.prototype.isEdgeValid = function(edge, source, target) {
-  return null == this.getEdgeValidationError(edge, source, target);
+mxGraph.prototype.isEdgeValid = function(edge, source, cell) {
+  return null == this.getEdgeValidationError(edge, source, cell);
 };
 mxGraph.prototype.getEdgeValidationError = function(edge, source, target) {
   if (null != edge && (!this.isAllowDanglingEdges() && (null == source || null == target))) {
@@ -23936,14 +24029,14 @@ mxGraph.prototype.getEdgeValidationError = function(edge, source, target) {
 mxGraph.prototype.validateEdge = function(edge, source, target) {
   return null;
 };
-mxGraph.prototype.validateGraph = function(cell, state) {
+mxGraph.prototype.validateGraph = function(cell, visible) {
   cell = null != cell ? cell : this.model.getRoot();
-  state = null != state ? state : {};
+  visible = null != visible ? visible : {};
   var clone = true;
   var lab = this.model.getChildCount(cell);
   for (var i = 0;i < lab;i++) {
     var tmp = this.model.getChildAt(cell, i);
-    var s = state;
+    var s = visible;
     if (this.isValidRoot(tmp)) {
       s = {};
     }
@@ -23962,9 +24055,9 @@ mxGraph.prototype.validateGraph = function(cell, state) {
     }
   }
   lab = this.model.isEdge(cell) ? lab + (this.getEdgeValidationError(cell, this.model.getTerminal(cell, true), this.model.getTerminal(cell, false)) || "") : lab + (this.getCellValidationError(cell) || "");
-  state = this.validateCell(cell, state);
-  if (null != state) {
-    lab += state;
+  i = this.validateCell(cell, visible);
+  if (null != i) {
+    lab += i;
   }
   if (null == this.model.getParent(cell)) {
     this.view.validate();
@@ -23994,7 +24087,7 @@ mxGraph.prototype.getCellValidationError = function(cell) {
   }
   return 0 < error.length ? error : null;
 };
-mxGraph.prototype.validateCell = function(cell, state) {
+mxGraph.prototype.validateCell = function(cell, visible) {
   return null;
 };
 mxGraph.prototype.getBackgroundImage = function() {
@@ -24049,11 +24142,11 @@ mxGraph.prototype.isWrapping = function(cell) {
 mxGraph.prototype.isLabelClipped = function(cell) {
   return "hidden" == this.getCurrentCellStyle(cell)[mxConstants.STYLE_OVERFLOW];
 };
-mxGraph.prototype.getTooltip = function(state, source, x, y) {
+mxGraph.prototype.getTooltip = function(state, node, x, y) {
   var cell = null;
   if (null != state) {
     if (!(null == state.control)) {
-      if (!(source != state.control.node && source.parentNode != state.control.node)) {
+      if (!(node != state.control.node && node.parentNode != state.control.node)) {
         cell = this.collapseExpandResource;
         cell = mxUtils.htmlEntities(mxResources.get(cell) || cell).replace(/\\n/g, "<br>");
       }
@@ -24062,7 +24155,7 @@ mxGraph.prototype.getTooltip = function(state, source, x, y) {
       if (null != state.overlays) {
         state.overlays.visit(function(flex, shape) {
           if (!(null != cell)) {
-            if (!(source != shape.node && source.parentNode != shape.node)) {
+            if (!(node != shape.node && node.parentNode != shape.node)) {
               cell = shape.overlay.toString();
             }
           }
@@ -24073,7 +24166,7 @@ mxGraph.prototype.getTooltip = function(state, source, x, y) {
       x = this.selectionCellsHandler.getHandler(state.cell);
       if (null != x) {
         if ("function" == typeof x.getTooltipForNode) {
-          cell = x.getTooltipForNode(source);
+          cell = x.getTooltipForNode(node);
         }
       }
     }
@@ -24089,9 +24182,6 @@ mxGraph.prototype.getTooltipForCell = function(cell) {
 mxGraph.prototype.getLinkForCell = function(cell) {
   return null;
 };
-mxGraph.prototype.getLinkTargetForCell = function(flex) {
-  return null;
-};
 mxGraph.prototype.getCursorForMouseEvent = function(me) {
   return this.getCursorForCell(me.getCell());
 };
@@ -24100,12 +24190,12 @@ mxGraph.prototype.getCursorForCell = function(cell) {
 };
 mxGraph.prototype.getStartSize = function(cell, ignoreState) {
   var result = new mxRectangle;
-  cell = this.getCurrentCellStyle(cell, ignoreState);
-  ignoreState = parseInt(mxUtils.getValue(cell, mxConstants.STYLE_STARTSIZE, mxConstants.DEFAULT_STARTSIZE));
-  if (mxUtils.getValue(cell, mxConstants.STYLE_HORIZONTAL, true)) {
-    result.height = ignoreState;
+  var style = this.getCurrentCellStyle(cell, ignoreState);
+  var size = parseInt(mxUtils.getValue(style, mxConstants.STYLE_STARTSIZE, mxConstants.DEFAULT_STARTSIZE));
+  if (mxUtils.getValue(style, mxConstants.STYLE_HORIZONTAL, true)) {
+    result.height = size;
   } else {
-    result.width = ignoreState;
+    result.width = size;
   }
   return result;
 };
@@ -24138,22 +24228,22 @@ mxGraph.prototype.getSwimlaneDirection = function(style) {
   }
   return[mxConstants.DIRECTION_NORTH, mxConstants.DIRECTION_EAST, mxConstants.DIRECTION_SOUTH, mxConstants.DIRECTION_WEST][mxUtils.mod(style, 4)];
 };
-mxGraph.prototype.getActualStartSize = function(swimlane, style) {
+mxGraph.prototype.getActualStartSize = function(swimlane, ignoreState) {
   var result = new mxRectangle;
-  if (this.isSwimlane(swimlane, style)) {
-    style = this.getCurrentCellStyle(swimlane, style);
-    swimlane = parseInt(mxUtils.getValue(style, mxConstants.STYLE_STARTSIZE, mxConstants.DEFAULT_STARTSIZE));
+  if (this.isSwimlane(swimlane, ignoreState)) {
+    var style = this.getCurrentCellStyle(swimlane, ignoreState);
+    var size = parseInt(mxUtils.getValue(style, mxConstants.STYLE_STARTSIZE, mxConstants.DEFAULT_STARTSIZE));
     style = this.getSwimlaneDirection(style);
     if (style == mxConstants.DIRECTION_NORTH) {
-      result.y = swimlane;
+      result.y = size;
     } else {
       if (style == mxConstants.DIRECTION_WEST) {
-        result.x = swimlane;
+        result.x = size;
       } else {
         if (style == mxConstants.DIRECTION_SOUTH) {
-          result.height = swimlane;
+          result.height = size;
         } else {
-          result.width = swimlane;
+          result.width = size;
         }
       }
     }
@@ -24207,7 +24297,6 @@ mxGraph.prototype.isEnabled = function() {
 };
 mxGraph.prototype.setEnabled = function(value) {
   this.enabled = value;
-  this.fireEvent(new mxEventObject("enabledChanged", "enabled", value));
 };
 mxGraph.prototype.isEscapeEnabled = function() {
   return this.escapeEnabled;
@@ -24294,11 +24383,6 @@ mxGraph.prototype.setCellsDeletable = function(value) {
 };
 mxGraph.prototype.isLabelMovable = function(cell) {
   return!this.isCellLocked(cell) && (this.model.isEdge(cell) && this.edgeLabelsMovable || this.model.isVertex(cell) && this.vertexLabelsMovable);
-};
-mxGraph.prototype.getRotatableCells = function(cells) {
-  return this.model.filterCells(cells, mxUtils.bind(this, function(cell) {
-    return this.isCellRotatable(cell);
-  }));
 };
 mxGraph.prototype.isCellRotatable = function(cell) {
   return 0 != this.getCurrentCellStyle(cell)[mxConstants.STYLE_ROTATABLE];
@@ -24414,11 +24498,6 @@ mxGraph.prototype.isSplitEnabled = function() {
 mxGraph.prototype.setSplitEnabled = function(value) {
   this.splitEnabled = value;
 };
-mxGraph.prototype.getResizableCells = function(cells) {
-  return this.model.filterCells(cells, mxUtils.bind(this, function(cell) {
-    return this.isCellResizable(cell);
-  }));
-};
 mxGraph.prototype.isCellResizable = function(cell) {
   var style = this.getCurrentCellStyle(cell);
   return this.isCellsResizable() && (!this.isCellLocked(cell) && "0" != mxUtils.getValue(style, mxConstants.STYLE_RESIZABLE, "1"));
@@ -24441,11 +24520,6 @@ mxGraph.prototype.isCellsBendable = function() {
 };
 mxGraph.prototype.setCellsBendable = function(value) {
   this.cellsBendable = value;
-};
-mxGraph.prototype.getEditableCells = function(cells) {
-  return this.model.filterCells(cells, mxUtils.bind(this, function(cell) {
-    return this.isCellEditable(cell);
-  }));
 };
 mxGraph.prototype.isCellEditable = function(cell) {
   var style = this.getCurrentCellStyle(cell);
@@ -24564,8 +24638,8 @@ mxGraph.prototype.getFoldableCells = function(cells, collapse) {
   }));
 };
 mxGraph.prototype.isCellFoldable = function(cell, collapse) {
-  collapse = this.getCurrentCellStyle(cell);
-  return 0 < this.model.getChildCount(cell) && 0 != collapse[mxConstants.STYLE_FOLDABLE];
+  var style = this.getCurrentCellStyle(cell);
+  return 0 < this.model.getChildCount(cell) && 0 != style[mxConstants.STYLE_FOLDABLE];
 };
 mxGraph.prototype.isValidDropTarget = function(cell, cells, evt) {
   return null != cell && (this.isSplitEnabled() && this.isSplitTarget(cell, cells, evt) || !this.model.isEdge(cell) && (this.isSwimlane(cell) || 0 < this.model.getChildCount(cell) && !this.isCellCollapsed(cell)));
@@ -24763,29 +24837,29 @@ mxGraph.prototype.getEdges = function(cell, parent, incoming, outgoing, includeL
 mxGraph.prototype.isValidAncestor = function(cell, parent, recurse) {
   return recurse ? this.model.isAncestor(parent, cell) : this.model.getParent(cell) == parent;
 };
-mxGraph.prototype.getOpposites = function(edges, terminal, sources, targets) {
-  sources = null != sources ? sources : true;
+mxGraph.prototype.getOpposites = function(edges, terminal, targets, sources) {
   targets = null != targets ? targets : true;
+  sources = null != sources ? sources : true;
   var terminals = [];
   var dict = new mxDictionary;
   if (null != edges) {
     for (var i = 0;i < edges.length;i++) {
-      var cell = this.view.getState(edges[i]);
-      var source = null != cell ? cell.getVisibleTerminal(true) : this.view.getVisibleTerminal(edges[i], true);
-      cell = null != cell ? cell.getVisibleTerminal(false) : this.view.getVisibleTerminal(edges[i], false);
-      if (source == terminal && (null != cell && (cell != terminal && targets))) {
-        if (!dict.get(cell)) {
-          dict.put(cell, true);
-          terminals.push(cell);
+      var source = this.view.getState(edges[i]);
+      var cell = null != source ? source.getVisibleTerminal(true) : this.view.getVisibleTerminal(edges[i], true);
+      source = null != source ? source.getVisibleTerminal(false) : this.view.getVisibleTerminal(edges[i], false);
+      if (cell == terminal && (null != source && (source != terminal && sources))) {
+        if (!dict.get(source)) {
+          dict.put(source, true);
+          terminals.push(source);
         }
       } else {
-        if (cell == terminal) {
-          if (null != source) {
-            if (source != terminal) {
-              if (sources) {
-                if (!dict.get(source)) {
-                  dict.put(source, true);
-                  terminals.push(source);
+        if (source == terminal) {
+          if (null != cell) {
+            if (cell != terminal) {
+              if (targets) {
+                if (!dict.get(cell)) {
+                  dict.put(cell, true);
+                  terminals.push(cell);
                 }
               }
             }
@@ -24811,13 +24885,13 @@ mxGraph.prototype.getEdgesBetween = function(source, target, isConnect) {
   return result;
 };
 mxGraph.prototype.getPointForEvent = function(evt, addOffset) {
-  evt = mxUtils.convertPoint(this.container, mxEvent.getClientX(evt), mxEvent.getClientY(evt));
+  var p = mxUtils.convertPoint(this.container, mxEvent.getClientX(evt), mxEvent.getClientY(evt));
   var scale = this.view.scale;
   var tr = this.view.translate;
-  addOffset = 0 != addOffset ? this.gridSize / 2 : 0;
-  evt.x = this.snap(evt.x / scale - tr.x - addOffset);
-  evt.y = this.snap(evt.y / scale - tr.y - addOffset);
-  return evt;
+  var off = 0 != addOffset ? this.gridSize / 2 : 0;
+  p.x = this.snap(p.x / scale - tr.x - off);
+  p.y = this.snap(p.y / scale - tr.y - off);
+  return p;
 };
 mxGraph.prototype.getCells = function(x, y, width, height, parent, result, intersection, ignoreFn, includeDescendants) {
   result = null != result ? result : [];
@@ -24841,7 +24915,7 @@ mxGraph.prototype.getCells = function(x, y, width, height, parent, result, inter
           if (0 != deg) {
             box = mxUtils.getBoundingBox(box, deg);
           }
-          if (deg = null != intersection && (model.isVertex(cell) && mxUtils.intersects(intersection, box)) || (null != intersection && (model.isEdge(cell) && mxUtils.intersects(intersection, box)) || null == intersection && ((model.isEdge(cell) || model.isVertex(cell)) && (box.x >= x && (box.y + box.height <= bottom && (box.y >= y && box.x + box.width <= right)))))) {
+          if (deg = null != intersection && (model.isVertex(cell) && mxUtils.intersects(intersection, box)) || null == intersection && ((model.isEdge(cell) || model.isVertex(cell)) && (box.x >= x && (box.y + box.height <= bottom && (box.y >= y && box.x + box.width <= right))))) {
             result.push(cell);
           }
           if (!(deg && !includeDescendants)) {
@@ -24915,14 +24989,14 @@ mxGraph.prototype.findTreeRoots = function(parent, isolate, invert) {
   }
   return roots;
 };
-mxGraph.prototype.traverse = function(vertex, directed, y2, cell, currentComp, hierarchyVertices) {
-  if (null != y2 && (null != vertex && ((directed = null != directed ? directed : true, hierarchyVertices = null != hierarchyVertices ? hierarchyVertices : false, currentComp = currentComp || new mxDictionary, null == cell || !currentComp.get(cell)) && ((currentComp.put(cell, true), cell = y2(vertex, cell), null == cell || cell) && (cell = this.model.getEdgeCount(vertex), 0 < cell))))) {
-    for (var i = 0;i < cell;i++) {
-      var e = this.model.getEdgeAt(vertex, i);
-      var next = this.model.getTerminal(e, true) == vertex;
+mxGraph.prototype.traverse = function(cell, directed, y2, isSource, currentComp, hierarchyVertices) {
+  if (null != y2 && (null != cell && ((directed = null != directed ? directed : true, hierarchyVertices = null != hierarchyVertices ? hierarchyVertices : false, currentComp = currentComp || new mxDictionary, !currentComp.get(cell) && (currentComp.put(cell, true), isSource = y2(cell, isSource), null == isSource || isSource)) && (isSource = this.model.getEdgeCount(cell), 0 < isSource)))) {
+    for (var i = 0;i < isSource;i++) {
+      var source = this.model.getEdgeAt(cell, i);
+      var next = this.model.getTerminal(source, true) == cell;
       if (!(directed && !hierarchyVertices != next)) {
-        next = this.model.getTerminal(e, !next);
-        this.traverse(next, directed, y2, e, currentComp, hierarchyVertices);
+        next = this.model.getTerminal(source, !next);
+        this.traverse(next, directed, y2, source, currentComp, hierarchyVertices);
       }
     }
   }
@@ -24964,9 +25038,9 @@ mxGraph.prototype.removeSelectionCells = function(cells) {
   this.getSelectionModel().removeCells(cells);
 };
 mxGraph.prototype.selectRegion = function(rect, evt) {
-  rect = this.getCells(rect.x, rect.y, rect.width, rect.height);
-  this.selectCellsForEvent(rect, evt);
-  return rect;
+  var cells = this.getCells(rect.x, rect.y, rect.width, rect.height);
+  this.selectCellsForEvent(cells, evt);
+  return cells;
 };
 mxGraph.prototype.selectNextCell = function() {
   this.selectCell(true);
@@ -24980,47 +25054,47 @@ mxGraph.prototype.selectParentCell = function() {
 mxGraph.prototype.selectChildCell = function() {
   this.selectCell(false, false, true);
 };
-mxGraph.prototype.selectCell = function(parent, isNext, isChild) {
-  var cell = this.selectionModel;
-  var source = 0 < cell.cells.length ? cell.cells[0] : null;
-  if (1 < cell.cells.length) {
-    cell.clear();
+mxGraph.prototype.selectCell = function(terminal, isNext, isChild) {
+  var parent = this.selectionModel;
+  var cell = 0 < parent.cells.length ? parent.cells[0] : null;
+  if (1 < parent.cells.length) {
+    parent.clear();
   }
-  cell = null != source ? this.model.getParent(source) : this.getDefaultParent();
-  var childCount = this.model.getChildCount(cell);
-  if (null == source && 0 < childCount) {
-    parent = this.model.getChildAt(cell, 0);
-    this.setSelectionCell(parent);
+  parent = null != cell ? this.model.getParent(cell) : this.getDefaultParent();
+  var childCount = this.model.getChildCount(parent);
+  if (null == cell && 0 < childCount) {
+    terminal = this.model.getChildAt(parent, 0);
+    this.setSelectionCell(terminal);
   } else {
-    if (null != source && !isNext || (null == this.view.getState(cell) || null == this.model.getGeometry(cell))) {
-      if (null != source && isChild) {
-        if (0 < this.model.getChildCount(source)) {
-          parent = this.model.getChildAt(source, 0);
-          this.setSelectionCell(parent);
+    if (null != cell && !isNext || (null == this.view.getState(parent) || null == this.model.getGeometry(parent))) {
+      if (null != cell && isChild) {
+        if (0 < this.model.getChildCount(cell)) {
+          terminal = this.model.getChildAt(cell, 0);
+          this.setSelectionCell(terminal);
         }
       } else {
         if (0 < childCount) {
-          isNext = cell.getIndex(source);
-          if (parent) {
+          isNext = parent.getIndex(cell);
+          if (terminal) {
             isNext++;
-            parent = this.model.getChildAt(cell, isNext % childCount);
+            terminal = this.model.getChildAt(parent, isNext % childCount);
           } else {
             isNext--;
-            parent = this.model.getChildAt(cell, 0 > isNext ? childCount - 1 : isNext);
+            terminal = this.model.getChildAt(parent, 0 > isNext ? childCount - 1 : isNext);
           }
-          this.setSelectionCell(parent);
+          this.setSelectionCell(terminal);
         }
       }
     } else {
-      if (this.getCurrentRoot() != cell) {
-        this.setSelectionCell(cell);
+      if (this.getCurrentRoot() != parent) {
+        this.setSelectionCell(parent);
       }
     }
   }
 };
-mxGraph.prototype.selectAll = function(parent, cells) {
+mxGraph.prototype.selectAll = function(parent, descendants) {
   parent = parent || this.getDefaultParent();
-  cells = cells ? this.model.filterDescendants(mxUtils.bind(this, function(cell) {
+  var cells = descendants ? this.model.filterDescendants(mxUtils.bind(this, function(cell) {
     return cell != parent && null != this.view.getState(cell);
   }), parent) : this.model.getChildren(parent);
   if (null != cells) {
@@ -25142,26 +25216,25 @@ mxGraph.prototype.isEventIgnored = function(evtName, me, sender) {
     mxEvent.removeGestureListeners(this.eventSource, null, this.mouseMoveRedirect, this.mouseUpRedirect);
     this.eventSource = this.mouseUpRedirect = this.mouseMoveRedirect = null;
   } else {
-    if (!mxClient.IS_GC && (null != this.eventSource && me.getSource() != this.eventSource)) {
-      result = true;
-    } else {
-      if (mxClient.IS_TOUCH && (evtName == mxEvent.MOUSE_DOWN && (!mouseEvent && !mxEvent.isPenEvent(me.getEvent())))) {
-        this.eventSource = me.getSource();
-        var pointerId = null;
-        if (!(!mxClient.IS_ANDROID && (mxClient.IS_LINUX && mxClient.IS_GC))) {
-          pointerId = me.getEvent().pointerId;
-        }
-        this.mouseMoveRedirect = mxUtils.bind(this, function(evt) {
-          if (!(null != pointerId && evt.pointerId != pointerId)) {
-            this.fireMouseEvent(mxEvent.MOUSE_MOVE, new mxMouseEvent(evt, this.getStateForTouchEvent(evt)));
+    if (mxClient.IS_GC || (null == this.eventSource || me.getSource() == this.eventSource)) {
+      if (!!mxClient.IS_TOUCH) {
+        if (!(evtName != mxEvent.MOUSE_DOWN)) {
+          if (!mouseEvent) {
+            if (!mxEvent.isPenEvent(me.getEvent())) {
+              this.eventSource = me.getSource();
+              this.mouseMoveRedirect = mxUtils.bind(this, function(evt) {
+                this.fireMouseEvent(mxEvent.MOUSE_MOVE, new mxMouseEvent(evt, this.getStateForTouchEvent(evt)));
+              });
+              this.mouseUpRedirect = mxUtils.bind(this, function(evt) {
+                this.fireMouseEvent(mxEvent.MOUSE_UP, new mxMouseEvent(evt, this.getStateForTouchEvent(evt)));
+              });
+              mxEvent.addGestureListeners(this.eventSource, null, this.mouseMoveRedirect, this.mouseUpRedirect);
+            }
           }
-        });
-        this.mouseUpRedirect = mxUtils.bind(this, function(evt) {
-          this.fireMouseEvent(mxEvent.MOUSE_UP, new mxMouseEvent(evt, this.getStateForTouchEvent(evt)));
-          pointerId = null;
-        });
-        mxEvent.addGestureListeners(this.eventSource, null, this.mouseMoveRedirect, this.mouseUpRedirect);
+        }
       }
+    } else {
+      result = true;
     }
   }
   if (this.isSyntheticEventIgnored(evtName, me, sender)) {
@@ -25212,39 +25285,11 @@ mxGraph.prototype.isSyntheticEventIgnored = function(evtName, me, sender) {
 mxGraph.prototype.isEventSourceIgnored = function(evtName, me) {
   var source = me.getSource();
   var tr = null != source.nodeName ? source.nodeName.toLowerCase() : "";
-  me = !mxEvent.isMouseEvent(me.getEvent()) || mxEvent.isLeftMouseButton(me.getEvent());
-  return evtName == mxEvent.MOUSE_DOWN && (me && ("select" == tr || ("option" == tr || "input" == tr && ("checkbox" != source.type && ("radio" != source.type && ("button" != source.type && ("submit" != source.type && "file" != source.type)))))));
+  var candidate = !mxEvent.isMouseEvent(me.getEvent()) || mxEvent.isLeftMouseButton(me.getEvent());
+  return evtName == mxEvent.MOUSE_DOWN && (candidate && ("select" == tr || ("option" == tr || "input" == tr && ("checkbox" != source.type && ("radio" != source.type && ("button" != source.type && ("submit" != source.type && "file" != source.type)))))));
 };
 mxGraph.prototype.getEventState = function(state) {
   return state;
-};
-mxGraph.prototype.isPointerEventIgnored = function(evtName, me) {
-  var isPointerEventIgnored = false;
-  if (mxClient.IS_ANDROID || (!mxClient.IS_LINUX || !mxClient.IS_GC)) {
-    var currentPointerId = me.getEvent().pointerId;
-    if (evtName == mxEvent.MOUSE_DOWN) {
-      if (null != this.currentPointerId && this.currentPointerId != currentPointerId) {
-        isPointerEventIgnored = true;
-      } else {
-        if (null == this.currentPointerId) {
-          this.currentPointerId = me.getEvent().pointerId;
-        }
-      }
-    } else {
-      if (evtName == mxEvent.MOUSE_MOVE) {
-        if (null != this.currentPointerId) {
-          if (this.currentPointerId != currentPointerId) {
-            isPointerEventIgnored = true;
-          }
-        }
-      } else {
-        if (evtName == mxEvent.MOUSE_UP) {
-          this.currentPointerId = null;
-        }
-      }
-    }
-  }
-  return isPointerEventIgnored;
 };
 mxGraph.prototype.fireMouseEvent = function(evtName, me, sender) {
   if (this.isEventSourceIgnored(evtName, me)) {
@@ -25252,117 +25297,113 @@ mxGraph.prototype.fireMouseEvent = function(evtName, me, sender) {
       this.tooltipHandler.hide();
     }
   } else {
-    if (this.isPointerEventIgnored(evtName, me)) {
-      this.tapAndHoldValid = false;
-    } else {
-      if (null == sender) {
-        sender = this;
-      }
-      me = this.updateMouseEvent(me, evtName);
-      if (!this.nativeDblClickEnabled && !mxEvent.isPopupTrigger(me.getEvent()) || this.doubleTapEnabled && (mxClient.IS_TOUCH && (mxEvent.isTouchEvent(me.getEvent()) || mxEvent.isPenEvent(me.getEvent())))) {
-        var s = (new Date).getTime();
-        if (evtName == mxEvent.MOUSE_DOWN) {
-          if (null != this.lastTouchEvent && (this.lastTouchEvent != me.getEvent() && (s - this.lastTouchTime < this.doubleTapTimeout && (Math.abs(this.lastTouchX - me.getX()) < this.doubleTapTolerance && (Math.abs(this.lastTouchY - me.getY()) < this.doubleTapTolerance && 2 > this.doubleClickCounter))))) {
-            if (this.doubleClickCounter++, s = false, evtName == mxEvent.MOUSE_UP ? me.getCell() == this.lastTouchCell && (null != this.lastTouchCell && (this.lastTouchTime = 0, s = this.lastTouchCell, this.lastTouchCell = null, this.dblClick(me.getEvent(), s), s = true)) : (this.fireDoubleClick = true, this.lastTouchTime = 0), s) {
-              mxEvent.consume(me.getEvent());
-              return;
-            }
-          } else {
-            if (null == this.lastTouchEvent || this.lastTouchEvent != me.getEvent()) {
-              this.lastTouchCell = me.getCell();
-              this.lastTouchX = me.getX();
-              this.lastTouchY = me.getY();
-              this.lastTouchTime = s;
-              this.lastTouchEvent = me.getEvent();
-              this.doubleClickCounter = 0;
-            }
-          }
-        } else {
-          if ((this.isMouseDown || evtName == mxEvent.MOUSE_UP) && this.fireDoubleClick) {
-            this.fireDoubleClick = false;
-            s = this.lastTouchCell;
-            this.lastTouchCell = null;
-            this.isMouseDown = false;
-            if ((null != s || (mxEvent.isTouchEvent(me.getEvent()) || mxEvent.isPenEvent(me.getEvent())) && (mxClient.IS_GC || mxClient.IS_SF)) && (Math.abs(this.lastTouchX - me.getX()) < this.doubleTapTolerance && Math.abs(this.lastTouchY - me.getY()) < this.doubleTapTolerance)) {
-              this.dblClick(me.getEvent(), s);
-            } else {
-              mxEvent.consume(me.getEvent());
-            }
+    if (null == sender) {
+      sender = this;
+    }
+    me = this.updateMouseEvent(me, evtName);
+    if (!this.nativeDblClickEnabled && !mxEvent.isPopupTrigger(me.getEvent()) || this.doubleTapEnabled && (mxClient.IS_TOUCH && (mxEvent.isTouchEvent(me.getEvent()) || mxEvent.isPenEvent(me.getEvent())))) {
+      var s = (new Date).getTime();
+      if (!mxClient.IS_QUIRKS && evtName == mxEvent.MOUSE_DOWN || mxClient.IS_QUIRKS && (evtName == mxEvent.MOUSE_UP && !this.fireDoubleClick)) {
+        if (null != this.lastTouchEvent && (this.lastTouchEvent != me.getEvent() && (s - this.lastTouchTime < this.doubleTapTimeout && (Math.abs(this.lastTouchX - me.getX()) < this.doubleTapTolerance && (Math.abs(this.lastTouchY - me.getY()) < this.doubleTapTolerance && 2 > this.doubleClickCounter))))) {
+          if (this.doubleClickCounter++, s = false, evtName == mxEvent.MOUSE_UP ? me.getCell() == this.lastTouchCell && (null != this.lastTouchCell && (this.lastTouchTime = 0, s = this.lastTouchCell, this.lastTouchCell = null, mxClient.IS_QUIRKS && me.getSource().fireEvent("ondblclick"), this.dblClick(me.getEvent(), s), s = true)) : (this.fireDoubleClick = true, this.lastTouchTime = 0), !mxClient.IS_QUIRKS || s) {
+            mxEvent.consume(me.getEvent());
             return;
           }
+        } else {
+          if (null == this.lastTouchEvent || this.lastTouchEvent != me.getEvent()) {
+            this.lastTouchCell = me.getCell();
+            this.lastTouchX = me.getX();
+            this.lastTouchY = me.getY();
+            this.lastTouchTime = s;
+            this.lastTouchEvent = me.getEvent();
+            this.doubleClickCounter = 0;
+          }
+        }
+      } else {
+        if ((this.isMouseDown || evtName == mxEvent.MOUSE_UP) && this.fireDoubleClick) {
+          this.fireDoubleClick = false;
+          s = this.lastTouchCell;
+          this.lastTouchCell = null;
+          this.isMouseDown = false;
+          if ((null != s || (mxEvent.isTouchEvent(me.getEvent()) || mxEvent.isPenEvent(me.getEvent())) && (mxClient.IS_GC || mxClient.IS_SF)) && (Math.abs(this.lastTouchX - me.getX()) < this.doubleTapTolerance && Math.abs(this.lastTouchY - me.getY()) < this.doubleTapTolerance)) {
+            this.dblClick(me.getEvent(), s);
+          } else {
+            mxEvent.consume(me.getEvent());
+          }
+          return;
         }
       }
-      if (!this.isEventIgnored(evtName, me, sender)) {
-        me.state = this.getEventState(me.getState());
-        this.fireEvent(new mxEventObject(mxEvent.FIRE_MOUSE_EVENT, "eventName", evtName, "event", me));
-        if (mxClient.IS_OP || (mxClient.IS_SF || (mxClient.IS_GC || (mxClient.IS_IE11 || (mxClient.IS_IE && mxClient.IS_SVG || me.getEvent().target != this.container))))) {
-          if (evtName == mxEvent.MOUSE_MOVE && (this.isMouseDown && (this.autoScroll && !mxEvent.isMultiTouchEvent(me.getEvent)))) {
-            this.scrollPointToVisible(me.getGraphX(), me.getGraphY(), this.autoExtend);
-          } else {
-            if (evtName == mxEvent.MOUSE_UP && (this.ignoreScrollbars && (this.translateToScrollPosition && (0 != this.container.scrollLeft || 0 != this.container.scrollTop)))) {
-              s = this.view.scale;
-              var tr = this.view.translate;
-              this.view.setTranslate(tr.x - this.container.scrollLeft / s, tr.y - this.container.scrollTop / s);
-              this.container.scrollLeft = 0;
-              this.container.scrollTop = 0;
-            }
+    }
+    if (!this.isEventIgnored(evtName, me, sender)) {
+      me.state = this.getEventState(me.getState());
+      this.fireEvent(new mxEventObject(mxEvent.FIRE_MOUSE_EVENT, "eventName", evtName, "event", me));
+      if (mxClient.IS_OP || (mxClient.IS_SF || (mxClient.IS_GC || (mxClient.IS_IE11 || (mxClient.IS_IE && mxClient.IS_SVG || me.getEvent().target != this.container))))) {
+        if (evtName == mxEvent.MOUSE_MOVE && (this.isMouseDown && (this.autoScroll && !mxEvent.isMultiTouchEvent(me.getEvent)))) {
+          this.scrollPointToVisible(me.getGraphX(), me.getGraphY(), this.autoExtend);
+        } else {
+          if (evtName == mxEvent.MOUSE_UP && (this.ignoreScrollbars && (this.translateToScrollPosition && (0 != this.container.scrollLeft || 0 != this.container.scrollTop)))) {
+            s = this.view.scale;
+            var tr = this.view.translate;
+            this.view.setTranslate(tr.x - this.container.scrollLeft / s, tr.y - this.container.scrollTop / s);
+            this.container.scrollLeft = 0;
+            this.container.scrollTop = 0;
           }
-          if (null != this.mouseListeners) {
-            s = [sender, me];
-            if (!me.getEvent().preventDefault) {
-              me.getEvent().returnValue = true;
-            }
-            for (tr = 0;tr < this.mouseListeners.length;tr++) {
-              var state = this.mouseListeners[tr];
-              if (evtName == mxEvent.MOUSE_DOWN) {
-                state.mouseDown.apply(state, s);
+        }
+        if (null != this.mouseListeners) {
+          s = [sender, me];
+          if (!me.getEvent().preventDefault) {
+            me.getEvent().returnValue = true;
+          }
+          for (tr = 0;tr < this.mouseListeners.length;tr++) {
+            var state = this.mouseListeners[tr];
+            if (evtName == mxEvent.MOUSE_DOWN) {
+              state.mouseDown.apply(state, s);
+            } else {
+              if (evtName == mxEvent.MOUSE_MOVE) {
+                state.mouseMove.apply(state, s);
               } else {
-                if (evtName == mxEvent.MOUSE_MOVE) {
-                  state.mouseMove.apply(state, s);
-                } else {
-                  if (evtName == mxEvent.MOUSE_UP) {
-                    state.mouseUp.apply(state, s);
-                  }
+                if (evtName == mxEvent.MOUSE_UP) {
+                  state.mouseUp.apply(state, s);
                 }
               }
             }
           }
-          if (evtName == mxEvent.MOUSE_UP) {
-            this.click(me);
-          }
         }
-        if ((mxEvent.isTouchEvent(me.getEvent()) || mxEvent.isPenEvent(me.getEvent())) && (evtName == mxEvent.MOUSE_DOWN && (this.tapAndHoldEnabled && !this.tapAndHoldInProgress))) {
-          this.tapAndHoldInProgress = true;
-          this.initialTouchX = me.getGraphX();
-          this.initialTouchY = me.getGraphY();
-          if (this.tapAndHoldThread) {
-            window.clearTimeout(this.tapAndHoldThread);
-          }
-          this.tapAndHoldThread = window.setTimeout(mxUtils.bind(this, function() {
-            if (this.tapAndHoldValid) {
-              this.tapAndHold(me);
-            }
-            this.tapAndHoldValid = this.tapAndHoldInProgress = false;
-          }), this.tapAndHoldDelay);
-          this.tapAndHoldValid = true;
-        } else {
-          if (evtName == mxEvent.MOUSE_UP) {
-            this.tapAndHoldValid = this.tapAndHoldInProgress = false;
-          } else {
-            if (this.tapAndHoldValid) {
-              this.tapAndHoldValid = Math.abs(this.initialTouchX - me.getGraphX()) < this.tolerance && Math.abs(this.initialTouchY - me.getGraphY()) < this.tolerance;
-            }
-          }
+        if (evtName == mxEvent.MOUSE_UP) {
+          this.click(me);
         }
-        if (evtName == mxEvent.MOUSE_DOWN) {
-          if (this.isEditing()) {
-            if (!this.cellEditor.isEventSource(me.getEvent())) {
-              this.stopEditing(!this.isInvokesStopCellEditing());
-            }
-          }
-        }
-        this.consumeMouseEvent(evtName, me, sender);
       }
+      if ((mxEvent.isTouchEvent(me.getEvent()) || mxEvent.isPenEvent(me.getEvent())) && (evtName == mxEvent.MOUSE_DOWN && (this.tapAndHoldEnabled && !this.tapAndHoldInProgress))) {
+        this.tapAndHoldInProgress = true;
+        this.initialTouchX = me.getGraphX();
+        this.initialTouchY = me.getGraphY();
+        if (this.tapAndHoldThread) {
+          window.clearTimeout(this.tapAndHoldThread);
+        }
+        this.tapAndHoldThread = window.setTimeout(mxUtils.bind(this, function() {
+          if (this.tapAndHoldValid) {
+            this.tapAndHold(me);
+          }
+          this.tapAndHoldValid = this.tapAndHoldInProgress = false;
+        }), this.tapAndHoldDelay);
+        this.tapAndHoldValid = true;
+      } else {
+        if (evtName == mxEvent.MOUSE_UP) {
+          this.tapAndHoldValid = this.tapAndHoldInProgress = false;
+        } else {
+          if (this.tapAndHoldValid) {
+            this.tapAndHoldValid = Math.abs(this.initialTouchX - me.getGraphX()) < this.tolerance && Math.abs(this.initialTouchY - me.getGraphY()) < this.tolerance;
+          }
+        }
+      }
+      if (evtName == mxEvent.MOUSE_DOWN) {
+        if (this.isEditing()) {
+          if (!this.cellEditor.isEventSource(me.getEvent())) {
+            this.stopEditing(!this.isInvokesStopCellEditing());
+          }
+        }
+      }
+      this.consumeMouseEvent(evtName, me, sender);
     }
   }
 };
@@ -25461,30 +25502,105 @@ function mxOutline(source, container) {
   }
 }
 mxOutline.prototype.source = null;
-mxOutline.prototype.container = null;
+mxOutline.prototype.outline = null;
+mxOutline.prototype.graphRenderHint = mxConstants.RENDERING_HINT_FASTER;
 mxOutline.prototype.enabled = true;
+mxOutline.prototype.showViewport = true;
+mxOutline.prototype.border = 10;
+mxOutline.prototype.sizerSize = 8;
+mxOutline.prototype.labelsVisible = false;
+mxOutline.prototype.updateOnPan = false;
+mxOutline.prototype.sizerImage = null;
+mxOutline.prototype.minScale = 1E-4;
 mxOutline.prototype.suspended = false;
-mxOutline.prototype.border = 14;
-mxOutline.prototype.opacity = mxClient.IS_IE11 ? 0.9 : 0.7;
+mxOutline.prototype.forceVmlHandles = 8 == document.documentMode;
+mxOutline.prototype.createGraph = function(container) {
+  container = new mxGraph(container, this.source.getModel(), this.graphRenderHint, this.source.getStylesheet());
+  container.foldingEnabled = false;
+  container.autoScroll = false;
+  return container;
+};
 mxOutline.prototype.init = function(container) {
-  this.container = container;
+  this.outline = this.createGraph(container);
+  var outlineGraphModelChanged = this.outline.graphModelChanged;
+  this.outline.graphModelChanged = mxUtils.bind(this, function(flex) {
+    if (!this.suspended) {
+      if (!(null == this.outline)) {
+        outlineGraphModelChanged.apply(this.outline, arguments);
+      }
+    }
+  });
+  if (mxClient.IS_SVG) {
+    container = this.outline.getView().getCanvas().parentNode;
+    container.setAttribute("shape-rendering", "optimizeSpeed");
+    container.setAttribute("image-rendering", "optimizeSpeed");
+  }
+  this.outline.labelsVisible = this.labelsVisible;
+  this.outline.setEnabled(false);
   this.updateHandler = mxUtils.bind(this, function(flex, editor) {
-    this.update(true);
+    if (!this.suspended) {
+      if (!this.active) {
+        this.update();
+      }
+    }
   });
   this.source.getModel().addListener(mxEvent.CHANGE, this.updateHandler);
-  this.source.addListener(mxEvent.REFRESH, this.updateHandler);
+  this.outline.addMouseListener(this);
   container = this.source.getView();
-  container.addListener(mxEvent.UP, this.updateHandler);
-  container.addListener(mxEvent.DOWN, this.updateHandler);
   container.addListener(mxEvent.SCALE, this.updateHandler);
   container.addListener(mxEvent.TRANSLATE, this.updateHandler);
   container.addListener(mxEvent.SCALE_AND_TRANSLATE, this.updateHandler);
-  this.scrollHandler = mxUtils.bind(this, function(flex, editor) {
-    this.update(false);
+  container.addListener(mxEvent.DOWN, this.updateHandler);
+  container.addListener(mxEvent.UP, this.updateHandler);
+  mxEvent.addListener(this.source.container, "scroll", this.updateHandler);
+  this.panHandler = mxUtils.bind(this, function(flex) {
+    if (this.updateOnPan) {
+      this.updateHandler.apply(this, arguments);
+    }
   });
-  mxEvent.addListener(this.source.container, "scroll", this.scrollHandler);
-  this.source.addListener(mxEvent.PAN, this.scrollHandler);
-  this.update(true);
+  this.source.addListener(mxEvent.PAN, this.panHandler);
+  this.refreshHandler = mxUtils.bind(this, function(flex) {
+    this.outline.setStylesheet(this.source.getStylesheet());
+    this.outline.refresh();
+  });
+  this.source.addListener(mxEvent.REFRESH, this.refreshHandler);
+  this.bounds = new mxRectangle(0, 0, 0, 0);
+  this.selectionBorder = new mxRectangleShape(this.bounds, null, mxConstants.OUTLINE_COLOR, mxConstants.OUTLINE_STROKEWIDTH);
+  this.selectionBorder.dialect = this.outline.dialect;
+  if (this.forceVmlHandles) {
+    this.selectionBorder.isHtmlAllowed = function() {
+      return false;
+    };
+  }
+  this.selectionBorder.init(this.outline.getView().getOverlayPane());
+  container = mxUtils.bind(this, function(evt) {
+    var node = mxEvent.getSource(evt);
+    var dragHandler = mxUtils.bind(this, function(evt) {
+      this.outline.fireMouseEvent(mxEvent.MOUSE_MOVE, new mxMouseEvent(evt));
+    });
+    var dropHandler = mxUtils.bind(this, function(evt) {
+      mxEvent.removeGestureListeners(node, null, dragHandler, dropHandler);
+      this.outline.fireMouseEvent(mxEvent.MOUSE_UP, new mxMouseEvent(evt));
+    });
+    mxEvent.addGestureListeners(node, null, dragHandler, dropHandler);
+    this.outline.fireMouseEvent(mxEvent.MOUSE_DOWN, new mxMouseEvent(evt));
+  });
+  mxEvent.addGestureListeners(this.selectionBorder.node, container);
+  this.sizer = this.createSizer();
+  if (this.forceVmlHandles) {
+    this.sizer.isHtmlAllowed = function() {
+      return false;
+    };
+  }
+  this.sizer.init(this.outline.getView().getOverlayPane());
+  if (this.enabled) {
+    this.sizer.node.style.cursor = "nwse-resize";
+  }
+  mxEvent.addGestureListeners(this.sizer.node, container);
+  this.selectionBorder.node.style.display = this.showViewport ? "" : "none";
+  this.sizer.node.style.display = this.selectionBorder.node.style.display;
+  this.selectionBorder.node.style.cursor = "move";
+  this.update(false);
 };
 mxOutline.prototype.isEnabled = function() {
   return this.enabled;
@@ -25492,202 +25608,193 @@ mxOutline.prototype.isEnabled = function() {
 mxOutline.prototype.setEnabled = function(value) {
   this.enabled = value;
 };
-mxOutline.prototype.isSuspended = function() {
-  return this.suspended;
+mxOutline.prototype.setZoomEnabled = function(value) {
+  this.sizer.node.style.visibility = value ? "visible" : "hidden";
 };
-mxOutline.prototype.setSuspended = function(flex) {
-  this.suspended = flex;
+mxOutline.prototype.refresh = function() {
   this.update(true);
 };
-mxOutline.prototype.isScrolling = function() {
-  return this.source.useScrollbarsForPanning && mxUtils.hasScrollbars(this.source.container);
+mxOutline.prototype.createSizer = function() {
+  var sizer = null != this.sizerImage ? new mxImageShape(new mxRectangle(0, 0, this.sizerImage.width, this.sizerImage.height), this.sizerImage.src) : new mxRectangleShape(new mxRectangle(0, 0, this.sizerSize, this.sizerSize), mxConstants.OUTLINE_HANDLE_FILLCOLOR, mxConstants.OUTLINE_HANDLE_STROKECOLOR);
+  sizer.dialect = this.outline.dialect;
+  return sizer;
 };
-mxOutline.prototype.createSvg = function() {
-  var node = document.createElementNS(mxConstants.NS_SVG, "svg");
-  node.style.position = "absolute";
-  node.style.left = "0px";
-  node.style.top = "0px";
-  node.style.width = "100%";
-  node.style.height = "100%";
-  node.style.display = "block";
-  node.style.padding = this.border + "px";
-  node.style.boxSizing = "border-box";
-  node.style.overflow = "visible";
-  node.style.cursor = "default";
-  node.setAttribute("shape-rendering", "optimizeSpeed");
-  node.setAttribute("image-rendering", "optimizeSpeed");
-  return node;
+mxOutline.prototype.getSourceContainerSize = function() {
+  return new mxRectangle(0, 0, this.source.container.scrollWidth, this.source.container.scrollHeight);
 };
-mxOutline.prototype.addGestureListeners = function(node) {
-  var offset = null;
-  var top = 0;
-  var left = 0;
-  var scale = 1;
-  var funct = mxUtils.bind(this, function(evt) {
-    if (this.isEnabled()) {
-      offset = new mxPoint(mxEvent.getClientX(evt), mxEvent.getClientY(evt));
-      var dx = node.clientWidth - 2 * this.border;
-      var y = node.clientHeight - 2 * this.border;
-      var bounds = this.getViewBox();
-      scale = Math.max(bounds.width / dx, bounds.height / y);
-      if (mxEvent.getSource(evt) != this.viewport) {
-        if (this.isScrolling()) {
-          dx -= bounds.width / scale;
-          y -= bounds.height / scale;
-          var r = this.svg.getBoundingClientRect();
-          this.source.container.scrollLeft = bounds.x - dx * scale / 2 + (offset.x - this.border - r.left) * scale;
-          this.source.container.scrollTop = bounds.y - y * scale / 2 + (offset.y - this.border - r.top) * scale;
-        } else {
-          bounds = this.source.view.translate;
-          y = this.viewport.getBoundingClientRect();
-          dx = (mxEvent.getClientX(evt) - y.left) * scale / this.source.view.scale;
-          y = (mxEvent.getClientY(evt) - y.top) * scale / this.source.view.scale;
-          this.source.getView().setTranslate(bounds.x - dx, bounds.y - y);
-          this.source.panGraph(0, 0);
-        }
-      }
-      mxEvent.addGestureListeners(document, null, dragHandler, dropHandler);
-      top = this.source.container.scrollLeft;
-      left = this.source.container.scrollTop;
-      mxEvent.consume(evt);
-    }
-  });
-  var dragHandler = mxUtils.bind(this, function(evt) {
-    if (this.isEnabled()) {
-      if (null != offset) {
-        if (this.isScrolling()) {
-          this.source.container.scrollLeft = top + (mxEvent.getClientX(evt) - offset.x) * scale;
-          this.source.container.scrollTop = left + (mxEvent.getClientY(evt) - offset.y) * scale;
-        } else {
-          this.source.panGraph((offset.x - mxEvent.getClientX(evt)) * scale, (offset.y - mxEvent.getClientY(evt)) * scale);
-        }
-        mxEvent.consume(evt);
-      }
-    }
-  });
-  var dropHandler = mxUtils.bind(this, function(evt) {
-    if (this.isEnabled() && null != offset) {
-      if (!this.isScrolling()) {
-        var dx = (mxEvent.getClientX(evt) - offset.x) * scale / this.source.view.scale;
-        var dy = (mxEvent.getClientY(evt) - offset.y) * scale / this.source.view.scale;
-        var t = this.source.view.translate;
-        this.source.getView().setTranslate(t.x - dx, t.y - dy);
-        this.source.panGraph(0, 0);
-      }
-      mxEvent.removeGestureListeners(document, null, dragHandler, dropHandler);
-      mxEvent.consume(evt);
-      offset = null;
-    }
-  });
-  mxEvent.addGestureListeners(node, funct, dragHandler, dropHandler);
+mxOutline.prototype.getOutlineOffset = function(state) {
+  return null;
 };
-mxOutline.prototype.getViewBox = function() {
+mxOutline.prototype.getSourceGraphBounds = function() {
   return this.source.getGraphBounds();
 };
-mxOutline.prototype.updateSvg = function() {
-  if (null == this.svg) {
-    this.svg = this.createSvg();
-    this.addGestureListeners(this.svg);
-    this.container.appendChild(this.svg);
-  }
-  var bounds = this.getViewBox();
-  this.svg.setAttribute("viewBox", Math.round(bounds.x) + " " + Math.round(bounds.y) + " " + Math.round(bounds.width) + " " + Math.round(bounds.height));
-  bounds = this.source.background;
-  this.svg.style.backgroundColor = bounds == mxConstants.NONE ? "" : bounds;
-  this.updateDrawPane();
-};
-mxOutline.prototype.updateDrawPane = function() {
-  if (null != this.drawPane) {
-    this.drawPane.parentNode.removeChild(this.drawPane);
-  }
-  this.drawPane = this.source.view.getDrawPane().cloneNode(true);
-  this.drawPane.style.opacity = this.opacity;
-  this.processSvg(this.drawPane);
-  if (null != this.viewport) {
-    this.svg.insertBefore(this.drawPane, this.viewport);
-  } else {
-    this.svg.appendChild(this.drawPane);
-  }
-};
-mxOutline.prototype.processSvg = function(doc) {
-  var b = mxClient.IS_IE11 ? Math.max(1, this.source.view.scale) : this.source.view.scale;
-  Array.prototype.slice.call(doc.getElementsByTagName("*")).forEach(mxUtils.bind(this, function(node) {
-    if ("text" != node.nodeName && ("foreignObject" != node.nodeName && ("hidden" != node.getAttribute("visibility") && node instanceof SVGElement))) {
-      var t = parseInt(node.getAttribute("stroke-width") || 1);
-      if (!isNaN(t)) {
-        node.setAttribute("stroke-width", Math.max(mxClient.IS_IE11 ? 4 : 1, t / (5 * b)));
+mxOutline.prototype.update = function(me) {
+  if (null != this.source && (null != this.source.container && (null != this.outline && null != this.outline.container))) {
+    var b2 = this.source.view.scale;
+    var b = this.getSourceGraphBounds();
+    b = new mxRectangle(b.x / b2 + this.source.panDx, b.y / b2 + this.source.panDy, b.width / b2, b.height / b2);
+    var s = new mxRectangle(0, 0, this.source.container.clientWidth / b2, this.source.container.clientHeight / b2);
+    var t = b.clone();
+    t.add(s);
+    s = this.getSourceContainerSize();
+    b2 = Math.min(Math.max(0, this.outline.container.clientWidth - this.border) / Math.max(s.width / b2, t.width), Math.max(0, this.outline.container.clientHeight - this.border) / Math.max(s.height / b2, t.height));
+    s = isNaN(b2) ? this.minScale : Math.max(this.minScale, b2);
+    if (0 < s) {
+      if (this.outline.getView().scale != s) {
+        this.outline.getView().scale = s;
+        me = true;
       }
-      node.setAttribute("vector-effect", "non-scaling-stroke");
-      node.style.cursor = "";
-    } else {
-      node.parentNode.removeChild(node);
-    }
-  }));
-};
-mxOutline.prototype.updateViewport = function() {
-  if (null != this.svg) {
-    if (null == this.viewport) {
-      this.viewport = this.createViewport();
-      this.svg.appendChild(this.viewport);
-    }
-    var s = this.source.container;
-    s = new mxRectangle(s.scrollLeft, s.scrollTop, s.clientWidth, s.clientHeight);
-    if (!this.isScrolling()) {
-      s.x = -this.source.panDx;
-      s.y = -this.source.panDy;
-    }
-    this.viewport.setAttribute("x", s.x);
-    this.viewport.setAttribute("y", s.y);
-    this.viewport.setAttribute("width", s.width);
-    this.viewport.setAttribute("height", s.height);
-  }
-};
-mxOutline.prototype.createViewport = function() {
-  var node = this.svg.ownerDocument.createElementNS(mxConstants.NS_SVG, "rect");
-  node.setAttribute("stroke-width", mxClient.IS_IE11 ? "12" : "3");
-  node.setAttribute("stroke", HoverIcons.prototype.arrowFill);
-  node.setAttribute("fill", HoverIcons.prototype.arrowFill);
-  node.setAttribute("vector-effect", "non-scaling-stroke");
-  node.setAttribute("fill-opacity", 0.2);
-  node.style.cursor = "move";
-  return node;
-};
-mxOutline.prototype.update = function(revalidate) {
-  if (null != this.source) {
-    if (null != this.source.container) {
-      if (null != this.thread) {
-        window.clearTimeout(this.thread);
-        this.thread = null;
+      b2 = this.outline.getView();
+      if (b2.currentRoot != this.source.getView().currentRoot) {
+        b2.setCurrentRoot(this.source.getView().currentRoot);
       }
-      this.fullUpdate = this.fullUpdate || revalidate;
-      this.thread = window.setTimeout(mxUtils.bind(this, function() {
-        if (!this.isSuspended()) {
-          if (this.fullUpdate) {
-            this.updateSvg();
-          }
-          this.updateViewport();
+      t = this.source.view.translate;
+      var x = t.x + this.source.panDx;
+      var y = t.y + this.source.panDy;
+      s = this.getOutlineOffset(s);
+      if (null != s) {
+        x += s.x;
+        y += s.y;
+      }
+      if (0 > b.x) {
+        x -= b.x;
+      }
+      if (0 > b.y) {
+        y -= b.y;
+      }
+      if (b2.translate.x != x || b2.translate.y != y) {
+        b2.translate.x = x;
+        b2.translate.y = y;
+        me = true;
+      }
+      b = b2.translate;
+      s = this.source.getView().scale;
+      x = s / b2.scale;
+      y = 1 / b2.scale;
+      var container = this.source.container;
+      this.bounds = new mxRectangle((b.x - t.x - this.source.panDx) / y, (b.y - t.y - this.source.panDy) / y, container.clientWidth / x, container.clientHeight / x);
+      this.bounds.x += this.source.container.scrollLeft * b2.scale / s;
+      this.bounds.y += this.source.container.scrollTop * b2.scale / s;
+      b = this.selectionBorder.bounds;
+      if (b.x != this.bounds.x || (b.y != this.bounds.y || (b.width != this.bounds.width || b.height != this.bounds.height))) {
+        this.selectionBorder.bounds = this.bounds;
+        this.selectionBorder.redraw();
+      }
+      b = this.sizer.bounds;
+      b2 = new mxRectangle(this.bounds.x + this.bounds.width - b.width / 2, this.bounds.y + this.bounds.height - b.height / 2, b.width, b.height);
+      if (b.x != b2.x || (b.y != b2.y || (b.width != b2.width || b.height != b2.height))) {
+        this.sizer.bounds = b2;
+        if ("hidden" != this.sizer.node.style.visibility) {
+          this.sizer.redraw();
         }
-        this.thread = this.fullUpdate = null;
-      }), this.isScrolling() ? 10 : 0);
+      }
+      if (me) {
+        this.outline.view.revalidate();
+      }
     }
+  }
+};
+mxOutline.prototype.mouseDown = function(evt, me) {
+  if (this.enabled && this.showViewport) {
+    var x = mxEvent.isMouseEvent(me.getEvent()) ? 0 : this.source.tolerance;
+    x = this.source.allowHandleBoundsCheck && (mxClient.IS_IE || 0 < x) ? new mxRectangle(me.getGraphX() - x, me.getGraphY() - x, 2 * x, 2 * x) : null;
+    this.zoom = me.isSource(this.sizer) || null != x && mxUtils.intersects(shape.bounds, x);
+    this.startX = me.getX();
+    this.startY = me.getY();
+    this.active = true;
+    if (this.source.useScrollbarsForPanning && mxUtils.hasScrollbars(this.source.container)) {
+      this.dx0 = this.source.container.scrollLeft;
+      this.dy0 = this.source.container.scrollTop;
+    } else {
+      this.dy0 = this.dx0 = 0;
+    }
+  }
+  me.consume();
+};
+mxOutline.prototype.mouseMove = function(sender, me) {
+  if (this.active) {
+    this.selectionBorder.node.style.display = this.showViewport ? "" : "none";
+    this.sizer.node.style.display = this.selectionBorder.node.style.display;
+    var bounds = this.getTranslateForEvent(me);
+    var dx = bounds.x;
+    var dy = bounds.y;
+    if (this.zoom) {
+      bounds = this.source.container;
+      dy = dx / (bounds.clientWidth / bounds.clientHeight);
+      bounds = new mxRectangle(this.bounds.x, this.bounds.y, Math.max(1, this.bounds.width + dx), Math.max(1, this.bounds.height + dy));
+      this.selectionBorder.bounds = bounds;
+      this.selectionBorder.redraw();
+    } else {
+      var s = this.outline.getView().scale;
+      bounds = new mxRectangle(this.bounds.x + dx, this.bounds.y + dy, this.bounds.width, this.bounds.height);
+      this.selectionBorder.bounds = bounds;
+      this.selectionBorder.redraw();
+      dx = dx / s * this.source.getView().scale;
+      dy = dy / s * this.source.getView().scale;
+      this.source.panGraph(-dx - this.dx0, -dy - this.dy0);
+    }
+    dx = this.sizer.bounds;
+    this.sizer.bounds = new mxRectangle(bounds.x + bounds.width - dx.width / 2, bounds.y + bounds.height - dx.height / 2, dx.width, dx.height);
+    if ("hidden" != this.sizer.node.style.visibility) {
+      this.sizer.redraw();
+    }
+    me.consume();
+  }
+};
+mxOutline.prototype.getTranslateForEvent = function(me) {
+  return new mxPoint(me.getX() - this.startX, me.getY() - this.startY);
+};
+mxOutline.prototype.mouseUp = function(sender, me) {
+  if (this.active) {
+    var dy = this.getTranslateForEvent(me);
+    var dx = dy.x;
+    dy = dy.y;
+    if (0 < Math.abs(dx) || 0 < Math.abs(dy)) {
+      if (this.zoom) {
+        dy = this.selectionBorder.bounds.width;
+        var t = this.source.getView().scale;
+        this.source.zoomTo(Math.max(this.minScale, t - dx * t / dy), false);
+      } else {
+        if (!(this.source.useScrollbarsForPanning && mxUtils.hasScrollbars(this.source.container))) {
+          this.source.panGraph(0, 0);
+          dx /= this.outline.getView().scale;
+          dy /= this.outline.getView().scale;
+          t = this.source.getView().translate;
+          this.source.getView().setTranslate(t.x - dx, t.y - dy);
+        }
+      }
+      this.update();
+      me.consume();
+    }
+    this.index = null;
+    this.active = false;
   }
 };
 mxOutline.prototype.destroy = function() {
-  if (null != this.svg) {
-    this.svg.parentNode.removeChild(this.svg);
-    this.svg = null;
-  }
   if (null != this.source) {
-    this.source.removeListener(this.updateHandler);
-    this.source.getView().removeListener(this.updateHandler);
+    this.source.removeListener(this.panHandler);
+    this.source.removeListener(this.refreshHandler);
     this.source.getModel().removeListener(this.updateHandler);
-    this.source.removeListener(mxEvent.PAN, this.scrollHandler);
-    mxEvent.removeListener(this.source.container, "scroll", this.scrollHandler);
+    this.source.getView().removeListener(this.updateHandler);
+    mxEvent.removeListener(this.source.container, "scroll", this.updateHandler);
     this.source = null;
   }
+  if (null != this.outline) {
+    this.outline.removeMouseListener(this);
+    this.outline.destroy();
+    this.outline = null;
+  }
+  if (null != this.selectionBorder) {
+    this.selectionBorder.destroy();
+    this.selectionBorder = null;
+  }
+  if (null != this.sizer) {
+    this.sizer.destroy();
+    this.sizer = null;
+  }
 };
-function mxMultiplicity(source, type, attr, value, min, max, validNeighbors, cell, typeError, validNeighborsAllowed) {
-  this.source = source;
+function mxMultiplicity(terminal, type, attr, value, min, max, validNeighbors, cell, source, validNeighborsAllowed) {
+  this.source = terminal;
   this.type = type;
   this.attr = attr;
   this.value = value;
@@ -25695,7 +25802,7 @@ function mxMultiplicity(source, type, attr, value, min, max, validNeighbors, cel
   this.max = null != max ? max : "n";
   this.validNeighbors = validNeighbors;
   this.countError = mxResources.get(cell) || cell;
-  this.typeError = mxResources.get(typeError) || typeError;
+  this.typeError = mxResources.get(source) || source;
   this.validNeighborsAllowed = null != validNeighborsAllowed ? validNeighborsAllowed : true;
 }
 mxMultiplicity.prototype.type = null;
@@ -25810,7 +25917,7 @@ mxLayoutManager.prototype.setGraph = function(graph) {
   }
 };
 mxLayoutManager.prototype.hasLayout = function(cell) {
-  return null != this.getLayout(cell, mxEvent.LAYOUT_CELLS);
+  return this.getLayout(cell, mxEvent.LAYOUT_CELLS);
 };
 mxLayoutManager.prototype.getLayout = function(cell, eventName) {
   return null;
@@ -25820,12 +25927,12 @@ mxLayoutManager.prototype.beforeUndo = function(undoableEdit) {
 };
 mxLayoutManager.prototype.cellsMoved = function(cells, evt) {
   if (null != cells && null != evt) {
-    evt = mxUtils.convertPoint(this.getGraph().container, mxEvent.getClientX(evt), mxEvent.getClientY(evt));
+    var point = mxUtils.convertPoint(this.getGraph().container, mxEvent.getClientX(evt), mxEvent.getClientY(evt));
     var model = this.getGraph().getModel();
     for (var i = 0;i < cells.length;i++) {
       var layout = this.getLayout(model.getParent(cells[i]), mxEvent.MOVE_CELLS);
       if (null != layout) {
-        layout.moveCell(cells[i], evt.x, evt.y);
+        layout.moveCell(cells[i], point.x, point.y);
       }
     }
   }
@@ -25853,14 +25960,14 @@ mxLayoutManager.prototype.getCellsForChanges = function(changes) {
   return result;
 };
 mxLayoutManager.prototype.getCellsForChange = function(change) {
-  return change instanceof mxChildChange ? this.addCellsWithLayout(change.child, this.addCellsWithLayout(change.previous)) : change instanceof mxValueChange || (change instanceof mxTerminalChange || (change instanceof mxGeometryChange || (change instanceof mxVisibleChange || change instanceof mxStyleChange))) ? this.addCellsWithLayout(change.cell) : [];
+  return change instanceof mxChildChange ? this.addCellsWithLayout(change.child, this.addCellsWithLayout(change.previous)) : change instanceof mxTerminalChange || (change instanceof mxGeometryChange || (change instanceof mxVisibleChange || change instanceof mxStyleChange)) ? this.addCellsWithLayout(change.cell) : [];
 };
 mxLayoutManager.prototype.addCellsWithLayout = function(cell, result) {
   return this.addDescendantsWithLayout(cell, this.addAncestorsWithLayout(cell, result));
 };
 mxLayoutManager.prototype.addAncestorsWithLayout = function(cell, result) {
   result = null != result ? result : [];
-  if (null != cell && (this.hasLayout(cell) && result.push(cell), this.isBubbling())) {
+  if (null != cell && (null != this.hasLayout(cell) && result.push(cell), this.isBubbling())) {
     var model = this.getGraph().getModel();
     this.addAncestorsWithLayout(model.getParent(cell), result);
   }
@@ -25881,15 +25988,9 @@ mxLayoutManager.prototype.addDescendantsWithLayout = function(cell, result) {
   return result;
 };
 mxLayoutManager.prototype.executeLayoutForCells = function(cells) {
-  var model = this.getGraph().getModel();
-  model.beginUpdate();
-  try {
-    var sorted = mxUtils.sortCells(cells, false);
-    this.layoutCells(sorted, true);
-    this.layoutCells(sorted.reverse(), false);
-  } finally {
-    model.endUpdate();
-  }
+  cells = mxUtils.sortCells(cells, false);
+  this.layoutCells(cells, true);
+  this.layoutCells(cells.reverse(), false);
 };
 mxLayoutManager.prototype.layoutCells = function(cells, bubble) {
   if (0 < cells.length) {
@@ -25912,9 +26013,9 @@ mxLayoutManager.prototype.layoutCells = function(cells, bubble) {
   }
 };
 mxLayoutManager.prototype.executeLayout = function(parent, bubble) {
-  bubble = this.getLayout(parent, bubble ? mxEvent.BEGIN_UPDATE : mxEvent.END_UPDATE);
-  if (null != bubble) {
-    bubble.execute(parent);
+  var layout = this.getLayout(parent, bubble ? mxEvent.BEGIN_UPDATE : mxEvent.END_UPDATE);
+  if (null != layout) {
+    layout.execute(parent);
   }
 };
 mxLayoutManager.prototype.destroy = function() {
@@ -26086,7 +26187,7 @@ mxSwimlaneManager.prototype.resizeSwimlane = function(cell, w, h, i) {
 mxSwimlaneManager.prototype.destroy = function() {
   this.setGraph(null);
 };
-function mxTemporaryCellStates(view, scale, cells, isCellVisibleFn, getLinkForCellState, ignoreFn) {
+function mxTemporaryCellStates(view, scale, cells, isCellVisibleFn, getLinkForCellState) {
   scale = null != scale ? scale : 1;
   this.view = view;
   this.oldValidateCellState = view.validateCellState;
@@ -26101,7 +26202,7 @@ function mxTemporaryCellStates(view, scale, cells, isCellVisibleFn, getLinkForCe
       state.shape.paint = function(c) {
         var link = getLinkForCellState(state);
         if (null != link) {
-          c.setLink(link, null != ignoreFn ? ignoreFn(state) : null);
+          c.setLink(link);
         }
         oldPaint.apply(this, arguments);
         if (null != link) {
@@ -26416,7 +26517,7 @@ mxGraphHandler.prototype.selectCellForEvent = function(cell, me) {
   if (null != model) {
     if (!(me.isSource(model.control) || this.graph.isToggleEvent(me.getEvent()) && mxEvent.isAltDown(me.getEvent()))) {
       model = this.graph.getModel();
-      for (var parent = model.getParent(cell);null != this.graph.view.getState(parent) && ((model.isVertex(parent) || model.isEdge(parent) && !this.graph.isToggleEvent(me.getEvent())) && this.isPropagateSelectionCell(cell, false, me));) {
+      for (var parent = model.getParent(cell);null != this.graph.view.getState(parent) && ((model.isVertex(parent) || model.isEdge(parent)) && this.isPropagateSelectionCell(cell, false, me));) {
         cell = parent;
         parent = model.getParent(cell);
       }
@@ -26428,19 +26529,29 @@ mxGraphHandler.prototype.selectCellForEvent = function(cell, me) {
 mxGraphHandler.prototype.consumeMouseEvent = function(evtName, me) {
   me.consume();
 };
-mxGraphHandler.prototype.mouseDown = function(cell, me) {
-  if (!me.isConsumed() && (this.isEnabled() && (this.graph.isEnabled() && (null != me.getState() && (!mxEvent.isMultiTouchEvent(me.getEvent()) && (cell = this.getInitialCellForEvent(me), this.delayedSelection = this.isDelayedSelection(cell, me), this.cell = null, this.isSelectEnabled() && (!this.delayedSelection && this.graph.selectCellForEvent(cell, me.getEvent())), this.isMoveEnabled())))))) {
-    var model = this.graph.model;
-    var geo = model.getGeometry(cell);
-    if (this.graph.isCellMovable(cell) && (!model.isEdge(cell) || (1 < this.graph.getSelectionCount() || (null != geo.points && 0 < geo.points.length || (null == model.getTerminal(cell, true) || (null == model.getTerminal(cell, false) || (this.graph.allowDanglingEdges || this.graph.isCloneEvent(me.getEvent()) && this.graph.isCellsCloneable()))))))) {
-      this.start(cell, me.getX(), me.getY());
-    } else {
-      if (this.delayedSelection) {
-        this.cell = cell;
+mxGraphHandler.prototype.mouseDown = function(evt, me) {
+  if (!me.isConsumed() && (this.isEnabled() && (this.graph.isEnabled() && (null != me.getState() && !mxEvent.isMultiTouchEvent(me.getEvent()))))) {
+    var cell = this.getInitialCellForEvent(me);
+    this.delayedSelection = this.isDelayedSelection(cell, me);
+    this.cell = null;
+    if (this.isSelectEnabled()) {
+      if (!this.delayedSelection) {
+        this.graph.selectCellForEvent(cell, me.getEvent());
       }
     }
-    this.cellWasClicked = true;
-    this.consumeMouseEvent(mxEvent.MOUSE_DOWN, me);
+    if (this.isMoveEnabled()) {
+      var model = this.graph.model;
+      var geo = model.getGeometry(cell);
+      if (this.graph.isCellMovable(cell) && (!model.isEdge(cell) || (1 < this.graph.getSelectionCount() || (null != geo.points && 0 < geo.points.length || (null == model.getTerminal(cell, true) || (null == model.getTerminal(cell, false) || (this.graph.allowDanglingEdges || this.graph.isCloneEvent(me.getEvent()) && this.graph.isCellsCloneable()))))))) {
+        this.start(cell, me.getX(), me.getY());
+      } else {
+        if (this.delayedSelection) {
+          this.cell = cell;
+        }
+      }
+      this.cellWasClicked = true;
+      this.consumeMouseEvent(mxEvent.MOUSE_DOWN, me);
+    }
   }
 };
 mxGraphHandler.prototype.getGuideStates = function() {
@@ -26510,7 +26621,7 @@ mxGraphHandler.prototype.createPreviewShape = function(shape) {
     shape.dialect = mxConstants.DIALECT_STRICTHTML;
     shape.init(this.graph.container);
   } else {
-    shape.dialect = mxConstants.DIALECT_SVG;
+    shape.dialect = this.graph.dialect != mxConstants.DIALECT_SVG ? mxConstants.DIALECT_VML : mxConstants.DIALECT_SVG;
     shape.init(this.graph.getView().getOverlayPane());
     shape.pointerEvents = false;
     if (mxClient.IS_IOS) {
@@ -26569,7 +26680,7 @@ mxGraphHandler.prototype.isCellMoving = function(cell) {
   return null != this.allCells.get(cell);
 };
 mxGraphHandler.prototype.useGuidesForEvent = function(me) {
-  return null != this.guide ? this.guide.isEnabledForEvent(me.getEvent()) && !this.isConstrainedEvent(me) : true;
+  return null != this.guide ? this.guide.isEnabledForEvent(me.getEvent()) && !this.graph.isConstrainedEvent(me.getEvent()) : true;
 };
 mxGraphHandler.prototype.snap = function(vector) {
   var scale = this.scaleGrid ? this.graph.view.scale : 1;
@@ -26609,8 +26720,8 @@ mxGraphHandler.prototype.checkPreview = function() {
     }
   }
 };
-mxGraphHandler.prototype.mouseMove = function(graph, me) {
-  graph = this.graph;
+mxGraphHandler.prototype.mouseMove = function(sender, me) {
+  var graph = this.graph;
   if (me.isConsumed() || (!graph.isMouseDown || (null == this.cell || (null == this.first || (null == this.bounds || this.suspended))))) {
     if (!(!this.isMoveEnabled() && !this.isCloneEnabled())) {
       if (!!this.updateCursor) {
@@ -26648,10 +26759,7 @@ mxGraphHandler.prototype.mouseMove = function(graph, me) {
         clone = graph.isCloneEvent(me.getEvent()) && (graph.isCellsCloneable() && this.isCloneEnabled());
         var gridEnabled = graph.isGridEnabledEvent(me.getEvent());
         var cell = me.getCell();
-        cell = null != cell && 0 > mxUtils.indexOf(this.cells, cell) ? cell : graph.getCellAt(me.getGraphX(), me.getGraphY(), null, null, null, mxUtils.bind(this, function(node, flex, editor) {
-          return 0 <= mxUtils.indexOf(this.cells, node.cell);
-        }));
-        var g = true;
+        var k = true;
         var target = null;
         this.cloning = clone;
         if (graph.isDropEnabled()) {
@@ -26660,13 +26768,13 @@ mxGraphHandler.prototype.mouseMove = function(graph, me) {
           }
         }
         var state = graph.getView().getState(target);
-        var m = false;
+        var n = false;
         if (null != state && (clone || this.isValidDropTarget(target, me))) {
           if (this.target != target) {
             this.target = target;
             this.setHighlightColor(mxConstants.DROP_TARGET_COLOR);
           }
-          m = true;
+          n = true;
         } else {
           this.target = null;
           if (this.connectOnDrop) {
@@ -26676,9 +26784,9 @@ mxGraphHandler.prototype.mouseMove = function(graph, me) {
                   if (graph.isCellConnectable(cell)) {
                     state = graph.getView().getState(cell);
                     if (null != state) {
-                      graph = null == graph.getEdgeValidationError(null, this.cell, cell) ? mxConstants.VALID_COLOR : mxConstants.INVALID_CONNECT_TARGET_COLOR;
-                      this.setHighlightColor(graph);
-                      m = true;
+                      cell = null == graph.getEdgeValidationError(null, this.cell, cell) ? mxConstants.VALID_COLOR : mxConstants.INVALID_CONNECT_TARGET_COLOR;
+                      this.setHighlightColor(cell);
+                      n = true;
                     }
                   }
                 }
@@ -26686,23 +26794,23 @@ mxGraphHandler.prototype.mouseMove = function(graph, me) {
             }
           }
         }
-        if (null != state && m) {
+        if (null != state && n) {
           this.highlight.highlight(state);
         } else {
           this.highlight.hide();
         }
         if (null != this.guide && this.useGuidesForEvent(me)) {
           delta = this.guide.move(this.bounds, delta, gridEnabled, clone);
-          g = false;
+          k = false;
         } else {
           delta = this.graph.snapDelta(delta, this.bounds, !gridEnabled, false, false);
         }
         if (null != this.guide) {
-          if (g) {
+          if (k) {
             this.guide.hide();
           }
         }
-        if (this.isConstrainedEvent(me)) {
+        if (graph.isConstrainedEvent(me.getEvent())) {
           if (Math.abs(delta.x) > Math.abs(delta.y)) {
             delta.y = 0;
           } else {
@@ -26721,9 +26829,6 @@ mxGraphHandler.prototype.mouseMove = function(graph, me) {
       mxEvent.consume(me.getEvent());
     }
   }
-};
-mxGraphHandler.prototype.isConstrainedEvent = function(me) {
-  return(null == this.target || this.graph.isCloneEvent(me.getEvent())) && this.graph.isConstrainedEvent(me.getEvent());
 };
 mxGraphHandler.prototype.updatePreview = function(remote) {
   if (this.livePreviewUsed && !remote) {
@@ -26747,8 +26852,8 @@ mxGraphHandler.prototype.updateLivePreview = function(dx, dy) {
   if (!this.suspended) {
     var states = [];
     if (null != this.allCells) {
-      this.allCells.visit(mxUtils.bind(this, function(realState, state) {
-        realState = this.graph.view.getState(state.cell);
+      this.allCells.visit(mxUtils.bind(this, function(flex, state) {
+        var realState = this.graph.view.getState(state.cell);
         if (realState != state) {
           state.destroy();
           if (null != realState) {
@@ -26925,7 +27030,7 @@ mxGraphHandler.prototype.setHighlightColor = function(color) {
     this.highlight.setHighlightColor(color);
   }
 };
-mxGraphHandler.prototype.mouseUp = function(graph, me) {
+mxGraphHandler.prototype.mouseUp = function(sender, me) {
   if (!me.isConsumed()) {
     if (this.livePreviewUsed && this.resetLivePreview(), null == this.cell || (null == this.first || (null == this.shape && !this.livePreviewUsed || (null == this.currentDx || null == this.currentDy)))) {
       if (this.isSelectEnabled()) {
@@ -26936,7 +27041,7 @@ mxGraphHandler.prototype.mouseUp = function(graph, me) {
         }
       }
     } else {
-      graph = this.graph;
+      var graph = this.graph;
       var cell = me.getCell();
       if (this.connectOnDrop && (null == this.target && (null != cell && (graph.getModel().isVertex(cell) && (graph.isCellConnectable(cell) && graph.isEdgeValid(null, this.cell, cell)))))) {
         graph.connectionHandler.connect(this.cell, cell, me.getEvent());
@@ -26993,11 +27098,9 @@ mxGraphHandler.prototype.moveCells = function(cells, dx, dy, clone, target, evt)
   }
   var tmp = this.graph.getModel().getParent(this.cell);
   if (null == target) {
-    if (null != evt) {
-      if (this.isRemoveCellsFromParent()) {
-        if (this.shouldRemoveCellsFromParent(tmp, cells, evt)) {
-          target = this.graph.getDefaultParent();
-        }
+    if (this.isRemoveCellsFromParent()) {
+      if (this.shouldRemoveCellsFromParent(tmp, cells, evt)) {
+        target = this.graph.getDefaultParent();
       }
     }
   }
@@ -27079,9 +27182,9 @@ function mxPanningHandler(graph) {
   if (null != graph) {
     this.graph = graph;
     this.graph.addMouseListener(this);
-    this.forcePanningHandler = mxUtils.bind(this, function(evtName, me) {
-      evtName = me.getProperty("eventName");
-      me = me.getProperty("event");
+    this.forcePanningHandler = mxUtils.bind(this, function(flex, evt) {
+      var evtName = evt.getProperty("eventName");
+      var me = evt.getProperty("event");
       if (evtName == mxEvent.MOUSE_DOWN) {
         if (this.isForcePanningEvent(me)) {
           this.start(me);
@@ -27092,9 +27195,9 @@ function mxPanningHandler(graph) {
       }
     });
     this.graph.addListener(mxEvent.FIRE_MOUSE_EVENT, this.forcePanningHandler);
-    this.gestureHandler = mxUtils.bind(this, function(evt, eo) {
+    this.gestureHandler = mxUtils.bind(this, function(flex, eo) {
       if (this.isPinchEnabled()) {
-        evt = eo.getProperty("event");
+        var evt = eo.getProperty("event");
         if (mxEvent.isConsumed(evt) || "gesturestart" != evt.type) {
           if ("gestureend" == evt.type) {
             if (null != this.initialScale) {
@@ -27121,8 +27224,7 @@ function mxPanningHandler(graph) {
         this.reset();
       }
     });
-    mxEvent.addGestureListeners(document, null, null, this.mouseUpListener);
-    mxEvent.addListener(document, "mouseleave", this.mouseUpListener);
+    mxEvent.addListener(document, "mouseup", this.mouseUpListener);
   }
 }
 mxPanningHandler.prototype = new mxEventSource;
@@ -27163,7 +27265,7 @@ mxPanningHandler.prototype.isPanningTrigger = function(me) {
 mxPanningHandler.prototype.isForcePanningEvent = function(me) {
   return this.ignoreCell || mxEvent.isMultiTouchEvent(me.getEvent());
 };
-mxPanningHandler.prototype.mouseDown = function(cell, me) {
+mxPanningHandler.prototype.mouseDown = function(evt, me) {
   this.mouseDownEvent = me;
   if (!me.isConsumed()) {
     if (this.isPanningEnabled()) {
@@ -27201,9 +27303,9 @@ mxPanningHandler.prototype.mouseMove = function(sender, me) {
     this.fireEvent(new mxEventObject(mxEvent.PAN, "event", me));
   } else {
     if (this.panningTrigger) {
-      sender = this.active;
+      var tmp = this.active;
       this.active = Math.abs(this.dx) > this.graph.tolerance || Math.abs(this.dy) > this.graph.tolerance;
-      if (!sender) {
+      if (!tmp) {
         if (this.active) {
           this.fireEvent(new mxEventObject(mxEvent.PAN_START, "event", me));
         }
@@ -27214,11 +27316,11 @@ mxPanningHandler.prototype.mouseMove = function(sender, me) {
     me.consume();
   }
 };
-mxPanningHandler.prototype.mouseUp = function(scale, me) {
+mxPanningHandler.prototype.mouseUp = function(sender, me) {
   if (this.active) {
     if (null != this.dx && null != this.dy) {
       if (!this.graph.useScrollbarsForPanning || !mxUtils.hasScrollbars(this.graph.container)) {
-        scale = this.graph.getView().scale;
+        var scale = this.graph.getView().scale;
         var t = this.graph.getView().translate;
         this.graph.panGraph(0, 0);
         this.panGraph(t.x + this.dx / scale, t.y + this.dy / scale);
@@ -27243,7 +27345,7 @@ mxPanningHandler.prototype.zoomGraph = function(evt) {
   }
 };
 mxPanningHandler.prototype.reset = function() {
-  this.panningTrigger = this.graph.isMouseDown = false;
+  this.panningTrigger = false;
   this.mouseDownEvent = null;
   this.active = false;
   this.dy = this.dx = null;
@@ -27255,8 +27357,7 @@ mxPanningHandler.prototype.destroy = function() {
   this.graph.removeMouseListener(this);
   this.graph.removeListener(this.forcePanningHandler);
   this.graph.removeListener(this.gestureHandler);
-  mxEvent.removeGestureListeners(document, null, null, this.mouseUpListener);
-  mxEvent.removeListener(document, "mouseleave", this.mouseUpListener);
+  mxEvent.removeListener(document, "mouseup", this.mouseUpListener);
 };
 function mxPopupMenuHandler(graph, factoryMethod) {
   if (null != graph) {
@@ -27288,7 +27389,7 @@ mxPopupMenuHandler.prototype.init = function() {
 mxPopupMenuHandler.prototype.isSelectOnPopup = function(me) {
   return this.selectOnPopup;
 };
-mxPopupMenuHandler.prototype.mouseDown = function(cell, me) {
+mxPopupMenuHandler.prototype.mouseDown = function(evt, me) {
   if (this.isEnabled()) {
     if (!mxEvent.isMultiTouchEvent(me.getEvent())) {
       this.hideMenu();
@@ -27312,12 +27413,7 @@ mxPopupMenuHandler.prototype.mouseMove = function(sender, me) {
     }
   }
 };
-mxPopupMenuHandler.prototype.mouseUp = function(sender, me, isCellVisibleFn) {
-  sender = null == isCellVisibleFn;
-  isCellVisibleFn = null != isCellVisibleFn ? isCellVisibleFn : mxUtils.bind(this, function(cell) {
-    var first = mxUtils.getScrollOrigin();
-    this.popup(me.getX() + first.x + 1, me.getY() + first.y + 1, cell, me.getEvent());
-  });
+mxPopupMenuHandler.prototype.mouseUp = function(sender, me) {
   if (this.popupTrigger && (this.inTolerance && (null != this.triggerX && null != this.triggerY))) {
     var cell = this.getCellForPopupEvent(me);
     if (this.graph.isEnabled() && (this.isSelectOnPopup(me) && (null != cell && !this.graph.isCellSelected(cell)))) {
@@ -27330,10 +27426,9 @@ mxPopupMenuHandler.prototype.mouseUp = function(sender, me, isCellVisibleFn) {
       }
     }
     this.graph.tooltipHandler.hide();
-    isCellVisibleFn(cell);
-    if (sender) {
-      me.consume();
-    }
+    var first = mxUtils.getScrollOrigin();
+    this.popup(me.getX() + first.x + 1, me.getY() + first.y + 1, cell, me.getEvent());
+    me.consume();
   }
   this.inTolerance = this.popupTrigger = false;
 };
@@ -27425,10 +27520,10 @@ mxCellMarker.prototype.setCurrentState = function(state, me, color) {
   }
 };
 mxCellMarker.prototype.markCell = function(cell, color) {
-  cell = this.graph.getView().getState(cell);
-  if (null != cell) {
+  var state = this.graph.getView().getState(cell);
+  if (null != state) {
     this.currentColor = null != color ? color : this.validColor;
-    this.markedState = cell;
+    this.markedState = state;
     this.mark();
   }
 };
@@ -27643,7 +27738,7 @@ mxConnectionHandler.prototype.edgeState = null;
 mxConnectionHandler.prototype.changeHandler = null;
 mxConnectionHandler.prototype.drillHandler = null;
 mxConnectionHandler.prototype.mouseDownCounter = 0;
-mxConnectionHandler.prototype.movePreviewAway = false;
+mxConnectionHandler.prototype.movePreviewAway = mxClient.IS_VML;
 mxConnectionHandler.prototype.outlineConnect = false;
 mxConnectionHandler.prototype.livePreview = false;
 mxConnectionHandler.prototype.cursor = null;
@@ -27665,9 +27760,8 @@ mxConnectionHandler.prototype.setCreateTarget = function(value) {
 };
 mxConnectionHandler.prototype.createShape = function() {
   var shape = this.livePreview && null != this.edgeState ? this.graph.cellRenderer.createShape(this.edgeState) : new mxPolyline([], mxConstants.INVALID_COLOR);
-  shape.dialect = mxConstants.DIALECT_SVG;
+  shape.dialect = this.graph.dialect != mxConstants.DIALECT_SVG ? mxConstants.DIALECT_VML : mxConstants.DIALECT_SVG;
   shape.scale = this.graph.view.scale;
-  shape.svgStrokeTolerance = 0;
   shape.pointerEvents = false;
   shape.isDashed = true;
   shape.init(this.graph.getView().getOverlayPane());
@@ -27769,9 +27863,9 @@ mxConnectionHandler.prototype.createMarker = function() {
   });
   return state;
 };
-mxConnectionHandler.prototype.start = function(me, x, y, edgeState) {
+mxConnectionHandler.prototype.start = function(me, x, index, edgeState) {
   this.previous = me;
-  this.first = new mxPoint(x, y);
+  this.first = new mxPoint(x, index);
   this.edgeState = null != edgeState ? edgeState : this.createEdgeState(null);
   this.marker.currentColor = this.marker.validColor;
   this.marker.markedState = me;
@@ -27808,7 +27902,7 @@ mxConnectionHandler.prototype.createIcons = function(state) {
       icon.dialect = mxConstants.DIALECT_STRICTHTML;
       icon.init(this.graph.container);
     } else {
-      icon.dialect = mxConstants.DIALECT_SVG;
+      icon.dialect = this.graph.dialect == mxConstants.DIALECT_SVG ? mxConstants.DIALECT_SVG : mxConstants.DIALECT_VML;
       icon.init(this.graph.getView().getOverlayPane());
       if (this.moveIconBack) {
         if (null != icon.node.previousSibling) {
@@ -27834,15 +27928,11 @@ mxConnectionHandler.prototype.createIcons = function(state) {
   return null;
 };
 mxConnectionHandler.prototype.redrawIcons = function(icons, state) {
-  if (null != icons) {
-    if (null != icons[0]) {
-      if (null != state) {
-        state = this.getIconPosition(icons[0], state);
-        icons[0].bounds.x = state.x;
-        icons[0].bounds.y = state.y;
-        icons[0].redraw();
-      }
-    }
+  if (null != icons && (null != icons[0] && null != state)) {
+    var pos = this.getIconPosition(icons[0], state);
+    icons[0].bounds.x = pos.x;
+    icons[0].bounds.y = pos.y;
+    icons[0].redraw();
   }
 };
 mxConnectionHandler.prototype.getIconPosition = function(icon, state) {
@@ -27857,8 +27947,8 @@ mxConnectionHandler.prototype.getIconPosition = function(icon, state) {
     if (0 != size) {
       cos = Math.cos(size);
       size = Math.sin(size);
-      state = new mxPoint(state.getCenterX(), state.getCenterY());
-      cy = mxUtils.getRotatedPoint(new mxPoint(cx, cy), cos, size, state);
+      var c = new mxPoint(state.getCenterX(), state.getCenterY());
+      cy = mxUtils.getRotatedPoint(new mxPoint(cx, cy), cos, size, c);
       cx = cy.x;
       cy = cy.y;
     }
@@ -27876,43 +27966,33 @@ mxConnectionHandler.prototype.destroyIcons = function() {
 mxConnectionHandler.prototype.isStartEvent = function(me) {
   return null != this.constraintHandler.currentFocus && null != this.constraintHandler.currentConstraint || null != this.previous && (null == this.error && (null == this.icons || null != this.icons && null != this.icon));
 };
-mxConnectionHandler.prototype.mouseDown = function(point, me) {
+mxConnectionHandler.prototype.mouseDown = function(evt, me) {
   this.mouseDownCounter++;
-  if (this.isEnabled()) {
-    if (this.graph.isEnabled()) {
-      if (!me.isConsumed()) {
-        if (!this.isConnecting()) {
-          if (this.isStartEvent(me)) {
-            if (null != this.constraintHandler.currentConstraint && (null != this.constraintHandler.currentFocus && null != this.constraintHandler.currentPoint)) {
-              this.sourceConstraint = this.constraintHandler.currentConstraint;
-              this.previous = this.constraintHandler.currentFocus;
-              this.first = this.constraintHandler.currentPoint.clone();
-            } else {
-              this.first = new mxPoint(me.getGraphX(), me.getGraphY());
-            }
-            this.edgeState = this.createEdgeState(me);
-            this.mouseDownCounter = 1;
-            if (this.waypointsEnabled) {
-              if (null == this.shape) {
-                this.waypoints = null;
-                this.shape = this.createShape();
-                if (null != this.edgeState) {
-                  this.shape.apply(this.edgeState);
-                }
-              }
-            }
-            if (null == this.previous) {
-              if (null != this.edgeState) {
-                point = this.graph.getPointForEvent(me.getEvent());
-                this.edgeState.cell.geometry.setTerminalPoint(point, true);
-              }
-            }
-            this.fireEvent(new mxEventObject(mxEvent.START, "state", this.previous));
-            me.consume();
-          }
+  if (this.isEnabled() && (this.graph.isEnabled() && (!me.isConsumed() && (!this.isConnecting() && this.isStartEvent(me))))) {
+    if (null != this.constraintHandler.currentConstraint && (null != this.constraintHandler.currentFocus && null != this.constraintHandler.currentPoint)) {
+      this.sourceConstraint = this.constraintHandler.currentConstraint;
+      this.previous = this.constraintHandler.currentFocus;
+      this.first = this.constraintHandler.currentPoint.clone();
+    } else {
+      this.first = new mxPoint(me.getGraphX(), me.getGraphY());
+    }
+    this.edgeState = this.createEdgeState(me);
+    this.mouseDownCounter = 1;
+    if (this.waypointsEnabled) {
+      if (null == this.shape) {
+        this.waypoints = null;
+        this.shape = this.createShape();
+        if (null != this.edgeState) {
+          this.shape.apply(this.edgeState);
         }
       }
     }
+    if (null == this.previous && null != this.edgeState) {
+      var pt = this.graph.getPointForEvent(me.getEvent());
+      this.edgeState.cell.geometry.setTerminalPoint(pt, true);
+    }
+    this.fireEvent(new mxEventObject(mxEvent.START, "state", this.previous));
+    me.consume();
   }
   this.selectedIcon = this.icon;
   this.icon = null;
@@ -27924,9 +28004,6 @@ mxConnectionHandler.prototype.createEdgeState = function(me) {
   return null;
 };
 mxConnectionHandler.prototype.isOutlineConnectEvent = function(me) {
-  if (mxEvent.isShiftDown(me.getEvent()) && mxEvent.isAltDown(me.getEvent())) {
-    return false;
-  }
   var gridY = mxUtils.getOffset(this.graph.container);
   var evt = me.getEvent();
   var clientX = mxEvent.getClientX(evt);
@@ -27934,7 +28011,7 @@ mxConnectionHandler.prototype.isOutlineConnectEvent = function(me) {
   var doc = document.documentElement;
   var gridX = this.currentPoint.x - this.graph.container.scrollLeft + gridY.x - ((window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0));
   gridY = this.currentPoint.y - this.graph.container.scrollTop + gridY.y - ((window.pageYOffset || doc.scrollTop) - (doc.clientTop || 0));
-  return this.outlineConnect && (mxEvent.isShiftDown(me.getEvent()) && !mxEvent.isAltDown(me.getEvent()) || (me.isSource(this.marker.highlight.shape) || (!mxEvent.isShiftDown(me.getEvent()) && (mxEvent.isAltDown(me.getEvent()) && null != me.getState()) || (this.marker.highlight.isHighlightAt(clientX, evt) || (gridX != clientX || gridY != evt) && (null == me.getState() && this.marker.highlight.isHighlightAt(gridX, gridY))))));
+  return this.outlineConnect && (!mxEvent.isShiftDown(me.getEvent()) && (me.isSource(this.marker.highlight.shape) || (mxEvent.isAltDown(me.getEvent()) && null != me.getState() || (this.marker.highlight.isHighlightAt(clientX, evt) || (gridX != clientX || gridY != evt) && (null == me.getState() && this.marker.highlight.isHighlightAt(gridX, gridY))))));
 };
 mxConnectionHandler.prototype.updateCurrentState = function(me, point) {
   this.constraintHandler.update(me, null == this.first, false, null == this.first || me.isSource(this.marker.highlight.shape) ? null : point);
@@ -27971,25 +28048,25 @@ mxConnectionHandler.prototype.updateCurrentState = function(me, point) {
         this.currentState = null;
       }
     }
-    var constraint = this.isOutlineConnectEvent(me);
+    var s = this.isOutlineConnectEvent(me);
     if (null != this.currentState) {
-      if (constraint) {
+      if (s) {
         if (me.isSource(this.marker.highlight.shape)) {
           point = new mxPoint(me.getGraphX(), me.getGraphY());
         }
-        constraint = this.graph.getOutlineConstraint(point, this.currentState, me);
+        s = this.graph.getOutlineConstraint(point, this.currentState, me);
         this.constraintHandler.setFocus(me, this.currentState, false);
-        this.constraintHandler.currentConstraint = constraint;
+        this.constraintHandler.currentConstraint = s;
         this.constraintHandler.currentPoint = point;
       }
     }
     if (this.outlineConnect) {
       if (null != this.marker.highlight) {
         if (null != this.marker.highlight.shape) {
-          point = this.graph.view.scale;
+          s = this.graph.view.scale;
           if (null != this.constraintHandler.currentConstraint && null != this.constraintHandler.currentFocus) {
             this.marker.highlight.shape.stroke = mxConstants.OUTLINE_HIGHLIGHT_COLOR;
-            this.marker.highlight.shape.strokewidth = mxConstants.OUTLINE_HIGHLIGHT_STROKEWIDTH / point / point;
+            this.marker.highlight.shape.strokewidth = mxConstants.OUTLINE_HIGHLIGHT_STROKEWIDTH / s / s;
             this.marker.highlight.repaint();
           } else {
             if (this.marker.hasValidState()) {
@@ -27999,7 +28076,7 @@ mxConnectionHandler.prototype.updateCurrentState = function(me, point) {
               } else {
                 this.marker.highlight.shape.stroke = mxConstants.DEFAULT_VALID_COLOR;
               }
-              this.marker.highlight.shape.strokewidth = mxConstants.HIGHLIGHT_STROKEWIDTH / point / point;
+              this.marker.highlight.shape.strokewidth = mxConstants.HIGHLIGHT_STROKEWIDTH / s / s;
               this.marker.highlight.repaint();
             }
           }
@@ -28029,7 +28106,7 @@ mxConnectionHandler.prototype.snapToPreview = function(me, point) {
     }
   }
 };
-mxConnectionHandler.prototype.mouseMove = function(point, me) {
+mxConnectionHandler.prototype.mouseMove = function(sender, me) {
   if (me.isConsumed() || !this.ignoreMouseDown && (null == this.first && this.graph.isMouseDown)) {
     this.constraintHandler.reset();
   } else {
@@ -28039,7 +28116,7 @@ mxConnectionHandler.prototype.mouseMove = function(point, me) {
         this.currentState = null;
       }
     }
-    point = this.graph.getView();
+    var point = this.graph.getView();
     var current = point.scale;
     var i = point.translate;
     point = new mxPoint(me.getGraphX(), me.getGraphY());
@@ -28062,8 +28139,8 @@ mxConnectionHandler.prototype.mouseMove = function(point, me) {
         current = this.constraintHandler.currentPoint.clone();
       } else {
         if (null != this.previous) {
-          if (mxEvent.isShiftDown(me.getEvent())) {
-            if (!this.graph.isIgnoreTerminalEvent(me.getEvent())) {
+          if (!this.graph.isIgnoreTerminalEvent(me.getEvent())) {
+            if (mxEvent.isShiftDown(me.getEvent())) {
               if (Math.abs(this.previous.getCenterX() - point.x) < Math.abs(this.previous.getCenterY() - point.y)) {
                 point.x = this.previous.getCenterX();
               } else {
@@ -28201,7 +28278,7 @@ mxConnectionHandler.prototype.mouseMove = function(point, me) {
     }
   }
 };
-mxConnectionHandler.prototype.updateEdgeState = function(points, constraint) {
+mxConnectionHandler.prototype.updateEdgeState = function(current, constraint) {
   if (null != this.sourceConstraint) {
     if (null != this.sourceConstraint.point) {
       this.edgeState.style[mxConstants.STYLE_EXIT_X] = this.sourceConstraint.point.x;
@@ -28215,7 +28292,7 @@ mxConnectionHandler.prototype.updateEdgeState = function(points, constraint) {
     delete this.edgeState.style[mxConstants.STYLE_ENTRY_X];
     delete this.edgeState.style[mxConstants.STYLE_ENTRY_Y];
   }
-  this.edgeState.absolutePoints = [null, null != this.currentState ? null : points];
+  this.edgeState.absolutePoints = [null, null != this.currentState ? null : current];
   this.graph.view.updateFixedTerminalPoint(this.edgeState, this.previous, true, this.sourceConstraint);
   if (null != this.currentState) {
     if (null == constraint) {
@@ -28224,32 +28301,32 @@ mxConnectionHandler.prototype.updateEdgeState = function(points, constraint) {
     this.edgeState.setAbsoluteTerminalPoint(null, false);
     this.graph.view.updateFixedTerminalPoint(this.edgeState, this.currentState, false, constraint);
   }
-  points = null;
+  var realPoints = null;
   if (null != this.waypoints) {
-    points = [];
-    for (constraint = 0;constraint < this.waypoints.length;constraint++) {
-      var pt = this.waypoints[constraint].clone();
+    realPoints = [];
+    for (var i = 0;i < this.waypoints.length;i++) {
+      var pt = this.waypoints[i].clone();
       this.convertWaypoint(pt);
-      points[constraint] = pt;
+      realPoints[i] = pt;
     }
   }
-  this.graph.view.updatePoints(this.edgeState, points, this.previous, this.currentState);
+  this.graph.view.updatePoints(this.edgeState, realPoints, this.previous, this.currentState);
   this.graph.view.updateFloatingTerminalPoints(this.edgeState, this.previous, this.currentState);
 };
 mxConnectionHandler.prototype.getTargetPerimeterPoint = function(state, me) {
-  me = null;
+  var result = null;
   var view = state.view;
   var targetPerimeter = view.getPerimeterFunction(state);
   if (null != targetPerimeter) {
     var next = null != this.waypoints && 0 < this.waypoints.length ? this.waypoints[this.waypoints.length - 1] : new mxPoint(this.previous.getCenterX(), this.previous.getCenterY());
-    state = targetPerimeter(view.getPerimeterBounds(state), this.edgeState, next, false);
-    if (null != state) {
-      me = state;
+    view = targetPerimeter(view.getPerimeterBounds(state), this.edgeState, next, false);
+    if (null != view) {
+      result = view;
     }
   } else {
-    me = new mxPoint(state.getCenterX(), state.getCenterY());
+    result = new mxPoint(state.getCenterX(), state.getCenterY());
   }
-  return me;
+  return result;
 };
 mxConnectionHandler.prototype.getSourcePerimeterPoint = function(state, next, me) {
   me = null;
@@ -28295,28 +28372,28 @@ mxConnectionHandler.prototype.addWaypointForEvent = function(me) {
 mxConnectionHandler.prototype.checkConstraints = function(c1, c2) {
   return null == c1 || (null == c2 || (null == c1.point || (null == c2.point || (!c1.point.equals(c2.point) || (c1.dx != c2.dx || (c1.dy != c2.dy || c1.perimeter != c2.perimeter))))));
 };
-mxConnectionHandler.prototype.mouseUp = function(c1, me) {
+mxConnectionHandler.prototype.mouseUp = function(sender, me) {
   if (!me.isConsumed() && this.isConnecting()) {
     if (this.waypointsEnabled && !this.isStopEvent(me)) {
       this.addWaypointForEvent(me);
       me.consume();
       return;
     }
-    c1 = this.sourceConstraint;
+    var c1 = this.sourceConstraint;
     var c2 = this.constraintHandler.currentConstraint;
     var source = null != this.previous ? this.previous.cell : null;
-    var isConnect = null;
+    var terminal = null;
     if (null != this.constraintHandler.currentConstraint) {
       if (null != this.constraintHandler.currentFocus) {
-        isConnect = this.constraintHandler.currentFocus.cell;
+        terminal = this.constraintHandler.currentFocus.cell;
       }
     }
-    if (null == isConnect) {
+    if (null == terminal) {
       if (null != this.currentState) {
-        isConnect = this.currentState.cell;
+        terminal = this.currentState.cell;
       }
     }
-    if (null != this.error || null != source && (null != isConnect && (source == isConnect && !this.checkConstraints(c1, c2)))) {
+    if (null != this.error || null != source && (null != terminal && (source == terminal && !this.checkConstraints(c1, c2)))) {
       if (null != this.previous) {
         if (null != this.marker.validState) {
           if (this.previous.cell == this.marker.validState.cell) {
@@ -28330,7 +28407,7 @@ mxConnectionHandler.prototype.mouseUp = function(c1, me) {
         }
       }
     } else {
-      this.connect(source, isConnect, me.getEvent(), me.getCell());
+      this.connect(source, terminal, me.getEvent(), me.getCell());
     }
     this.destroyIcons();
     me.consume();
@@ -28359,11 +28436,6 @@ mxConnectionHandler.prototype.reset = function() {
 };
 mxConnectionHandler.prototype.drawPreview = function() {
   this.updatePreview(null == this.error);
-  if (null != this.edgeState) {
-    this.edgeState.shape = this.shape;
-    this.graph.cellRenderer.postConfigureShape(this.edgeState);
-    this.edgeState.shape = null;
-  }
   this.shape.redraw();
 };
 mxConnectionHandler.prototype.updatePreview = function(valid) {
@@ -28488,8 +28560,8 @@ mxConnectionHandler.prototype.insertEdge = function(parent, edge, value, source,
   edge = this.createEdge(value, source, target, style);
   return edge = this.graph.addEdge(edge, parent, source, target);
 };
-mxConnectionHandler.prototype.createTargetVertex = function(geo, source) {
-  for (geo = this.graph.getCellGeometry(source);null != geo && geo.relative;) {
+mxConnectionHandler.prototype.createTargetVertex = function(evt, source) {
+  for (var geo = this.graph.getCellGeometry(source);null != geo && geo.relative;) {
     source = this.graph.getModel().getParent(source);
     geo = this.graph.getCellGeometry(source);
   }
@@ -28505,10 +28577,10 @@ mxConnectionHandler.prototype.createTargetVertex = function(geo, source) {
     if (0 < point) {
       var sourceState = this.graph.view.getState(source);
       if (null != sourceState) {
-        source = sourceState.x / s - y.x;
+        var x = sourceState.x / s - y.x;
         y = sourceState.y / s - y.y;
-        if (Math.abs(source - geo.x) <= point) {
-          geo.x = Math.round(source);
+        if (Math.abs(x - geo.x) <= point) {
+          geo.x = Math.round(x);
         }
         if (Math.abs(y - geo.y) <= point) {
           geo.y = Math.round(y);
@@ -28521,18 +28593,18 @@ mxConnectionHandler.prototype.createTargetVertex = function(geo, source) {
 mxConnectionHandler.prototype.getAlignmentTolerance = function(evt) {
   return this.graph.isGridEnabled() ? this.graph.gridSize / 2 : this.graph.tolerance;
 };
-mxConnectionHandler.prototype.createEdge = function(geometry, source, target, style) {
+mxConnectionHandler.prototype.createEdge = function(cell, source, target, style) {
   var edge = null;
   if (null != this.factoryMethod) {
     edge = this.factoryMethod(source, target, style);
   }
   if (null == edge) {
-    edge = new mxCell(geometry || "");
+    edge = new mxCell(cell || "");
     edge.setEdge(true);
     edge.setStyle(style);
-    geometry = new mxGeometry;
-    geometry.relative = true;
-    edge.setGeometry(geometry);
+    cell = new mxGeometry;
+    cell.relative = true;
+    edge.setGeometry(cell);
   }
   return edge;
 };
@@ -28630,7 +28702,7 @@ mxConstraintHandler.prototype.destroyFocusHighlight = function() {
   }
 };
 mxConstraintHandler.prototype.isKeepFocusEvent = function(me) {
-  return mxEvent.isShiftDown(me.getEvent()) && !mxEvent.isAltDown(me.getEvent());
+  return mxEvent.isShiftDown(me.getEvent());
 };
 mxConstraintHandler.prototype.getCellForEvent = function(me, point) {
   var cell = me.getCell();
@@ -28641,13 +28713,11 @@ mxConstraintHandler.prototype.getCellForEvent = function(me, point) {
       }
     }
   }
-  if (!(null == cell)) {
-    if (!this.graph.isCellConnectable(cell)) {
-      me = this.graph.getModel().getParent(cell);
-      if (this.graph.getModel().isVertex(me)) {
-        if (this.graph.isCellConnectable(me)) {
-          cell = me;
-        }
+  if (null != cell && !this.graph.isCellConnectable(cell)) {
+    var parent = this.graph.getModel().getParent(cell);
+    if (this.graph.getModel().isVertex(parent)) {
+      if (this.graph.isCellConnectable(parent)) {
+        cell = parent;
       }
     }
   }
@@ -28695,7 +28765,7 @@ mxConstraintHandler.prototype.update = function(me, y, existingEdge, point) {
           --tmp.height;
           if (null == this.focusHighlight) {
             hl = this.createHighlightShape();
-            hl.dialect = mxConstants.DIALECT_SVG;
+            hl.dialect = this.graph.dialect == mxConstants.DIALECT_SVG ? mxConstants.DIALECT_SVG : mxConstants.DIALECT_VML;
             hl.pointerEvents = false;
             hl.init(this.graph.getView().getOverlayPane());
             this.focusHighlight = hl;
@@ -28754,6 +28824,12 @@ mxConstraintHandler.prototype.setFocus = function(me, state, i) {
       icon.dialect = this.graph.dialect != mxConstants.DIALECT_SVG ? mxConstants.DIALECT_MIXEDHTML : mxConstants.DIALECT_SVG;
       icon.preserveImageAspect = false;
       icon.init(this.graph.getView().getDecoratorPane());
+      if (mxClient.IS_QUIRKS || 8 == document.documentMode) {
+        mxEvent.addListener(icon.node, "dragstart", function(evt) {
+          mxEvent.consume(evt);
+          return false;
+        });
+      }
       if (null != icon.node.previousSibling) {
         icon.node.parentNode.insertBefore(icon.node, icon.node.parentNode.firstChild);
       }
@@ -28799,9 +28875,9 @@ function mxRubberband(graph) {
   if (null != graph) {
     this.graph = graph;
     this.graph.addMouseListener(this);
-    this.forceRubberbandHandler = mxUtils.bind(this, function(evtName, me) {
-      evtName = me.getProperty("eventName");
-      me = me.getProperty("event");
+    this.forceRubberbandHandler = mxUtils.bind(this, function(flex, evt) {
+      var evtName = evt.getProperty("eventName");
+      var me = evt.getProperty("event");
       if (evtName == mxEvent.MOUSE_DOWN && this.isForceRubberbandEvent(me)) {
         evtName = mxUtils.getOffset(this.graph.container);
         var origin = mxUtils.getScrollOrigin(this.graph.container);
@@ -28845,9 +28921,9 @@ mxRubberband.prototype.setEnabled = function(value) {
 mxRubberband.prototype.isForceRubberbandEvent = function(me) {
   return mxEvent.isAltDown(me.getEvent());
 };
-mxRubberband.prototype.mouseDown = function(offset, me) {
+mxRubberband.prototype.mouseDown = function(evt, me) {
   if (!me.isConsumed() && (this.isEnabled() && (this.graph.isEnabled() && (null == me.getState() && !mxEvent.isMultiTouchEvent(me.getEvent()))))) {
-    offset = mxUtils.getOffset(this.graph.container);
+    var offset = mxUtils.getOffset(this.graph.container);
     var origin = mxUtils.getScrollOrigin(this.graph.container);
     origin.x -= offset.x;
     origin.y -= offset.y;
@@ -28875,10 +28951,10 @@ mxRubberband.prototype.start = function(x, y) {
     mxEvent.addGestureListeners(document, null, this.dragHandler, this.dropHandler);
   }
 };
-mxRubberband.prototype.mouseMove = function(x, me) {
+mxRubberband.prototype.mouseMove = function(sender, me) {
   if (!me.isConsumed() && null != this.first) {
     var y = mxUtils.getScrollOrigin(this.graph.container);
-    x = mxUtils.getOffset(this.graph.container);
+    var x = mxUtils.getOffset(this.graph.container);
     y.x -= x.x;
     y.y -= x.y;
     x = me.getX() + y.x;
@@ -28917,9 +28993,9 @@ mxRubberband.prototype.isActive = function(me, sender) {
   return null != this.div && "none" != this.div.style.display;
 };
 mxRubberband.prototype.mouseUp = function(sender, me) {
-  sender = this.isActive();
+  var active = this.isActive();
   this.reset();
-  if (sender) {
+  if (active) {
     this.execute(me.getEvent());
     me.consume();
   }
@@ -28960,8 +29036,9 @@ mxRubberband.prototype.repaint = function() {
     this.y = Math.min(this.first.y, y);
     this.width = Math.max(this.first.x, x) - this.x;
     this.height = Math.max(this.first.y, y) - this.y;
-    this.div.style.left = this.x + 0 + "px";
-    this.div.style.top = this.y + 0 + "px";
+    x = mxClient.IS_VML ? this.graph.panDy : 0;
+    this.div.style.left = this.x + (mxClient.IS_VML ? this.graph.panDx : 0) + "px";
+    this.div.style.top = this.y + x + "px";
     this.div.style.width = Math.max(1, this.width) + "px";
     this.div.style.height = Math.max(1, this.height) + "px";
   }
@@ -28999,18 +29076,18 @@ mxHandle.prototype.copyStyle = function(key) {
   this.graph.setCellStyles(key, this.state.style[key], [this.state.cell]);
 };
 mxHandle.prototype.processEvent = function(me) {
-  var scale = this.graph.view.scale;
+  var alpha1 = this.graph.view.scale;
   var pt = this.graph.view.translate;
-  pt = new mxPoint(me.getGraphX() / scale - pt.x, me.getGraphY() / scale - pt.y);
+  pt = new mxPoint(me.getGraphX() / alpha1 - pt.x, me.getGraphY() / alpha1 - pt.y);
   if (null != this.shape) {
     if (null != this.shape.bounds) {
-      pt.x -= this.shape.bounds.width / scale / 4;
-      pt.y -= this.shape.bounds.height / scale / 4;
+      pt.x -= this.shape.bounds.width / alpha1 / 4;
+      pt.y -= this.shape.bounds.height / alpha1 / 4;
     }
   }
-  scale = -mxUtils.toRadians(this.getRotation());
-  var alpha2 = -mxUtils.toRadians(this.getTotalRotation()) - scale;
-  pt = this.flipPoint(this.rotatePoint(this.snapPoint(this.rotatePoint(pt, scale), this.ignoreGrid || !this.graph.isGridEnabledEvent(me.getEvent())), alpha2));
+  alpha1 = -mxUtils.toRadians(this.getRotation());
+  var alpha2 = -mxUtils.toRadians(this.getTotalRotation()) - alpha1;
+  pt = this.flipPoint(this.rotatePoint(this.snapPoint(this.rotatePoint(pt, alpha1), this.ignoreGrid || !this.graph.isGridEnabledEvent(me.getEvent())), alpha2));
   this.setPosition(this.state.getPaintBounds(), pt, me);
   this.redraw();
 };
@@ -29062,12 +29139,12 @@ mxHandle.prototype.redraw = function() {
   if (null != this.shape && null != this.state.shape) {
     var pt = this.getPosition(this.state.getPaintBounds());
     if (null != pt) {
-      var y = mxUtils.toRadians(this.getTotalRotation());
-      pt = this.rotatePoint(this.flipPoint(pt), y);
-      y = this.graph.view.scale;
+      var alpha = mxUtils.toRadians(this.getTotalRotation());
+      pt = this.rotatePoint(this.flipPoint(pt), alpha);
+      alpha = this.graph.view.scale;
       var tr = this.graph.view.translate;
-      this.shape.bounds.x = Math.floor((pt.x + tr.x) * y - this.shape.bounds.width / 2);
-      this.shape.bounds.y = Math.floor((pt.y + tr.y) * y - this.shape.bounds.height / 2);
+      this.shape.bounds.x = Math.floor((pt.x + tr.x) * alpha - this.shape.bounds.width / 2);
+      this.shape.bounds.y = Math.floor((pt.y + tr.y) * alpha - this.shape.bounds.height / 2);
       this.shape.redraw();
     }
   }
@@ -29075,10 +29152,10 @@ mxHandle.prototype.redraw = function() {
 mxHandle.prototype.isHtmlRequired = function() {
   return null != this.state.text && this.state.text.node.parentNode == this.graph.container;
 };
-mxHandle.prototype.rotatePoint = function(pt, rad) {
+mxHandle.prototype.rotatePoint = function(pt, alpha) {
   var cx = this.state.getCellBounds();
   cx = new mxPoint(cx.getCenterX(), cx.getCenterY());
-  return mxUtils.getRotatedPoint(pt, Math.cos(rad), Math.sin(rad), cx);
+  return mxUtils.getRotatedPoint(pt, Math.cos(alpha), Math.sin(alpha), cx);
 };
 mxHandle.prototype.flipPoint = function(pt) {
   if (null != this.state.shape) {
@@ -29159,18 +29236,16 @@ mxVertexHandler.prototype.init = function() {
   this.selectionBounds = this.getSelectionBounds(this.state);
   this.bounds = new mxRectangle(this.selectionBounds.x, this.selectionBounds.y, this.selectionBounds.width, this.selectionBounds.height);
   this.selectionBorder = this.createSelectionShape(this.bounds);
-  this.selectionBorder.dialect = mxConstants.DIALECT_SVG;
+  this.selectionBorder.dialect = this.graph.dialect != mxConstants.DIALECT_SVG ? mxConstants.DIALECT_VML : mxConstants.DIALECT_SVG;
   this.selectionBorder.pointerEvents = false;
   this.selectionBorder.rotation = Number(this.state.style[mxConstants.STYLE_ROTATION] || "0");
   this.selectionBorder.init(this.graph.getView().getOverlayPane());
   mxEvent.redirectMouseEvents(this.selectionBorder.node, this.graph, this.state);
   if (this.graph.isCellMovable(this.state.cell)) {
-    if (!this.graph.isCellLocked(this.state.cell)) {
-      this.selectionBorder.setCursor(mxConstants.CURSOR_MOVABLE_VERTEX);
-    }
+    this.selectionBorder.setCursor(mxConstants.CURSOR_MOVABLE_VERTEX);
   }
   if (0 >= mxGraphHandler.prototype.maxCells || this.graph.getSelectionCount() < mxGraphHandler.prototype.maxCells) {
-    var geo = this.graph.isCellResizable(this.state.cell) && !this.graph.isCellLocked(this.state.cell);
+    var geo = this.graph.isCellResizable(this.state.cell);
     this.sizers = [];
     if (geo || this.graph.isLabelMovable(this.state.cell) && (2 <= this.state.width && 2 <= this.state.height)) {
       var i = 0;
@@ -29199,7 +29274,7 @@ mxVertexHandler.prototype.init = function() {
       }
     } else {
       if (this.graph.isCellMovable(this.state.cell)) {
-        if (!geo) {
+        if (!this.graph.isCellResizable(this.state.cell)) {
           if (2 > this.state.width) {
             if (2 > this.state.height) {
               this.labelShape = this.createSizer(mxConstants.CURSOR_MOVABLE_VERTEX, mxEvent.LABEL_HANDLE, null, mxConstants.LABEL_HANDLE_FILLCOLOR);
@@ -29214,16 +29289,14 @@ mxVertexHandler.prototype.init = function() {
     this.rotationShape = this.createSizer(this.rotationCursor, mxEvent.ROTATION_HANDLE, mxConstants.HANDLE_SIZE + 3, mxConstants.HANDLE_FILLCOLOR);
     this.sizers.push(this.rotationShape);
   }
-  if (!this.graph.isCellLocked(this.state.cell)) {
-    this.customHandles = this.createCustomHandles();
-  }
+  this.customHandles = this.createCustomHandles();
   this.redraw();
   if (this.constrainGroupByChildren) {
     this.updateMinBounds();
   }
 };
 mxVertexHandler.prototype.isRotationHandleVisible = function() {
-  return this.graph.isEnabled() && (this.rotationEnabled && (!this.graph.isCellLocked(this.state.cell) && (this.graph.isCellRotatable(this.state.cell) && (0 >= mxGraphHandler.prototype.maxCells || this.graph.getSelectionCount() < mxGraphHandler.prototype.maxCells))));
+  return this.graph.isEnabled() && (this.rotationEnabled && (this.graph.isCellRotatable(this.state.cell) && (0 >= mxGraphHandler.prototype.maxCells || this.graph.getSelectionCount() < mxGraphHandler.prototype.maxCells)));
 };
 mxVertexHandler.prototype.isConstrainedEvent = function(me) {
   return mxEvent.isShiftDown(me.getEvent()) || "fixed" == this.state.style[mxConstants.STYLE_ASPECT];
@@ -29262,7 +29335,7 @@ mxVertexHandler.prototype.createSelectionShape = function(bounds) {
   return bounds;
 };
 mxVertexHandler.prototype.getSelectionColor = function() {
-  return this.graph.isCellEditable(this.state.cell) ? mxConstants.VERTEX_SELECTION_COLOR : mxConstants.LOCKED_HANDLE_FILLCOLOR;
+  return mxConstants.VERTEX_SELECTION_COLOR;
 };
 mxVertexHandler.prototype.getSelectionStrokeWidth = function() {
   return mxConstants.VERTEX_SELECTION_STROKEWIDTH;
@@ -29313,9 +29386,9 @@ mxVertexHandler.prototype.getHandleForEvent = function(me) {
   var checkShape = mxEvent.isMouseEvent(me.getEvent()) ? 1 : this.tolerance;
   var c = this.allowHandleBoundsCheck && (mxClient.IS_IE || 0 < checkShape) ? new mxRectangle(me.getGraphX() - checkShape, me.getGraphY() - checkShape, 2 * checkShape, 2 * checkShape) : null;
   checkShape = mxUtils.bind(this, function(shape) {
-    var height = null != shape && (shape.constructor != mxImageShape && this.allowHandleBoundsCheck) ? shape.strokewidth + shape.svgStrokeTolerance : null;
-    height = null != height ? new mxRectangle(me.getGraphX() - Math.floor(height / 2), me.getGraphY() - Math.floor(height / 2), height, height) : c;
-    return null != shape && (me.isSource(shape) || shape.intersectsRectangle(height));
+    var x = null != shape && (shape.constructor != mxImageShape && this.allowHandleBoundsCheck) ? shape.strokewidth + shape.svgStrokeTolerance : null;
+    x = null != x ? new mxRectangle(me.getGraphX() - Math.floor(x / 2), me.getGraphY() - Math.floor(x / 2), x, x) : c;
+    return null != shape && (me.isSource(shape) || null != x && (mxUtils.intersects(shape.bounds, x) && ("none" != shape.node.style.display && "hidden" != shape.node.style.visibility)));
   });
   if (checkShape(this.rotationShape)) {
     return mxEvent.ROTATION_HANDLE;
@@ -29342,14 +29415,12 @@ mxVertexHandler.prototype.getHandleForEvent = function(me) {
 mxVertexHandler.prototype.isCustomHandleEvent = function(me) {
   return true;
 };
-mxVertexHandler.prototype.mouseDown = function(index, me) {
-  if (!me.isConsumed()) {
-    if (this.graph.isEnabled()) {
-      index = this.getHandleForEvent(me);
-      if (null != index) {
-        this.start(me.getGraphX(), me.getGraphY(), index);
-        me.consume();
-      }
+mxVertexHandler.prototype.mouseDown = function(evt, me) {
+  if (!me.isConsumed() && this.graph.isEnabled()) {
+    var handle = this.getHandleForEvent(me);
+    if (null != handle) {
+      this.start(me.getGraphX(), me.getGraphY(), handle);
+      me.consume();
     }
   }
 };
@@ -29372,7 +29443,7 @@ mxVertexHandler.prototype.start = function(me, cell, index) {
       if (!this.livePreviewActive || this.isLivePreviewBorder()) {
         this.preview = this.createSelectionShape(this.bounds);
         if (mxClient.IS_SVG && 0 != Number(this.state.style[mxConstants.STYLE_ROTATION] || "0") || (null == this.state.text || this.state.text.node.parentNode != this.graph.container)) {
-          this.preview.dialect = mxConstants.DIALECT_SVG;
+          this.preview.dialect = this.graph.dialect != mxConstants.DIALECT_SVG ? mxConstants.DIALECT_VML : mxConstants.DIALECT_SVG;
           this.preview.init(this.graph.view.getOverlayPane());
         } else {
           this.preview.dialect = mxConstants.DIALECT_STRICTHTML;
@@ -29700,10 +29771,10 @@ mxVertexHandler.prototype.moveToFront = function() {
     }
   }
 };
-mxVertexHandler.prototype.mouseUp = function(index, parent) {
+mxVertexHandler.prototype.mouseUp = function(sender, parent) {
   if (null != this.index && null != this.state) {
     var point = new mxPoint(parent.getGraphX(), parent.getGraphY());
-    index = this.index;
+    var index = this.index;
     this.index = null;
     if (null == this.ghostPreview) {
       this.state.view.invalidate(this.state.cell, false, false);
@@ -29740,9 +29811,9 @@ mxVertexHandler.prototype.mouseUp = function(index, parent) {
           var sin = Math.sin(-alpha);
           var dx = point.x - this.startX;
           var dy = point.y - this.startY;
-          style = sin * dx + cos * dy;
+          point = sin * dx + cos * dy;
           dx = cos * dx - sin * dy;
-          dy = style;
+          dy = point;
           var s = this.graph.view.scale;
           var recurse = this.isRecursiveResize(this.state, parent);
           this.resizeCell(this.state.cell, this.roundLength(dx / s), this.roundLength(dy / s), index, gridEnabled, this.isConstrainedEvent(parent), recurse);
@@ -30113,14 +30184,6 @@ mxVertexHandler.prototype.getRotationHandlePosition = function() {
 mxVertexHandler.prototype.isParentHighlightVisible = function() {
   return!this.graph.isCellSelected(this.graph.model.getParent(this.state.cell));
 };
-mxVertexHandler.prototype.destroyParentHighlight = function() {
-  if (null != this.parentHighlight.state) {
-    delete this.parentHighlight.state.parentHighlight;
-    delete this.parentHighlight.state;
-  }
-  this.parentHighlight.destroy();
-  this.parentHighlight = null;
-};
 mxVertexHandler.prototype.updateParentHighlight = function() {
   if (!this.isDestroyed()) {
     var bounds = this.isParentHighlightVisible();
@@ -30136,7 +30199,13 @@ mxVertexHandler.prototype.updateParentHighlight = function() {
           }
         }
       } else {
-        this.destroyParentHighlight();
+        if (null != pstate) {
+          if (pstate.parentHighlight == this.parentHighlight) {
+            pstate.parentHighlight = null;
+          }
+        }
+        this.parentHighlight.destroy();
+        this.parentHighlight = null;
       }
     } else {
       if (this.parentHighlightEnabled) {
@@ -30145,13 +30214,12 @@ mxVertexHandler.prototype.updateParentHighlight = function() {
             if (null != pstate) {
               if (null == pstate.parentHighlight) {
                 this.parentHighlight = this.createParentHighlightShape(pstate);
-                this.parentHighlight.dialect = mxConstants.DIALECT_SVG;
+                this.parentHighlight.dialect = this.graph.dialect != mxConstants.DIALECT_SVG ? mxConstants.DIALECT_VML : mxConstants.DIALECT_SVG;
                 this.parentHighlight.pointerEvents = false;
                 this.parentHighlight.rotation = Number(pstate.style[mxConstants.STYLE_ROTATION] || "0");
                 this.parentHighlight.init(this.graph.getView().getOverlayPane());
                 this.parentHighlight.redraw();
                 pstate.parentHighlight = this.parentHighlight;
-                this.parentHighlight.state = pstate;
               }
             }
           }
@@ -30189,6 +30257,17 @@ mxVertexHandler.prototype.destroy = function() {
     this.preview.destroy();
     this.preview = null;
   }
+  if (null != this.parentHighlight) {
+    var i = this.graph.model.getParent(this.state.cell);
+    i = this.graph.view.getState(i);
+    if (null != i) {
+      if (i.parentHighlight == this.parentHighlight) {
+        i.parentHighlight = null;
+      }
+    }
+    this.parentHighlight.destroy();
+    this.parentHighlight = null;
+  }
   if (null != this.ghostPreview) {
     this.ghostPreview.destroy();
     this.ghostPreview = null;
@@ -30197,13 +30276,10 @@ mxVertexHandler.prototype.destroy = function() {
     this.selectionBorder.destroy();
     this.selectionBorder = null;
   }
-  if (null != this.parentHighlight) {
-    this.destroyParentHighlight();
-  }
   this.labelShape = null;
   this.removeHint();
   if (null != this.sizers) {
-    for (var i = 0;i < this.sizers.length;i++) {
+    for (i = 0;i < this.sizers.length;i++) {
       this.sizers[i].destroy();
     }
     this.sizers = null;
@@ -30221,9 +30297,9 @@ function mxEdgeHandler(state) {
       this.state = state;
       this.init();
       this.escapeHandler = mxUtils.bind(this, function(flex, editor) {
-        flex = null != this.index;
+        var d = null != this.index;
         this.reset();
-        if (flex) {
+        if (d) {
           this.graph.cellRenderer.redraw(this.state, false, state.view.isRendering());
         }
       });
@@ -30264,12 +30340,9 @@ mxEdgeHandler.prototype.init = function() {
   this.shape = this.createSelectionShape(this.abspoints);
   this.shape.dialect = this.graph.dialect != mxConstants.DIALECT_SVG ? mxConstants.DIALECT_MIXEDHTML : mxConstants.DIALECT_SVG;
   this.shape.init(this.graph.getView().getOverlayPane());
-  this.shape.svgStrokeTolerance = 0;
   this.shape.pointerEvents = false;
+  this.shape.setCursor(mxConstants.CURSOR_MOVABLE_EDGE);
   mxEvent.redirectMouseEvents(this.shape.node, this.graph, this.state);
-  if (this.graph.isCellMovable(this.state.cell)) {
-    this.shape.setCursor(mxConstants.CURSOR_MOVABLE_EDGE);
-  }
   this.preferHtml = null != this.state.text && this.state.text.node.parentNode == this.graph.container;
   if (!this.preferHtml) {
     var sourceState = this.state.getVisibleTerminalState(true);
@@ -30283,26 +30356,21 @@ mxEdgeHandler.prototype.init = function() {
       }
     }
   }
-  if (this.graph.isCellEditable(this.state.cell)) {
-    if (this.graph.getSelectionCount() < mxGraphHandler.prototype.maxCells || 0 >= mxGraphHandler.prototype.maxCells) {
-      this.bends = this.createBends();
-      if (this.isVirtualBendsEnabled()) {
-        this.virtualBends = this.createVirtualBends();
-      }
+  if (this.graph.getSelectionCount() < mxGraphHandler.prototype.maxCells || 0 >= mxGraphHandler.prototype.maxCells) {
+    this.bends = this.createBends();
+    if (this.isVirtualBendsEnabled()) {
+      this.virtualBends = this.createVirtualBends();
     }
   }
   this.label = new mxPoint(this.state.absoluteOffset.x, this.state.absoluteOffset.y);
   this.labelShape = this.createLabelHandleShape();
   this.initBend(this.labelShape);
-  if (this.graph.isCellEditable(this.state.cell)) {
-    this.labelShape.setCursor(mxConstants.CURSOR_LABEL_HANDLE);
-    this.customHandles = this.createCustomHandles();
-  }
+  this.labelShape.setCursor(mxConstants.CURSOR_LABEL_HANDLE);
+  this.customHandles = this.createCustomHandles();
   this.updateParentHighlight();
   this.redraw();
 };
 mxEdgeHandler.prototype.isParentHighlightVisible = mxVertexHandler.prototype.isParentHighlightVisible;
-mxEdgeHandler.prototype.destroyParentHighlight = mxVertexHandler.prototype.destroyParentHighlight;
 mxEdgeHandler.prototype.updateParentHighlight = mxVertexHandler.prototype.updateParentHighlight;
 mxEdgeHandler.prototype.createCustomHandles = function() {
   return null;
@@ -30338,7 +30406,7 @@ mxEdgeHandler.prototype.createSelectionShape = function(shape) {
   return shape;
 };
 mxEdgeHandler.prototype.getSelectionColor = function() {
-  return this.graph.isCellEditable(this.state.cell) ? mxConstants.EDGE_SELECTION_COLOR : mxConstants.LOCKED_HANDLE_FILLCOLOR;
+  return mxConstants.EDGE_SELECTION_COLOR;
 };
 mxEdgeHandler.prototype.getSelectionStrokeWidth = function() {
   return mxConstants.EDGE_SELECTION_STROKEWIDTH;
@@ -30400,7 +30468,7 @@ mxEdgeHandler.prototype.createBends = function() {
       var terminal = 0 == i || target;
       if (terminal || this.graph.isCellBendable(cell)) {
         mxUtils.bind(this, function(index) {
-          var bend = this.createHandleShape(index, null, index == this.abspoints.length - 1);
+          var bend = this.createHandleShape(index);
           this.initBend(bend, mxUtils.bind(this, mxUtils.bind(this, function() {
             if (this.dblClickRemoveEnabled) {
               this.removePoint(this.state, index);
@@ -30470,6 +30538,12 @@ mxEdgeHandler.prototype.initBend = function(bend, dblClick) {
     bend.init(this.graph.getView().getOverlayPane());
   }
   mxEvent.redirectMouseEvents(bend.node, this.graph, this.state, null, null, null, dblClick);
+  if (mxClient.IS_QUIRKS || 8 == document.documentMode) {
+    mxEvent.addListener(bend.node, "dragstart", function(evt) {
+      mxEvent.consume(evt);
+      return false;
+    });
+  }
   if (mxClient.IS_TOUCH) {
     bend.node.setAttribute("pointer-events", "none");
   }
@@ -30478,7 +30552,7 @@ mxEdgeHandler.prototype.getHandleForEvent = function(me) {
   var result = null;
   if (null != this.state) {
     var checkShape = function(shape) {
-      if (null != shape && (me.isSource(shape) || shape.intersectsRectangle(r))) {
+      if (null != shape && (null != shape.node && ("none" != shape.node.style.display && ("hidden" != shape.node.style.visibility && (me.isSource(shape) || null != x && mxUtils.intersects(shape.bounds, x)))))) {
         var dist = me.getGraphX() - shape.bounds.getCenterX();
         shape = me.getGraphY() - shape.bounds.getCenterY();
         dist = dist * dist + shape * shape;
@@ -30489,7 +30563,7 @@ mxEdgeHandler.prototype.getHandleForEvent = function(me) {
       return false;
     };
     var i = mxEvent.isMouseEvent(me.getEvent()) ? 1 : this.tolerance;
-    var r = this.allowHandleBoundsCheck && (mxClient.IS_IE || 0 < i) ? new mxRectangle(me.getGraphX() - i, me.getGraphY() - i, 2 * i, 2 * i) : null;
+    var x = this.allowHandleBoundsCheck && (mxClient.IS_IE || 0 < i) ? new mxRectangle(me.getGraphX() - i, me.getGraphY() - i, 2 * i, 2 * i) : null;
     var minDist = null;
     if (null != this.customHandles && this.isCustomHandleEvent(me)) {
       for (i = this.customHandles.length - 1;0 <= i;i--) {
@@ -30524,30 +30598,28 @@ mxEdgeHandler.prototype.isAddVirtualBendEvent = function(me) {
 mxEdgeHandler.prototype.isCustomHandleEvent = function(me) {
   return true;
 };
-mxEdgeHandler.prototype.mouseDown = function(handle, me) {
-  if (this.graph.isCellEditable(this.state.cell)) {
-    handle = this.getHandleForEvent(me);
-    if (null != this.bends && null != this.bends[handle]) {
-      var b = this.bends[handle].bounds;
-      this.snapPoint = new mxPoint(b.getCenterX(), b.getCenterY());
-    }
-    if (this.addEnabled && (null == handle && this.isAddPointEvent(me.getEvent()))) {
-      this.addPoint(this.state, me.getEvent());
-      me.consume();
-    } else {
-      if (null != handle && (!me.isConsumed() && this.graph.isEnabled())) {
-        if (this.removeEnabled && this.isRemovePointEvent(me.getEvent())) {
-          this.removePoint(this.state, handle);
-        } else {
-          if (handle != mxEvent.LABEL_HANDLE || this.graph.isLabelMovable(me.getCell())) {
-            if (handle <= mxEvent.VIRTUAL_HANDLE) {
-              mxUtils.setOpacity(this.virtualBends[mxEvent.VIRTUAL_HANDLE - handle].node, 100);
-            }
-            this.start(me.getX(), me.getY(), handle);
+mxEdgeHandler.prototype.mouseDown = function(evt, me) {
+  var handle = this.getHandleForEvent(me);
+  if (null != this.bends && null != this.bends[handle]) {
+    var b = this.bends[handle].bounds;
+    this.snapPoint = new mxPoint(b.getCenterX(), b.getCenterY());
+  }
+  if (this.addEnabled && (null == handle && this.isAddPointEvent(me.getEvent()))) {
+    this.addPoint(this.state, me.getEvent());
+    me.consume();
+  } else {
+    if (null != handle && (!me.isConsumed() && this.graph.isEnabled())) {
+      if (this.removeEnabled && this.isRemovePointEvent(me.getEvent())) {
+        this.removePoint(this.state, handle);
+      } else {
+        if (handle != mxEvent.LABEL_HANDLE || this.graph.isLabelMovable(me.getCell())) {
+          if (handle <= mxEvent.VIRTUAL_HANDLE) {
+            mxUtils.setOpacity(this.virtualBends[mxEvent.VIRTUAL_HANDLE - handle].node, 100);
           }
+          this.start(me.getX(), me.getY(), handle);
         }
-        me.consume();
       }
+      me.consume();
     }
   }
 };
@@ -30576,7 +30648,7 @@ mxEdgeHandler.prototype.clonePreviewState = function(terminal, point) {
   return this.state.clone();
 };
 mxEdgeHandler.prototype.getSnapToTerminalTolerance = function() {
-  return 2;
+  return this.graph.gridSize * this.graph.view.scale / 2;
 };
 mxEdgeHandler.prototype.updateHint = function(me, point) {
 };
@@ -30596,9 +30668,9 @@ mxEdgeHandler.prototype.getPointForEvent = function(me) {
   var f = false;
   var g = false;
   if (0 < tt && this.isSnapToTerminalsEvent(me)) {
-    var snapToTerminal = function(x) {
-      if (null != x) {
-        snapToPoint.call(this, new mxPoint(view.getRoutingCenterX(x), view.getRoutingCenterY(x)));
+    var i = function(terminal) {
+      if (null != terminal) {
+        snapToPoint.call(this, new mxPoint(view.getRoutingCenterX(terminal), view.getRoutingCenterY(terminal)));
       }
     };
     var snapToPoint = function(y) {
@@ -30615,16 +30687,11 @@ mxEdgeHandler.prototype.getPointForEvent = function(me) {
         }
       }
     };
-    snapToTerminal.call(this, this.state.getVisibleTerminalState(true));
-    snapToTerminal.call(this, this.state.getVisibleTerminalState(false));
-    snapToTerminal = this.state.absolutePoints;
-    if (null != snapToTerminal) {
-      for (var i = 0;i < snapToTerminal.length;i++) {
-        if (0 < i || !this.state.isFloatingTerminalPoint(true)) {
-          if (i < snapToTerminal.length - 1 || !this.state.isFloatingTerminalPoint(false)) {
-            snapToPoint.call(this, this.state.absolutePoints[i]);
-          }
-        }
+    i.call(this, this.state.getVisibleTerminalState(true));
+    i.call(this, this.state.getVisibleTerminalState(false));
+    if (null != this.state.absolutePoints) {
+      for (i = 0;i < this.state.absolutePoints.length;i++) {
+        snapToPoint.call(this, this.state.absolutePoints[i]);
       }
     }
   }
@@ -30675,11 +30742,11 @@ mxEdgeHandler.prototype.getPreviewPoints = function(pt, me) {
         points.splice(mxEvent.VIRTUAL_HANDLE - this.index, 0, point);
       }
       if (!this.isSource && !this.isTarget) {
-        for (var abs = 0;abs < this.bends.length;abs++) {
-          if (abs != this.index) {
-            var idx = this.bends[abs];
-            if (null != idx) {
-              if (mxUtils.contains(idx.bounds, pt.x, pt.y)) {
+        for (var i = 0;i < this.bends.length;i++) {
+          if (i != this.index) {
+            var abs = this.bends[i];
+            if (null != abs) {
+              if (mxUtils.contains(abs.bounds, pt.x, pt.y)) {
                 if (this.index <= mxEvent.VIRTUAL_HANDLE) {
                   points.splice(mxEvent.VIRTUAL_HANDLE - this.index, 1);
                 } else {
@@ -30691,12 +30758,13 @@ mxEdgeHandler.prototype.getPreviewPoints = function(pt, me) {
           }
         }
         if (null == result && (this.straightRemoveEnabled && (null == me || !mxEvent.isAltDown(me.getEvent())))) {
-          me = this.graph.tolerance * this.graph.tolerance;
+          i = this.graph.tolerance * this.graph.tolerance;
           abs = this.state.absolutePoints.slice();
           abs[this.index] = pt;
           var terminal = this.state.getVisibleTerminalState(true);
           if (null != terminal) {
-            if (idx = this.graph.getConnectionConstraint(this.state, terminal, true), null == idx || null == this.graph.getConnectionPoint(terminal, idx)) {
+            var idx = this.graph.getConnectionConstraint(this.state, terminal, true);
+            if (null == idx || null == this.graph.getConnectionPoint(terminal, idx)) {
               abs[0] = new mxPoint(terminal.view.getRoutingCenterX(terminal), terminal.view.getRoutingCenterY(terminal));
             }
           }
@@ -30709,7 +30777,7 @@ mxEdgeHandler.prototype.getPreviewPoints = function(pt, me) {
           idx = this.index;
           if (0 < idx) {
             if (idx < abs.length - 1) {
-              if (mxUtils.ptSegDistSq(abs[idx - 1].x, abs[idx - 1].y, abs[idx + 1].x, abs[idx + 1].y, pt.x, pt.y) < me) {
+              if (mxUtils.ptSegDistSq(abs[idx - 1].x, abs[idx - 1].y, abs[idx + 1].x, abs[idx + 1].y, pt.x, pt.y) < i) {
                 points.splice(idx - 1, 1);
                 result = points;
               }
@@ -30727,9 +30795,6 @@ mxEdgeHandler.prototype.getPreviewPoints = function(pt, me) {
   return null != result ? result : points;
 };
 mxEdgeHandler.prototype.isOutlineConnectEvent = function(me) {
-  if (mxEvent.isShiftDown(me.getEvent()) && mxEvent.isAltDown(me.getEvent())) {
-    return false;
-  }
   var gridY = mxUtils.getOffset(this.graph.container);
   var evt = me.getEvent();
   var clientX = mxEvent.getClientX(evt);
@@ -30737,7 +30802,7 @@ mxEdgeHandler.prototype.isOutlineConnectEvent = function(me) {
   var doc = document.documentElement;
   var gridX = this.currentPoint.x - this.graph.container.scrollLeft + gridY.x - ((window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0));
   gridY = this.currentPoint.y - this.graph.container.scrollTop + gridY.y - ((window.pageYOffset || doc.scrollTop) - (doc.clientTop || 0));
-  return this.outlineConnect && (mxEvent.isShiftDown(me.getEvent()) && !mxEvent.isAltDown(me.getEvent()) || (me.isSource(this.marker.highlight.shape) || (!mxEvent.isShiftDown(me.getEvent()) && (mxEvent.isAltDown(me.getEvent()) && null != me.getState()) || (this.marker.highlight.isHighlightAt(clientX, evt) || (gridX != clientX || gridY != evt) && (null == me.getState() && this.marker.highlight.isHighlightAt(gridX, gridY))))));
+  return this.outlineConnect && (!mxEvent.isShiftDown(me.getEvent()) && (me.isSource(this.marker.highlight.shape) || (mxEvent.isAltDown(me.getEvent()) && null != me.getState() || (this.marker.highlight.isHighlightAt(clientX, evt) || (gridX != clientX || gridY != evt) && (null == me.getState() && this.marker.highlight.isHighlightAt(gridX, gridY))))));
 };
 mxEdgeHandler.prototype.updatePreviewState = function(edge, point, terminalState, me, outline) {
   var source = this.isSource ? terminalState : this.state.getVisibleTerminalState(true);
@@ -30809,21 +30874,17 @@ mxEdgeHandler.prototype.updatePreviewState = function(edge, point, terminalState
   edge.view.updatePoints(edge, this.points, source, target);
   edge.view.updateFloatingTerminalPoints(edge, source, target);
 };
-mxEdgeHandler.prototype.mouseMove = function(terminalState, me) {
+mxEdgeHandler.prototype.mouseMove = function(sender, me) {
   if (null != this.index && null != this.marker) {
     this.currentPoint = this.getPointForEvent(me);
     this.error = null;
-    if (null != this.snapPoint) {
+    if (!this.graph.isIgnoreTerminalEvent(me.getEvent())) {
       if (mxEvent.isShiftDown(me.getEvent())) {
-        if (!this.graph.isIgnoreTerminalEvent(me.getEvent())) {
-          if (null == this.constraintHandler.currentFocus) {
-            if (this.constraintHandler.currentFocus != this.state) {
-              if (Math.abs(this.snapPoint.x - this.currentPoint.x) < Math.abs(this.snapPoint.y - this.currentPoint.y)) {
-                this.currentPoint.x = this.snapPoint.x;
-              } else {
-                this.currentPoint.y = this.snapPoint.y;
-              }
-            }
+        if (null != this.snapPoint) {
+          if (Math.abs(this.snapPoint.x - this.currentPoint.x) < Math.abs(this.snapPoint.y - this.currentPoint.y)) {
+            this.currentPoint.x = this.snapPoint.x;
+          } else {
+            this.currentPoint.y = this.snapPoint.y;
           }
         }
       }
@@ -30844,7 +30905,7 @@ mxEdgeHandler.prototype.mouseMove = function(terminalState, me) {
         this.label.y = this.currentPoint.y;
       } else {
         this.points = this.getPreviewPoints(this.currentPoint, me);
-        terminalState = this.isSource || this.isTarget ? this.getPreviewTerminalState(me) : null;
+        var terminalState = this.isSource || this.isTarget ? this.getPreviewTerminalState(me) : null;
         if (null != this.constraintHandler.currentConstraint && (null != this.constraintHandler.currentFocus && null != this.constraintHandler.currentPoint)) {
           this.currentPoint = this.constraintHandler.currentPoint.clone();
         } else {
@@ -30892,14 +30953,14 @@ mxEdgeHandler.prototype.mouseMove = function(terminalState, me) {
     }
   }
 };
-mxEdgeHandler.prototype.mouseUp = function(edge, parent) {
+mxEdgeHandler.prototype.mouseUp = function(sender, parent) {
   if (null != this.index && null != this.marker) {
     if (null != this.shape) {
       if (null != this.shape.node) {
         this.shape.node.style.display = "";
       }
     }
-    edge = this.state.cell;
+    var edge = this.state.cell;
     var index = this.index;
     this.index = null;
     if (parent.getX() != this.startX || parent.getY() != this.startY) {
@@ -30936,12 +30997,12 @@ mxEdgeHandler.prototype.mouseUp = function(edge, parent) {
                 model.beginUpdate();
                 try {
                   if (clone) {
-                    var pt = model.getGeometry(edge);
+                    var geo = model.getGeometry(edge);
                     clone = this.graph.cloneCell(edge);
                     model.add(child, clone, model.getChildCount(child));
-                    if (null != pt) {
-                      pt = pt.clone();
-                      model.setGeometry(clone, pt);
+                    if (null != geo) {
+                      geo = geo.clone();
+                      model.setGeometry(clone, geo);
                     }
                     var terminal = model.getTerminal(edge, !this.isSource);
                     this.graph.connectCell(clone, terminal, !this.isSource);
@@ -30953,17 +31014,17 @@ mxEdgeHandler.prototype.mouseUp = function(edge, parent) {
                 }
               } else {
                 if (this.graph.isAllowDanglingEdges()) {
-                  pt = this.abspoints[this.isSource ? 0 : this.abspoints.length - 1];
-                  pt.x = this.roundLength(pt.x / this.graph.view.scale - this.graph.view.translate.x);
-                  pt.y = this.roundLength(pt.y / this.graph.view.scale - this.graph.view.translate.y);
-                  terminal = this.graph.getView().getState(this.graph.getModel().getParent(edge));
-                  if (null != terminal) {
-                    pt.x -= terminal.origin.x;
-                    pt.y -= terminal.origin.y;
+                  model = this.abspoints[this.isSource ? 0 : this.abspoints.length - 1];
+                  model.x = this.roundLength(model.x / this.graph.view.scale - this.graph.view.translate.x);
+                  model.y = this.roundLength(model.y / this.graph.view.scale - this.graph.view.translate.y);
+                  geo = this.graph.getView().getState(this.graph.getModel().getParent(edge));
+                  if (null != geo) {
+                    model.x -= geo.origin.x;
+                    model.y -= geo.origin.y;
                   }
-                  pt.x -= this.graph.panDx / this.graph.view.scale;
-                  pt.y -= this.graph.panDy / this.graph.view.scale;
-                  edge = this.changeTerminalPoint(edge, pt, this.isSource, clone);
+                  model.x -= this.graph.panDx / this.graph.view.scale;
+                  model.y -= this.graph.panDy / this.graph.view.scale;
+                  edge = this.changeTerminalPoint(edge, model, this.isSource, clone);
                 }
               }
             } else {
@@ -31033,10 +31094,10 @@ mxEdgeHandler.prototype.convertPoint = function(point, gridEnabled) {
   }
   point.x = Math.round(point.x / scale - tr.x);
   point.y = Math.round(point.y / scale - tr.y);
-  gridEnabled = this.graph.getView().getState(this.graph.getModel().getParent(this.state.cell));
-  if (null != gridEnabled) {
-    point.x -= gridEnabled.origin.x;
-    point.y -= gridEnabled.origin.y;
+  scale = this.graph.getView().getState(this.graph.getModel().getParent(this.state.cell));
+  if (null != scale) {
+    point.x -= scale.origin.x;
+    point.y -= scale.origin.y;
   }
   return point;
 };
@@ -31068,7 +31129,7 @@ mxEdgeHandler.prototype.moveLabel = function(edgeState, x, y) {
     model.setGeometry(edgeState.cell, geometry);
   }
 };
-mxEdgeHandler.prototype.connect = function(edge, isConnect, isSource, model, me) {
+mxEdgeHandler.prototype.connect = function(edge, terminal, isSource, model, me) {
   model = this.graph.getModel();
   model.getParent(edge);
   model.beginUpdate();
@@ -31077,7 +31138,7 @@ mxEdgeHandler.prototype.connect = function(edge, isConnect, isSource, model, me)
     if (null == constraint) {
       constraint = new mxConnectionConstraint;
     }
-    this.graph.connectCell(edge, isConnect, isSource, constraint);
+    this.graph.connectCell(edge, terminal, isSource, constraint);
   } finally {
     model.endUpdate();
   }
@@ -31219,43 +31280,43 @@ mxEdgeHandler.prototype.redrawHandles = function() {
   this.label = new mxPoint(this.state.absoluteOffset.x, this.state.absoluteOffset.y);
   this.labelShape.bounds = new mxRectangle(Math.round(this.label.x - b.width / 2), Math.round(this.label.y - b.height / 2), b.width, b.height);
   b = this.graph.getLabel(i);
-  this.labelShape.visible = null != b && (0 < b.length && (this.graph.isCellEditable(this.state.cell) && this.graph.isLabelMovable(i)));
+  this.labelShape.visible = null != b && (0 < b.length && this.graph.isLabelMovable(i));
   if (null != this.bends && 0 < this.bends.length) {
-    var last = this.abspoints.length - 1;
+    var pe = this.abspoints.length - 1;
     i = this.abspoints[0];
-    var pt = i.x;
+    var p0 = i.x;
     var y0 = i.y;
     b = this.bends[0].bounds;
-    this.bends[0].bounds = new mxRectangle(Math.floor(pt - b.width / 2), Math.floor(y0 - b.height / 2), b.width, b.height);
+    this.bends[0].bounds = new mxRectangle(Math.floor(p0 - b.width / 2), Math.floor(y0 - b.height / 2), b.width, b.height);
     this.bends[0].fill = this.getHandleFillColor(0);
     this.bends[0].redraw();
     if (this.manageLabelHandle) {
       this.checkLabelHandle(this.bends[0].bounds);
     }
-    last = this.abspoints[last];
-    pt = last.x;
-    y0 = last.y;
+    pe = this.abspoints[pe];
+    p0 = pe.x;
+    y0 = pe.y;
     var bn = this.bends.length - 1;
     b = this.bends[bn].bounds;
-    this.bends[bn].bounds = new mxRectangle(Math.floor(pt - b.width / 2), Math.floor(y0 - b.height / 2), b.width, b.height);
+    this.bends[bn].bounds = new mxRectangle(Math.floor(p0 - b.width / 2), Math.floor(y0 - b.height / 2), b.width, b.height);
     this.bends[bn].fill = this.getHandleFillColor(bn);
     this.bends[bn].redraw();
     if (this.manageLabelHandle) {
       this.checkLabelHandle(this.bends[bn].bounds);
     }
-    this.redrawInnerBends(i, last);
+    this.redrawInnerBends(i, pe);
   }
   if (null != this.abspoints && (null != this.virtualBends && 0 < this.virtualBends.length)) {
-    last = this.abspoints[0];
+    pe = this.abspoints[0];
     for (i = 0;i < this.virtualBends.length;i++) {
       if (null != this.virtualBends[i]) {
         if (null != this.abspoints[i + 1]) {
-          pt = this.abspoints[i + 1];
+          p0 = this.abspoints[i + 1];
           b = this.virtualBends[i];
-          b.bounds = new mxRectangle(Math.floor(last.x + (pt.x - last.x) / 2 - b.bounds.width / 2), Math.floor(last.y + (pt.y - last.y) / 2 - b.bounds.height / 2), b.bounds.width, b.bounds.height);
+          b.bounds = new mxRectangle(Math.floor(pe.x + (p0.x - pe.x) / 2 - b.bounds.width / 2), Math.floor(pe.y + (p0.y - pe.y) / 2 - b.bounds.height / 2), b.bounds.width, b.bounds.height);
           b.redraw();
           mxUtils.setOpacity(b.node, this.virtualBendOpacity);
-          last = pt;
+          pe = p0;
           if (this.manageLabelHandle) {
             this.checkLabelHandle(b.bounds);
           }
@@ -31298,15 +31359,15 @@ mxEdgeHandler.prototype.setHandlesVisible = function(visible) {
     }
   }
 };
-mxEdgeHandler.prototype.redrawInnerBends = function(i, cx) {
-  for (i = 1;i < this.bends.length - 1;i++) {
+mxEdgeHandler.prototype.redrawInnerBends = function(mainLoopIteration, pe) {
+  for (var i = 1;i < this.bends.length - 1;i++) {
     if (null != this.bends[i]) {
       if (null != this.abspoints[i]) {
-        cx = this.abspoints[i].x;
+        var x = this.abspoints[i].x;
         var y = this.abspoints[i].y;
         var b = this.bends[i].bounds;
         this.bends[i].node.style.visibility = "visible";
-        this.bends[i].bounds = new mxRectangle(Math.round(cx - b.width / 2), Math.round(y - b.height / 2), b.width, b.height);
+        this.bends[i].bounds = new mxRectangle(Math.round(x - b.width / 2), Math.round(y - b.height / 2), b.width, b.height);
         if (this.manageLabelHandle) {
           this.checkLabelHandle(this.bends[i].bounds);
         } else {
@@ -31315,7 +31376,7 @@ mxEdgeHandler.prototype.redrawInnerBends = function(i, cx) {
               if (mxUtils.intersects(this.bends[i].bounds, this.labelShape.bounds)) {
                 w = mxConstants.HANDLE_SIZE + 3;
                 h = mxConstants.HANDLE_SIZE + 3;
-                this.bends[i].bounds = new mxRectangle(Math.round(cx - w / 2), Math.round(y - h / 2), w, h);
+                this.bends[i].bounds = new mxRectangle(Math.round(x - w / 2), Math.round(y - h / 2), w, h);
               }
             }
           }
@@ -31416,6 +31477,17 @@ mxEdgeHandler.prototype.destroy = function() {
     this.shape.destroy();
     this.shape = null;
   }
+  if (null != this.parentHighlight) {
+    var child = this.graph.model.getParent(this.state.cell);
+    child = this.graph.view.getState(child);
+    if (null != child) {
+      if (child.parentHighlight == this.parentHighlight) {
+        child.parentHighlight = null;
+      }
+    }
+    this.parentHighlight.destroy();
+    this.parentHighlight = null;
+  }
   if (null != this.labelShape) {
     this.labelShape.destroy();
     this.labelShape = null;
@@ -31423,9 +31495,6 @@ mxEdgeHandler.prototype.destroy = function() {
   if (null != this.constraintHandler) {
     this.constraintHandler.destroy();
     this.constraintHandler = null;
-  }
-  if (null != this.parentHighlight) {
-    this.destroyParentHighlight();
   }
   this.destroyBends(this.virtualBends);
   this.virtualBends = null;
@@ -31456,7 +31525,7 @@ mxElbowEdgeHandler.prototype.createBends = function() {
     }
   })));
   this.points.push(new mxPoint(0, 0));
-  bend = this.createHandleShape(2, null, true);
+  bend = this.createHandleShape(2);
   this.initBend(bend);
   bend.setCursor(mxConstants.CURSOR_TERMINAL_HANDLE);
   bends.push(bend);
@@ -31474,11 +31543,11 @@ mxElbowEdgeHandler.prototype.createVirtualBend = function(dblClickHandler) {
 mxElbowEdgeHandler.prototype.getCursorForBend = function() {
   return this.state.style[mxConstants.STYLE_EDGE] == mxEdgeStyle.TopToBottom || (this.state.style[mxConstants.STYLE_EDGE] == mxConstants.EDGESTYLE_TOPTOBOTTOM || (this.state.style[mxConstants.STYLE_EDGE] == mxEdgeStyle.ElbowConnector || this.state.style[mxConstants.STYLE_EDGE] == mxConstants.EDGESTYLE_ELBOW) && this.state.style[mxConstants.STYLE_ELBOW] == mxConstants.ELBOW_VERTICAL) ? "row-resize" : "col-resize";
 };
-mxElbowEdgeHandler.prototype.getTooltipForNode = function(source) {
+mxElbowEdgeHandler.prototype.getTooltipForNode = function(node) {
   var cell = null;
   if (!(null == this.bends)) {
     if (!(null == this.bends[1])) {
-      if (!(source != this.bends[1].node && source.parentNode != this.bends[1].node)) {
+      if (!(node != this.bends[1].node && node.parentNode != this.bends[1].node)) {
         cell = this.doubleClickOrientationResource;
         cell = mxResources.get(cell) || cell;
       }
@@ -31498,25 +31567,25 @@ mxElbowEdgeHandler.prototype.convertPoint = function(point, gridEnabled) {
   point.y = Math.round(point.y / scale - tr.y - origin.y);
   return point;
 };
-mxElbowEdgeHandler.prototype.redrawInnerBends = function(state, last) {
-  var g = this.graph.getModel().getGeometry(this.state.cell);
-  var pts = this.state.absolutePoints;
+mxElbowEdgeHandler.prototype.redrawInnerBends = function(last, pe) {
+  var state = this.graph.getModel().getGeometry(this.state.cell);
+  var tmp = this.state.absolutePoints;
   var p0 = null;
-  if (1 < pts.length) {
-    state = pts[1];
-    last = pts[pts.length - 2];
+  if (1 < tmp.length) {
+    last = tmp[1];
+    pe = tmp[tmp.length - 2];
   } else {
-    if (null != g.points) {
-      if (0 < g.points.length) {
-        p0 = pts[0];
+    if (null != state.points) {
+      if (0 < state.points.length) {
+        p0 = tmp[0];
       }
     }
   }
-  p0 = null == p0 ? new mxPoint(state.x + (last.x - state.x) / 2, state.y + (last.y - state.y) / 2) : new mxPoint(this.graph.getView().scale * (p0.x + this.graph.getView().translate.x + this.state.origin.x), this.graph.getView().scale * (p0.y + this.graph.getView().translate.y + this.state.origin.y));
-  last = this.bends[1].bounds;
-  state = last.width;
-  last = last.height;
-  state = new mxRectangle(Math.round(p0.x - state / 2), Math.round(p0.y - last / 2), state, last);
+  p0 = null == p0 ? new mxPoint(last.x + (pe.x - last.x) / 2, last.y + (pe.y - last.y) / 2) : new mxPoint(this.graph.getView().scale * (p0.x + this.graph.getView().translate.x + this.state.origin.x), this.graph.getView().scale * (p0.y + this.graph.getView().translate.y + this.state.origin.y));
+  tmp = this.bends[1].bounds;
+  state = tmp.width;
+  tmp = tmp.height;
+  state = new mxRectangle(Math.round(p0.x - state / 2), Math.round(p0.y - tmp / 2), state, tmp);
   if (this.manageLabelHandle) {
     this.checkLabelHandle(state);
   } else {
@@ -31524,8 +31593,8 @@ mxElbowEdgeHandler.prototype.redrawInnerBends = function(state, last) {
       if (this.labelShape.visible) {
         if (mxUtils.intersects(state, this.labelShape.bounds)) {
           state = mxConstants.HANDLE_SIZE + 3;
-          last = mxConstants.HANDLE_SIZE + 3;
-          state = new mxRectangle(Math.floor(p0.x - state / 2), Math.floor(p0.y - last / 2), state, last);
+          tmp = mxConstants.HANDLE_SIZE + 3;
+          state = new mxRectangle(Math.floor(p0.x - state / 2), Math.floor(p0.y - tmp / 2), state, tmp);
         }
       }
     }
@@ -31644,7 +31713,7 @@ mxEdgeSegmentHandler.prototype.updatePreviewState = function(edge, point, termin
     edge.view.updateFloatingTerminalPoints(edge, source, target);
   }
 };
-mxEdgeSegmentHandler.prototype.connect = function(edge, isConnect, me, isClone, parent) {
+mxEdgeSegmentHandler.prototype.connect = function(edge, terminal, isSource, isClone, me) {
   var model = this.graph.getModel();
   var geo = model.getGeometry(edge);
   var result = null;
@@ -31680,7 +31749,7 @@ mxEdgeSegmentHandler.prototype.connect = function(edge, isConnect, me, isClone, 
   }
   return edge;
 };
-mxEdgeSegmentHandler.prototype.getTooltipForNode = function(source) {
+mxEdgeSegmentHandler.prototype.getTooltipForNode = function(node) {
   return null;
 };
 mxEdgeSegmentHandler.prototype.start = function(me, y, index) {
@@ -31719,7 +31788,7 @@ mxEdgeSegmentHandler.prototype.createBends = function() {
       this.points.push(new mxPoint(0, 0));
     }
   }
-  bend = this.createHandleShape(pts.length, null, true);
+  bend = this.createHandleShape(pts.length);
   this.initBend(bend);
   bend.setCursor(mxConstants.CURSOR_TERMINAL_HANDLE);
   bends.push(bend);
@@ -31729,7 +31798,7 @@ mxEdgeSegmentHandler.prototype.redraw = function() {
   this.refresh();
   mxEdgeHandler.prototype.redraw.apply(this, arguments);
 };
-mxEdgeSegmentHandler.prototype.redrawInnerBends = function(p0, bbox) {
+mxEdgeSegmentHandler.prototype.redrawInnerBends = function(p0, pe) {
   if (this.graph.isCellBendable(this.state.cell)) {
     var pts = this.getCurrentPoints();
     if (null != pts && 1 < pts.length) {
@@ -31748,10 +31817,10 @@ mxEdgeSegmentHandler.prototype.redrawInnerBends = function(p0, bbox) {
       for (i = 0;i < pts.length - 1;i++) {
         if (null != this.bends[i + 1]) {
           p0 = pts[i];
-          bbox = pts[i + 1];
-          p0 = new mxPoint(p0.x + (bbox.x - p0.x) / 2, p0.y + (bbox.y - p0.y) / 2);
-          bbox = this.bends[i + 1].bounds;
-          this.bends[i + 1].bounds = new mxRectangle(Math.floor(p0.x - bbox.width / 2), Math.floor(p0.y - bbox.height / 2), bbox.width, bbox.height);
+          pe = pts[i + 1];
+          var point = new mxPoint(p0.x + (pe.x - p0.x) / 2, p0.y + (pe.y - p0.y) / 2);
+          var b = this.bends[i + 1].bounds;
+          this.bends[i + 1].bounds = new mxRectangle(Math.floor(point.x - b.width / 2), Math.floor(point.y - b.height / 2), b.width, b.height);
           this.bends[i + 1].redraw();
           if (this.manageLabelHandle) {
             this.checkLabelHandle(this.bends[i + 1].bounds);
@@ -31896,14 +31965,14 @@ mxTooltipHandler.prototype.init = function() {
 mxTooltipHandler.prototype.getStateForEvent = function(me) {
   return me.getState();
 };
-mxTooltipHandler.prototype.mouseDown = function(cell, me) {
+mxTooltipHandler.prototype.mouseDown = function(evt, me) {
   this.reset(me, false);
   this.hideTooltip();
 };
-mxTooltipHandler.prototype.mouseMove = function(state, me) {
+mxTooltipHandler.prototype.mouseMove = function(sender, me) {
   if (me.getX() != this.lastX || me.getY() != this.lastY) {
     this.reset(me, true);
-    state = this.getStateForEvent(me);
+    var state = this.getStateForEvent(me);
     if (this.isHideOnHover() || (state != this.state || me.getSource() != this.node && (!this.stateSource || null != state && this.stateSource == (me.isSource(state.shape) || !me.isSource(state.text))))) {
       this.hideTooltip();
     }
@@ -31947,7 +32016,7 @@ mxTooltipHandler.prototype.hide = function() {
 mxTooltipHandler.prototype.hideTooltip = function() {
   if (null != this.div) {
     this.div.style.visibility = "hidden";
-    this.div.innerText = "";
+    this.div.innerHTML = "";
   }
 };
 mxTooltipHandler.prototype.show = function(tip, x, y) {
@@ -31960,7 +32029,7 @@ mxTooltipHandler.prototype.show = function(tip, x, y) {
     this.div.style.left = x + origin.x + "px";
     this.div.style.top = y + mxConstants.TOOLTIP_VERTICAL_OFFSET + origin.y + "px";
     if (mxUtils.isNode(tip)) {
-      this.div.innerText = "";
+      this.div.innerHTML = "";
       this.div.appendChild(tip);
     } else {
       this.div.innerHTML = tip.replace(/\n/g, "<br>");
@@ -31995,7 +32064,7 @@ function mxCellTracker(graph, color, funct) {
   }
 }
 mxUtils.extend(mxCellTracker, mxCellMarker);
-mxCellTracker.prototype.mouseDown = function(cell, sender) {
+mxCellTracker.prototype.mouseDown = function(evt, sender) {
 };
 mxCellTracker.prototype.mouseMove = function(sender, me) {
   if (this.isEnabled()) {
@@ -32069,7 +32138,7 @@ mxCellHighlight.prototype.createShape = function() {
   shape.opacity = this.opacity;
   shape.isDashed = this.dashed;
   shape.isShadow = false;
-  shape.dialect = mxConstants.DIALECT_SVG;
+  shape.dialect = this.graph.dialect != mxConstants.DIALECT_SVG ? mxConstants.DIALECT_VML : mxConstants.DIALECT_SVG;
   shape.init(this.graph.getView().getOverlayPane());
   mxEvent.redirectMouseEvents(shape.node, this.graph, this.state);
   if (this.graph.dialect != mxConstants.DIALECT_SVG) {
@@ -32083,24 +32152,30 @@ mxCellHighlight.prototype.getStrokeWidth = function(state) {
   return this.strokeWidth;
 };
 mxCellHighlight.prototype.repaint = function() {
-  if (null != this.state) {
-    if (null != this.shape) {
-      this.shape.scale = this.state.view.scale;
-      if (this.graph.model.isEdge(this.state.cell)) {
-        this.shape.strokewidth = this.getStrokeWidth();
-        this.shape.points = this.state.absolutePoints;
-        this.shape.outline = false;
-      } else {
-        this.shape.bounds = new mxRectangle(this.state.x - this.spacing, this.state.y - this.spacing, this.state.width + 2 * this.spacing, this.state.height + 2 * this.spacing);
-        this.shape.rotation = Number(this.state.style[mxConstants.STYLE_ROTATION] || "0");
-        this.shape.strokewidth = this.getStrokeWidth() / this.state.view.scale;
-        this.shape.outline = true;
-      }
-      if (null != this.state.shape) {
-        this.shape.setCursor(this.state.shape.getCursor());
-      }
-      this.shape.redraw();
+  if (null != this.state && null != this.shape) {
+    this.shape.scale = this.state.view.scale;
+    if (this.graph.model.isEdge(this.state.cell)) {
+      this.shape.strokewidth = this.getStrokeWidth();
+      this.shape.points = this.state.absolutePoints;
+      this.shape.outline = false;
+    } else {
+      this.shape.bounds = new mxRectangle(this.state.x - this.spacing, this.state.y - this.spacing, this.state.width + 2 * this.spacing, this.state.height + 2 * this.spacing);
+      this.shape.rotation = Number(this.state.style[mxConstants.STYLE_ROTATION] || "0");
+      this.shape.strokewidth = this.getStrokeWidth() / this.state.view.scale;
+      this.shape.outline = true;
     }
+    if (null != this.state.shape) {
+      this.shape.setCursor(this.state.shape.getCursor());
+    }
+    if (mxClient.IS_QUIRKS || 8 == document.documentMode) {
+      if ("transparent" == this.shape.stroke) {
+        this.shape.stroke = "white";
+        this.shape.opacity = 1;
+      } else {
+        this.shape.opacity = this.opacity;
+      }
+    }
+    this.shape.redraw();
   }
 };
 mxCellHighlight.prototype.hide = function() {
@@ -32120,13 +32195,13 @@ mxCellHighlight.prototype.highlight = function(state) {
 };
 mxCellHighlight.prototype.isHighlightAt = function(x, y) {
   var hit = false;
-  if (null != this.shape && null != document.elementFromPoint) {
-    for (x = document.elementFromPoint(x, y);null != x;) {
-      if (x == this.shape.node) {
+  if (null != this.shape && (null != document.elementFromPoint && !mxClient.IS_QUIRKS)) {
+    for (var elt = document.elementFromPoint(x, y);null != elt;) {
+      if (elt == this.shape.node) {
         hit = true;
         break;
       }
-      x = x.parentNode;
+      elt = elt.parentNode;
     }
   }
   return hit;
@@ -32138,6 +32213,1301 @@ mxCellHighlight.prototype.destroy = function() {
   if (null != this.shape) {
     this.shape.destroy();
     this.shape = null;
+  }
+};
+function mxDefaultKeyHandler(editor) {
+  if (null != editor) {
+    this.editor = editor;
+    this.handler = new mxKeyHandler(editor.graph);
+    var old = this.handler.escape;
+    this.handler.escape = function(evt) {
+      old.apply(this, arguments);
+      editor.hideProperties();
+      editor.fireEvent(new mxEventObject(mxEvent.ESCAPE, "event", evt));
+    };
+  }
+}
+mxDefaultKeyHandler.prototype.editor = null;
+mxDefaultKeyHandler.prototype.handler = null;
+mxDefaultKeyHandler.prototype.bindAction = function(code, parent, control) {
+  var keyHandler = mxUtils.bind(this, function() {
+    this.editor.execute(parent);
+  });
+  if (control) {
+    this.handler.bindControlKey(code, keyHandler);
+  } else {
+    this.handler.bindKey(code, keyHandler);
+  }
+};
+mxDefaultKeyHandler.prototype.destroy = function() {
+  this.handler.destroy();
+  this.handler = null;
+};
+function mxDefaultPopupMenu(config) {
+  this.config = config;
+}
+mxDefaultPopupMenu.prototype.imageBasePath = null;
+mxDefaultPopupMenu.prototype.config = null;
+mxDefaultPopupMenu.prototype.createMenu = function(editor, menu, cell, evt) {
+  if (null != this.config) {
+    var conditions = this.createConditions(editor, cell, evt);
+    this.addItems(editor, menu, cell, evt, conditions, this.config.firstChild, null);
+  }
+};
+mxDefaultPopupMenu.prototype.addItems = function(editor, menu, cell, evt, conditions, item, parent) {
+  for (var k = false;null != item;) {
+    if ("add" == item.nodeName) {
+      var as = item.getAttribute("if");
+      if (null == as || conditions[as]) {
+        as = item.getAttribute("as");
+        as = mxResources.get(as) || as;
+        var funct = mxUtils.eval(mxUtils.getTextContent(item));
+        var action = item.getAttribute("action");
+        var icon = item.getAttribute("icon");
+        var iconCls = item.getAttribute("iconCls");
+        var enabled = item.getAttribute("enabled-if");
+        enabled = null == enabled || conditions[enabled];
+        if (k) {
+          menu.addSeparator(parent);
+          k = false;
+        }
+        if (null != icon) {
+          if (this.imageBasePath) {
+            icon = this.imageBasePath + icon;
+          }
+        }
+        as = this.addAction(menu, editor, as, icon, funct, action, cell, parent, iconCls, enabled);
+        this.addItems(editor, menu, cell, evt, conditions, item.firstChild, as);
+      }
+    } else {
+      if ("separator" == item.nodeName) {
+        k = true;
+      }
+    }
+    item = item.nextSibling;
+  }
+};
+mxDefaultPopupMenu.prototype.addAction = function(menu, editor, lab, icon, funct, parent, cell, pressed, iconCls, enabled) {
+  return menu.addItem(lab, icon, function(evt) {
+    if ("function" == typeof funct) {
+      funct.call(editor, editor, cell, evt);
+    }
+    if (null != parent) {
+      editor.execute(parent, cell, evt);
+    }
+  }, pressed, iconCls, enabled);
+};
+mxDefaultPopupMenu.prototype.createConditions = function(editor, cell, evt) {
+  var i = editor.graph.getModel();
+  var condNodes = i.getChildCount(cell);
+  var conditions = [];
+  conditions.nocell = null == cell;
+  conditions.ncells = 1 < editor.graph.getSelectionCount();
+  conditions.notRoot = i.getRoot() != i.getParent(editor.graph.getDefaultParent());
+  conditions.cell = null != cell;
+  i = null != cell && 1 == editor.graph.getSelectionCount();
+  conditions.nonEmpty = i && 0 < condNodes;
+  conditions.expandable = i && editor.graph.isCellFoldable(cell, false);
+  conditions.collapsable = i && editor.graph.isCellFoldable(cell, true);
+  conditions.validRoot = i && editor.graph.isValidRoot(cell);
+  conditions.emptyValidRoot = conditions.validRoot && 0 == condNodes;
+  conditions.swimlane = i && editor.graph.isSwimlane(cell);
+  condNodes = this.config.getElementsByTagName("condition");
+  for (i = 0;i < condNodes.length;i++) {
+    var funct = mxUtils.eval(mxUtils.getTextContent(condNodes[i]));
+    var name = condNodes[i].getAttribute("name");
+    if (null != name) {
+      if ("function" == typeof funct) {
+        conditions[name] = funct(editor, cell, evt);
+      }
+    }
+  }
+  return conditions;
+};
+function mxDefaultToolbar(container, editor) {
+  this.editor = editor;
+  if (null != container) {
+    if (null != editor) {
+      this.init(container);
+    }
+  }
+}
+mxDefaultToolbar.prototype.editor = null;
+mxDefaultToolbar.prototype.toolbar = null;
+mxDefaultToolbar.prototype.resetHandler = null;
+mxDefaultToolbar.prototype.spacing = 4;
+mxDefaultToolbar.prototype.connectOnDrop = false;
+mxDefaultToolbar.prototype.init = function(container) {
+  if (null != container) {
+    this.toolbar = new mxToolbar(container);
+    this.toolbar.addListener(mxEvent.SELECT, mxUtils.bind(this, function(flex, evt) {
+      var funct = evt.getProperty("function");
+      this.editor.insertFunction = null != funct ? mxUtils.bind(this, function() {
+        funct.apply(this, arguments);
+        this.toolbar.resetMode();
+      }) : null;
+    }));
+    this.resetHandler = mxUtils.bind(this, function() {
+      if (null != this.toolbar) {
+        this.toolbar.resetMode(true);
+      }
+    });
+    this.editor.graph.addListener(mxEvent.DOUBLE_CLICK, this.resetHandler);
+    this.editor.addListener(mxEvent.ESCAPE, this.resetHandler);
+  }
+};
+mxDefaultToolbar.prototype.addItem = function(title, icon, parent, pressed) {
+  var clickHandler = mxUtils.bind(this, function() {
+    if (null != parent) {
+      if (0 < parent.length) {
+        this.editor.execute(parent);
+      }
+    }
+  });
+  return this.toolbar.addItem(title, icon, clickHandler, pressed);
+};
+mxDefaultToolbar.prototype.addSeparator = function(icon) {
+  icon = icon || mxClient.imageBasePath + "/separator.gif";
+  this.toolbar.addSeparator(icon);
+};
+mxDefaultToolbar.prototype.addCombo = function() {
+  return this.toolbar.addCombo();
+};
+mxDefaultToolbar.prototype.addActionCombo = function(title) {
+  return this.toolbar.addActionCombo(title);
+};
+mxDefaultToolbar.prototype.addActionOption = function(combo, title, parent) {
+  var clickHandler = mxUtils.bind(this, function() {
+    this.editor.execute(parent);
+  });
+  this.addOption(combo, title, clickHandler);
+};
+mxDefaultToolbar.prototype.addOption = function(combo, title, value) {
+  return this.toolbar.addOption(combo, title, value);
+};
+mxDefaultToolbar.prototype.addMode = function(title, icon, mode, pressed, funct) {
+  var clickHandler = mxUtils.bind(this, function() {
+    this.editor.setMode(mode);
+    if (null != funct) {
+      funct(this.editor);
+    }
+  });
+  return this.toolbar.addSwitchMode(title, icon, clickHandler, pressed);
+};
+mxDefaultToolbar.prototype.addPrototype = function(title, icon, cell, pressed, insert, toggle) {
+  var factory = mxUtils.bind(this, function() {
+    return "function" == typeof cell ? cell() : null != cell ? this.editor.graph.cloneCell(cell) : null;
+  });
+  var clickHandler = mxUtils.bind(this, function(evt, cell) {
+    if ("function" == typeof insert) {
+      insert(this.editor, factory(), evt, cell);
+    } else {
+      this.drop(factory(), evt, cell);
+    }
+    this.toolbar.resetMode();
+    mxEvent.consume(evt);
+  });
+  title = this.toolbar.addMode(title, icon, clickHandler, pressed, null, toggle);
+  this.installDropHandler(title, function(flex, evt, cell) {
+    clickHandler(evt, cell);
+  });
+  return title;
+};
+mxDefaultToolbar.prototype.drop = function(vertex, evt, target) {
+  var graph = this.editor.graph;
+  var model = graph.getModel();
+  if (null != target && (!model.isEdge(target) && (this.connectOnDrop && graph.isCellConnectable(target)))) {
+    this.connect(vertex, evt, target);
+  } else {
+    for (;null != target && !graph.isValidDropTarget(target, [vertex], evt);) {
+      target = model.getParent(target);
+    }
+    this.insert(vertex, evt, target);
+  }
+};
+mxDefaultToolbar.prototype.insert = function(vertex, evt, target) {
+  var graph = this.editor.graph;
+  if (graph.canImportCell(vertex)) {
+    var pt = mxEvent.getClientX(evt);
+    var y = mxEvent.getClientY(evt);
+    pt = mxUtils.convertPoint(graph.container, pt, y);
+    return graph.isSplitEnabled() && graph.isSplitTarget(target, [vertex], evt) ? graph.splitEdge(target, [vertex], null, pt.x, pt.y) : this.editor.addVertex(target, vertex, pt.x, pt.y);
+  }
+  return null;
+};
+mxDefaultToolbar.prototype.connect = function(vertex, graph, source) {
+  graph = this.editor.graph;
+  var model = graph.getModel();
+  if (null != source && (graph.isCellConnectable(vertex) && graph.isEdgeValid(null, source, vertex))) {
+    var edge = null;
+    model.beginUpdate();
+    try {
+      var geo = model.getGeometry(source);
+      var g = model.getGeometry(vertex).clone();
+      g.x = geo.x + (geo.width - g.width) / 2;
+      g.y = geo.y + (geo.height - g.height) / 2;
+      var step = this.spacing * graph.gridSize;
+      var dist = 20 * model.getDirectedEdgeCount(source, true);
+      if (this.editor.horizontalFlow) {
+        g.x += (g.width + geo.width) / 2 + step + dist;
+      } else {
+        g.y += (g.height + geo.height) / 2 + step + dist;
+      }
+      vertex.setGeometry(g);
+      var parent = model.getParent(source);
+      graph.addCell(vertex, parent);
+      graph.constrainChild(vertex);
+      edge = this.editor.createEdge(source, vertex);
+      if (null == model.getGeometry(edge)) {
+        var edgeGeometry = new mxGeometry;
+        edgeGeometry.relative = true;
+        model.setGeometry(edge, edgeGeometry);
+      }
+      graph.addEdge(edge, parent, source, vertex);
+    } finally {
+      model.endUpdate();
+    }
+    graph.setSelectionCells([vertex, edge]);
+    graph.scrollCellToVisible(vertex);
+  }
+};
+mxDefaultToolbar.prototype.installDropHandler = function(img, dropHandler) {
+  var node = document.createElement("img");
+  node.setAttribute("src", img.getAttribute("src"));
+  var loader = mxUtils.bind(this, function(flex) {
+    node.style.width = 2 * img.offsetWidth + "px";
+    node.style.height = 2 * img.offsetHeight + "px";
+    mxUtils.makeDraggable(img, this.editor.graph, dropHandler, node);
+    mxEvent.removeListener(node, "load", loader);
+  });
+  if (mxClient.IS_IE) {
+    loader();
+  } else {
+    mxEvent.addListener(node, "load", loader);
+  }
+};
+mxDefaultToolbar.prototype.destroy = function() {
+  if (null != this.resetHandler) {
+    this.editor.graph.removeListener("dblclick", this.resetHandler);
+    this.editor.removeListener("escape", this.resetHandler);
+    this.resetHandler = null;
+  }
+  if (null != this.toolbar) {
+    this.toolbar.destroy();
+    this.toolbar = null;
+  }
+};
+function mxEditor(config) {
+  this.actions = [];
+  this.addActions();
+  if (null != document.body) {
+    this.cycleAttributeValues = [];
+    this.popupHandler = new mxDefaultPopupMenu;
+    this.undoManager = new mxUndoManager;
+    this.graph = this.createGraph();
+    this.toolbar = this.createToolbar();
+    this.keyHandler = new mxDefaultKeyHandler(this);
+    this.configure(config);
+    this.graph.swimlaneIndicatorColorAttribute = this.cycleAttributeName;
+    if (null != this.onInit) {
+      this.onInit();
+    }
+    if (mxClient.IS_IE) {
+      mxEvent.addListener(window, "unload", mxUtils.bind(this, function() {
+        this.destroy();
+      }));
+    }
+  }
+}
+if (mxLoadResources) {
+  mxResources.add(mxClient.basePath + "/resources/editor");
+} else {
+  mxClient.defaultBundles.push(mxClient.basePath + "/resources/editor");
+}
+mxEditor.prototype = new mxEventSource;
+mxEditor.prototype.constructor = mxEditor;
+mxEditor.prototype.askZoomResource = "none" != mxClient.language ? "askZoom" : "";
+mxEditor.prototype.lastSavedResource = "none" != mxClient.language ? "lastSaved" : "";
+mxEditor.prototype.currentFileResource = "none" != mxClient.language ? "currentFile" : "";
+mxEditor.prototype.propertiesResource = "none" != mxClient.language ? "properties" : "";
+mxEditor.prototype.tasksResource = "none" != mxClient.language ? "tasks" : "";
+mxEditor.prototype.helpResource = "none" != mxClient.language ? "help" : "";
+mxEditor.prototype.outlineResource = "none" != mxClient.language ? "outline" : "";
+mxEditor.prototype.outline = null;
+mxEditor.prototype.graph = null;
+mxEditor.prototype.graphRenderHint = null;
+mxEditor.prototype.toolbar = null;
+mxEditor.prototype.status = null;
+mxEditor.prototype.popupHandler = null;
+mxEditor.prototype.undoManager = null;
+mxEditor.prototype.keyHandler = null;
+mxEditor.prototype.actions = null;
+mxEditor.prototype.dblClickAction = "edit";
+mxEditor.prototype.swimlaneRequired = false;
+mxEditor.prototype.disableContextMenu = true;
+mxEditor.prototype.insertFunction = null;
+mxEditor.prototype.forcedInserting = false;
+mxEditor.prototype.templates = null;
+mxEditor.prototype.defaultEdge = null;
+mxEditor.prototype.defaultEdgeStyle = null;
+mxEditor.prototype.defaultGroup = null;
+mxEditor.prototype.groupBorderSize = null;
+mxEditor.prototype.filename = null;
+mxEditor.prototype.linefeed = "&#xa;";
+mxEditor.prototype.postParameterName = "xml";
+mxEditor.prototype.escapePostData = true;
+mxEditor.prototype.urlPost = null;
+mxEditor.prototype.urlImage = null;
+mxEditor.prototype.horizontalFlow = false;
+mxEditor.prototype.layoutDiagram = false;
+mxEditor.prototype.swimlaneSpacing = 0;
+mxEditor.prototype.maintainSwimlanes = false;
+mxEditor.prototype.layoutSwimlanes = false;
+mxEditor.prototype.cycleAttributeValues = null;
+mxEditor.prototype.cycleAttributeIndex = 0;
+mxEditor.prototype.cycleAttributeName = "fillColor";
+mxEditor.prototype.tasks = null;
+mxEditor.prototype.tasksWindowImage = null;
+mxEditor.prototype.tasksTop = 20;
+mxEditor.prototype.help = null;
+mxEditor.prototype.helpWindowImage = null;
+mxEditor.prototype.urlHelp = null;
+mxEditor.prototype.helpWidth = 300;
+mxEditor.prototype.helpHeight = 260;
+mxEditor.prototype.propertiesWidth = 240;
+mxEditor.prototype.propertiesHeight = null;
+mxEditor.prototype.movePropertiesDialog = false;
+mxEditor.prototype.validating = false;
+mxEditor.prototype.modified = false;
+mxEditor.prototype.isModified = function() {
+  return this.modified;
+};
+mxEditor.prototype.setModified = function(value) {
+  this.modified = value;
+};
+mxEditor.prototype.addActions = function() {
+  this.addAction("save", function(editor) {
+    editor.save();
+  });
+  this.addAction("print", function(editor) {
+    (new mxPrintPreview(editor.graph, 1)).open();
+  });
+  this.addAction("show", function(editor) {
+    mxUtils.show(editor.graph, null, 10, 10);
+  });
+  this.addAction("exportImage", function(editor) {
+    var url = editor.getUrlImage();
+    if (null == url || mxClient.IS_LOCAL) {
+      editor.execute("show");
+    } else {
+      var xml = mxUtils.getViewXml(editor.graph, 1);
+      xml = mxUtils.getXml(xml, "\n");
+      mxUtils.submit(url, editor.postParameterName + "=" + encodeURIComponent(xml), document, "_blank");
+    }
+  });
+  this.addAction("refresh", function(editor) {
+    editor.graph.refresh();
+  });
+  this.addAction("cut", function(editor) {
+    if (editor.graph.isEnabled()) {
+      mxClipboard.cut(editor.graph);
+    }
+  });
+  this.addAction("copy", function(editor) {
+    if (editor.graph.isEnabled()) {
+      mxClipboard.copy(editor.graph);
+    }
+  });
+  this.addAction("paste", function(editor) {
+    if (editor.graph.isEnabled()) {
+      mxClipboard.paste(editor.graph);
+    }
+  });
+  this.addAction("delete", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.removeCells();
+    }
+  });
+  this.addAction("group", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.setSelectionCell(editor.groupCells());
+    }
+  });
+  this.addAction("ungroup", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.setSelectionCells(editor.graph.ungroupCells());
+    }
+  });
+  this.addAction("removeFromParent", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.removeCellsFromParent();
+    }
+  });
+  this.addAction("undo", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.undo();
+    }
+  });
+  this.addAction("redo", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.redo();
+    }
+  });
+  this.addAction("zoomIn", function(editor) {
+    editor.graph.zoomIn();
+  });
+  this.addAction("zoomOut", function(editor) {
+    editor.graph.zoomOut();
+  });
+  this.addAction("actualSize", function(editor) {
+    editor.graph.zoomActual();
+  });
+  this.addAction("fit", function(editor) {
+    editor.graph.fit();
+  });
+  this.addAction("showProperties", function(editor, cell) {
+    editor.showProperties(cell);
+  });
+  this.addAction("selectAll", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.selectAll();
+    }
+  });
+  this.addAction("selectNone", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.clearSelection();
+    }
+  });
+  this.addAction("selectVertices", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.selectVertices();
+    }
+  });
+  this.addAction("selectEdges", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.selectEdges();
+    }
+  });
+  this.addAction("edit", function(editor, cell) {
+    if (editor.graph.isEnabled()) {
+      if (editor.graph.isCellEditable(cell)) {
+        editor.graph.startEditingAtCell(cell);
+      }
+    }
+  });
+  this.addAction("toBack", function(editor, flex) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.orderCells(true);
+    }
+  });
+  this.addAction("toFront", function(editor, flex) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.orderCells(false);
+    }
+  });
+  this.addAction("enterGroup", function(editor, cell) {
+    editor.graph.enterGroup(cell);
+  });
+  this.addAction("exitGroup", function(editor) {
+    editor.graph.exitGroup();
+  });
+  this.addAction("home", function(editor) {
+    editor.graph.home();
+  });
+  this.addAction("selectPrevious", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.selectPreviousCell();
+    }
+  });
+  this.addAction("selectNext", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.selectNextCell();
+    }
+  });
+  this.addAction("selectParent", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.selectParentCell();
+    }
+  });
+  this.addAction("selectChild", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.selectChildCell();
+    }
+  });
+  this.addAction("collapse", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.foldCells(true);
+    }
+  });
+  this.addAction("collapseAll", function(editor) {
+    if (editor.graph.isEnabled()) {
+      var cells = editor.graph.getChildVertices();
+      editor.graph.foldCells(true, false, cells);
+    }
+  });
+  this.addAction("expand", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.foldCells(false);
+    }
+  });
+  this.addAction("expandAll", function(editor) {
+    if (editor.graph.isEnabled()) {
+      var cells = editor.graph.getChildVertices();
+      editor.graph.foldCells(false, false, cells);
+    }
+  });
+  this.addAction("bold", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.toggleCellStyleFlags(mxConstants.STYLE_FONTSTYLE, mxConstants.FONT_BOLD);
+    }
+  });
+  this.addAction("italic", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.toggleCellStyleFlags(mxConstants.STYLE_FONTSTYLE, mxConstants.FONT_ITALIC);
+    }
+  });
+  this.addAction("underline", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.toggleCellStyleFlags(mxConstants.STYLE_FONTSTYLE, mxConstants.FONT_UNDERLINE);
+    }
+  });
+  this.addAction("alignCellsLeft", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.alignCells(mxConstants.ALIGN_LEFT);
+    }
+  });
+  this.addAction("alignCellsCenter", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.alignCells(mxConstants.ALIGN_CENTER);
+    }
+  });
+  this.addAction("alignCellsRight", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.alignCells(mxConstants.ALIGN_RIGHT);
+    }
+  });
+  this.addAction("alignCellsTop", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.alignCells(mxConstants.ALIGN_TOP);
+    }
+  });
+  this.addAction("alignCellsMiddle", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.alignCells(mxConstants.ALIGN_MIDDLE);
+    }
+  });
+  this.addAction("alignCellsBottom", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.alignCells(mxConstants.ALIGN_BOTTOM);
+    }
+  });
+  this.addAction("alignFontLeft", function(editor) {
+    editor.graph.setCellStyles(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_LEFT);
+  });
+  this.addAction("alignFontCenter", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.setCellStyles(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_CENTER);
+    }
+  });
+  this.addAction("alignFontRight", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.setCellStyles(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_RIGHT);
+    }
+  });
+  this.addAction("alignFontTop", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.setCellStyles(mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_TOP);
+    }
+  });
+  this.addAction("alignFontMiddle", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.setCellStyles(mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_MIDDLE);
+    }
+  });
+  this.addAction("alignFontBottom", function(editor) {
+    if (editor.graph.isEnabled()) {
+      editor.graph.setCellStyles(mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_BOTTOM);
+    }
+  });
+  this.addAction("zoom", function(editor) {
+    var scale = 100 * editor.graph.getView().scale;
+    scale = parseFloat(mxUtils.prompt(mxResources.get(editor.askZoomResource) || editor.askZoomResource, scale)) / 100;
+    if (!isNaN(scale)) {
+      editor.graph.getView().setScale(scale);
+    }
+  });
+  this.addAction("toggleTasks", function(editor) {
+    if (null != editor.tasks) {
+      editor.tasks.setVisible(!editor.tasks.isVisible());
+    } else {
+      editor.showTasks();
+    }
+  });
+  this.addAction("toggleHelp", function(editor) {
+    if (null != editor.help) {
+      editor.help.setVisible(!editor.help.isVisible());
+    } else {
+      editor.showHelp();
+    }
+  });
+  this.addAction("toggleOutline", function(editor) {
+    if (null == editor.outline) {
+      editor.showOutline();
+    } else {
+      editor.outline.setVisible(!editor.outline.isVisible());
+    }
+  });
+  this.addAction("toggleConsole", function(flex) {
+    mxLog.setVisible(!mxLog.isVisible());
+  });
+};
+mxEditor.prototype.configure = function(node) {
+  if (null != node) {
+    (new mxCodec(node.ownerDocument)).decode(node, this);
+    this.resetHistory();
+  }
+};
+mxEditor.prototype.resetFirstTime = function() {
+  document.cookie = "mxgraph=seen; expires=Fri, 27 Jul 2001 02:47:11 UTC; path=/";
+};
+mxEditor.prototype.resetHistory = function() {
+  this.lastSnapshot = (new Date).getTime();
+  this.undoManager.clear();
+  this.ignoredChanges = 0;
+  this.setModified(false);
+};
+mxEditor.prototype.addAction = function(actionname, funct) {
+  this.actions[actionname] = funct;
+};
+mxEditor.prototype.execute = function(parent, cell, evt) {
+  var action = this.actions[parent];
+  if (null != action) {
+    try {
+      var args = arguments;
+      args[0] = this;
+      action.apply(this, args);
+    } catch (e) {
+      throw mxUtils.error("Cannot execute " + parent + ": " + e.message, 280, true), e;
+    }
+  } else {
+    mxUtils.error("Cannot find action " + parent, 280, true);
+  }
+};
+mxEditor.prototype.addTemplate = function(name, template) {
+  this.templates[name] = template;
+};
+mxEditor.prototype.getTemplate = function(name) {
+  return this.templates[name];
+};
+mxEditor.prototype.createGraph = function() {
+  var graph = new mxGraph(null, null, this.graphRenderHint);
+  graph.setTooltips(true);
+  graph.setPanning(true);
+  this.installDblClickHandler(graph);
+  this.installUndoHandler(graph);
+  this.installDrillHandler(graph);
+  this.installChangeHandler(graph);
+  this.installInsertHandler(graph);
+  graph.popupMenuHandler.factoryMethod = mxUtils.bind(this, function(menu, cell, evt) {
+    return this.createPopupMenu(menu, cell, evt);
+  });
+  graph.connectionHandler.factoryMethod = mxUtils.bind(this, function(source, id) {
+    return this.createEdge(source, id);
+  });
+  this.createSwimlaneManager(graph);
+  this.createLayoutManager(graph);
+  return graph;
+};
+mxEditor.prototype.createSwimlaneManager = function(graph) {
+  graph = new mxSwimlaneManager(graph, false);
+  graph.isHorizontal = mxUtils.bind(this, function() {
+    return this.horizontalFlow;
+  });
+  graph.isEnabled = mxUtils.bind(this, function() {
+    return this.maintainSwimlanes;
+  });
+  return graph;
+};
+mxEditor.prototype.createLayoutManager = function(graph) {
+  var layoutMgr = new mxLayoutManager(graph);
+  var self = this;
+  layoutMgr.getLayout = function(cell) {
+    var layout = null;
+    var model = self.graph.getModel();
+    if (null != model.getParent(cell)) {
+      if (self.layoutSwimlanes && graph.isSwimlane(cell)) {
+        if (null == self.swimlaneLayout) {
+          self.swimlaneLayout = self.createSwimlaneLayout();
+        }
+        layout = self.swimlaneLayout;
+      } else {
+        if (self.layoutDiagram) {
+          if (graph.isValidRoot(cell) || null == model.getParent(model.getParent(cell))) {
+            if (null == self.diagramLayout) {
+              self.diagramLayout = self.createDiagramLayout();
+            }
+            layout = self.diagramLayout;
+          }
+        }
+      }
+    }
+    return layout;
+  };
+  return layoutMgr;
+};
+mxEditor.prototype.setGraphContainer = function(container) {
+  if (null == this.graph.container) {
+    this.graph.init(container);
+    this.rubberband = new mxRubberband(this.graph);
+    if (this.disableContextMenu) {
+      mxEvent.disableContextMenu(container);
+    }
+    if (mxClient.IS_QUIRKS) {
+      new mxDivResizer(container);
+    }
+  }
+};
+mxEditor.prototype.installDblClickHandler = function(graph) {
+  graph.addListener(mxEvent.DOUBLE_CLICK, mxUtils.bind(this, function(flex, evt) {
+    var cell = evt.getProperty("cell");
+    if (null != cell) {
+      if (graph.isEnabled()) {
+        if (null != this.dblClickAction) {
+          this.execute(this.dblClickAction, cell);
+          evt.consume();
+        }
+      }
+    }
+  }));
+};
+mxEditor.prototype.installUndoHandler = function(graph) {
+  var undoHandler = mxUtils.bind(this, function(flex, evt) {
+    var edit = evt.getProperty("edit");
+    this.undoManager.undoableEditHappened(edit);
+  });
+  graph.getModel().addListener(mxEvent.UNDO, undoHandler);
+  graph.getView().addListener(mxEvent.UNDO, undoHandler);
+  undoHandler = function(sender, evt) {
+    var changes = evt.getProperty("edit").changes;
+    graph.setSelectionCells(graph.getSelectionCellsForChanges(changes));
+  };
+  this.undoManager.addListener(mxEvent.UNDO, undoHandler);
+  this.undoManager.addListener(mxEvent.REDO, undoHandler);
+};
+mxEditor.prototype.installDrillHandler = function(graph) {
+  var funct = mxUtils.bind(this, function(flex) {
+    this.fireEvent(new mxEventObject(mxEvent.ROOT));
+  });
+  graph.getView().addListener(mxEvent.DOWN, funct);
+  graph.getView().addListener(mxEvent.UP, funct);
+};
+mxEditor.prototype.installChangeHandler = function(graph) {
+  var funct = mxUtils.bind(this, function(flex, evt) {
+    this.setModified(true);
+    if (1 == this.validating) {
+      graph.validateGraph();
+    }
+    var changes = evt.getProperty("edit").changes;
+    for (var i = 0;i < changes.length;i++) {
+      var change = changes[i];
+      if (change instanceof mxRootChange || (change instanceof mxValueChange && change.cell == this.graph.model.root || change instanceof mxCellAttributeChange && change.cell == this.graph.model.root)) {
+        this.fireEvent(new mxEventObject(mxEvent.ROOT));
+        break;
+      }
+    }
+  });
+  graph.getModel().addListener(mxEvent.CHANGE, funct);
+};
+mxEditor.prototype.installInsertHandler = function(graph) {
+  var self = this;
+  graph.addMouseListener({
+    mouseDown : function(evt, me) {
+      if (!(null == self.insertFunction)) {
+        if (!me.isPopupTrigger()) {
+          if (!(!self.forcedInserting && null != me.getState())) {
+            self.graph.clearSelection();
+            self.insertFunction(me.getEvent(), me.getCell());
+            this.isActive = true;
+            me.consume();
+          }
+        }
+      }
+    },
+    mouseMove : function(sender, me) {
+      if (this.isActive) {
+        me.consume();
+      }
+    },
+    mouseUp : function(sender, me) {
+      if (this.isActive) {
+        this.isActive = false;
+        me.consume();
+      }
+    }
+  });
+};
+mxEditor.prototype.createDiagramLayout = function() {
+  var gs = this.graph.gridSize;
+  var layout = new mxStackLayout(this.graph, !this.horizontalFlow, this.swimlaneSpacing, 2 * gs, 2 * gs);
+  layout.isVertexIgnored = function(cell) {
+    return!layout.graph.isSwimlane(cell);
+  };
+  return layout;
+};
+mxEditor.prototype.createSwimlaneLayout = function() {
+  return new mxCompactTreeLayout(this.graph, this.horizontalFlow);
+};
+mxEditor.prototype.createToolbar = function() {
+  return new mxDefaultToolbar(null, this);
+};
+mxEditor.prototype.setToolbarContainer = function(container) {
+  this.toolbar.init(container);
+  if (mxClient.IS_QUIRKS) {
+    new mxDivResizer(container);
+  }
+};
+mxEditor.prototype.setStatusContainer = function(container) {
+  if (null == this.status) {
+    this.status = container;
+    this.addListener(mxEvent.SAVE, mxUtils.bind(this, function() {
+      var tstamp = (new Date).toLocaleString();
+      this.setStatus((mxResources.get(this.lastSavedResource) || this.lastSavedResource) + ": " + tstamp);
+    }));
+    this.addListener(mxEvent.OPEN, mxUtils.bind(this, function() {
+      this.setStatus((mxResources.get(this.currentFileResource) || this.currentFileResource) + ": " + this.filename);
+    }));
+    if (mxClient.IS_QUIRKS) {
+      new mxDivResizer(container);
+    }
+  }
+};
+mxEditor.prototype.setStatus = function(message) {
+  if (null != this.status) {
+    if (null != message) {
+      this.status.innerHTML = message;
+    }
+  }
+};
+mxEditor.prototype.setTitleContainer = function(container) {
+  this.addListener(mxEvent.ROOT, mxUtils.bind(this, function(flex) {
+    container.innerHTML = this.getTitle();
+  }));
+  if (mxClient.IS_QUIRKS) {
+    new mxDivResizer(container);
+  }
+};
+mxEditor.prototype.treeLayout = function(parent, horizontal) {
+  if (null != parent) {
+    (new mxCompactTreeLayout(this.graph, horizontal)).execute(parent);
+  }
+};
+mxEditor.prototype.getTitle = function() {
+  var title = "";
+  var graph = this.graph;
+  for (var cell = graph.getCurrentRoot();null != cell && null != graph.getModel().getParent(graph.getModel().getParent(cell));) {
+    if (graph.isValidRoot(cell)) {
+      title = " > " + graph.convertValueToString(cell) + title;
+    }
+    cell = graph.getModel().getParent(cell);
+  }
+  return this.getRootTitle() + title;
+};
+mxEditor.prototype.getRootTitle = function() {
+  var root = this.graph.getModel().getRoot();
+  return this.graph.convertValueToString(root);
+};
+mxEditor.prototype.undo = function() {
+  this.undoManager.undo();
+};
+mxEditor.prototype.redo = function() {
+  this.undoManager.redo();
+};
+mxEditor.prototype.groupCells = function() {
+  var border = null != this.groupBorderSize ? this.groupBorderSize : this.graph.gridSize;
+  return this.graph.groupCells(this.createGroup(), border);
+};
+mxEditor.prototype.createGroup = function() {
+  return this.graph.getModel().cloneCell(this.defaultGroup);
+};
+mxEditor.prototype.open = function(filename) {
+  if (null != filename) {
+    var xml = mxUtils.load(filename).getXml();
+    this.readGraphModel(xml.documentElement);
+    this.filename = filename;
+    this.fireEvent(new mxEventObject(mxEvent.OPEN, "filename", filename));
+  }
+};
+mxEditor.prototype.readGraphModel = function(node) {
+  (new mxCodec(node.ownerDocument)).decode(node, this.graph.getModel());
+  this.resetHistory();
+};
+mxEditor.prototype.save = function(url, linefeed) {
+  url = url || this.getUrlPost();
+  if (null != url && 0 < url.length) {
+    var data = this.writeGraphModel(linefeed);
+    this.postDiagram(url, data);
+    this.setModified(false);
+  }
+  this.fireEvent(new mxEventObject(mxEvent.SAVE, "url", url));
+};
+mxEditor.prototype.postDiagram = function(url, data) {
+  if (this.escapePostData) {
+    data = encodeURIComponent(data);
+  }
+  mxUtils.post(url, this.postParameterName + "=" + data, mxUtils.bind(this, function(req) {
+    this.fireEvent(new mxEventObject(mxEvent.POST, "request", req, "url", url, "data", data));
+  }));
+};
+mxEditor.prototype.writeGraphModel = function(linefeed) {
+  linefeed = null != linefeed ? linefeed : this.linefeed;
+  var node = (new mxCodec).encode(this.graph.getModel());
+  return mxUtils.getXml(node, linefeed);
+};
+mxEditor.prototype.getUrlPost = function() {
+  return this.urlPost;
+};
+mxEditor.prototype.getUrlImage = function() {
+  return this.urlImage;
+};
+mxEditor.prototype.swapStyles = function(first, second) {
+  var style = this.graph.getStylesheet().styles[second];
+  this.graph.getView().getStylesheet().putCellStyle(second, this.graph.getStylesheet().styles[first]);
+  this.graph.getStylesheet().putCellStyle(first, style);
+  this.graph.refresh();
+};
+mxEditor.prototype.showProperties = function(cell) {
+  cell = cell || this.graph.getSelectionCell();
+  if (null == cell) {
+    cell = this.graph.getCurrentRoot();
+    if (null == cell) {
+      cell = this.graph.getModel().getRoot();
+    }
+  }
+  if (null != cell) {
+    this.graph.stopEditing(true);
+    var y = mxUtils.getOffset(this.graph.container);
+    var x = y.x + 10;
+    y = y.y;
+    if (null == this.properties || this.movePropertiesDialog) {
+      var bounds = this.graph.getCellBounds(cell);
+      if (null != bounds) {
+        x += bounds.x + Math.min(200, bounds.width);
+        y += bounds.y;
+      }
+    } else {
+      x = this.properties.getX();
+      y = this.properties.getY();
+    }
+    this.hideProperties();
+    cell = this.createProperties(cell);
+    if (null != cell) {
+      this.properties = new mxWindow(mxResources.get(this.propertiesResource) || this.propertiesResource, cell, x, y, this.propertiesWidth, this.propertiesHeight, false);
+      this.properties.setVisible(true);
+    }
+  }
+};
+mxEditor.prototype.isPropertiesVisible = function() {
+  return null != this.properties;
+};
+mxEditor.prototype.createProperties = function(cell) {
+  var model = this.graph.getModel();
+  var i = model.getValue(cell);
+  if (mxUtils.isNode(i)) {
+    var form = new mxForm("properties");
+    form.addText("ID", cell.getId()).setAttribute("readonly", "true");
+    var geo = null;
+    var yField = null;
+    var xField = null;
+    var widthField = null;
+    var heightField = null;
+    if (model.isVertex(cell)) {
+      geo = model.getGeometry(cell);
+      if (null != geo) {
+        yField = form.addText("top", geo.y);
+        xField = form.addText("left", geo.x);
+        widthField = form.addText("width", geo.width);
+        heightField = form.addText("height", geo.height);
+      }
+    }
+    var tmp = model.getStyle(cell);
+    var style = form.addText("Style", tmp || "");
+    var attrs = i.attributes;
+    var texts = [];
+    for (i = 0;i < attrs.length;i++) {
+      texts[i] = form.addTextarea(attrs[i].nodeName, attrs[i].value, "label" == attrs[i].nodeName ? 4 : 2);
+    }
+    i = mxUtils.bind(this, function() {
+      this.hideProperties();
+      model.beginUpdate();
+      try {
+        if (null != geo) {
+          geo = geo.clone();
+          geo.x = parseFloat(xField.value);
+          geo.y = parseFloat(yField.value);
+          geo.width = parseFloat(widthField.value);
+          geo.height = parseFloat(heightField.value);
+          model.setGeometry(cell, geo);
+        }
+        if (0 < style.value.length) {
+          model.setStyle(cell, style.value);
+        } else {
+          model.setStyle(cell, null);
+        }
+        for (var i = 0;i < attrs.length;i++) {
+          var parent = new mxCellAttributeChange(cell, attrs[i].nodeName, texts[i].value);
+          model.execute(parent);
+        }
+        if (this.graph.isAutoSizeCell(cell)) {
+          this.graph.updateCellSize(cell);
+        }
+      } finally {
+        model.endUpdate();
+      }
+    });
+    tmp = mxUtils.bind(this, function() {
+      this.hideProperties();
+    });
+    form.addButtons(i, tmp);
+    return form.table;
+  }
+  return null;
+};
+mxEditor.prototype.hideProperties = function() {
+  if (null != this.properties) {
+    this.properties.destroy();
+    this.properties = null;
+  }
+};
+mxEditor.prototype.showTasks = function() {
+  if (null == this.tasks) {
+    var div = document.createElement("div");
+    div.style.padding = "4px";
+    div.style.paddingLeft = "20px";
+    var wnd = document.body.clientWidth;
+    wnd = new mxWindow(mxResources.get(this.tasksResource) || this.tasksResource, div, wnd - 220, this.tasksTop, 200);
+    wnd.setClosable(true);
+    wnd.destroyOnClose = false;
+    var funct = mxUtils.bind(this, function(flex) {
+      mxEvent.release(div);
+      div.innerHTML = "";
+      this.createTasks(div);
+    });
+    this.graph.getModel().addListener(mxEvent.CHANGE, funct);
+    this.graph.getSelectionModel().addListener(mxEvent.CHANGE, funct);
+    this.graph.addListener(mxEvent.ROOT, funct);
+    if (null != this.tasksWindowImage) {
+      wnd.setImage(this.tasksWindowImage);
+    }
+    this.tasks = wnd;
+    this.createTasks(div);
+  }
+  this.tasks.setVisible(true);
+};
+mxEditor.prototype.refreshTasks = function(div) {
+  if (null != this.tasks) {
+    div = this.tasks.content;
+    mxEvent.release(div);
+    div.innerHTML = "";
+    this.createTasks(div);
+  }
+};
+mxEditor.prototype.createTasks = function(div) {
+};
+mxEditor.prototype.showHelp = function(handler) {
+  if (null == this.help) {
+    var frame = document.createElement("iframe");
+    frame.setAttribute("src", mxResources.get("urlHelp") || this.urlHelp);
+    frame.setAttribute("height", "100%");
+    frame.setAttribute("width", "100%");
+    frame.setAttribute("frameBorder", "0");
+    frame.style.backgroundColor = "white";
+    handler = document.body.clientWidth;
+    var h = document.body.clientHeight || document.documentElement.clientHeight;
+    var wnd = new mxWindow(mxResources.get(this.helpResource) || this.helpResource, frame, (handler - this.helpWidth) / 2, (h - this.helpHeight) / 3, this.helpWidth, this.helpHeight);
+    wnd.setMaximizable(true);
+    wnd.setClosable(true);
+    wnd.destroyOnClose = false;
+    wnd.setResizable(true);
+    if (null != this.helpWindowImage) {
+      wnd.setImage(this.helpWindowImage);
+    }
+    if (mxClient.IS_NS) {
+      handler = function(x) {
+        frame.setAttribute("height", wnd.div.offsetHeight - 26 + "px");
+      };
+      wnd.addListener(mxEvent.RESIZE_END, handler);
+      wnd.addListener(mxEvent.MAXIMIZE, handler);
+      wnd.addListener(mxEvent.NORMALIZE, handler);
+      wnd.addListener(mxEvent.SHOW, handler);
+    }
+    this.help = wnd;
+  }
+  this.help.setVisible(true);
+};
+mxEditor.prototype.showOutline = function() {
+  if (null == this.outline) {
+    var div = document.createElement("div");
+    div.style.overflow = "hidden";
+    div.style.position = "relative";
+    div.style.width = "100%";
+    div.style.height = "100%";
+    div.style.background = "white";
+    div.style.cursor = "move";
+    if (8 == document.documentMode) {
+      div.style.filter = "progid:DXImageTransform.Microsoft.alpha(opacity=100)";
+    }
+    var wnd = new mxWindow(mxResources.get(this.outlineResource) || this.outlineResource, div, 600, 480, 200, 200, false);
+    var outline = new mxOutline(this.graph, div);
+    wnd.setClosable(true);
+    wnd.setResizable(true);
+    wnd.destroyOnClose = false;
+    wnd.addListener(mxEvent.RESIZE_END, function() {
+      outline.update();
+    });
+    this.outline = wnd;
+    this.outline.outline = outline;
+  }
+  this.outline.setVisible(true);
+  this.outline.outline.update(true);
+};
+mxEditor.prototype.setMode = function(modename) {
+  if ("select" == modename) {
+    this.graph.panningHandler.useLeftButtonForPanning = false;
+    this.graph.setConnectable(false);
+  } else {
+    if ("connect" == modename) {
+      this.graph.panningHandler.useLeftButtonForPanning = false;
+      this.graph.setConnectable(true);
+    } else {
+      if ("pan" == modename) {
+        this.graph.panningHandler.useLeftButtonForPanning = true;
+        this.graph.setConnectable(false);
+      }
+    }
+  }
+};
+mxEditor.prototype.createPopupMenu = function(menu, cell, evt) {
+  this.popupHandler.createMenu(this, menu, cell, evt);
+};
+mxEditor.prototype.createEdge = function(source, id) {
+  var e;
+  if (null != this.defaultEdge) {
+    e = this.graph.getModel().cloneCell(this.defaultEdge);
+  } else {
+    e = new mxCell("");
+    e.setEdge(true);
+    var cell = new mxGeometry;
+    cell.relative = true;
+    e.setGeometry(cell);
+  }
+  cell = this.getEdgeStyle();
+  if (null != cell) {
+    e.setStyle(cell);
+  }
+  return e;
+};
+mxEditor.prototype.getEdgeStyle = function() {
+  return this.defaultEdgeStyle;
+};
+mxEditor.prototype.consumeCycleAttribute = function(cell) {
+  return null != this.cycleAttributeValues && (0 < this.cycleAttributeValues.length && this.graph.isSwimlane(cell)) ? this.cycleAttributeValues[this.cycleAttributeIndex++ % this.cycleAttributeValues.length] : null;
+};
+mxEditor.prototype.cycleAttribute = function(cell) {
+  if (null != this.cycleAttributeName) {
+    var value = this.consumeCycleAttribute(cell);
+    if (null != value) {
+      cell.setStyle(cell.getStyle() + ";" + this.cycleAttributeName + "=" + value);
+    }
+  }
+};
+mxEditor.prototype.addVertex = function(parent, vertex, x, y) {
+  for (var model = this.graph.getModel();null != parent && !this.graph.isValidDropTarget(parent);) {
+    parent = model.getParent(parent);
+  }
+  parent = null != parent ? parent : this.graph.getSwimlaneAt(x, y);
+  var scale = this.graph.getView().scale;
+  var geo = model.getGeometry(vertex);
+  var pState = model.getGeometry(parent);
+  if (this.graph.isSwimlane(vertex) && !this.graph.swimlaneNesting) {
+    parent = null;
+  } else {
+    if (null == parent && this.swimlaneRequired) {
+      return null;
+    }
+    if (null != parent && null != pState) {
+      var state = this.graph.getView().getState(parent);
+      if (null != state) {
+        if (x -= state.origin.x * scale, y -= state.origin.y * scale, this.graph.isConstrainedMoving) {
+          pState = geo.width;
+          var height = geo.height;
+          var tmp = state.x + state.width;
+          if (x + pState > tmp) {
+            x -= x + pState - tmp;
+          }
+          tmp = state.y + state.height;
+          if (y + height > tmp) {
+            y -= y + height - tmp;
+          }
+        }
+      } else {
+        if (null != pState) {
+          x -= pState.x * scale;
+          y -= pState.y * scale;
+        }
+      }
+    }
+  }
+  geo = geo.clone();
+  geo.x = this.graph.snap(x / scale - this.graph.getView().translate.x - this.graph.gridSize / 2);
+  geo.y = this.graph.snap(y / scale - this.graph.getView().translate.y - this.graph.gridSize / 2);
+  vertex.setGeometry(geo);
+  if (null == parent) {
+    parent = this.graph.getDefaultParent();
+  }
+  this.cycleAttribute(vertex);
+  this.fireEvent(new mxEventObject(mxEvent.BEFORE_ADD_VERTEX, "vertex", vertex, "parent", parent));
+  model.beginUpdate();
+  try {
+    vertex = this.graph.addCell(vertex, parent);
+    if (null != vertex) {
+      this.graph.constrainChild(vertex);
+      this.fireEvent(new mxEventObject(mxEvent.ADD_VERTEX, "vertex", vertex));
+    }
+  } finally {
+    model.endUpdate();
+  }
+  if (null != vertex) {
+    this.graph.setSelectionCell(vertex);
+    this.graph.scrollCellToVisible(vertex);
+    this.fireEvent(new mxEventObject(mxEvent.AFTER_ADD_VERTEX, "vertex", vertex));
+  }
+  return vertex;
+};
+mxEditor.prototype.destroy = function() {
+  if (!this.destroyed) {
+    this.destroyed = true;
+    if (null != this.tasks) {
+      this.tasks.destroy();
+    }
+    if (null != this.outline) {
+      this.outline.destroy();
+    }
+    if (null != this.properties) {
+      this.properties.destroy();
+    }
+    if (null != this.keyHandler) {
+      this.keyHandler.destroy();
+    }
+    if (null != this.rubberband) {
+      this.rubberband.destroy();
+    }
+    if (null != this.toolbar) {
+      this.toolbar.destroy();
+    }
+    if (null != this.graph) {
+      this.graph.destroy();
+    }
+    this.templates = this.status = null;
   }
 };
 var mxCodecRegistry = {
@@ -32181,7 +33551,6 @@ function mxCodec(flex) {
   this.document = flex || mxUtils.createXmlDocument();
   this.objects = [];
 }
-mxCodec.allowlist = null;
 mxCodec.prototype.document = null;
 mxCodec.prototype.objects = null;
 mxCodec.prototype.elements = null;
@@ -32277,32 +33646,20 @@ mxCodec.prototype.encode = function(obj) {
 };
 mxCodec.prototype.decode = function(node, into) {
   this.updateElements();
-  var obj = null;
-  if (null != node) {
-    if (node.nodeType == mxConstants.NODETYPE_ELEMENT) {
-      obj = this.getConstructor(node.nodeName);
-      obj = mxCodecRegistry.getCodec(obj);
-      if (null != obj) {
-        obj = obj.decode(this, node, into);
-      } else {
-        obj = node.cloneNode(true);
-        obj.removeAttribute("as");
-      }
-    }
-  }
-  return obj;
-};
-mxCodec.prototype.getConstructor = function(cell) {
   var ctor = null;
-  try {
-    if (null == mxCodec.allowlist || 0 <= mxUtils.indexOf(mxCodec.allowlist, cell)) {
-      ctor = window[cell];
-    } else {
-      if (null != window.console) {
-        console.error("mxCodec.getConstructor: " + cell + " not allowed in mxCodec.allowlist");
-      }
+  if (null != node && node.nodeType == mxConstants.NODETYPE_ELEMENT) {
+    ctor = null;
+    try {
+      ctor = window[node.nodeName];
+    } catch (d) {
     }
-  } catch (c) {
+    ctor = mxCodecRegistry.getCodec(ctor);
+    if (null != ctor) {
+      ctor = ctor.decode(this, node, into);
+    } else {
+      ctor = node.cloneNode(true);
+      ctor.removeAttribute("as");
+    }
   }
   return ctor;
 };
@@ -32457,19 +33814,19 @@ mxObjectCodec.prototype.writeAttribute = function(enc, obj, name, value, node) {
     this.writeComplexAttribute(enc, obj, name, value, node);
   }
 };
-mxObjectCodec.prototype.writePrimitiveAttribute = function(enc, child, name, value, node) {
-  value = this.convertAttributeToXml(enc, child, name, value, node);
+mxObjectCodec.prototype.writePrimitiveAttribute = function(enc, node, name, value, child) {
+  value = this.convertAttributeToXml(enc, node, name, value, child);
   if (null == name) {
-    child = enc.document.createElement("add");
+    node = enc.document.createElement("add");
     if ("function" == typeof value) {
-      child.appendChild(enc.document.createTextNode(value));
+      node.appendChild(enc.document.createTextNode(value));
     } else {
-      enc.setAttribute(child, "value", value);
+      enc.setAttribute(node, "value", value);
     }
-    node.appendChild(child);
+    child.appendChild(node);
   } else {
     if ("function" != typeof value) {
-      enc.setAttribute(node, name, value);
+      enc.setAttribute(child, name, value);
     }
   }
 };
@@ -32559,15 +33916,15 @@ mxObjectCodec.prototype.decodeAttribute = function(dec, value, obj) {
     }
   }
 };
-mxObjectCodec.prototype.decodeChildren = function(dec, node, obj) {
-  for (node = node.firstChild;null != node;) {
-    var tmp = node.nextSibling;
-    if (!(node.nodeType != mxConstants.NODETYPE_ELEMENT)) {
-      if (!this.processInclude(dec, node, obj)) {
-        this.decodeChild(dec, node, obj);
+mxObjectCodec.prototype.decodeChildren = function(dec, child, obj) {
+  for (child = child.firstChild;null != child;) {
+    var tmp = child.nextSibling;
+    if (!(child.nodeType != mxConstants.NODETYPE_ELEMENT)) {
+      if (!this.processInclude(dec, child, obj)) {
+        this.decodeChild(dec, child, obj);
       }
     }
-    node = tmp;
+    child = tmp;
   }
 };
 mxObjectCodec.prototype.decodeChild = function(dec, child, obj) {
@@ -32611,12 +33968,12 @@ mxObjectCodec.prototype.addObjectValue = function(obj, fieldname, value, templat
     }
   }
 };
-mxObjectCodec.prototype.processInclude = function(dec, name, into) {
-  if ("include" == name.nodeName) {
-    name = name.getAttribute("name");
-    if (null != name) {
+mxObjectCodec.prototype.processInclude = function(dec, node, into) {
+  if ("include" == node.nodeName) {
+    node = node.getAttribute("name");
+    if (null != node) {
       try {
-        var xml = mxUtils.load(name).getDocumentElement();
+        var xml = mxUtils.load(node).getDocumentElement();
         if (null != xml) {
           dec.decode(xml, into);
         }
@@ -32642,10 +33999,10 @@ mxCodecRegistry.register(function() {
     return "value" !== attr.nodeName && mxObjectCodec.prototype.isNumericAttribute.apply(this, arguments);
   };
   codec.isExcluded = function(obj, attr, value, isWrite) {
-    return mxObjectCodec.prototype.isExcluded.apply(this, arguments) || isWrite && ("value" == attr && mxUtils.isNode(value));
+    return mxObjectCodec.prototype.isExcluded.apply(this, arguments) || isWrite && ("value" == attr && value.nodeType == mxConstants.NODETYPE_ELEMENT);
   };
   codec.afterEncode = function(enc, obj, node) {
-    if (null != obj.value && mxUtils.isNode(obj.value)) {
+    if (null != obj.value && obj.value.nodeType == mxConstants.NODETYPE_ELEMENT) {
       var tmp = node;
       node = mxUtils.importNode(enc.document, obj.value, true);
       node.appendChild(tmp);
@@ -32679,14 +34036,14 @@ mxCodecRegistry.register(function() {
     if (null != tmp) {
       for (node = 0;node < this.idrefs.length;node++) {
         attr = this.idrefs[node];
-        var ref = tmp.getAttribute(attr);
-        if (null != ref) {
+        var element = tmp.getAttribute(attr);
+        if (null != element) {
           tmp.removeAttribute(attr);
-          var object = dec.objects[ref] || dec.lookup(ref);
+          var object = dec.objects[element] || dec.lookup(element);
           if (null == object) {
-            ref = dec.getElementById(ref);
-            if (null != ref) {
-              object = (mxCodecRegistry.codecs[ref.nodeName] || this).decode(dec, ref);
+            element = dec.getElementById(element);
+            if (null != element) {
+              object = (mxCodecRegistry.codecs[element.nodeName] || this).decode(dec, element);
             }
           }
           obj[attr] = object;
@@ -32821,8 +34178,8 @@ mxCodecRegistry.register(function() {
   };
   return codec;
 }());
-var mxGenericChangeCodec = function(codec, variable) {
-  codec = new mxObjectCodec(codec, ["model", "previous"], ["cell"]);
+var mxGenericChangeCodec = function(obj, variable) {
+  var codec = new mxObjectCodec(obj, ["model", "previous"], ["cell"]);
   codec.afterDecode = function(dec, node, obj) {
     if (mxUtils.isNode(obj.cell)) {
       obj.cell = dec.decodeCell(obj.cell, false);
@@ -32852,7 +34209,7 @@ mxCodecRegistry.register(function() {
     var value = model.getParent(cell);
     if (null == value || null != state) {
       var childCount = model.getChildCount(cell);
-      var src = view.graph.getCellGeometry(cell);
+      var pts = view.graph.getCellGeometry(cell);
       var name = null;
       if (value == model.getRoot()) {
         name = "layer";
@@ -32863,7 +34220,7 @@ mxCodecRegistry.register(function() {
           if (model.isEdge(cell)) {
             name = "edge";
           } else {
-            if (0 < childCount && null != src) {
+            if (0 < childCount && null != pts) {
               name = "group";
             } else {
               if (model.isVertex(cell)) {
@@ -32891,7 +34248,7 @@ mxCodecRegistry.register(function() {
           }
           node.setAttribute("scale", view.scale);
         } else {
-          if (null != state && null != src) {
+          if (null != state && null != pts) {
             for (i in state.style) {
               value = state.style[i];
               if ("function" == typeof value) {
@@ -32909,11 +34266,11 @@ mxCodecRegistry.register(function() {
             }
             value = state.absolutePoints;
             if (null != value && 0 < value.length) {
-              src = Math.round(value[0].x) + "," + Math.round(value[0].y);
+              pts = Math.round(value[0].x) + "," + Math.round(value[0].y);
               for (i = 1;i < value.length;i++) {
-                src += " " + Math.round(value[i].x) + "," + Math.round(value[i].y);
+                pts += " " + Math.round(value[i].x) + "," + Math.round(value[i].y);
               }
-              node.setAttribute("points", src);
+              node.setAttribute("points", pts);
             } else {
               node.setAttribute("x", Math.round(state.x));
               node.setAttribute("y", Math.round(state.y));
@@ -32969,11 +34326,11 @@ var mxStylesheetCodec = mxCodecRegistry.register(function() {
     return node;
   };
   codec.getStringValue = function(key, value) {
-    key = typeof value;
-    if ("function" == key) {
+    var type = typeof value;
+    if ("function" == type) {
       value = mxStyleRegistry.getName(value);
     } else {
-      if ("object" == key) {
+      if ("object" == type) {
         value = null;
       }
     }
@@ -33027,4 +34384,274 @@ var mxStylesheetCodec = mxCodecRegistry.register(function() {
   };
   return codec;
 }());
-mxStylesheetCodec.allowEval = false;
+mxStylesheetCodec.allowEval = true;
+mxCodecRegistry.register(function() {
+  var codec = new mxObjectCodec(new mxDefaultKeyHandler);
+  codec.encode = function(enc, obj) {
+    return null;
+  };
+  codec.decode = function(dec, node, into) {
+    if (null != into) {
+      for (node = node.firstChild;null != node;) {
+        if (!this.processInclude(dec, node, into) && "add" == node.nodeName) {
+          var as = node.getAttribute("as");
+          var action = node.getAttribute("action");
+          var control = node.getAttribute("control");
+          into.bindAction(as, action, control);
+        }
+        node = node.nextSibling;
+      }
+    }
+    return into;
+  };
+  return codec;
+}());
+var mxDefaultToolbarCodec = mxCodecRegistry.register(function() {
+  var codec = new mxObjectCodec(new mxDefaultToolbar);
+  codec.encode = function(enc, obj) {
+    return null;
+  };
+  codec.decode = function(dec, node, into) {
+    if (null != into) {
+      var editor = into.editor;
+      for (node = node.firstChild;null != node;) {
+        if (node.nodeType == mxConstants.NODETYPE_ELEMENT && !this.processInclude(dec, node, into)) {
+          if ("separator" == node.nodeName) {
+            into.addSeparator();
+          } else {
+            if ("br" == node.nodeName) {
+              into.toolbar.addBreak();
+            } else {
+              if ("hr" == node.nodeName) {
+                into.toolbar.addLine();
+              } else {
+                if ("add" == node.nodeName) {
+                  var title = node.getAttribute("as");
+                  title = mxResources.get(title) || title;
+                  var icon = node.getAttribute("icon");
+                  var pressed = node.getAttribute("pressedIcon");
+                  var action = node.getAttribute("action");
+                  var mode = node.getAttribute("mode");
+                  var combo = node.getAttribute("template");
+                  var child = "0" != node.getAttribute("toggle");
+                  var text = mxUtils.getTextContent(node);
+                  var cell = null;
+                  if (null != action) {
+                    cell = into.addItem(title, icon, action, pressed);
+                  } else {
+                    if (null != mode) {
+                      var funct = mxDefaultToolbarCodec.allowEval ? mxUtils.eval(text) : null;
+                      cell = into.addMode(title, icon, mode, pressed, funct);
+                    } else {
+                      if (null != combo || null != text && 0 < text.length) {
+                        cell = editor.templates[combo];
+                        combo = node.getAttribute("style");
+                        if (null != cell) {
+                          if (null != combo) {
+                            cell = editor.graph.cloneCell(cell);
+                            cell.setStyle(combo);
+                          }
+                        }
+                        combo = null;
+                        if (null != text) {
+                          if (0 < text.length) {
+                            if (mxDefaultToolbarCodec.allowEval) {
+                              combo = mxUtils.eval(text);
+                            }
+                          }
+                        }
+                        cell = into.addPrototype(title, icon, cell, pressed, combo, child);
+                      } else {
+                        if (pressed = mxUtils.getChildNodes(node), 0 < pressed.length) {
+                          if (null == icon) {
+                            combo = into.addActionCombo(title);
+                            for (title = 0;title < pressed.length;title++) {
+                              child = pressed[title];
+                              if ("separator" == child.nodeName) {
+                                into.addOption(combo, "---");
+                              } else {
+                                if ("add" == child.nodeName) {
+                                  icon = child.getAttribute("as");
+                                  child = child.getAttribute("action");
+                                  into.addActionOption(combo, icon, child);
+                                }
+                              }
+                            }
+                          } else {
+                            var select = null;
+                            var img = into.addPrototype(title, icon, function() {
+                              var cell = editor.templates[select.value];
+                              if (null != cell) {
+                                cell = cell.clone();
+                                var style = select.options[select.selectedIndex].cellStyle;
+                                if (null != style) {
+                                  cell.setStyle(style);
+                                }
+                                return cell;
+                              }
+                              mxLog.warn("Template " + cell + " not found");
+                              return null;
+                            }, null, null, child);
+                            select = into.addCombo();
+                            mxEvent.addListener(select, "change", function() {
+                              into.toolbar.selectMode(img, function(evt) {
+                                evt = mxUtils.convertPoint(editor.graph.container, mxEvent.getClientX(evt), mxEvent.getClientY(evt));
+                                return editor.addVertex(null, funct(), evt.x, evt.y);
+                              });
+                              into.toolbar.noReset = false;
+                            });
+                            for (title = 0;title < pressed.length;title++) {
+                              child = pressed[title];
+                              if ("separator" == child.nodeName) {
+                                into.addOption(select, "---");
+                              } else {
+                                if ("add" == child.nodeName) {
+                                  icon = child.getAttribute("as");
+                                  text = child.getAttribute("template");
+                                  into.addOption(select, icon, text || combo).cellStyle = child.getAttribute("style");
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                  if (null != cell) {
+                    combo = node.getAttribute("id");
+                    if (null != combo) {
+                      if (0 < combo.length) {
+                        cell.setAttribute("id", combo);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        node = node.nextSibling;
+      }
+    }
+    return into;
+  };
+  return codec;
+}());
+mxDefaultToolbarCodec.allowEval = true;
+mxCodecRegistry.register(function() {
+  var codec = new mxObjectCodec(new mxDefaultPopupMenu);
+  codec.encode = function(enc, obj) {
+    return null;
+  };
+  codec.decode = function(dec, node, into) {
+    var inc = node.getElementsByTagName("include")[0];
+    if (null != inc) {
+      this.processInclude(dec, inc, into);
+    } else {
+      if (null != into) {
+        into.config = node;
+      }
+    }
+    return into;
+  };
+  return codec;
+}());
+mxCodecRegistry.register(function() {
+  var codec = new mxObjectCodec(new mxEditor, "modified lastSnapshot ignoredChanges undoManager graphContainer toolbarContainer".split(" "));
+  codec.afterDecode = function(defaultEdge, node, obj) {
+    defaultEdge = node.getAttribute("defaultEdge");
+    if (null != defaultEdge) {
+      node.removeAttribute("defaultEdge");
+      obj.defaultEdge = obj.templates[defaultEdge];
+    }
+    defaultEdge = node.getAttribute("defaultGroup");
+    if (null != defaultEdge) {
+      node.removeAttribute("defaultGroup");
+      obj.defaultGroup = obj.templates[defaultEdge];
+    }
+    return obj;
+  };
+  codec.decodeChild = function(dec, child, obj) {
+    if ("Array" == child.nodeName) {
+      if ("templates" == child.getAttribute("as")) {
+        this.decodeTemplates(dec, child, obj);
+        return;
+      }
+    } else {
+      if ("ui" == child.nodeName) {
+        this.decodeUi(dec, child, obj);
+        return;
+      }
+    }
+    mxObjectCodec.prototype.decodeChild.apply(this, arguments);
+  };
+  codec.decodeUi = function(tmp, cell, editor) {
+    for (tmp = cell.firstChild;null != tmp;) {
+      if ("add" == tmp.nodeName) {
+        cell = tmp.getAttribute("as");
+        var element = tmp.getAttribute("element");
+        var style = tmp.getAttribute("style");
+        if (null != element) {
+          element = document.getElementById(element);
+          if (null != element) {
+            if (null != style) {
+              element.style.cssText += ";" + style;
+            }
+          }
+        } else {
+          var current = parseInt(tmp.getAttribute("x"));
+          var y = parseInt(tmp.getAttribute("y"));
+          var width = tmp.getAttribute("width");
+          var height = tmp.getAttribute("height");
+          element = document.createElement("div");
+          element.style.cssText = style;
+          (new mxWindow(mxResources.get(cell) || cell, element, current, y, width, height, false, true)).setVisible(true);
+        }
+        if ("graph" == cell) {
+          editor.setGraphContainer(element);
+        } else {
+          if ("toolbar" == cell) {
+            editor.setToolbarContainer(element);
+          } else {
+            if ("title" == cell) {
+              editor.setTitleContainer(element);
+            } else {
+              if ("status" == cell) {
+                editor.setStatusContainer(element);
+              } else {
+                if ("map" == cell) {
+                  editor.setMapContainer(element);
+                }
+              }
+            }
+          }
+        }
+      } else {
+        if ("resource" == tmp.nodeName) {
+          mxResources.add(tmp.getAttribute("basename"));
+        } else {
+          if ("stylesheet" == tmp.nodeName) {
+            mxClient.link("stylesheet", tmp.getAttribute("name"));
+          }
+        }
+      }
+      tmp = tmp.nextSibling;
+    }
+  };
+  codec.decodeTemplates = function(dec, children, editor) {
+    if (null == editor.templates) {
+      editor.templates = [];
+    }
+    children = mxUtils.getChildNodes(children);
+    for (var j = 0;j < children.length;j++) {
+      var name = children[j].getAttribute("as");
+      for (var child = children[j].firstChild;null != child && 1 != child.nodeType;) {
+        child = child.nextSibling;
+      }
+      if (null != child) {
+        editor.templates[name] = dec.decodeCell(child);
+      }
+    }
+  };
+  return codec;
+}());

@@ -2,7 +2,7 @@ var mxClient = {
   VERSION : "20.3.0",
   IS_IE : null != navigator.userAgent && 0 <= navigator.userAgent.indexOf("MSIE"),
   IS_IE11 : null != navigator.userAgent && !!navigator.userAgent.match(/Trident\/7\./),
-  IS_EDGE: null != navigator.userAgent && !!navigator.userAgent.match(/Edge\//),
+  IS_EDGE : null != navigator.userAgent && !!navigator.userAgent.match(/Edge\
   IS_EM : "spellcheck" in document.createElement("textarea") && 8 == document.documentMode,
   VML_PREFIX : "v",
   OFFICE_PREFIX : "o",
@@ -214,10 +214,10 @@ var mxLog = {
       return mxLog.writeln("Entering " + string), (new Date).getTime();
     }
   },
-  leave: function(string, t0) {
+  leave : function(t0, string) {
     if (mxLog.TRACE) {
-      var dt = (t0 != 0) ? ' ('+(new Date().getTime() - t0)+' ms)' : '';
-      mxLog.writeln('Leaving '+string+dt);
+      string = 0 != string ? " (" + ((new Date).getTime() - string) + " ms)" : "";
+      mxLog.writeln("Leaving " + t0 + string);
     }
   },
   debug : function() {
@@ -298,10 +298,10 @@ mxDictionary.prototype.get = function(cell) {
   cell = mxObjectIdentity.get(cell);
   return this.map[cell];
 };
-mxDictionary.prototype.put = function(key, value) {
-  var id = mxObjectIdentity.get(key);
-  var previous = this.map[id];
-  this.map[id] = value;
+mxDictionary.prototype.put = function(cell, update) {
+  cell = mxObjectIdentity.get(cell);
+  var previous = this.map[cell];
+  this.map[cell] = update;
   return previous;
 };
 mxDictionary.prototype.remove = function(cell) {
@@ -572,7 +572,7 @@ var mxEffects = {
               var dx = (change.geometry.x - change.previous.x) * sy;
               var dy = (change.geometry.y - change.previous.y) * sy;
               var sx = (change.geometry.width - change.previous.width) * sy;
-              sy = (change.geometry.height - change.previous.height) * sy;
+              sy *= change.geometry.height - change.previous.height;
               if (0 == d) {
                 state.x -= dx;
                 state.y -= dy;
@@ -825,8 +825,8 @@ var mxUtils = {
   isNode : function(value, nodeName, attributeName, attributeValue) {
     return null == value || (value.constructor !== Element || null != nodeName && value.nodeName.toLowerCase() != nodeName.toLowerCase()) ? false : null == attributeName || value.getAttribute(attributeName) == attributeValue;
   },
-  isAncestorNode : function(ancestor, child) {
-    for (var parent = child;null != parent;) {
+  isAncestorNode : function(ancestor, parent) {
+    for (;null != parent;) {
       if (parent == ancestor) {
         return true;
       }
@@ -834,10 +834,10 @@ var mxUtils = {
     }
     return false;
   },
-  getChildNodes : function(node, nodeType) {
+  getChildNodes : function(tmp, nodeType) {
     nodeType = nodeType || mxConstants.NODETYPE_ELEMENT;
     var children = [];
-    for (var tmp = node.firstChild;null != tmp;) {
+    for (tmp = tmp.firstChild;null != tmp;) {
       if (tmp.nodeType == nodeType) {
         children.push(tmp);
       }
@@ -897,8 +897,8 @@ var mxUtils = {
     } : function() {
     };
   }(),
-  removeWhitespace : function(node, before) {
-    for (var tmp = before ? node.previousSibling : node.nextSibling;null != tmp && tmp.nodeType == mxConstants.NODETYPE_TEXT;) {
+  removeWhitespace : function(tmp, before) {
+    for (tmp = before ? tmp.previousSibling : tmp.nextSibling;null != tmp && tmp.nodeType == mxConstants.NODETYPE_TEXT;) {
       var next = before ? tmp.previousSibling : tmp.nextSibling;
       var text = mxUtils.getTextContent(tmp);
       if (0 == mxUtils.trim(text).length) {
@@ -924,7 +924,7 @@ var mxUtils = {
     ta.innerHTML = str;
     return ta.value;
   },
-  getXml : function(node, linefeed) {
+  getXml : function(node, flex) {
     var xml = "";
     if (mxClient.IS_IE || mxClient.IS_IE11) {
       xml = mxUtils.getPrettyXml(node, "", "", "");
@@ -937,7 +937,7 @@ var mxUtils = {
         }
       }
     }
-    return xml = xml.replace(/\n/g, linefeed || "&#xa;");
+    return xml = xml.replace(/\n/g, flex || "&#xa;");
   },
   getPrettyXml : function(node, tab, indent, newline, ns) {
     var result = [];
@@ -1093,19 +1093,19 @@ var mxUtils = {
     };
   }(),
   write : function(parent, text) {
-    var node = parent.ownerDocument.createTextNode(text);
+    text = parent.ownerDocument.createTextNode(text);
     if (null != parent) {
-      parent.appendChild(node);
+      parent.appendChild(text);
     }
-    return node;
+    return text;
   },
   writeln : function(parent, text) {
-    var node = parent.ownerDocument.createTextNode(text);
+    text = parent.ownerDocument.createTextNode(text);
     if (null != parent) {
-      parent.appendChild(node);
+      parent.appendChild(text);
       parent.appendChild(document.createElement("br"));
     }
-    return node;
+    return text;
   },
   br : function(parent, count) {
     count = count || 1;
@@ -1227,8 +1227,8 @@ var mxUtils = {
     for (var i = 0;i < urls.length;i++) {
       (function(cell, index) {
         mxUtils.get(cell, function(req) {
-          var status = req.getStatus();
-          if (200 > status || 299 < status) {
+          var p = req.getStatus();
+          if (200 > p || 299 < p) {
             err();
           } else {
             result[index] = req;
@@ -1262,8 +1262,8 @@ var mxUtils = {
     }
     doc.load(url);
   },
-  getValue : function(cell, key, defaultValue) {
-    cell = null != cell ? cell[key] : null;
+  getValue : function(cell, name, defaultValue) {
+    cell = null != cell ? cell[name] : null;
     if (null == cell) {
       cell = defaultValue;
     }
@@ -1293,18 +1293,18 @@ var mxUtils = {
     }
     return true;
   },
-  clone : function(obj, transients, shallow) {
-    shallow = null != shallow ? shallow : false;
+  clone : function(obj, connectingEdge, initialMove) {
+    initialMove = null != initialMove ? initialMove : false;
     var clone = null;
     if (null != obj && "function" == typeof obj.constructor) {
       if (obj.constructor === Element) {
-        clone = obj.cloneNode(null != shallow ? !shallow : false);
+        clone = obj.cloneNode(null != initialMove ? !initialMove : false);
       } else {
         clone = new obj.constructor;
         for (var i in obj) {
           if (i != mxObjectIdentity.FIELD_NAME) {
-            if (null == transients || 0 > mxUtils.indexOf(transients, i)) {
-              clone[i] = shallow || "object" != typeof obj[i] ? obj[i] : mxUtils.clone(obj[i]);
+            if (null == connectingEdge || 0 > mxUtils.indexOf(connectingEdge, i)) {
+              clone[i] = initialMove || "object" != typeof obj[i] ? obj[i] : mxUtils.clone(obj[i]);
             }
           }
         }
@@ -1611,25 +1611,25 @@ var mxUtils = {
     }
     return index;
   },
-  getDirectedBounds : function(rect, m, style, flipH, flipV) {
-    var direction = mxUtils.getValue(style, mxConstants.STYLE_DIRECTION, mxConstants.DIRECTION_EAST);
-    flipH = null != flipH ? flipH : mxUtils.getValue(style, mxConstants.STYLE_FLIPH, false);
-    flipV = null != flipV ? flipV : mxUtils.getValue(style, mxConstants.STYLE_FLIPV, false);
+  getDirectedBounds : function(rect, m, tmp, m2, flipV) {
+    var direction = mxUtils.getValue(tmp, mxConstants.STYLE_DIRECTION, mxConstants.DIRECTION_EAST);
+    m2 = null != m2 ? m2 : mxUtils.getValue(tmp, mxConstants.STYLE_FLIPH, false);
+    flipV = null != flipV ? flipV : mxUtils.getValue(tmp, mxConstants.STYLE_FLIPV, false);
     m.x = Math.round(Math.max(0, Math.min(rect.width, m.x)));
     m.y = Math.round(Math.max(0, Math.min(rect.height, m.y)));
     m.width = Math.round(Math.max(0, Math.min(rect.width, m.width)));
     m.height = Math.round(Math.max(0, Math.min(rect.height, m.height)));
-    if (flipV && (direction == mxConstants.DIRECTION_SOUTH || direction == mxConstants.DIRECTION_NORTH) || flipH && (direction == mxConstants.DIRECTION_EAST || direction == mxConstants.DIRECTION_WEST)) {
-      style = m.x;
+    if (flipV && (direction == mxConstants.DIRECTION_SOUTH || direction == mxConstants.DIRECTION_NORTH) || m2 && (direction == mxConstants.DIRECTION_EAST || direction == mxConstants.DIRECTION_WEST)) {
+      tmp = m.x;
       m.x = m.width;
-      m.width = style;
+      m.width = tmp;
     }
-    if (flipH && (direction == mxConstants.DIRECTION_SOUTH || direction == mxConstants.DIRECTION_NORTH) || flipV && (direction == mxConstants.DIRECTION_EAST || direction == mxConstants.DIRECTION_WEST)) {
-      style = m.y;
+    if (m2 && (direction == mxConstants.DIRECTION_SOUTH || direction == mxConstants.DIRECTION_NORTH) || flipV && (direction == mxConstants.DIRECTION_EAST || direction == mxConstants.DIRECTION_WEST)) {
+      tmp = m.y;
       m.y = m.height;
-      m.height = style;
+      m.height = tmp;
     }
-    var m2 = mxRectangle.fromRectangle(m);
+    m2 = mxRectangle.fromRectangle(m);
     if (direction == mxConstants.DIRECTION_SOUTH) {
       m2.y = m.x;
       m2.x = m.height;
@@ -1725,23 +1725,23 @@ var mxUtils = {
   contains : function(cell, x, y) {
     return cell.x <= x && (cell.x + cell.width >= x && (cell.y <= y && cell.y + cell.height >= y));
   },
-  intersects : function(a, x) {
-    var tw = a.width;
-    var th = a.height;
-    var rw = x.width;
-    var rh = x.height;
-    if (0 >= rw || (0 >= rh || (0 >= tw || 0 >= th))) {
+  intersects : function(state, x) {
+    var rw = state.width;
+    var h = state.height;
+    var tw = x.width;
+    var minHeight = x.height;
+    if (0 >= tw || (0 >= minHeight || (0 >= rw || 0 >= h))) {
       return false;
     }
-    var tx = a.x;
-    var ty = a.y;
-    var rx = x.x;
-    var ry = x.y;
-    rw = rw + rx;
-    rh = rh + ry;
-    tw = tw + tx;
-    th = th + ty;
-    return(rw < rx || rw > tx) && ((rh < ry || rh > ty) && ((tw < tx || tw > rx) && (th < ty || th > ry)));
+    var rx = state.x;
+    state = state.y;
+    var tx = x.x;
+    x = x.y;
+    tw += tx;
+    minHeight += x;
+    rw += rx;
+    h += state;
+    return(tw < tx || tw > rx) && ((minHeight < x || minHeight > state) && ((rw < rx || rw > tx) && (h < state || h > x)));
   },
   intersectsHotspot : function(state, x, y, hotspot, min, max) {
     hotspot = null != hotspot ? hotspot : 1;
@@ -9546,7 +9546,7 @@ mxText.prototype.apply = function(state) {
   this.flipH = this.flipV = null;
 };
 mxText.prototype.getAutoDirection = function() {
-  var tmp = /[A-Za-z\u05d0-\u065f\u066a-\u06ef\u06fa-\u07ff\ufb1d-\ufdff\ufe70-\ufefc]/.exec(this.value);
+  var tmp = /[A-Za-z\U000005d0-\U0000065f\U0000066a-\U000006ef\U000006fa-\U000007ff\U0000fb1d-\U0000fdff\U0000fe70-\U0000fefc]/.exec(this.value);
   return null != tmp && (0 < tmp.length && "z" < tmp[0]) ? mxConstants.TEXT_DIRECTION_RTL : mxConstants.TEXT_DIRECTION_LTR;
 };
 mxText.prototype.getContentNode = function() {
