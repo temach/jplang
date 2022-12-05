@@ -71,7 +71,7 @@ services:
               <root>
                 <mxCell id="0" />
                 <mxCell id="1" style="locked=1;" parent="0" />
-                <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="/workelements-demouser-ddd/" style="width: 680px; height: 560px; border: medium none;" id="2">
+                <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="/router/route/workelements-demouser-ddd/" style="width: 680px; height: 560px; border: medium none;" id="2">
                   <mxCell style="iframe=1;" parent="1" xmlns="" vertex="1">
                     <mxGeometry x="-210" y="-70" width="700" height="580" as="geometry" />
                   </mxCell>
