@@ -58,6 +58,34 @@ Example initial config for graph:
 ```
 
 
+Controlling shape redraw:
+mxCellRenderer.prototype.redrawShape
+mxCellRenderer.prototype.redraw 
+mxCellRenderer.prototype.redrawLabel
+mxGraphView.prototype.validateCellState
+mxSvgCanvas2D.prototype.addForeignObject
+
+Inside: mxCellRenderer.prototype.createShape
+a.view.graph.isCellLocked(a.cell) 
+OR
+Inside: mxCellRenderer.prototype.redrawLabel
+this.state.view.graph.isCellLocked(this.state.cell) 
+
+Does not work because the node id=1 does not get updated on redraw (its virtual)
+So the proper solution is to set pointer-events to each element based on isCellLocked.
+```
+    let mxCellRendererRedraw = mxCellRenderer.prototype.redraw;
+    mxCellRenderer.prototype.redraw = function(state, force, rendering)
+    {
+        mxCellRendererRedraw.apply(this, arguments);
+        if (state.style.locked) {
+            state.view.canvas.dataset.moonspeakLocked = true;
+        } else if (state.view && state.view.canvas && state.view.canvas.dataset.moonspeakLocked) {
+            delete state.view.canvas.dataset.moonspeakLocked;
+        }
+    }
+```
+
 
 Looks like there are a few ways to lock the elements:
 

@@ -6888,7 +6888,7 @@ mxSvgCanvas2D.prototype.addForeignObject = function(x, y, w, h, str, align, vali
   group = this.createElement("g");
   var fo = this.createElement("foreignObject");
   this.setCssText(fo, "overflow: visible; text-align: left;");
-  fo.setAttribute("data-moonspeak-locked", "test-data");
+  // fo.setAttribute("data-moonspeak-locked", "test-data");
   fo.setAttribute("pointer-events", "none");
   if (div.ownerDocument != document) {
     div = mxUtils.importNodeImplementation(fo.ownerDocument, div, true);

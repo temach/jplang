@@ -2816,6 +2816,9 @@ Graph.prototype.init = function(container)
             this.translate.y = 0;
         }
         
+        if (window.ARTEM_DEBUG) {
+            console.log("debug here");
+        }
         graphViewValidate.apply(this, arguments);
         
         if (this.graph.useCssTransforms)
@@ -6972,6 +6975,9 @@ TableLayout.prototype.execute = function(parent)
             this.graph.cellRenderer.redraw(state, false, this.isRendering());
         }
         
+        if (window.ARTEM_DEBUG) {
+            console.log("debug here");
+        }
         state = mxGraphViewValidateCellState.apply(this, arguments);
         
         // Adds to the list of edges that may intersect with later edges

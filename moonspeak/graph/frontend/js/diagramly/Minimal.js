@@ -2080,9 +2080,8 @@ EditorUi.initMinimalTheme = function()
                     addAction(ui.actions.get('toggleDarkMode'), mxResources.get('dark'),
                         (Editor.isDarkMode() ? Editor.lightModeImage : Editor.darkModeImage), 'D');
 
-                    var freehandElt = addAction(ui.actions.get('insertFreehand'), mxResources.get('freehand'),
-                        Editor.freehandImage, 'X');
-                    freehandElt.style.opacity = isLocked ? '0.1' : '0.7';
+                    var freehandElt = addAction(ui.actions.get('insertFreehand'), mxResources.get('freehand'), Editor.freehandImage, 'X');
+                    // freehandElt.style.opacity = isLocked ? '0.1' : '0.7';
 
                     var deleteAction = ui.actions.get('delete');
                     var deleteElt = addAction(deleteAction, mxResources.get('delete'), Editor.trashImage, 'T');

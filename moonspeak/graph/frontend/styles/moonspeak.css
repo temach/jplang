@@ -1,12 +1,20 @@
+[data-moonspeak-locked="true"] path {
+    pointer-events: none !important;
+}
+
+[data-moonspeak-locked="true"] rect {
+    pointer-events: none !important;
+}
+
+/* must describe the absent state for iframe, because the last 
+ * iframe always lands on top of display stack and therefore
+ * consumes events if its not force ignored */ 
 iframe {
-    pointer-events: all !important;
-}
-
-path {
     pointer-events: none !important;
 }
 
-rect {
-    pointer-events: none !important;
+iframe[data-moonspeak-locked="true"] {
+    pointer-events: auto !important;
 }
+
 

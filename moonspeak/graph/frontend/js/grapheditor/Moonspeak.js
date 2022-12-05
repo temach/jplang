@@ -11,6 +11,146 @@
         return index === 0 || index === 2 || index === 5 || index === 7;
     };
 
+
+    let mxCellRendererRedraw = mxCellRenderer.prototype.redraw;
+    mxCellRenderer.prototype.redraw = function(state, force, rendering)
+    {
+        mxCellRendererRedraw.apply(this, arguments);
+
+        if (state.shape && state.shape.node) {
+            if (state.view.graph.isCellLocked(state.cell)) {
+                state.shape.node.dataset.moonspeakLocked = true;
+                state.shape.node.setAttribute("pointer-events", "none");
+
+                if (state.style.iframe) {
+                    // iframes are stored as Text value, so we must mark them in addition to marking the underlying rect
+                    state.text.value.dataset.moonspeakLocked = true;
+                    state.text.value.setAttribute("pointer-events", "auto");
+
+                    // mozilla hack
+                    state.text.node.setAttribute("pointer-events", "none");
+                    state.text.node.firstChild.setAttribute("pointer-events", "none");
+                    state.text.node.style.pointerEvents = "none";
+                    state.text.node.firstChild.style.pointerEvents = "none";
+                }
+            } else {
+                delete state.shape.node.dataset.moonspeakLocked;
+                state.shape.node.setAttribute("pointer-events", "auto");
+
+                if (state.style.iframe) {
+                    // iframes are stored as Text value, so we must mark them in addition to marking the underlying rect
+                    delete state.text.value.dataset.moonspeakLocked;
+                    state.text.value.setAttribute("pointer-events", "none");
+
+                    state.text.node.setAttribute("pointer-events", "auto");
+                    state.text.node.firstChild.setAttribute("pointer-events", "auto");
+                    state.text.node.style.pointerEvents = "auto";
+                    state.text.node.firstChild.style.pointerEvents = "auto";
+                }
+
+            }
+        }
+
+        // if (state.style.locked) {
+        //     state.view.canvas.dataset.moonspeakLocked = true;
+        // } else if (state.view && state.view.canvas && state.view.canvas.dataset.moonspeakLocked) {
+        //     delete state.view.canvas.dataset.moonspeakLocked;
+        // }
+    }
+
+
+    // Interesting line of code:
+    //   if (null == this.stencil && (null == this.points && this.shapePointerEvents) || null != this.stencil && this.stencilPointerEvents) {
+    // what is this shapePointerEvents ?
+
+    // var shapePaint = mxShape.prototype.paint;
+    // mxShape.prototype.paint = function(c)
+    // {
+    //     if (this.style != null)
+    //     {
+    //         events = mxUtils.getValue(this.style, mxConstants.STYLE_POINTER_EVENTS, '1') == '1';
+    //     }
+    //     shapePaint.apply(this, arguments);
+    // }
+
+    // let mxShapeRedraw = mxShape.prototype.redraw;
+    // mxShape.prototype.redraw = function() {
+    //     if (this.state.view.graph.isCellLocked(this.state.cell)) {
+    //         this.node.dataset.moonspeakPointerEvents = false;
+    //         this.node.style.pointerEvents = "none";
+    //     }
+    //     mxShapeRedraw.apply(this, arguments);
+    // };
+
+
+    // let mxCellRendererRedrawLabel = mxCellRenderer.prototype.redrawLabel;
+    // mxCellRenderer.prototype.redrawLabel = function(state, forced) {
+    //     if (state.view.graph.isCellLocked(state.cell)) {
+    //         if (state.shape && state.shape.node) {
+    //             console.log("must alter the value pointer events (value is iframe)");
+    //             console.log("must alter the foreignObject pointer events");
+    //         }
+    //     }
+
+    //     mxCellRendererRedrawLabel.apply(this, arguments);
+
+    //     // if (state.view.graph.isCellLocked(state.cell)) {
+    //     //     if (state.shape && state.shape.node) {
+    //     //         console.log("must alter the value pointer events (value is iframe)");
+    //     //         console.log("must alter the foreignObject pointer events");
+    //     //     }
+    //     // }
+
+    //     // if (state.style.iframe) {
+    //     //     if (state.shape && state.shape.node && state.view.graph.isCellLocked(state.cell)) {
+    //     //         // Adds data attribute to signify locked object
+    //     //         state.shape.node.dataset.lockMoonspeak = true;
+    //     //     }
+    //     // }
+    // }
+
+    // mxSvgCanvas2D.prototype.addForeignObject = function(x, y, w, h, str, align, valign, wrap, format, overflow, clip, rotation, dir, div, root)
+    // {
+    //     var group = this.createElement('g');
+    //     var fo = this.createElement('foreignObject');
+
+    //     if (typeof str == "object") {
+    //         let x = 10;
+    //     }
+    //     
+    //     // Workarounds for print clipping and static position in Safari
+    //     this.setCssText(fo, 'overflow: visible; text-align: left;');
+    //     fo.setAttribute('pointer-events', 'none');
+    //     
+    //     // Import needed for older versions of IE
+    //     if (div.ownerDocument != document)
+    //     {
+    //         div = mxUtils.importNodeImplementation(fo.ownerDocument, div, true);
+    //     }
+
+    //     fo.appendChild(div);
+    //     group.appendChild(fo);
+
+    //     this.updateTextNodes(x, y, w, h, align, valign, wrap, overflow, clip, rotation, group);
+    //     
+    //     // Alternate content if foreignObject not supported
+    //     if (this.root.ownerDocument != document)
+    //     {
+    //         var alt = this.createAlternateContent(fo, x, y, w, h, str, align, valign, wrap, format, overflow, clip, rotation);
+    //         
+    //         if (alt != null)
+    //         {
+    //             fo.setAttribute('requiredFeatures', 'http://www.w3.org/TR/SVG11/feature#Extensibility');
+    //             var sw = this.createElement('switch');
+    //             sw.appendChild(fo);
+    //             sw.appendChild(alt);
+    //             group.appendChild(sw);
+    //         }
+    //     }
+    //     
+    //     root.appendChild(group);
+    // };
+
     // Do not show crosses and green circles that show extra
     // focus points when mousing over a shape
     mxConstraintHandler.prototype.setFocus = function(me, state, source)
