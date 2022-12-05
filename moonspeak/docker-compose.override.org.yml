@@ -1,0 +1,45 @@
+#
+# This docker-compose runs production setup for .org domain
+#
+version: "3"
+
+services:
+  #===================================
+  gateway:
+    container_name: moonspeak.org
+    restart: always
+    volumes:
+      - "/etc/letsencrypt/live/moonspeak.org/fullchain.pem:/etc/nginx/fullchain.pem:ro"
+      - "/etc/letsencrypt/live/moonspeak.org/privkey.pem:/etc/nginx/privkey.pem:ro"
+    ports:
+      - "80:8443"   # listens on 8433 to redirect to https port 443
+      - "443:443"
+
+  router:
+    container_name: router.moonspeak.org
+    restart: always
+    environment:
+      MOONSPEAK_DOMAIN: "moonspeak.org"
+
+  #===================================
+  landing:
+    container_name: landing.moonspeak.org
+    restart: always
+
+  synonyms:
+    container_name: synonyms.moonspeak.org
+    restart: always
+
+  suggestions:
+    container_name: suggestions.moonspeak.org
+    restart: always
+
+  # #==================================
+  # graph address is the user's unique access url
+  workelements:
+    container_name: workelements-demouser-ddd.moonspeak.org
+    restart: always
+
+  graph:
+    container_name: graph-demouser-bbb.moonspeak.org
+    restart: always

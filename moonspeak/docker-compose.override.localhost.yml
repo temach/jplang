@@ -36,11 +36,7 @@ services:
     restart: always
 
   # #==================================
-  # this is the user's unique access url
-  hud:
-    container_name: hud-demouser-aaa.moonspeak.localhost
-    restart: always
-
+  # graph address is the user's unique access url
   workelements:
     container_name: workelements-demouser-ddd.moonspeak.localhost
     restart: always
