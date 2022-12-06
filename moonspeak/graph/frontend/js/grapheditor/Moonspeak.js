@@ -11,6 +11,49 @@
         return index === 0 || index === 2 || index === 5 || index === 7;
     };
 
+
+    // handle setting and unsetting pointer-event correctly for 
+    // iframes and backing shapes when they are locked/unlocked
+    let mxCellRendererRedraw = mxCellRenderer.prototype.redraw;
+    mxCellRenderer.prototype.redraw = function(state, force, rendering)
+    {
+        mxCellRendererRedraw.apply(this, arguments);
+
+        if (state.shape && state.shape.node) {
+            if (state.view.graph.isCellLocked(state.cell)) {
+                state.shape.node.dataset.moonspeakLocked = true;
+                state.shape.node.setAttribute("pointer-events", "none");
+
+                if (state.style.iframe) {
+                    // iframes are stored as Text value, so we must mark them in addition to marking the underlying rect
+                    state.text.value.dataset.moonspeakLocked = true;
+                    state.text.value.setAttribute("pointer-events", "auto");
+
+                    // mozilla hack
+                    state.text.node.setAttribute("pointer-events", "none");
+                    state.text.node.firstChild.setAttribute("pointer-events", "none");
+                    state.text.node.style.pointerEvents = "none";
+                    state.text.node.firstChild.style.pointerEvents = "none";
+                }
+            } else {
+                delete state.shape.node.dataset.moonspeakLocked;
+                state.shape.node.setAttribute("pointer-events", "auto");
+
+                if (state.style.iframe) {
+                    // iframes are stored as Text value, so we must mark them in addition to marking the underlying rect
+                    delete state.text.value.dataset.moonspeakLocked;
+                    state.text.value.setAttribute("pointer-events", "none");
+
+                    state.text.node.setAttribute("pointer-events", "auto");
+                    state.text.node.firstChild.setAttribute("pointer-events", "auto");
+                    state.text.node.style.pointerEvents = "auto";
+                    state.text.node.firstChild.style.pointerEvents = "auto";
+                }
+
+            }
+        }
+    }
+
     // Do not show crosses and green circles that show extra
     // focus points when mousing over a shape
     mxConstraintHandler.prototype.setFocus = function(me, state, source)
