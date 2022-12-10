@@ -2,6 +2,7 @@ FROM node:19.2 as builder
 
 WORKDIR /opt/moonspeak/frontend
 
+RUN npm install --global gulp-cli@2.3.0
 COPY frontend/package.json           package.json
 COPY frontend/package-lock.json      package-lock.json
 RUN npm install
