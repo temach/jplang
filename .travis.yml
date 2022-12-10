@@ -1,37 +1,19 @@
 # see: https://itnext.io/go-continuous-integration-with-travis-ci-and-docker-4b26379e54b7
+# see: https://docs.travis-ci.com/user/docker/
 #
 stages:
-  - test
-  - deploy
+  - build-push-latest
 
 jobs:
   include:
-    # run linters
-    - stage: test
-      language: python
-      python:
-        - "3.9"
-      services:
-        - docker
-      install:
-        - pip install -r ./kanji-keywords/backend/requirements.txt
-      script: 
-        - mypy ./kanji-keywords/backend/main.py
-        - (cd kanji-keywords/backend/ && python -m unittest)
-
     # push docker image
-    - stage: deploy
-      language: elm
-      python:
-        - "3.9"
+    - stage: build-push-latest
+      if: branch = master
       services:
         - docker
       install:
-        - (cd kanji-keywords/frontend/ && elm make src/Main.elm --optimize)
-        - docker build -f kanji-keywords/Dockerfile --no-cache --tag temachpool/kanji-keywords:${TRAVIS_COMMIT} ./kanji-keywords/
-        - docker tag temachpool/kanji-keywords:${TRAVIS_COMMIT} temachpool/kanji-keywords:latest
+        - ( cd moonspeak && TAG="latest" docker-compose build )
       script: 
         - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
-        - docker push temachpool/kanji-keywords:${TRAVIS_COMMIT}
-        - docker push temachpool/kanji-keywords:latest
+        - ( cd moonspeak && TAG="latest" docker-compose push )
         - docker logout
