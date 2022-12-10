@@ -12,8 +12,8 @@ jobs:
       services:
         - docker
       install:
-        - ( cd moonspeak && TAG="latest" docker-compose build )
+        - ( cd moonspeak && TAG="2022-12-06" docker-compose build )
       script: 
         - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
-        - ( cd moonspeak && TAG="latest" docker-compose push )
+        - ( cd moonspeak && TAG="2022-12-06" docker-compose push )
         - docker logout
