@@ -1,8 +1,7 @@
-FROM node as builder
+FROM node:19.2 as builder
 
 WORKDIR /opt/moonspeak/build/frontend
 
-RUN npm install --global gulp-cli
 COPY frontend/package.json           package.json
 COPY frontend/package-lock.json      package-lock.json
 RUN npm install
@@ -13,7 +12,7 @@ COPY frontend/gulpfile.js   gulpfile.js
 RUN gulp production
 
 
-FROM python:alpine
+FROM python:3.11-alpine
 WORKDIR /opt/moonspeak/suggestions
 
 # dependencies
