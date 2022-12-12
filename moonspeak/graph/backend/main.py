@@ -13,6 +13,8 @@ DB_PATH = "../tmp/kanji-grapheditor.db"
 DB = sqlite3.connect(DB_PATH)
 DB.row_factory = sqlite3.Row
 
+FRONTEND_ROOT="../frontend/src/main/webapp/"
+
 GRAPH_INITIAL_XML = os.getenv("MOONSPEAK_GRAPH_INITIAL_XML", None)
 
 @get("/config/<filename>")
@@ -76,8 +78,8 @@ def index():
 @get("/<path:path>")
 def static(path):
     if "index.html" in path:
-        return static_file("index.html", root="../frontend/")
-    return static_file(path, root="../frontend/")
+        return static_file("index.html", root=FRONTEND_ROOT)
+    return static_file(path, root=FRONTEND_ROOT)
 
 
 def db_init():
