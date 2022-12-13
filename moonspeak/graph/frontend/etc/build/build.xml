@@ -418,6 +418,9 @@
 				<file name="GitLabClient.js" />
 				<file name="DrawioComment.js" />
 				<file name="DriveComment.js" />
+				<file name="MoonspeakFile.js" />
+				<file name="MoonspeakLibrary.js" />
+				<file name="MoonspeakClient.js" />
 			</sources>
 			
 			<sources dir="${war.dir}/js/onedrive">
