@@ -343,8 +343,8 @@ MoonspeakInit = function(app)
         console.log(location + " " + document.title + " received:");
         console.log(event.data);
 
-        if (! ("info" in event.data)) {
-            console.log("No 'info' field in message, skipping");
+        if ((typeof event.data !== 'object') || ! ("info" in event.data)) {
+            console.log("event.data is not an object or no 'info' field in event.data, skipping");
             return;
         }
 
