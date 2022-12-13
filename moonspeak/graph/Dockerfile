@@ -17,7 +17,7 @@
 # 
 # WORKDIR /opt/moonspeak/build/
 
-FROM ubuntu:jammy-20221130 as builder
+FROM debian:11 as builder
 
 WORKDIR /opt/moonspeak/build/
 
