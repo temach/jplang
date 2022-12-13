@@ -222,3 +222,49 @@ Configuration: https://www.diagrams.net/doc/faq/configure-diagram-editor
     //     }
     // };
 
+
+
+After the compiler of ant all has done its job, this is what files were new on the filesystem
+root@eda2cff53d36:/tmp/frontend# find . -newermt 2022-12-13 -type f -print
+./src/main/webapp/js/viewer-static.min.js
+./src/main/webapp/js/extensions.min.js
+./src/main/webapp/js/viewer.min.js
+./src/main/webapp/js/orgchart.min.js
+./src/main/webapp/js/shapes-14-6-5.min.js
+./src/main/webapp/js/app.min.js
+./src/main/webapp/js/integrate.min.js
+./src/main/webapp/js/stencils.min.js
+./VERSION
+./etc/propgen/README
+./etc/propgen/convert.js
+./etc/propgen/com/mxgraph/properties/PropGen.java
+./etc/propgen/build.xml
+./etc/propgen/package-lock.json
+./etc/propgen/package.json
+./etc/docker/README.md
+./etc/integrate/Integrate.js
+./etc/dependencies/package.json
+./etc/dependencies/README.md
+./etc/build/compiler.jar
+./etc/build/Xml2Js.java
+./etc/build/build.xml
+./etc/build/build.properties
+./etc/build/Xml2Js.class
+./etc/build/base-viewer.min.js
+./etc/build/base.min.js
+
+
+It seems that these are the new JS files:
+```
+root@eda2cff53d36:/tmp/frontend# find . -newermt 2022-12-13T13:50:00 -type f -print
+./src/main/webapp/js/viewer-static.min.js
+./src/main/webapp/js/extensions.min.js
+./src/main/webapp/js/viewer.min.js
+./src/main/webapp/js/orgchart.min.js
+./src/main/webapp/js/shapes-14-6-5.min.js
+./src/main/webapp/js/app.min.js
+./src/main/webapp/js/integrate.min.js
+./src/main/webapp/js/stencils.min.js
+./etc/build/base-viewer.min.js
+./etc/build/base.min.js
+```
