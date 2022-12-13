@@ -23,7 +23,7 @@ use std::os::unix::fs::PermissionsExt;
 use std::str::FromStr;
 
 const BASE_HREF_PREPEND: &'static str = "/router";
-const BODY_LIMIT: usize =  5 * 1024 * 1024;
+const BODY_LIMIT: usize =  8 * 1024 * 1024;
 
 const HTML_NS: Namespace = namespace_url!("http://www.w3.org/1999/xhtml");
 
