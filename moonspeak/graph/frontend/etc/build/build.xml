@@ -79,6 +79,7 @@
 				<file name="Menus.js" />
 				<file name="Toolbar.js" />
 				<file name="Dialogs.js" />
+				<file name="Moonspeak.js" />
 			</sources>
 		</jscomp>
 		
@@ -180,6 +181,7 @@
 				<file name="Graph.js" />
 				<file name="Shapes.js" />
 				<file name="Actions.js" />
+				<file name="Moonspeak.js" />
 			</sources>
 			
 			<sources dir="${war.dir}/js/diagramly">
