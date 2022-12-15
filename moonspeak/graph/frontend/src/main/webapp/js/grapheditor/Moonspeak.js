@@ -11,6 +11,19 @@
         return index === 0 || index === 2 || index === 5 || index === 7;
     };
 
+    Sidebar.prototype.init = function()
+    {
+        this.entries = [];
+
+        // Uses search.xml index file instead (faster load times)
+        this.addStencilsToIndex = false;
+
+        // Contains additional tags for shapes
+        this.shapetags = {};
+
+        // Adds tags from compressed text file for improved searches
+        this.tagIndex = null;
+    };
 
     // handle setting and unsetting pointer-event correctly for 
     // iframes and backing shapes when they are locked/unlocked
