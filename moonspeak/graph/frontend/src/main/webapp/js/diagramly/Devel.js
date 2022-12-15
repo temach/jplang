@@ -228,3 +228,7 @@ if (urlParams['orgChartDev'] == '1')
 
 // Miro Import
 mxscript(drawDevUrl + 'js/diagramly/miro/MiroImporter.js');
+
+// Moonspeak custom code
+mxscript(geBasePath + '/Moonspeak.js');
+mxscript(geBasePath + '/dev_mode.js');
