@@ -11,6 +11,12 @@
         return index === 0 || index === 2 || index === 5 || index === 7;
     };
 
+    // disable revision history as that only applies to Drive and DropBox
+    // and disabling it allows to drop DriveClient.js and DropBoxClient.js
+    EditorUi.prototype.isRevisionHistoryEnabled = function() {
+        return false;
+    };
+
     Sidebar.prototype.init = function()
     {
         this.entries = [];
