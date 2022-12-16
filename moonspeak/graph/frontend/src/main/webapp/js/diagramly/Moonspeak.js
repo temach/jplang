@@ -11,11 +11,20 @@
         return index === 0 || index === 2 || index === 5 || index === 7;
     };
 
-    // disable revision history as that only applies to Drive and DropBox
-    // and disabling it allows to drop DriveClient.js and DropBoxClient.js
-    EditorUi.prototype.isRevisionHistoryEnabled = function() {
-        return false;
-    };
+    // in a few places the code directly references these global constructors 
+    // because it expects DriveClient.js/DropboxClient.js/etc to be loaded 
+    window.DriveFile = null;
+    window.DriveLibrary = null;
+    window.DropboxFile = null;
+    window.DropboxLibrary = null;
+    window.OneDriveFile = null;
+    window.OneDriveLibrary = null;
+    window.GitHubFile = null;
+    window.GitHubLibrary = null;
+    window.GitLabFile = null;
+    window.GitLabLibrary = null;
+    window.TrelloFile = null;
+    window.TrelloLibrary = null;
 
     Sidebar.prototype.init = function()
     {
