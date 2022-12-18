@@ -54,81 +54,47 @@ MoonspeakClient.prototype.getFile = function(id, success, error, denyConvert, as
                 var ids = id.split(this.SEPARATOR);
                 var acceptResponse = true;
 
-        // let getGraph = (url, graph, uuid) => {
-        //     mxUtils.get(url + '?' + 'uuid=' + encodeURIComponent(uuid), function(req)
-        //     {
-        //         var node = req.getDocumentElement();
-        //         var dec = new mxCodec(node.ownerDocument);
-        //         dec.decode(node, graph.getModel());
+                let headers = {};
+                let binary = false;
+                let graph_uuid = 'default';
 
-        //         for (var index in graph.model.cells) {
-        //             let cell = graph.model.cells[index];
-        //             var style = graph.getCurrentCellStyle(cell);
-        //             if (style && style['iframe'] == '1') {
-        //                 registerChildIframe(cell.value);
-        //             }
-        //         }
-
-        //         for (var index in graph.model.cells) {
-        //             let cell = graph.model.cells[index];
-        //             if (cell.edge) {
-        //                 let edge = cell;
-        //                 let source = graph.model.getTerminal(edge, true);
-        //                 let target = graph.model.getTerminal(edge, false);
-
-        //                 // interconnect them both ways
-        //                 addObserver(source.value, target.value);
-        //                 addObserver(target.value, source.value);
-        //             }
-        //         }
-
-        //         // Stores ID for saving
-        //         graph.uuid = uuid;
-        //     });
-        // }
-        // getGraph(OPEN_URL, graph, graph.uuid);
-
-        let headers = {};
-        let binary = false;
-        let graph_uuid = 'default';
-
-        timeoutThread = window.setTimeout(mxUtils.bind(this, function()
-        {
-            acceptResponse = false;
-            error({code: App.ERROR_TIMEOUT, retry: callback})
-        }), this.ui.timeout);
-
-        let graphUrl = OPEN_URL + '?uuid=' + encodeURIComponent(graph_uuid);
-        this.ui.editor.loadUrl(graphUrl, mxUtils.bind(this, function(data)
-        {
-            window.clearTimeout(timeoutThread);
-
-            if (acceptResponse)
-            {
-                let meta = {
-                    "uuid": graph_uuid,
-                    "hash": graphUrl,
-                    "name": graph_uuid,
-                };
-
-                if (asLibrary)
+                timeoutThread = window.setTimeout(mxUtils.bind(this, function()
                 {
-                    success(new MoonspeakLibrary(this.ui, data, meta));
-                }
-                else
-                {
-                    success(new MoonspeakFile(this.ui, data, meta));
-                }
-            }
-        }), mxUtils.bind(this, function(err, req)
-        {
-            window.clearTimeout(timeoutThread);
+                    acceptResponse = false;
+                    error({code: App.ERROR_TIMEOUT, retry: callback})
+                }), this.ui.timeout);
 
-            if (acceptResponse)
-            {
-                error();
-            }
-        }), binary, null, null, null, headers);
+                let graphUrl = OPEN_URL + '?uuid=' + encodeURIComponent(graph_uuid);
+                this.ui.editor.loadUrl(graphUrl, mxUtils.bind(this, function(data)
+                {
+                    window.clearTimeout(timeoutThread);
+
+                    if (acceptResponse)
+                    {
+                        let meta = {
+                            "uuid": graph_uuid,
+                            "hash": graphUrl,
+                            "name": graph_uuid,
+                        };
+
+                        if (asLibrary)
+                        {
+                            success(new MoonspeakLibrary(this.ui, data, meta));
+                        }
+                        else
+                        {
+                            success(new MoonspeakFile(this.ui, data, meta));
+                        }
+                    }
+                }), mxUtils.bind(this, function(err, req)
+                {
+                    window.clearTimeout(timeoutThread);
+
+                    if (acceptResponse)
+                    {
+                        error();
+                    }
+                }), binary, null, null, null, headers);
 
         });
 
