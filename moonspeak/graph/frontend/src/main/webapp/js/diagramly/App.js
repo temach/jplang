@@ -925,8 +925,9 @@ App.main = function(callback, createUi)
                         urlParams['chrome'] == '0' || uiTheme == 'min',
                         null, null, null, urlParams['chrome'] != '0'));
                 
-                // give moonspeak a chance to init as the last init step
-                MoonspeakInit(ui);
+                // run moonspeak init as the last init step
+                // and add it as EditorUI field for reference
+                ui.editor.moonspeakUi = new MoonspeakUi(ui);
 
                 if (window.mxscript != null)
                 {

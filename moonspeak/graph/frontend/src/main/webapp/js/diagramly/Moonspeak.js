@@ -144,19 +144,54 @@
         // }
     }
 
-
 })();
 
 
-MoonspeakInit = function(app)
+// This runs after the App has done its init.
+// Specifically for hacks that must be done after everything has been initialised.
+MoonspeakUi = function(app)
 {
-    this.isMoonspeakDevMode = function() {
-        return ['moonspeak.localhost', '127.0.0.1', '0.0.0.0'].includes(location.hostname);
-    }
+    // declare fields
+    this.iframeinfo = new Map();
 
+    // run the init logic
+    this.runInit(app);
+};
+
+MoonspeakUi.prototype.runInit = function(app)
+{
     let editorUi = app.editor;
-    
     let graph = editorUi.graph;
+
+    // on file loaded, make iframe message connections
+    // this.graph.getModel().addListener(mxEvent.CHANGE, funct);
+    editorUi.addListener('fileLoaded', mxUtils.bind(this, function(editorUi)
+    {
+        let graph = editorUi.graph;
+        let moonUi = editorUi.moonspeakUi;
+
+        for (var index in graph.model.cells) {
+            let cell = graph.model.cells[index];
+            var style = graph.getCurrentCellStyle(cell);
+            if (style && style['iframe'] == '1') {
+                moonUi.registerChildIframe(cell.value);
+            }
+        }
+
+        for (var index in graph.model.cells) {
+            let cell = graph.model.cells[index];
+            if (cell.edge) {
+                let edge = cell;
+                let source = graph.model.getTerminal(edge, true);
+                let target = graph.model.getTerminal(edge, false);
+
+                // interconnect them both ways
+                moonUi.addObserver(source.value, target.value);
+                moonUi.addObserver(target.value, source.value);
+            }
+        }
+    }));
+
 
     // style fixes
     let stylesheet = graph.getStylesheet();
@@ -239,102 +274,17 @@ MoonspeakInit = function(app)
 
     // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
     // handle message events
-    let iframeinfo = new Map();
 
     let onChildMessage = (event, iframe) => {
         console.log(location + " " + document.title + " received:");
         console.log(event.data);
 
         // this is a message between the sub-iframes
-        let info = iframeinfo.get(iframe);
+        let info = this.iframeinfo.get(iframe);
         for (const connectedPort of info.observers) {
             connectedPort.postMessage(event.data);
         }
     };
-
-    let registerChildIframe = (iframe) => {
-        let channel = new MessageChannel();
-        let info = {
-            // contains channels of communicating child iframes
-            "observers": new Set(),
-
-            // the communication channel between graph and this iframe
-            "iframeport": channel.port1,
-        };
-        info.iframeport.onmessage = (event) => onChildMessage(event, iframe);
-        iframe.onload = () => {
-            // if host on dev origin, soften developer pain by relaxing security, else be strict
-            let targetOrigin = this.isMoonspeakDevMode() ? "*" : location.origin;
-            iframe.contentWindow.postMessage({"info": "port"}, targetOrigin, [channel.port2]);
-        };
-        iframeinfo.set(iframe, info);
-    };
-
-    let addObserver = (sourceIFrame, observerIFrame) => {
-        let source = iframeinfo.get(sourceIFrame);
-        let observer = iframeinfo.get(observerIFrame);
-        source.observers.add(observer.iframeport);
-    }
-
-    // sets default uuid for OPEN/SAVE actions
-    graph.uuid = 'default';
-
-    // Add OPEN action
-    let getGraph = (url, graph, uuid) => {
-        mxUtils.get(url + '?' + 'uuid=' + encodeURIComponent(uuid), function(req)
-        {
-            let node = req.getDocumentElement();
-            let dec = new mxCodec(node.ownerDocument);
-            dec.decode(node, graph.getModel());
-
-            for (let index in graph.model.cells) {
-                let cell = graph.model.cells[index];
-                let style = graph.getCurrentCellStyle(cell);
-                if (style && style['iframe'] === 1) {
-                    registerChildIframe(cell.value);
-                }
-            }
-
-            for (let index in graph.model.cells) {
-                let cell = graph.model.cells[index];
-                if (cell.edge) {
-                    let edge = cell;
-                    let source = graph.model.getTerminal(edge, true);
-                    let target = graph.model.getTerminal(edge, false);
-
-                    // interconnect them both ways
-                    addObserver(source.value, target.value);
-                    addObserver(target.value, source.value);
-                }
-            }
-
-            // Stores ID for saving
-            graph.uuid = uuid;
-        });
-    }
-    //editorUi.actions.addAction('open', function() { getGraph(OPEN_URL, graph, graph.uuid)  });
-
-    // Add SAVE action
-    let postGraph = (url, graph) => {
-        let enc = new mxCodec();
-        let node = enc.encode(graph.getModel());
-        let xml = mxUtils.getXml(node);
-
-        mxUtils.post(url + '?' + 'uuid=' + encodeURIComponent(graph.uuid), 'xml=' + encodeURIComponent(xml), function()
-        {
-            mxUtils.alert('Saved');
-        }, function()
-        {
-            mxUtils.alert('Error');
-        });
-    }
-    //editorUi.actions.addAction('save', function() { postGraph(SAVE_URL, graph)  }, null, null, Editor.ctrlKey + '+S');
-
-    let deleteObserver = (sourceIFrame, observerIFrame) => {
-        let source = iframeinfo.get(sourceIFrame);
-        let observer = iframeinfo.get(observerIFrame);
-        source.observers.delete(observer.iframeport);
-    }
 
     graph.addListener(mxEvent.CELLS_REMOVED, function(sender, evt)
     {
@@ -344,8 +294,8 @@ MoonspeakInit = function(app)
             }
             // delete the connection between two iframes
             if (cell.source && cell.target) {
-                deleteObserver(cell.source, cell.target);
-                deleteObserver(cell.target, cell.source);
+                this.deleteObserver(cell.source, cell.target);
+                this.deleteObserver(cell.target, cell.source);
             }
         }
     });
@@ -357,8 +307,8 @@ MoonspeakInit = function(app)
         let target = graph.getModel().getTerminal(edge, false);
 
         // interconnect them both ways
-        addObserver(source.value, target.value);
-        addObserver(target.value, source.value);
+        this.addObserver(source.value, target.value);
+        this.addObserver(target.value, source.value);
     });
 
     let onMessage = (event) =>
@@ -406,4 +356,42 @@ MoonspeakInit = function(app)
     // trigger loading of saved graph from backend
     // let action = editorUi.actions.get("open");
     // action.funct();
+};
+
+MoonspeakUi.prototype.addObserver = function(sourceIFrame, observerIFrame)
+{
+    let source = this.iframeinfo.get(sourceIFrame);
+    let observer = this.iframeinfo.get(observerIFrame);
+    source.observers.add(observer.iframeport);
+};
+
+MoonspeakUi.prototype.deleteObserver = function(sourceIFrame, observerIFrame)
+{
+    let source = this.iframeinfo.get(sourceIFrame);
+    let observer = this.iframeinfo.get(observerIFrame);
+    source.observers.delete(observer.iframeport);
+};
+
+MoonspeakUi.prototype.registerChildIframe = function(iframe)
+{
+    let channel = new MessageChannel();
+    let info = {
+        // contains channels of communicating child iframes
+        "observers": new Set(),
+
+        // the communication channel between graph and this iframe
+        "iframeport": channel.port1,
+    };
+    info.iframeport.onmessage = (event) => onChildMessage(event, iframe);
+    iframe.onload = () => {
+        // if host on dev origin, soften developer pain by relaxing security, else be strict
+        let targetOrigin = this.isMoonspeakDevMode() ? "*" : location.origin;
+        iframe.contentWindow.postMessage({"info": "port"}, targetOrigin, [channel.port2]);
+    };
+    this.iframeinfo.set(iframe, info);
+};
+
+MoonspeakUi.prototype.isMoonspeakDevMode = function()
+{
+    return ['moonspeak.localhost', '127.0.0.1', '0.0.0.0'].includes(location.hostname);
 };
