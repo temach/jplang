@@ -13,7 +13,7 @@ COPY frontend/gulpfile.js   gulpfile.js
 RUN gulp production
 
 
-FROM python:3.11-alpine
+FROM python:3.10-alpine
 WORKDIR /opt/moonspeak/suggestions
 
 # dependencies

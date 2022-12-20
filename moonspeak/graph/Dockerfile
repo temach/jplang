@@ -31,7 +31,7 @@ COPY frontend 	frontend
 RUN cd frontend/etc/build && ant app
 
 
-FROM python:3.11-alpine
+FROM python:3.10-alpine
 WORKDIR /opt/ms/
 
 RUN mkdir tmp
