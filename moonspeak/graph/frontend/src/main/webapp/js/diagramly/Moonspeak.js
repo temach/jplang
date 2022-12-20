@@ -273,19 +273,6 @@ MoonspeakUi.prototype.runInit = function(app)
     graph.setAllowDanglingEdges(false);
 
     // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
-    // handle message events
-
-    let onChildMessage = (event, iframe) => {
-        console.log(location + " " + document.title + " received:");
-        console.log(event.data);
-
-        // this is a message between the sub-iframes
-        let info = this.iframeinfo.get(iframe);
-        for (const connectedPort of info.observers) {
-            connectedPort.postMessage(event.data);
-        }
-    };
-
     graph.addListener(mxEvent.CELLS_REMOVED, function(sender, evt)
     {
         for (const cell of evt.properties.cells) {
@@ -382,13 +369,25 @@ MoonspeakUi.prototype.registerChildIframe = function(iframe)
         // the communication channel between graph and this iframe
         "iframeport": channel.port1,
     };
-    info.iframeport.onmessage = (event) => onChildMessage(event, iframe);
+    info.iframeport.onmessage = (event) => this.onChildMessage(event, iframe);
     iframe.onload = () => {
         // if host on dev origin, soften developer pain by relaxing security, else be strict
         let targetOrigin = this.isMoonspeakDevMode() ? "*" : location.origin;
         iframe.contentWindow.postMessage({"info": "port"}, targetOrigin, [channel.port2]);
     };
     this.iframeinfo.set(iframe, info);
+};
+
+MoonspeakUi.prototype.onChildMessage = function(event, iframe)
+{
+    console.log(location + " " + document.title + " received:");
+    console.log(event.data);
+
+    // this is a message between the sub-iframes
+    let info = this.iframeinfo.get(iframe);
+    for (const connectedPort of info.observers) {
+        connectedPort.postMessage(event.data);
+    }
 };
 
 MoonspeakUi.prototype.isMoonspeakDevMode = function()
