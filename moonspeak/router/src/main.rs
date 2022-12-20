@@ -65,7 +65,7 @@ async fn router(
                 error!("Bad service name {:?}. Could not split into name:port tuple.", service);
                 return HttpResponse::build(actix_web::http::StatusCode::BAD_REQUEST).finish();
             },
-        }; 
+        };
         format!("{}.{}:{}", service_name, &appstate.domain, service_port)
     } else {
         format!("{}.{}", service, &appstate.domain)
@@ -234,6 +234,10 @@ async fn handler3(
     router(req, service, path, appstate, body).await
 }
 
+// This handler is useful to be able to run the router + any micro-frontend
+// without having to bring up the gateway service.
+// Basically for out-of-docker running and debugging.
+//
 // Supports the following:
 // curl 'http://moonspeak.test:8080/plus'
 // curl 'http://moonspeak.test:8080/plus/'
@@ -247,6 +251,8 @@ async fn handler_dev(
     body: web::Bytes,
     appstate: web::Data<AppState>
 ) -> HttpResponse {
+    debug!("Dev mode: not a valid /route/, but trying to handle: {:?}", req);
+
     // remove leading whitespace and slashes
     // so they dont affect .split_once() later
     let trimmed_path = req.uri().path()
