@@ -2,7 +2,7 @@
 # This file is applied automatically by docker-compose
 # see: https://docs.docker.com/compose/extends/
 #
-# This docker-compose is used to run everything in dev mode for .localhost domain
+# This docker-compose is used to run everything in production setup on .localhost domain
 #
 # Important: you might need to define moonspeak.localhost in /etc/hosts 
 #
@@ -23,9 +23,8 @@ services:
     build:
       context: ./gateway
     ports:
-      - "0.0.0.0:8443:8443"
-      - "0.0.0.0:443:443"
-      - "0.0.0.0:80:80"
+      - "80:8443"   # listens on 8433 to redirect to https port 443
+      - "443:443"
 
   router:
     container_name: router.moonspeak.localhost
@@ -33,7 +32,7 @@ services:
       context: ./router
     environment:
       MOONSPEAK_DOMAIN: "moonspeak.localhost"
-      MOONSPEAK_DEV_MODE: "true"
+      MOONSPEAK_DEV_MODE: ""
       RUST_LOG: "router=info"
 
   #===================================
