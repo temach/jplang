@@ -3342,11 +3342,13 @@ EditorUi.prototype.initCanvas = function()
 							Math.round(evt.deltaY) != evt.deltaY)
 						{
 							factor = 1 + (Math.abs(evt.deltaY) / 20) * (factor - 1);
+							factor = this.editor.moonspeakUi.clampPinchZoom(factor);
 						}
 						// Slower zoom for pinch gesture on touch screens
 						else if (evt.movementY != null && evt.type == 'pointermove')
 						{
 							factor = 1 + (Math.max(1, Math.abs(evt.movementY)) / 20) * (factor - 1);
+							factor = this.editor.moonspeakUi.clampPinchZoom(factor);
 							delay = -1;
 						}
 						

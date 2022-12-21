@@ -14,6 +14,38 @@ rgjs ui.mode
 rgjs unsavedChangesClickHereToSave
 ```
 
+Must test one day with Trackpad pinch to zoom (browser expresses it as CTRL + Wheel event), see current code in mxClient.4.2.2.js:
+```
+    //To prevent window zoom on trackpad pinch
+    if (evt.ctrlKey) 
+    {
+            evt.preventDefault();
+    }
+```
+
+To test trackpad pinch zoom on firefox:
+```
+Mousewheel action prefs on the about:config page:
+
+    mousewheel.default.action
+    mousewheel.with_*.action
+    mousewheel.with_alt.action = 2
+    mousewheel.with_control.action = 3
+    mousewheel.with_meta.action = 1
+    mousewheel.with_shift.action = 4
+    mousewheel.with_win.action= 1 
+
+Action:
+
+0: Nothing happens
+1: Scrolling contents
+2: Go back or go forward, in your history
+3: Zoom in or out (reflowing zoom)
+4: Treat vertical wheel as horizontal scroll
+5: Zoom in or out (pinch zoom)
+```
+
+
 to set ui, use ui=sketch url parameter
 
 

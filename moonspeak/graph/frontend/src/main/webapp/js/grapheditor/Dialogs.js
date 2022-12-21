@@ -2010,7 +2010,7 @@ var OutlineWindow = function(editorUi, x, y, w, h)
 
 	outline.init(div);
 	
-	mxEvent.addMouseWheelListener(function(evt, up)
+	mxEvent.addMouseWheelListener(function(evt, up, isPinchZoom)
 	{
 		var outlineWheel = false;
 		var source = mxEvent.getSource(evt);
@@ -2034,6 +2034,7 @@ var OutlineWindow = function(editorUi, x, y, w, h)
 			if (evt.deltaY != null && Math.round(evt.deltaY) != evt.deltaY)
 			{
 				factor = 1 + (Math.abs(evt.deltaY) / 20) * (factor - 1);
+				factor = editorUi.editor.moonspeakUi.clampPinchZoom(factor);
 			}
 
 			graph.lazyZoom(up, null, null, factor);

@@ -154,6 +154,9 @@ MoonspeakUi = function(app)
     // declare fields
     this.iframeinfo = new Map();
 
+    // make pinch zooming slower, but do not go lower than .05 because of implicit dependencies
+    this.zoomFactorPinchMax = 0.06;
+
     // run the init logic
     this.runInit(app);
 };
@@ -227,8 +230,9 @@ MoonspeakUi.prototype.runInit = function(app)
         return (style != null) ? (style['iframe'] === 1 || graphIsHtmlLabel.apply(this, arguments)) : false;
     }
 
-    // make zooming slower as main use is on touchscreens
-    graph.zoomFactor = 1.02
+    // pinch zooming is clamped with this.zoomFactorPinchMax to be slower on mobile and touchpads
+    // but mouse and buttons zoom is kept aggressive
+    graph.zoomFactor = 1.2;
 
     // Consider all wheel events to be scroll events
     // override in instance instead of prototype, because original func is defined during .init()
@@ -394,3 +398,8 @@ MoonspeakUi.prototype.isMoonspeakDevMode = function()
 {
     return ['moonspeak.localhost', '127.0.0.1', '0.0.0.0'].includes(location.hostname);
 };
+
+MoonspeakUi.prototype.clampPinchZoom = function(value)
+{
+    return Math.max(1 - this.zoomFactorPinchMax, Math.min(value, 1 + this.zoomFactorPinchMax));
+}

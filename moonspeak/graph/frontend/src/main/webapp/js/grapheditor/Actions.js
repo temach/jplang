@@ -1005,7 +1005,7 @@ Actions.prototype.init = function()
 	{
 		if (graph.isFastZoomEnabled())
 		{
-			graph.lazyZoom(true, true, ui.buttonZoomDelay);
+			graph.lazyZoom(true, true, ui.buttonZoomDelay, graph.zoomFactor);
 		}
 		else
 		{
@@ -1016,7 +1016,7 @@ Actions.prototype.init = function()
 	{
 		if (graph.isFastZoomEnabled())
 		{
-			graph.lazyZoom(false, true, ui.buttonZoomDelay);
+			graph.lazyZoom(false, true, ui.buttonZoomDelay, graph.zoomFactor);
 		}
 		else
 		{
