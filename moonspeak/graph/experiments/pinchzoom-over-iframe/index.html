@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang=en>
+    <!--
+        This application demonstrates using Pointer Events for simple 2-pointer
+        pinch/zoom gesture recognition.
+    -->
+    <head>
+        <title>Pointer Events pinch/zoom example</title>
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="/index.css">
+        <script src="/index.js"></script>
+    </head>
+
+    <body onload="init();" style="touch-action:none">
+        <h1>Pointer Event pinch/zoom gesture</h1>
+        <!-- Create element for pointer gestures. -->
+        <div id="target">
+            <iframe id="secondframe" src="/second.html" frameborder="0"></iframe>
+        </div>
+    </body>
+</html>
+
