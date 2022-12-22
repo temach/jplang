@@ -45,6 +45,29 @@ Action:
 5: Zoom in or out (pinch zoom)
 ```
 
+Really good info on pointer and touch events:
+https://www.w3.org/TR/pointerevents3/
+
+Touch events are NOT shared across iframes because its a CVE:
+https://www.mozilla.org/en-US/security/advisories/mfsa2013-06/
+Indeed it not logical, :(
+
+Changing the events capture target also looks like its forbidden:
+https://github.com/w3c/pointerevents/issues/291
+
+Touch event is limited to single iframe. Touchstart and touchend events use something like capture,
+so if touchstart was in an iframe, touchend can only trigger in the same iframe.
+User agents should ensure that all Touch objects available from a given TouchEvent are all associated to the same
+document that the TouchEvent was dispatched to. To implement this, user agents should maintain a notion of the
+current touch-active document. On first touch, this is set to the target document where the touch was created.
+If a touch starts entirely outside the currently touch-active document, then it is ignored entirely
+See implementer's note: https://www.w3.org/TR/touch-events/#touchevent-implementer-s-note
+
+If your touchstart listener calls preventDefault(), ensure preventDefault() is also called from associated
+touchend listeners to continue suppressing the generation of click events and other default tap behavior.
+Because touchend is generated on finger lift-off and if its not handled a mouse click will be generated.
+https://developer.chrome.com/blog/scrolling-intervention/
+https://developer.mozilla.org/en-US/docs/Web/API/Touch_events
 
 to set ui, use ui=sketch url parameter
 
