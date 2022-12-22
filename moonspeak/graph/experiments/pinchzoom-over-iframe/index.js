@@ -1,6 +1,3 @@
-// Log events flag
-let mustStartPinchZoom = false;
-
 // Global vars to cache event state
 var evCache = new Array();
 var prevDiff = -1;
@@ -12,12 +9,10 @@ function pointerdown_handler(ev) {
     console.log(m);
 
     if (ev.isPrimary == false) {
-        isPinchZoom = true;
-
         let fr = document.getElementById('secondframe');
         let message = {
-            type: 'isPinchZoom',
-            value: isPinchZoom,
+            type: 'pleaseStreamEvents',
+            value: true,
         };
         fr.contentWindow.postMessage(message, "*");
     }
@@ -83,16 +78,12 @@ function pointerup_handler(ev) {
     // If the number of pointers down is less than two then reset diff tracker
     if (evCache.length < 2) prevDiff = -1;
 
-    if (isPinchZoom) {
-        isPinchZoom = false;
-
-        let fr = document.getElementById('secondframe');
-        let message = {
-            type: 'isPinchZoom',
-            value: isPinchZoom,
-        };
-        fr.contentWindow.postMessage(message, "*");
-    }
+    let fr = document.getElementById('secondframe');
+    let message = {
+        type: 'pleaseStreamEvents',
+        value: false,
+    };
+    fr.contentWindow.postMessage(message, "*");
 }
 
 function remove_event(ev) {
@@ -145,6 +136,6 @@ function init() {
 
     window.addEventListener('message', event => {
         const data = event.data;
-        dispatchTouchEvent(data.touchEvent, data.type);
+        dispatchTouchEvent(data.pointerEvent, data.type);
     });
 }

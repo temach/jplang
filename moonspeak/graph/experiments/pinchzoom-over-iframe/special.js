@@ -1,129 +1,92 @@
-let zeroTouches = true;
 let primaryPointerDown = null;
 let streamPinchZoomEvents = false;
+let streamedIds = new Set();
 
 function pointerdown_handler(ev) {
+    if (ev.pointerType != 'touch') {
+        return;
+    }
+
     if (ev.isPrimary == false) {
-        // this is the second pointer event on this document, so
-        // both fingers are in iframe, handle by streaming events to parent iframe
+        // this is the second pointer event on this document, so its pinch zoom
         streamPinchZoomEvents = true;
-        let message = {
-            type: "pointerdown",
-            touchEvent: {
-                isPrimary: ev.isPrimary,
-                pointerId: ev.pointerId,
-                width: ev.width,
-                height: ev.height,
-                clientX: ev.clientX,
-                clientY: ev.clientY,
-                pageX: ev.pageX,
-                pageY: ev.pageY,
-                screenX: ev.screenX,
-                screenY: ev.screenY,
-            },
-        };
-        window.top.postMessage(message, '*');
+        streamEvent(ev);
     } else {
         primaryPointerDown = ev;
-    }
-    zeroTouches = false;
-}
-
-function pointermove_handler(ev) {
-    if (streamPinchZoomEvents) {
-        if (primaryPointerDown != null) {
-            // after pinch zoom activation and before the first pointermove
-            // we must send pointerdown
-            let ev = primaryPointerDown;
-            let message = {
-                type: "pointerdown",
-                touchEvent: {
-                    isPrimary: ev.isPrimary,
-                    pointerId: ev.pointerId,
-                    width: ev.width,
-                    height: ev.height,
-                    clientX: ev.clientX,
-                    clientY: ev.clientY,
-                    pageX: ev.pageX,
-                    pageY: ev.pageY,
-                    screenX: ev.screenX,
-                    screenY: ev.screenY,
-                },
-            };
-            primaryPointerDown = null;
-            window.top.postMessage(message, '*');
-        }
-        // stream pointermove event to parent and ignore it here
-        let message = {
-            type: "pointermove",
-            touchEvent: {
-                isPrimary: ev.isPrimary,
-                pointerId: ev.pointerId,
-                width: ev.width,
-                height: ev.height,
-                clientX: ev.clientX,
-                clientY: ev.clientY,
-                pageX: ev.pageX,
-                pageY: ev.pageY,
-                screenX: ev.screenX,
-                screenY: ev.screenY,
-            },
-        };
-        window.top.postMessage(message, '*');
     }
 }
 
 function pointerup_handler(ev) {
-    if (primaryPointerDown && (ev.pointerId == primaryPointerDown.pointerId)) {
-        // if we are here, means we have not streamed the primary pointerdown data yet
-        primaryPointerDown = null;
-    } // so we just shut about it ever being down even if asked to stream, hence "else if"
-    else if (streamPinchZoomEvents) {
-        let message = {
-            type: "pointerup",
-            touchEvent: {
-                isPrimary: ev.isPrimary,
-                pointerId: ev.pointerId,
-                width: ev.width,
-                height: ev.height,
-                clientX: ev.clientX,
-                clientY: ev.clientY,
-                pageX: ev.pageX,
-                pageY: ev.pageY,
-                screenX: ev.screenX,
-                screenY: ev.screenY,
-            },
-        };
-        window.top.postMessage(message, '*');
+    if (ev.pointerType != 'touch') {
+        return;
+    }
 
-        // for case when both fingers were inside iframe,
-        // after streaming yet another pointerup check if it was the last one
-        if (zeroTouches) {
-            streamPinchZoomEvents = false;
-        }
+    if (primaryPointerDown && (ev.pointerId == primaryPointerDown.pointerId)) {
+        // got here in case of a boring primary pointer click, so just forget it
+        primaryPointerDown = null;
+    }
+
+    if (streamedIds.has(ev.pointerId)) {
+        streamPinchZoomEvents = false;
+        streamEvent(ev);
+        streamedIds.delete(ev.pointerId);
     }
 }
 
-function touchend(tev) {
-    if (tev.touches.length == 0) {
-        zeroTouches = true;
+function pointermove_handler(ev) {
+    if (ev.pointerType != 'touch') {
+        return;
     }
 
+    if (streamPinchZoomEvents) {
+        if (primaryPointerDown != null) {
+            // after pinch zoom activation and before the first pointermove
+            // we must send pointerdown
+            streamEvent(primaryPointerDown);
+            primaryPointerDown = null;
+        }
+        // stream pointermove event to parent
+        streamEvent(ev);
+    }
+}
+
+function streamEvent(event) {
+    // when event is streamed the end event must also be streamed (e.g. pointerup), so track the ids
+    streamedIds.add(event.pointerId);
+
+    let message = {
+        type: event.type,
+        pointerEvent: {
+            isPrimary: event.isPrimary,
+            pointerId: event.pointerId,
+            width: event.width,
+            height: event.height,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            pageX: event.pageX,
+            pageY: event.pageY,
+            screenX: event.screenX,
+            screenY: event.screenY,
+        },
+    };
+    window.top.postMessage(message, '*');
 }
 
 function init() {
     // Install event handlers for the pointer target
-    var el=document.getElementById("mainbody");
+    var body = document.body;
+    body.addEventListener('pointerdown', pointerdown_handler);
+    body.addEventListener('pointermove', pointermove_handler);
 
-    el.addEventListener('pointerdown', pointerdown_handler);
-    el.addEventListener('pointermove', pointermove_handler);
-    el.addEventListener('pointerup', pointerup_handler);
-    el.addEventListener('touchend', touchend);
+    // the finish event handler is the same in all cases
+    body.addEventListener('pointerup', pointerup_handler);
+    body.addEventListener('pointercancel', pointerup_handler);
+    body.addEventListener('pointerout', pointerup_handler);
+    body.addEventListener('pointerleave', pointerup_handler);
 
     window.addEventListener('message', event => {
         const data = event.data;
-
-        if (data.type === 'isPinchZoom') {
+        if (data.type === 'pleaseStreamEvents') {
             streamPinchZoomEvents = data.value;
         };
     });
