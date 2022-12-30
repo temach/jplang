@@ -1,3 +1,14 @@
+Server setup:
+- create server
+- redirect DNS to server ip
+- configure server swap file to make at least 3GB RAM total (add swap to fstab)
+- install docker-compose on server (docker will be pulled as dependency)
+- curl the letsencrypt script
+- edit letsncyrpt script so it creates a new cert instead of refreshing
+- curl the docker-compose-update script
+- chmod and run docker-compose-update script
+
+
 To test localhost installations against open web, use ngrok: https://dashboard.ngrok.com/get-started/setup
 
 Setup for development:
