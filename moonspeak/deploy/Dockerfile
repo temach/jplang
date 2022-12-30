@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM alpine:3.17
 WORKDIR /opt/ms/
 
 # some ansible modules (cffi) have compiled dependencies, via pip we need compiler tools
