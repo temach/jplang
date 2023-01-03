@@ -1,4 +1,24 @@
-To view translation keys and disable splash on draw.io use:`
+Debugging zoom on mobile:
+1. After touching iframe, zooming on graph does not work, maybe focus shifts?
+2. Two fnger zoom breaks if one or two fingers are in the iframe.
+
+First lets debug problem 1.
+Looking at logs after manually triggering finger zoom with androig-touch-record-replay git repo.
+The difference between good and bad is that good always has:
+10:17:37.537 size mxClient.js:118:57
+10:17:37.538 scale mxClient.js:118:57
+10:17:37.543 reset mxClient.js:118:57
+10:17:37.552 scale mxClient.js:118:57
+At the very end.
+The good runs differ between themselves in the number of mouse press and their order.
+It seems like somehing is just blocking the size event from firing in the bad case.
+After looking its clear that the evt.movementY property is 0 for the pointermove events after a click in an iframe.
+After clicking outside of iframe the event is registered and further evt.movementY are not 0.
+Having movementY == 0, means that the factor variable is always too small to affect cumulativeZoomFactor.
+The current fix is to just set movementY to 20 when calculating the factor, does not matter if its zoom in or out because factor is calculated with Math.abs.
+
+
+To view translation keys and disable splash on draw.io use:
 ```
 https://app.diagrams.net/?lang=i18n&splash=0
 ```
@@ -68,6 +88,34 @@ touchend listeners to continue suppressing the generation of click events and ot
 Because touchend is generated on finger lift-off and if its not handled a mouse click will be generated.
 https://developer.chrome.com/blog/scrolling-intervention/
 https://developer.mozilla.org/en-US/docs/Web/API/Touch_events
+
+
+For android debugging the UI simulate touch events via ADB:
+https://igor.mp/blog/2018/02/23/using-adb-simulate-touch-events.html
+https://developer.android.com/studio/test/monkeyrunner
+https://developer.android.com/studio/test/other-testing-tools
+
+https://stackoverflow.com/questions/4386449/send-touch-events-to-a-device-via-adb/18959385#18959385
+https://source.android.com/docs/core/interaction/input/touch-devices
+https://source.android.com/docs/core/interaction/input/getevent
+https://stackoverflow.com/questions/7789826/adb-shell-input-events
+
+Links:
+- getevent source: https://github.com/ndyer/getevent/blob/master/getevent.c
+- multi-touch protocol overview (has struct input_event_: https://www.kernel.org/doc/html/latest/input/input.html
+- multi-touch protocol details: https://www.kernel.org/doc/html/v4.19/input/multi-touch-protocol.html
+- good question on SO: https://stackoverflow.com/questions/30729738/parse-android-kernel-dev-input-event-touch-information
+evtest util for linux and evemu.
+
+
+FINALLY replay that sleeps according to delay!: https://github.com/Cartucho/android-touch-record-replay
+For it to work, must manually copy the mysendevent-arm64 binary:
+```
+adb push mysendevent-arm64 /data/local/tmp/mysendevent
+```
+The short recording of short zoom-in with two fingers vertically: recorded_touch_events.txt
+
+
 
 to set ui, use ui=sketch url parameter
 
