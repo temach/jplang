@@ -3347,7 +3347,14 @@ EditorUi.prototype.initCanvas = function()
 						// Slower zoom for pinch gesture on touch screens
 						else if (evt.movementY != null && evt.type == 'pointermove')
 						{
-							factor = 1 + (Math.max(1, Math.abs(evt.movementY)) / 20) * (factor - 1);
+							if (mxClient.IS_FF && evt.movementY == 0) {
+								// hack because when touching inside iframe and then doing pointermove outside of iframe the
+								// movementY is zero. This bug is specific for android firefox. Not filed yet.
+								let fakeMovementY = 20
+								factor = 1 + (Math.max(1, Math.abs(fakeMovementY)) / 20) * (factor - 1);
+							} else {
+								factor = 1 + (Math.max(1, Math.abs(evt.movementY)) / 20) * (factor - 1);
+							}
 							factor = this.editor.moonspeakUi.clampPinchZoom(factor);
 							delay = -1;
 						}
