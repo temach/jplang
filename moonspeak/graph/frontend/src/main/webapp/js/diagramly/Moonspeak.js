@@ -130,6 +130,11 @@
         return false;
     }
 
+    // hide layers mxWindow
+    EditorUi.prototype.showLayersDialog = function() {
+        return;
+    }
+
     // hide the format window after init
     let EditorUiInit = EditorUi.prototype.init;
     EditorUi.prototype.init = function()
