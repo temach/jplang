@@ -209,3 +209,5 @@ Frequency evaluation:
 
 Looking at frequency evaluations, the most commonly seen pattern is breakdown with (甬 + 力),
 because its members get more apperances as kanji.
+
+
