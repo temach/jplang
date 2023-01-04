@@ -1785,24 +1785,24 @@ var mxUtils = {
   getOffset : function(container, scrollOffset) {
     var offsetLeft = 0;
     var offsetTop = 0;
-    var r = false;
+    var fixed = false;
     var node = container;
     var b = document.body;
-    for (var d = document.documentElement;null != node && (node != b && (node != d && !r));) {
+    for (var d = document.documentElement;null != node && (node != b && (node != d && !fixed));) {
       var style = mxUtils.getCurrentStyle(node);
       if (null != style) {
-        r = r || "fixed" == style.position;
+        fixed = fixed || "fixed" == style.position;
       }
       node = node.parentNode;
     }
     if (!scrollOffset) {
-      if (!r) {
-        r = mxUtils.getDocumentScrollOrigin(container.ownerDocument);
-        offsetLeft += r.x;
-        offsetTop += r.y;
+      if (!fixed) {
+        var offset = mxUtils.getDocumentScrollOrigin(container.ownerDocument);
+        offsetLeft += offset.x;
+        offsetTop += offset.y;
       }
     }
-    r = container.getBoundingClientRect();
+    var r = container.getBoundingClientRect();
     if (null != r) {
       offsetLeft += r.left;
       offsetTop += r.top;
@@ -1810,9 +1810,6 @@ var mxUtils = {
     return new mxPoint(offsetLeft, offsetTop);
   },
   getDocumentScrollOrigin : function(doc) {
-    if (mxClient.IS_QUIRKS) {
-      return new mxPoint(doc.body.scrollLeft, doc.body.scrollTop);
-    }
     doc = doc.defaultView || doc.parentWindow;
     return new mxPoint(null != doc && void 0 !== window.pageXOffset ? window.pageXOffset : (document.documentElement || (document.body.parentNode || document.body)).scrollLeft, null != doc && void 0 !== window.pageYOffset ? window.pageYOffset : (document.documentElement || (document.body.parentNode || document.body)).scrollTop);
   },
@@ -1845,12 +1842,12 @@ var mxUtils = {
     }
     return result;
   },
-  convertPoint : function(container, gridEnabled, evt) {
+  convertPoint : function(container, x, y) {
     var origin = mxUtils.getScrollOrigin(container, false);
-    container = mxUtils.getOffset(container);
-    container.x -= origin.x;
-    container.y -= origin.y;
-    return new mxPoint(gridEnabled - container.x, evt - container.y);
+    var offset = mxUtils.getOffset(container);
+    offset.x -= origin.x;
+    offset.y -= origin.y;
+    return new mxPoint(x - offset.x, y - offset.y);
   },
   ltrim : function(str, chars) {
     return null != str ? str.replace(new RegExp("^[" + (chars || "\\s") + "]+", "g"), "") : null;
@@ -1925,27 +1922,16 @@ var mxUtils = {
     mxEffects.fadeOut.apply(this, arguments);
   },
   setOpacity : function(node, opacity) {
-    if (mxUtils.isVml(node)) {
-      node.style.filter = 100 <= opacity ? "" : "alpha(opacity=" + opacity / 5 + ")";
+    if (mxClient.IS_IE && ("undefined" === typeof document.documentMode || 9 > document.documentMode)) {
+      node.style.filter = 100 <= opacity ? "" : "alpha(opacity=" + opacity + ")";
     } else {
-      if (mxClient.IS_IE && ("undefined" === typeof document.documentMode || 9 > document.documentMode)) {
-        node.style.filter = 100 <= opacity ? "" : "alpha(opacity=" + opacity + ")";
-      } else {
-        node.style.opacity = opacity / 100;
-      }
+      node.style.opacity = opacity / 100;
     }
   },
   createImage : function(src) {
-    var imageNode;
-    if (mxClient.IS_IE6 && "CSS1Compat" != document.compatMode) {
-      imageNode = document.createElement(mxClient.VML_PREFIX + ":image");
-      imageNode.setAttribute("src", src);
-      imageNode.style.borderStyle = "none";
-    } else {
-      imageNode = document.createElement("img");
-      imageNode.setAttribute("src", src);
-      imageNode.setAttribute("border", "0");
-    }
+    var imageNode = document.createElement("img");
+    imageNode.setAttribute("src", src);
+    imageNode.setAttribute("border", "0");
     return imageNode;
   },
   sortCells : function(cells, initialMove) {
@@ -2049,6 +2035,45 @@ var mxUtils = {
       }
     }
   },
+  hex2rgb : function(url) {
+    if (null != url && (7 == url.length && "#" == url.charAt(0))) {
+      var current = parseInt(url.substring(1, 3), 16);
+      var w = parseInt(url.substring(3, 5), 16);
+      url = parseInt(url.substring(5, 7), 16);
+      url = "rgb(" + current + ", " + w + ", " + url + ")";
+    }
+    return url;
+  },
+  hex2rgba : function(url) {
+    if (null != url && (7 <= url.length && "#" == url.charAt(0))) {
+      var current = parseInt(url.substring(1, 3), 16);
+      var w = parseInt(url.substring(3, 5), 16);
+      var left = parseInt(url.substring(5, 7), 16);
+      var e = 1;
+      if (7 < url.length) {
+        e = parseInt(url.substring(7, 9), 16) / 255;
+      }
+      url = "rgba(" + current + ", " + w + ", " + left + ", " + e + ")";
+    }
+    return url;
+  },
+  rgba2hex : function(start) {
+    return(rgb = start && start.match ? start.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?/i) : start) && 4 === rgb.length ? "#" + ("0" + parseInt(rgb[1], 10).toString(16)).slice(-2) + ("0" + parseInt(rgb[2], 10).toString(16)).slice(-2) + ("0" + parseInt(rgb[3], 10).toString(16)).slice(-2) : start;
+  },
+  setCssText : function(fo, value) {
+    if (null != fo && null != value) {
+      value = value.split(";");
+      for (var i = 0;i < value.length;i++) {
+        var lines = value[i].split(":");
+        if (1 < lines.length) {
+          lines[0] = mxUtils.trim(lines[0].replace(/-([a-z])/gi, function(editor, flex) {
+            return flex.toUpperCase();
+          }));
+          fo[lines[0]] = mxUtils.trim(lines[1]);
+        }
+      }
+    }
+  },
   setStyle : function(style, key, flag) {
     var sep = null != flag && ("undefined" == typeof flag.length || 0 < flag.length);
     if (null == style || 0 == style.length) {
@@ -2099,8 +2124,7 @@ var mxUtils = {
         style = value || null == value ? style + index + key + "=" + flag : style + index + key + "=0";
       } else {
         var cont = style.indexOf(";", index);
-        var tmp;
-        tmp = 0 > cont ? style.substring(index + key.length + 1) : style.substring(index + key.length + 1, cont);
+        var tmp = 0 > cont ? style.substring(index + key.length + 1) : style.substring(index + key.length + 1, cont);
         tmp = null == value ? parseInt(tmp) ^ flag : value ? parseInt(tmp) | flag : parseInt(tmp) & ~flag;
         style = style.substring(0, index) + key + "=" + tmp + (0 <= cont ? style.substring(cont) : "");
       }
@@ -2126,13 +2150,13 @@ var mxUtils = {
     }
     return new mxPoint(x, y);
   },
-  getSizeForString : function(text, fontSize, fontFamily, textWidth, fontStyle) {
+  getSizeForString : function(text, fontSize, fontFamily, width, fontStyle) {
     fontSize = null != fontSize ? fontSize : mxConstants.DEFAULT_FONTSIZE;
     fontFamily = null != fontFamily ? fontFamily : mxConstants.DEFAULT_FONTFAMILY;
     var div = document.createElement("div");
     div.style.fontFamily = fontFamily;
     div.style.fontSize = Math.round(fontSize) + "px";
-    div.style.lineHeight = Math.round(fontSize * mxConstants.LINE_HEIGHT) + "px";
+    div.style.lineHeight = mxConstants.ABSOLUTE_LINE_HEIGHT ? fontSize * mxConstants.LINE_HEIGHT + "px" : mxConstants.LINE_HEIGHT * mxSvgCanvas2D.prototype.lineHeightCorrection;
     if (null != fontStyle) {
       if ((fontStyle & mxConstants.FONT_BOLD) == mxConstants.FONT_BOLD) {
         div.style.fontWeight = "bold";
@@ -2153,10 +2177,10 @@ var mxUtils = {
     }
     div.style.position = "absolute";
     div.style.visibility = "hidden";
-    div.style.display = mxClient.IS_QUIRKS ? "inline" : "inline-block";
+    div.style.display = "inline-block";
     div.style.zoom = "1";
-    if (null != textWidth) {
-      div.style.width = textWidth + "px";
+    if (null != width) {
+      div.style.width = width + "px";
       div.style.whiteSpace = "normal";
     } else {
       div.style.whiteSpace = "nowrap";
@@ -2289,7 +2313,7 @@ var mxUtils = {
         } catch (m) {
         }
       }
-      y0 = y0 + '</style></head><body style="margin:0px;">' + ('<div style="position:absolute;overflow:hidden;width:' + node + "px;height:" + tmp + 'px;"><div style="position:relative;left:' + dx + "px;top:" + dy + 'px;">') + graph.container.innerHTML;
+      y0 = y0 + '</style></head><body style="margin:0px;"><div style="position:absolute;overflow:hidden;width:' + (node + "px;height:" + tmp + 'px;"><div style="position:relative;left:' + dx + "px;top:" + dy + 'px;">') + graph.container.innerHTML;
       doc.writeln(y0 + "</div></div></body><html>");
       doc.close();
     } else {
@@ -2384,8 +2408,8 @@ var mxUtils = {
   alert : function(message) {
     alert(message);
   },
-  prompt : function(message, scale) {
-    return prompt(message, null != scale ? scale : "");
+  prompt : function(message, defaultValue) {
+    return prompt(message, null != defaultValue ? defaultValue : "");
   },
   confirm : function(message) {
     return confirm(message);
@@ -2426,7 +2450,7 @@ var mxUtils = {
     warn.setVisible(true);
     return warn;
   },
-  makeDraggable : function(dragSource, graphF, funct, node, dx, dy, autoscroll, scalePreview, highlightDropTargets, getDropTarget) {
+  makeDraggable : function(dragSource, graphF, funct, dragElement, dx, dy, autoscroll, scalePreview, highlightDropTargets, getDropTarget) {
     dragSource = new mxDragSource(dragSource, funct);
     dragSource.dragOffset = new mxPoint(null != dx ? dx : 0, null != dy ? dy : mxConstants.TOOLTIP_VERTICAL_OFFSET);
     dragSource.autoscroll = autoscroll;
@@ -2440,13 +2464,13 @@ var mxUtils = {
     dragSource.getGraphForEvent = function(evt) {
       return "function" == typeof graphF ? graphF(evt) : graphF;
     };
-    if (null != node) {
+    if (null != dragElement) {
       dragSource.createDragElement = function() {
-        return node.cloneNode(true);
+        return dragElement.cloneNode(true);
       };
       if (scalePreview) {
         dragSource.createPreviewElement = function(graph) {
-          var elt = node.cloneNode(true);
+          var elt = dragElement.cloneNode(true);
           var h = parseInt(elt.style.width);
           var w = parseInt(elt.style.height);
           elt.style.width = Math.round(h * graph.view.scale) + "px";
@@ -2456,6 +2480,9 @@ var mxUtils = {
       }
     }
     return dragSource;
+  },
+  format : function(value) {
+    return parseFloat(parseFloat(value).toFixed(2));
   }
 };
 var mxConstants = {
@@ -2466,7 +2493,6 @@ var mxConstants = {
   RENDERING_HINT_FASTER : "faster",
   RENDERING_HINT_FASTEST : "fastest",
   DIALECT_SVG : "svg",
-  DIALECT_VML : "vml",
   DIALECT_MIXEDHTML : "mixedHtml",
   DIALECT_PREFERHTML : "preferHtml",
   DIALECT_STRICTHTML : "strictHtml",
@@ -2560,10 +2586,12 @@ var mxConstants = {
   STYLE_TARGET_PORT_CONSTRAINT : "targetPortConstraint",
   STYLE_OPACITY : "opacity",
   STYLE_FILL_OPACITY : "fillOpacity",
+  STYLE_FILL_STYLE : "fillStyle",
   STYLE_STROKE_OPACITY : "strokeOpacity",
   STYLE_TEXT_OPACITY : "textOpacity",
   STYLE_TEXT_DIRECTION : "textDirection",
   STYLE_OVERFLOW : "overflow",
+  STYLE_BLOCK_SPACING : "blockSpacing",
   STYLE_ORTHOGONAL : "orthogonal",
   STYLE_EXIT_X : "exitX",
   STYLE_EXIT_Y : "exitY",
@@ -2623,6 +2651,8 @@ var mxConstants = {
   STYLE_ENDSIZE : "endSize",
   STYLE_STARTSIZE : "startSize",
   STYLE_SWIMLANE_LINE : "swimlaneLine",
+  STYLE_SWIMLANE_HEAD : "swimlaneHead",
+  STYLE_SWIMLANE_BODY : "swimlaneBody",
   STYLE_ENDFILL : "endFill",
   STYLE_STARTFILL : "startFill",
   STYLE_DASHED : "dashed",
@@ -2650,6 +2680,7 @@ var mxConstants = {
   STYLE_FONTSTYLE : "fontStyle",
   STYLE_ASPECT : "aspect",
   STYLE_AUTOSIZE : "autosize",
+  STYLE_FIXED_WIDTH : "fixedWidth",
   STYLE_FOLDABLE : "foldable",
   STYLE_EDITABLE : "editable",
   STYLE_BACKGROUND_OUTLINE : "backgroundOutline",
@@ -2670,6 +2701,7 @@ var mxConstants = {
   STYLE_ORTHOGONAL_LOOP : "orthogonalLoop",
   STYLE_ROUTING_CENTER_X : "routingCenterX",
   STYLE_ROUTING_CENTER_Y : "routingCenterY",
+  STYLE_CLIP_PATH : "clipPath",
   FONT_BOLD : 1,
   FONT_ITALIC : 2,
   FONT_UNDERLINE : 4,
@@ -2709,6 +2741,7 @@ var mxConstants = {
   DIRECTION_SOUTH : "south",
   DIRECTION_EAST : "east",
   DIRECTION_WEST : "west",
+  DIRECTION_RADIAL : "radial",
   TEXT_DIRECTION_DEFAULT : "",
   TEXT_DIRECTION_AUTO : "auto",
   TEXT_DIRECTION_LTR : "ltr",
@@ -2752,8 +2785,8 @@ mxEventObject.prototype.getName = function() {
 mxEventObject.prototype.getProperties = function() {
   return this.properties;
 };
-mxEventObject.prototype.getProperty = function(actionname) {
-  return this.properties[actionname];
+mxEventObject.prototype.getProperty = function(key) {
+  return this.properties[key];
 };
 mxEventObject.prototype.isConsumed = function() {
   return this.consumed;
@@ -2863,27 +2896,41 @@ mxEventSource.prototype.fireEvent = function(evt, sender) {
     if (null == sender) {
       sender = this;
     }
-    var args = [sender, evt];
     for (var i = 0;i < this.eventListeners.length;i += 2) {
       var listen = this.eventListeners[i];
       if (!(null != listen && listen != evt.getName())) {
-        this.eventListeners[i + 1].apply(this, args);
+        this.eventListeners[i + 1].apply(this, [sender, evt]);
       }
     }
   }
 };
 var mxEvent = {
   addListener : function() {
-    return window.addEventListener ? function(element, eventName, funct) {
-      element.addEventListener(eventName, funct, false);
-      if (null == element.mxListenerList) {
-        element.mxListenerList = [];
+    if (window.addEventListener) {
+      var a = false;
+      try {
+        document.addEventListener("test", function() {
+        }, Object.defineProperty && Object.defineProperty({}, "passive", {
+          get : function() {
+            a = true;
+          }
+        }));
+      } catch (b) {
       }
-      element.mxListenerList.push({
-        name : eventName,
-        f : funct
-      });
-    } : function(element, eventName, funct) {
+      return function(element, eventName, funct) {
+        element.addEventListener(eventName, funct, a ? {
+          passive : false
+        } : false);
+        if (null == element.mxListenerList) {
+          element.mxListenerList = [];
+        }
+        element.mxListenerList.push({
+          name : eventName,
+          f : funct
+        });
+      };
+    }
+    return function(element, eventName, funct) {
       element.attachEvent("on" + eventName, funct);
       if (null == element.mxListenerList) {
         element.mxListenerList = [];
@@ -3095,8 +3142,8 @@ var mxEvent = {
       });
     }
   },
-  disableContextMenu : function(node) {
-    mxEvent.addListener(node, "contextmenu", function(evt) {
+  disableContextMenu : function(element) {
+    mxEvent.addListener(element, "contextmenu", function(evt) {
       if (evt.preventDefault) {
         evt.preventDefault();
       }
@@ -3119,7 +3166,7 @@ var mxEvent = {
     return null != evt.type && (0 == evt.type.indexOf("touch") && (null != evt.touches && 1 < evt.touches.length));
   },
   isMouseEvent : function(evt) {
-    return null != evt.pointerType ? "mouse" == evt.pointerType || evt.pointerType === evt.MSPOINTER_TYPE_MOUSE : null != evt.mozInputSource ? 1 == evt.mozInputSource : 0 == evt.type.indexOf("mouse");
+    return!mxClient.IS_ANDROID && (mxClient.IS_LINUX && mxClient.IS_GC) ? true : null != evt.pointerType ? "mouse" == evt.pointerType || evt.pointerType === evt.MSPOINTER_TYPE_MOUSE : null != evt.mozInputSource ? 1 == evt.mozInputSource : 0 == evt.type.indexOf("mouse");
   },
   isLeftMouseButton : function(evt) {
     return "buttons" in evt && ("mousedown" == evt.type || "mousemove" == evt.type) ? 1 == evt.buttons : "which" in evt ? 1 === evt.which : 1 === evt.button;
@@ -3366,14 +3413,12 @@ mxXmlRequest.prototype.send = function(onload, onerror, timeout, ontimeout) {
         this.request.withCredentials = "true";
       }
     }
-    if (!mxClient.IS_QUIRKS) {
-      if (null == document.documentMode || 9 < document.documentMode) {
-        if (window.XMLHttpRequest) {
-          if (null != timeout) {
-            if (null != ontimeout) {
-              this.request.timeout = timeout;
-              this.request.ontimeout = ontimeout;
-            }
+    if (null == document.documentMode || 9 < document.documentMode) {
+      if (window.XMLHttpRequest) {
+        if (null != timeout) {
+          if (null != ontimeout) {
+            this.request.timeout = timeout;
+            this.request.ontimeout = ontimeout;
           }
         }
       }
@@ -3386,7 +3431,7 @@ mxXmlRequest.prototype.setRequestHeaders = function(request, params) {
     request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
   }
 };
-mxXmlRequest.prototype.simulate = function(doc, name) {
+mxXmlRequest.prototype.simulate = function(doc, target) {
   doc = doc || document;
   var old = null;
   if (doc == document) {
@@ -3396,8 +3441,8 @@ mxXmlRequest.prototype.simulate = function(doc, name) {
   var form = doc.createElement("form");
   form.setAttribute("method", this.method);
   form.setAttribute("action", this.url);
-  if (null != name) {
-    form.setAttribute("target", name);
+  if (null != target) {
+    form.setAttribute("target", target);
   }
   form.style.display = "none";
   form.style.visibility = "hidden";
@@ -3442,15 +3487,15 @@ var mxClipboard = {
   cut : function(graph, cells) {
     cells = mxClipboard.copy(graph, cells);
     mxClipboard.insertCount = 0;
-    mxClipboard.removeCells(graph, cells);
+    mxClipboard.removeCells(graph, cells, false);
     return cells;
   },
-  removeCells : function(graph, cells) {
-    graph.removeCells(cells);
+  removeCells : function(graph, cells, includeEdges) {
+    graph.removeCells(cells, includeEdges);
   },
-  copy : function(graph, flag) {
-    flag = flag || graph.getSelectionCells();
-    var cells = graph.getExportableCells(graph.model.getTopmostCells(flag));
+  copy : function(graph, cells) {
+    cells = cells || graph.getSelectionCells();
+    cells = graph.getExportableCells(graph.model.getTopmostCells(cells));
     mxClipboard.insertCount = 1;
     mxClipboard.setCells(graph.cloneCells(cells));
     return cells;
@@ -3513,15 +3558,11 @@ mxWindow.prototype.init = function(container, tr, width, height, style) {
     this.div.style.touchAction = "none";
   }
   if (null != width) {
-    if (!mxClient.IS_QUIRKS) {
-      this.div.style.width = width + "px";
-    }
+    this.div.style.width = width + "px";
     this.table.style.width = width + "px";
   }
   if (null != height) {
-    if (!mxClient.IS_QUIRKS) {
-      this.div.style.height = height + "px";
-    }
+    this.div.style.height = height + "px";
     this.table.style.height = height + "px";
   }
   container = document.createElement("tbody");
@@ -3546,7 +3587,7 @@ mxWindow.prototype.init = function(container, tr, width, height, style) {
   this.contentWrapper.className = style + "Pane";
   this.contentWrapper.style.width = "100%";
   this.contentWrapper.appendChild(this.content);
-  if (mxClient.IS_QUIRKS || "DIV" != this.content.nodeName.toUpperCase()) {
+  if ("DIV" != this.content.nodeName.toUpperCase()) {
     this.contentWrapper.style.height = "100%";
   }
   this.td.appendChild(this.contentWrapper);
@@ -3604,8 +3645,8 @@ mxWindow.prototype.fit = function() {
 mxWindow.prototype.isResizable = function() {
   return null != this.resize ? "none" != this.resize.style.display : false;
 };
-mxWindow.prototype.setResizable = function(paint) {
-  if (paint) {
+mxWindow.prototype.setResizable = function(resizable) {
+  if (resizable) {
     if (null == this.resize) {
       this.resize = document.createElement("img");
       this.resize.style.position = "absolute";
@@ -3617,7 +3658,7 @@ mxWindow.prototype.setResizable = function(paint) {
       var startY = null;
       var width = null;
       var height = null;
-      paint = mxUtils.bind(this, function(evt) {
+      var funct = mxUtils.bind(this, function(evt) {
         this.activate();
         startX = mxEvent.getClientX(evt);
         startY = mxEvent.getClientY(evt);
@@ -3646,7 +3687,7 @@ mxWindow.prototype.setResizable = function(paint) {
           }
         }
       });
-      mxEvent.addGestureListeners(this.resize, paint, dragHandler, dropHandler);
+      mxEvent.addGestureListeners(this.resize, funct, dragHandler, dropHandler);
       this.div.appendChild(this.resize);
     } else {
       this.resize.style.display = "inline";
@@ -3660,81 +3701,73 @@ mxWindow.prototype.setResizable = function(paint) {
 mxWindow.prototype.setSize = function(width, height) {
   width = Math.max(this.minimumSize.width, width);
   height = Math.max(this.minimumSize.height, height);
-  if (!mxClient.IS_QUIRKS) {
-    this.div.style.width = width + "px";
-    this.div.style.height = height + "px";
-  }
+  this.div.style.width = width + "px";
+  this.div.style.height = height + "px";
   this.table.style.width = width + "px";
   this.table.style.height = height + "px";
-  if (!mxClient.IS_QUIRKS) {
-    this.contentWrapper.style.height = this.div.offsetHeight - this.title.offsetHeight - this.contentHeightCorrection + "px";
-  }
+  this.contentWrapper.style.height = this.div.offsetHeight - this.title.offsetHeight - this.contentHeightCorrection + "px";
 };
 mxWindow.prototype.setMinimizable = function(minimizable) {
-  this.minimize.style.display = minimizable ? "" : "none";
+  this.minimizeImg.style.display = minimizable ? "" : "none";
 };
 mxWindow.prototype.getMinimumSize = function() {
   return new mxRectangle(0, 0, 0, this.title.offsetHeight);
 };
-mxWindow.prototype.installMinimizeHandler = function() {
-  this.minimize = document.createElement("img");
-  this.minimize.setAttribute("src", this.minimizeImage);
-  this.minimize.setAttribute("title", "Minimize");
-  this.minimize.style.cursor = "pointer";
-  this.minimize.style.marginLeft = "2px";
-  this.minimize.style.display = "none";
-  this.buttons.appendChild(this.minimize);
-  var a = false;
-  var maxDisplay = null;
-  var height = null;
-  var funct = mxUtils.bind(this, function(evt) {
-    this.activate();
-    if (a) {
-      a = false;
-      this.minimize.setAttribute("src", this.minimizeImage);
-      this.minimize.setAttribute("title", "Minimize");
-      this.contentWrapper.style.display = "";
-      this.maximize.style.display = maxDisplay;
-      if (!mxClient.IS_QUIRKS) {
-        this.div.style.height = height;
-      }
-      this.table.style.height = height;
-      if (null != this.resize) {
-        this.resize.style.visibility = "";
-      }
-      this.fireEvent(new mxEventObject(mxEvent.NORMALIZE, "event", evt));
-    } else {
-      a = true;
-      this.minimize.setAttribute("src", this.normalizeImage);
-      this.minimize.setAttribute("title", "Normalize");
-      this.contentWrapper.style.display = "none";
-      maxDisplay = this.maximize.style.display;
-      this.maximize.style.display = "none";
-      height = this.table.style.height;
-      var minSize = this.getMinimumSize();
-      if (0 < minSize.height) {
-        if (!mxClient.IS_QUIRKS) {
-          this.div.style.height = minSize.height + "px";
-        }
-        this.table.style.height = minSize.height + "px";
-      }
-      if (0 < minSize.width) {
-        if (!mxClient.IS_QUIRKS) {
-          this.div.style.width = minSize.width + "px";
-        }
-        this.table.style.width = minSize.width + "px";
-      }
-      if (null != this.resize) {
-        this.resize.style.visibility = "hidden";
-      }
-      this.fireEvent(new mxEventObject(mxEvent.MINIMIZE, "event", evt));
+mxWindow.prototype.toggleMinimized = function(evt) {
+  this.activate();
+  if (this.minimized) {
+    this.minimized = false;
+    this.minimizeImg.setAttribute("src", this.minimizeImage);
+    this.minimizeImg.setAttribute("title", "Minimize");
+    this.contentWrapper.style.display = "";
+    this.maximize.style.display = this.maxDisplay;
+    this.div.style.height = this.height;
+    this.table.style.height = this.height;
+    if (null != this.resize) {
+      this.resize.style.visibility = "";
     }
+    this.fireEvent(new mxEventObject(mxEvent.NORMALIZE, "event", evt));
+  } else {
+    this.minimized = true;
+    this.minimizeImg.setAttribute("src", this.normalizeImage);
+    this.minimizeImg.setAttribute("title", "Normalize");
+    this.contentWrapper.style.display = "none";
+    this.maxDisplay = this.maximize.style.display;
+    this.maximize.style.display = "none";
+    this.height = this.table.style.height;
+    var minSize = this.getMinimumSize();
+    if (0 < minSize.height) {
+      this.div.style.height = minSize.height + "px";
+      this.table.style.height = minSize.height + "px";
+    }
+    if (0 < minSize.width) {
+      this.div.style.width = minSize.width + "px";
+      this.table.style.width = minSize.width + "px";
+    }
+    if (null != this.resize) {
+      this.resize.style.visibility = "hidden";
+    }
+    this.fireEvent(new mxEventObject(mxEvent.MINIMIZE, "event", evt));
+  }
+};
+mxWindow.prototype.installMinimizeHandler = function() {
+  this.minimizeImg = document.createElement("img");
+  this.minimizeImg.setAttribute("src", this.minimizeImage);
+  this.minimizeImg.setAttribute("title", "Minimize");
+  this.minimizeImg.style.cursor = "pointer";
+  this.minimizeImg.style.marginLeft = "2px";
+  this.minimizeImg.style.display = "none";
+  this.buttons.appendChild(this.minimizeImg);
+  this.minimized = false;
+  this.height = this.maxDisplay = null;
+  var funct = mxUtils.bind(this, function(evt) {
+    this.toggleMinimized(evt);
     mxEvent.consume(evt);
   });
-  mxEvent.addGestureListeners(this.minimize, funct);
+  mxEvent.addGestureListeners(this.minimizeImg, funct);
 };
-mxWindow.prototype.setMaximizable = function(visible) {
-  this.maximize.style.display = visible ? "" : "none";
+mxWindow.prototype.setMaximizable = function(maximizable) {
+  this.maximize.style.display = maximizable ? "" : "none";
 };
 mxWindow.prototype.installMaximizeHandler = function() {
   this.maximize = document.createElement("img");
@@ -3759,13 +3792,14 @@ mxWindow.prototype.installMaximizeHandler = function() {
         this.maximize.setAttribute("src", this.maximizeImage);
         this.maximize.setAttribute("title", "Maximize");
         this.contentWrapper.style.display = "";
-        this.minimize.style.display = maxDisplay;
+        this.minimizeImg.style.display = maxDisplay;
         this.div.style.left = x + "px";
         this.div.style.top = y + "px";
-        if (!mxClient.IS_QUIRKS) {
-          if (!(this.div.style.height = height, this.div.style.width = width, style = mxUtils.getCurrentStyle(this.contentWrapper), "auto" != style.overflow && null == this.resize)) {
-            this.contentWrapper.style.height = this.div.offsetHeight - this.title.offsetHeight - this.contentHeightCorrection + "px";
-          }
+        this.div.style.height = height;
+        this.div.style.width = width;
+        style = mxUtils.getCurrentStyle(this.contentWrapper);
+        if ("auto" == style.overflow || null != this.resize) {
+          this.contentWrapper.style.height = this.div.offsetHeight - this.title.offsetHeight - this.contentHeightCorrection + "px";
         }
         this.table.style.height = height;
         this.table.style.width = width;
@@ -3778,8 +3812,8 @@ mxWindow.prototype.installMaximizeHandler = function() {
         this.maximize.setAttribute("src", this.normalizeImage);
         this.maximize.setAttribute("title", "Normalize");
         this.contentWrapper.style.display = "";
-        maxDisplay = this.minimize.style.display;
-        this.minimize.style.display = "none";
+        maxDisplay = this.minimizeImg.style.display;
+        this.minimizeImg.style.display = "none";
         x = parseInt(this.div.style.left);
         y = parseInt(this.div.style.top);
         height = this.table.style.height;
@@ -3787,20 +3821,16 @@ mxWindow.prototype.installMaximizeHandler = function() {
         this.div.style.left = "0px";
         this.div.style.top = "0px";
         style = Math.max(document.body.clientHeight || 0, document.documentElement.clientHeight || 0);
-        if (!mxClient.IS_QUIRKS) {
-          this.div.style.width = document.body.clientWidth - 2 + "px";
-          this.div.style.height = style - 2 + "px";
-        }
+        this.div.style.width = document.body.clientWidth - 2 + "px";
+        this.div.style.height = style - 2 + "px";
         this.table.style.width = document.body.clientWidth - 2 + "px";
         this.table.style.height = style - 2 + "px";
         if (null != this.resize) {
           this.resize.style.visibility = "hidden";
         }
-        if (!mxClient.IS_QUIRKS) {
-          var style = mxUtils.getCurrentStyle(this.contentWrapper);
-          if ("auto" == style.overflow || null != this.resize) {
-            this.contentWrapper.style.height = this.div.offsetHeight - this.title.offsetHeight - this.contentHeightCorrection + "px";
-          }
+        var style = mxUtils.getCurrentStyle(this.contentWrapper);
+        if ("auto" == style.overflow || null != this.resize) {
+          this.contentWrapper.style.height = this.div.offsetHeight - this.title.offsetHeight - this.contentHeightCorrection + "px";
         }
         this.fireEvent(new mxEventObject(mxEvent.MAXIMIZE, "event", evt));
       }
@@ -3874,8 +3904,8 @@ mxWindow.prototype.setImage = function(image) {
   this.image.style.marginTop = "-2px";
   this.title.insertBefore(this.image, this.title.firstChild);
 };
-mxWindow.prototype.setClosable = function(update) {
-  this.closeImg.style.display = update ? "" : "none";
+mxWindow.prototype.setClosable = function(visible) {
+  this.closeImg.style.display = visible ? "" : "none";
 };
 mxWindow.prototype.isVisible = function() {
   return null != this.div ? "none" != this.div.style.display : false;
@@ -3888,18 +3918,17 @@ mxWindow.prototype.setVisible = function(visible) {
       } else {
         this.hide();
       }
+    } else {
+      this.fireEvent(new mxEventObject(visible ? mxEvent.SHOW : mxEvent.HIDE));
     }
   }
 };
 mxWindow.prototype.show = function() {
   this.div.style.display = "";
   this.activate();
-  var style = mxUtils.getCurrentStyle(this.contentWrapper);
-  if (!mxClient.IS_QUIRKS) {
-    if (!("auto" != style.overflow && null == this.resize)) {
-      if (!("none" == this.contentWrapper.style.display)) {
-        this.contentWrapper.style.height = this.div.offsetHeight - this.title.offsetHeight - this.contentHeightCorrection + "px";
-      }
+  if (!("auto" != mxUtils.getCurrentStyle(this.contentWrapper).overflow && null == this.resize)) {
+    if (!("none" == this.contentWrapper.style.display)) {
+      this.contentWrapper.style.height = this.div.offsetHeight - this.title.offsetHeight - this.contentHeightCorrection + "px";
     }
   }
   this.fireEvent(new mxEventObject(mxEvent.SHOW));
@@ -3972,19 +4001,19 @@ mxForm.prototype.addTextarea = function(name, value, rows) {
   input.value = value;
   return this.addField(name, input);
 };
-mxForm.prototype.addCombo = function(style, isMultiSelect, name) {
+mxForm.prototype.addCombo = function(name, isMultiSelect, size) {
   var select = document.createElement("select");
-  if (null != name) {
-    select.setAttribute("size", name);
+  if (null != size) {
+    select.setAttribute("size", size);
   }
   if (isMultiSelect) {
     select.setAttribute("multiple", "true");
   }
-  return this.addField(style, select);
+  return this.addField(name, select);
 };
-mxForm.prototype.addOption = function(combo, title, value, isSelected) {
+mxForm.prototype.addOption = function(combo, label, value, isSelected) {
   var option = document.createElement("option");
-  mxUtils.writeln(option, title);
+  mxUtils.writeln(option, label);
   option.setAttribute("value", value);
   if (isSelected) {
     option.setAttribute("selected", isSelected);
@@ -4002,14 +4031,18 @@ mxForm.prototype.addField = function(name, input) {
   this.body.appendChild(tr);
   return input;
 };
-function mxImage(src, width, height) {
+function mxImage(src, width, height, x, y) {
   this.src = src;
-  this.width = width;
-  this.height = height;
+  this.width = null != width ? width : this.width;
+  this.height = null != height ? height : this.height;
+  this.x = null != x ? x : this.x;
+  this.y = null != y ? y : this.y;
 }
 mxImage.prototype.src = null;
-mxImage.prototype.width = null;
-mxImage.prototype.height = null;
+mxImage.prototype.width = 0;
+mxImage.prototype.height = 0;
+mxImage.prototype.x = 0;
+mxImage.prototype.y = 0;
 function mxDivResizer(div, container) {
   if ("div" == div.nodeName.toLowerCase()) {
     if (null == container) {
@@ -4333,28 +4366,28 @@ mxDragSource.prototype.dragOver = function(graph, evt) {
       this.previewElement.style.zIndex = "3";
       this.previewElement.style.position = "absolute";
     }
-    scale = this.isGridEnabled() && graph.isGridEnabledEvent(evt);
-    var bounds = true;
+    var gridEnabled = this.isGridEnabled() && graph.isGridEnabledEvent(evt);
+    var h = true;
     if (null != this.currentGuide && this.currentGuide.isEnabledForEvent(evt)) {
-      bounds = parseInt(this.previewElement.style.width);
-      var tr = parseInt(this.previewElement.style.height);
-      bounds = new mxRectangle(0, 0, bounds, tr);
+      graph = parseInt(this.previewElement.style.width);
+      h = parseInt(this.previewElement.style.height);
+      graph = new mxRectangle(0, 0, graph, h);
       y = new mxPoint(x, y);
-      y = this.currentGuide.move(bounds, y, scale, true);
-      bounds = false;
+      y = this.currentGuide.move(graph, y, gridEnabled, true);
+      h = false;
       x = y.x;
       y = y.y;
     } else {
-      if (scale) {
-        scale = graph.view.scale;
-        tr = graph.view.translate;
+      if (gridEnabled) {
+        var scale = graph.view.scale;
+        var tr = graph.view.translate;
         var off = graph.gridSize / 2;
         x = (graph.snap(x / scale - tr.x - off) + tr.x) * scale;
         y = (graph.snap(y / scale - tr.y - off) + tr.y) * scale;
       }
     }
     if (null != this.currentGuide) {
-      if (bounds) {
+      if (h) {
         this.currentGuide.hide();
       }
     }
@@ -4368,7 +4401,7 @@ mxDragSource.prototype.dragOver = function(graph, evt) {
   }
   this.currentPoint = new mxPoint(x, y);
 };
-mxDragSource.prototype.drop = function(graph, evt, target, dropTarget, y) {
+mxDragSource.prototype.drop = function(graph, evt, dropTarget, x, y) {
   this.dropHandler.apply(this, arguments);
   if ("hidden" != graph.container.style.visibility) {
     graph.container.focus();

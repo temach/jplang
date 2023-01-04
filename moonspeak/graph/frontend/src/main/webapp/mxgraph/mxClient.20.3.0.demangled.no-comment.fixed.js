@@ -1782,7 +1782,7 @@ var mxUtils = {
     }
     return true;
   },
-  getOffset : function(container, offset) {
+  getOffset : function(container, scrollOffset) {
     var offsetLeft = 0;
     var offsetTop = 0;
     var fixed = false;
@@ -1795,17 +1795,17 @@ var mxUtils = {
       }
       node = node.parentNode;
     }
-    if (!offset) {
+    if (!scrollOffset) {
       if (!fixed) {
-        offset = mxUtils.getDocumentScrollOrigin(container.ownerDocument);
+        var offset = mxUtils.getDocumentScrollOrigin(container.ownerDocument);
         offsetLeft += offset.x;
         offsetTop += offset.y;
       }
     }
-    container = container.getBoundingClientRect();
-    if (null != container) {
-      offsetLeft += container.left;
-      offsetTop += container.top;
+    var r = container.getBoundingClientRect();
+    if (null != r) {
+      offsetLeft += r.left;
+      offsetTop += r.top;
     }
     return new mxPoint(offsetLeft, offsetTop);
   },
@@ -1842,12 +1842,12 @@ var mxUtils = {
     }
     return result;
   },
-  convertPoint : function(point, gridEnabled, y) {
-    var offset = mxUtils.getScrollOrigin(point, false);
-    point = mxUtils.getOffset(point);
-    point.x -= offset.x;
-    point.y -= offset.y;
-    return new mxPoint(gridEnabled - point.x, y - point.y);
+  convertPoint : function(container, x, y) {
+    var origin = mxUtils.getScrollOrigin(container, false);
+    var offset = mxUtils.getOffset(container);
+    offset.x -= origin.x;
+    offset.y -= origin.y;
+    return new mxPoint(x - offset.x, y - offset.y);
   },
   ltrim : function(str, chars) {
     return null != str ? str.replace(new RegExp("^[" + (chars || "\\s") + "]+", "g"), "") : null;
@@ -1864,8 +1864,8 @@ var mxUtils = {
   isInteger : function(n) {
     return String(parseInt(n)) === String(n);
   },
-  mod : function(array, defaultValue) {
-    return(array % defaultValue + defaultValue) % defaultValue;
+  mod : function(angle, defaultValue) {
+    return(angle % defaultValue + defaultValue) % defaultValue;
   },
   intersection : function(x2, y0, x0, y1, x1, y2, x3, y3) {
     var l = (y3 - y2) * (x0 - x2) - (x3 - x1) * (y1 - y0);
@@ -1936,20 +1936,20 @@ var mxUtils = {
   },
   sortCells : function(cells, initialMove) {
     initialMove = null != initialMove ? initialMove : true;
-    var dict = new mxDictionary;
-    cells.sort(function(terminal, cell) {
-      var p1 = dict.get(terminal);
+    var lookup = new mxDictionary;
+    cells.sort(function(cell, terminal) {
+      var p1 = lookup.get(cell);
       if (null == p1) {
-        p1 = mxCellPath.create(terminal).split(mxCellPath.PATH_SEPARATOR);
-        dict.put(terminal, p1);
+        p1 = mxCellPath.create(cell).split(mxCellPath.PATH_SEPARATOR);
+        lookup.put(cell, p1);
       }
-      terminal = dict.get(cell);
-      if (null == terminal) {
-        terminal = mxCellPath.create(cell).split(mxCellPath.PATH_SEPARATOR);
-        dict.put(cell, terminal);
+      var p2 = lookup.get(terminal);
+      if (null == p2) {
+        p2 = mxCellPath.create(terminal).split(mxCellPath.PATH_SEPARATOR);
+        lookup.put(terminal, p2);
       }
-      cell = mxCellPath.compare(p1, terminal);
-      return 0 == cell ? 0 : 0 < cell == initialMove ? 1 : -1;
+      p1 = mxCellPath.compare(p1, p2);
+      return 0 == p1 ? 0 : 0 < p1 == initialMove ? 1 : -1;
     });
     return cells;
   },
@@ -1968,9 +1968,9 @@ var mxUtils = {
     }
     return result;
   },
-  indexOfStylename : function(tokens, stylename) {
-    if (null != tokens && null != stylename) {
-      tokens = tokens.split(";");
+  indexOfStylename : function(style, stylename) {
+    if (null != style && null != stylename) {
+      var tokens = style.split(";");
       var pos = 0;
       for (var i = 0;i < tokens.length;i++) {
         if (tokens[i] == stylename) {
@@ -1996,10 +1996,10 @@ var mxUtils = {
     }
     return style;
   },
-  removeStylename : function(tokens, stylename) {
+  removeStylename : function(style, stylename) {
     var result = [];
-    if (null != tokens) {
-      tokens = tokens.split(";");
+    if (null != style) {
+      var tokens = style.split(";");
       for (var i = 0;i < tokens.length;i++) {
         if (tokens[i] != stylename) {
           result.push(tokens[i]);
@@ -2380,13 +2380,13 @@ var mxUtils = {
       print();
     }
   },
-  popup : function(content, pre) {
-    if (pre) {
+  popup : function(content, isInternalWindow) {
+    if (isInternalWindow) {
       var div = document.createElement("div");
       div.style.overflow = "scroll";
       div.style.width = "636px";
       div.style.height = "460px";
-      pre = document.createElement("pre");
+      var pre = document.createElement("pre");
       pre.innerHTML = mxUtils.htmlEntities(content, false).replace(/\n/g, "<br>").replace(/ /g, "&nbsp;");
       div.appendChild(pre);
       div = new mxWindow("Popup Window", div, document.body.clientWidth / 2 - 320, Math.max(document.body.clientHeight || 0, document.documentElement.clientHeight) / 2 - 240, 640, 480, false, true);
@@ -3431,7 +3431,7 @@ mxXmlRequest.prototype.setRequestHeaders = function(request, params) {
     request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
   }
 };
-mxXmlRequest.prototype.simulate = function(doc, pars) {
+mxXmlRequest.prototype.simulate = function(doc, target) {
   doc = doc || document;
   var old = null;
   if (doc == document) {
@@ -3441,12 +3441,12 @@ mxXmlRequest.prototype.simulate = function(doc, pars) {
   var form = doc.createElement("form");
   form.setAttribute("method", this.method);
   form.setAttribute("action", this.url);
-  if (null != pars) {
-    form.setAttribute("target", pars);
+  if (null != target) {
+    form.setAttribute("target", target);
   }
   form.style.display = "none";
   form.style.visibility = "hidden";
-  pars = 0 < this.params.indexOf("&") ? this.params.split("&") : this.params.split();
+  var pars = 0 < this.params.indexOf("&") ? this.params.split("&") : this.params.split();
   for (var i = 0;i < pars.length;i++) {
     var value = pars[i].indexOf("=");
     if (0 < value) {
@@ -3645,8 +3645,8 @@ mxWindow.prototype.fit = function() {
 mxWindow.prototype.isResizable = function() {
   return null != this.resize ? "none" != this.resize.style.display : false;
 };
-mxWindow.prototype.setResizable = function(funct) {
-  if (funct) {
+mxWindow.prototype.setResizable = function(resizable) {
+  if (resizable) {
     if (null == this.resize) {
       this.resize = document.createElement("img");
       this.resize.style.position = "absolute";
@@ -3658,7 +3658,7 @@ mxWindow.prototype.setResizable = function(funct) {
       var startY = null;
       var width = null;
       var height = null;
-      funct = mxUtils.bind(this, function(evt) {
+      var funct = mxUtils.bind(this, function(evt) {
         this.activate();
         startX = mxEvent.getClientX(evt);
         startY = mxEvent.getClientY(evt);
@@ -4049,10 +4049,10 @@ function mxDivResizer(div, container) {
       container = window;
     }
     this.div = div;
-    div = mxUtils.getCurrentStyle(div);
-    if (null != div) {
-      this.resizeWidth = "auto" == div.width;
-      this.resizeHeight = "auto" == div.height;
+    var style = mxUtils.getCurrentStyle(div);
+    if (null != style) {
+      this.resizeWidth = "auto" == style.width;
+      this.resizeHeight = "auto" == style.height;
     }
     mxEvent.addListener(container, "resize", mxUtils.bind(this, function(flex) {
       if (!this.handlingResize) {
@@ -4110,17 +4110,17 @@ mxDivResizer.prototype.getDocumentHeight = function() {
 function mxDragSource(element, dropHandler) {
   this.element = element;
   this.dropHandler = dropHandler;
-  mxEvent.addGestureListeners(element, mxUtils.bind(this, function(cell) {
-    this.mouseDown(cell);
+  mxEvent.addGestureListeners(element, mxUtils.bind(this, function(evt) {
+    this.mouseDown(evt);
   }));
   mxEvent.addListener(element, "dragstart", function(evt) {
     mxEvent.consume(evt);
   });
-  this.eventConsumer = function(evtName, evt) {
-    evtName = evt.getProperty("eventName");
-    evt = evt.getProperty("event");
+  this.eventConsumer = function(sender, evt) {
+    var evtName = evt.getProperty("eventName");
+    var me = evt.getProperty("event");
     if (evtName != mxEvent.MOUSE_DOWN) {
-      evt.consume();
+      me.consume();
     }
   };
 }
@@ -4233,13 +4233,13 @@ mxDragSource.prototype.graphContainsEvent = function(graph, evt) {
   var y = mxEvent.getClientY(evt);
   var offset = mxUtils.getOffset(graph.container);
   var origin = mxUtils.getScrollOrigin();
-  evt = this.getElementForEvent(evt);
+  var elt = this.getElementForEvent(evt);
   if (this.checkEventSource) {
-    for (;null != evt && evt != graph.container;) {
-      evt = evt.parentNode;
+    for (;null != elt && elt != graph.container;) {
+      elt = elt.parentNode;
     }
   }
-  return null != evt && (x >= offset.x - origin.x && (y >= offset.y - origin.y && (x <= offset.x - origin.x + graph.container.offsetWidth && y <= offset.y - origin.y + graph.container.offsetHeight)));
+  return null != elt && (x >= offset.x - origin.x && (y >= offset.y - origin.y && (x <= offset.x - origin.x + graph.container.offsetWidth && y <= offset.y - origin.y + graph.container.offsetHeight)));
 };
 mxDragSource.prototype.mouseMove = function(evt) {
   var graph = this.getGraphForEvent(evt);
@@ -4366,24 +4366,24 @@ mxDragSource.prototype.dragOver = function(graph, evt) {
       this.previewElement.style.zIndex = "3";
       this.previewElement.style.position = "absolute";
     }
-    scale = this.isGridEnabled() && graph.isGridEnabledEvent(evt);
+    var gridEnabled = this.isGridEnabled() && graph.isGridEnabledEvent(evt);
     var h = true;
     if (null != this.currentGuide && this.currentGuide.isEnabledForEvent(evt)) {
       graph = parseInt(this.previewElement.style.width);
       h = parseInt(this.previewElement.style.height);
       graph = new mxRectangle(0, 0, graph, h);
       y = new mxPoint(x, y);
-      y = this.currentGuide.move(graph, y, scale, true);
+      y = this.currentGuide.move(graph, y, gridEnabled, true);
       h = false;
       x = y.x;
       y = y.y;
     } else {
-      if (scale) {
-        scale = graph.view.scale;
-        evt = graph.view.translate;
+      if (gridEnabled) {
+        var scale = graph.view.scale;
+        var tr = graph.view.translate;
         var off = graph.gridSize / 2;
-        x = (graph.snap(x / scale - evt.x - off) + evt.x) * scale;
-        y = (graph.snap(y / scale - evt.y - off) + evt.y) * scale;
+        x = (graph.snap(x / scale - tr.x - off) + tr.x) * scale;
+        y = (graph.snap(y / scale - tr.y - off) + tr.y) * scale;
       }
     }
     if (null != this.currentGuide) {
@@ -4401,7 +4401,7 @@ mxDragSource.prototype.dragOver = function(graph, evt) {
   }
   this.currentPoint = new mxPoint(x, y);
 };
-mxDragSource.prototype.drop = function(graph, evt, dropTarget, y, target) {
+mxDragSource.prototype.drop = function(graph, evt, dropTarget, x, y) {
   this.dropHandler.apply(this, arguments);
   if ("hidden" != graph.container.style.visibility) {
     graph.container.focus();
