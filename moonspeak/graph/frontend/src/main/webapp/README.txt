@@ -18,6 +18,89 @@ Having movementY == 0, means that the factor variable is always too small to aff
 The current fix is to just set movementY to 20 when calculating the factor, does not matter if its zoom in or out because factor is calculated with Math.abs.
 
 
+Problem 2
+mxClient.js
+```
+mxCellRenderer.prototype.installListeners = function(state)
+```
+
+
+mxClient.js
+```
+	addMouseWheelListener: function(funct, target)
+			...
+				var evtCache = [];
+				var dx0 = 0;
+				var dy0 = 0;
+				
+				// Adds basic listeners for graph event dispatching
+				mxEvent.addGestureListeners(target, mxUtils.bind(this, function(evt)
+				{
+					if (!mxEvent.isMouseEvent(evt) && evt.pointerId != null)
+					{
+						evtCache.push(evt);
+					}
+				}),
+					...
+						// Calculate the distance between the two pointers
+						var dx = Math.abs(evtCache[0].clientX - evtCache[1].clientX);
+						var dy = Math.abs(evtCache[0].clientY - evtCache[1].clientY);
+						var tx = Math.abs(dx - dx0);
+						var ty = Math.abs(dy - dy0);
+
+						if (tx > mxEvent.PINCH_THRESHOLD || ty > mxEvent.PINCH_THRESHOLD)
+						{
+							var cx = evtCache[0].clientX + (evtCache[1].clientX - evtCache[0].clientX) / 2;
+							var cy = evtCache[0].clientY + (evtCache[1].clientY - evtCache[0].clientY) / 2;
+							
+							funct(evtCache[0], (tx > ty) ? dx > dx0 : dy > dy0, true, cx, cy);
+```
+
+
+mxClient.js
+```
+	addGestureListeners: function(node, startListener, moveListener, endListener)
+	{
+		if (startListener != null)
+		{
+			mxEvent.addListener(node, (mxClient.IS_POINTER) ? 'pointerdown' : 'mousedown', startListener);
+		}
+		...
+```
+
+
+grapheditor/EditorUi.js
+```
+	mxEvent.addMouseWheelListener(mxUtils.bind(this, function(evt, up, force, cx, cy)
+	{
+		graph.fireEvent(new mxEventObject('wheel'));
+		...
+			else if (force || graph.isZoomWheelEvent(evt))
+			{
+				var source = mxEvent.getSource(evt);
+				while (source != null)
+				{
+					if (source == graph.container)
+					{
+						graph.tooltipHandler.hideTooltip();
+						cursorPosition = (cx != null && cy!= null) ? new mxPoint(cx, cy) :
+							new mxPoint(mxEvent.getClientX(evt), mxEvent.getClientY(evt));
+						forcedZoom = force;
+						var factor = graph.zoomFactor;
+						var delay = null;
+						...
+```
+
+Basically there is jitter in touch events, in particular: a short pointerdown + pointerup just before the long pointerdown + pointermove + pointerup.
+Now because workelements unexpectedly push new events it happens that the sequence is pointerdown, pointerdown, pointerup.
+This means that then the EditorUi.js event handler is called it is called with pointerdown event.
+The simple hack is to apply the "pointermove" conditional to "pointerdown" case as well.
+The other problem was that "addMouseWheelListener: function(funct, target)" in mxClient.js used clientX/Y to calculate delta from evtCache.
+The coordinates were relative to DOM inside iframes, not to the screen. One solution is to modify mxClient.js to use screenX/Y.
+The current hack is to feed screenX/Y from iframes into clientX/Y event fields.
+
+
+
 To view translation keys and disable splash on draw.io use:
 ```
 https://app.diagrams.net/?lang=i18n&splash=0
