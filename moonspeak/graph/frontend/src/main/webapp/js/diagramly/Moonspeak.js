@@ -401,7 +401,10 @@ MoonspeakUi.prototype.onChildMessage = function(event, iframe)
 
 MoonspeakUi.prototype.isMoonspeakDevMode = function()
 {
-    return ['moonspeak.localhost', '127.0.0.1', '0.0.0.0'].includes(location.hostname);
+    // having 192.168.42.156 here allows debugging via usb tethering on android
+    // set permanent computer address to this IP, then load it from the phone
+    // then you dont have to run the router component
+    return ['moonspeak.localhost', '127.0.0.1', '0.0.0.0', '192.168.42.156'].includes(location.hostname);
 };
 
 MoonspeakUi.prototype.clampPinchZoom = function(value)
