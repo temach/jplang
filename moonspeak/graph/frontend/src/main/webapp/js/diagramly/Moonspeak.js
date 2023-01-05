@@ -201,6 +201,48 @@ MoonspeakUi.prototype.runInit = function(app)
     }));
 
 
+    let pointer_down_handler = (event) => {
+        if (event.isPrimary == false) {
+            // tell all iframes to stream events to graph
+            // as we dont know which one of them will have the other pointerdown event
+            for (const [iframe, info] of this.iframeinfo.entries()) {
+                let message = {
+                    type: 'pleaseStreamEvents',
+                    value: true,
+                };
+                info.iframeport.postMessage(message);
+            }
+        }
+    };
+
+    let pointer_up_handler = (event) => {
+        // tell all iframes that event streaming is not needed anymore
+        for (const [iframe, info] of this.iframeinfo.entries()) {
+            let message = {
+                type: 'pleaseStreamEvents',
+                value: false,
+            };
+            info.iframeport.postMessage(message);
+        }
+    };
+
+    graph.container.addEventListener('pointerdown', pointer_down_handler);
+    // use same handler for pointer{up,cancel,out,leave} events
+    graph.container.addEventListener('pointerup', pointer_up_handler);
+    graph.container.addEventListener('pointercancel', pointer_up_handler);
+    graph.container.addEventListener('pointerout', pointer_up_handler);
+    graph.container.addEventListener('pointerleave', pointer_up_handler);
+
+    let dispatchPointerEvent = (event, type, targetElem) => {
+        const pointerEvent = new PointerEvent(type, {
+            ...event,
+        });
+
+        // re-dispatch the pointer event on the target element
+        targetElem.dispatchEvent(pointerEvent);
+    }
+
+
     // style fixes
     let stylesheet = graph.getStylesheet();
 
@@ -331,6 +373,8 @@ MoonspeakUi.prototype.runInit = function(app)
             let action_name = event.data["action_name"];
             let action = editorUi.actions.get(action_name);
             action.funct();
+        if (["pointerdown", "pointerup", "pointermove"].includes(event.data["info"])) {
+            dispatchPointerEvent(event.data["pointerEvent"], event.data["info"], graph.container);
         } else {
             console.log("Can not understand message info:" + event.data["info"]);
             return;

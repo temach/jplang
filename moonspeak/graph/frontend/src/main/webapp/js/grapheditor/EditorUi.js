@@ -3345,7 +3345,7 @@ EditorUi.prototype.initCanvas = function()
 							factor = this.editor.moonspeakUi.clampPinchZoom(factor);
 						}
 						// Slower zoom for pinch gesture on touch screens
-						else if (evt.movementY != null && evt.type == 'pointermove')
+						else if (evt.movementY != null && (evt.type == 'pointermove' || evt.type == 'pointerdown'))
 						{
 							if (mxClient.IS_FF && evt.movementY == 0) {
 								// hack because when touching inside iframe and then doing pointermove outside of iframe the
