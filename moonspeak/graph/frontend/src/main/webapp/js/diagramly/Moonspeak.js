@@ -356,46 +356,21 @@ MoonspeakUi.prototype.runInit = function(app)
             return;
         }
 
-        console.log(location + " " + document.title + " received:");
-        console.log(event.data);
-
         if ((typeof event.data !== 'object') || ! ("info" in event.data)) {
             console.log("event.data is not an object or no 'info' field in event.data, skipping");
             return;
         }
 
-        if (event.data["info"].includes("please feature")) {
-            let iframe = document.createElement("iframe");
-            iframe.src = event.data["src"];
-            registerChildIframe(iframe);
-            let result = this.addIframe(iframe);
-        } else if (event.data["info"].includes("manager action")) {
-            let action_name = event.data["action_name"];
-            let action = editorUi.actions.get(action_name);
-            action.funct();
         if (["pointerdown", "pointerup", "pointermove"].includes(event.data["info"])) {
             dispatchPointerEvent(event.data["pointerEvent"], event.data["info"], graph.container);
         } else {
-            console.log("Can not understand message info:" + event.data["info"]);
+            console.log(location + " " + document.title + " received, but could not understand message info:");
+            console.log(event.data);
             return;
         }
     };
 
     window.addEventListener("message", onMessage);
-
-    // becasue editor initialisations use document.body.appendChild
-    // the two deadzones must be added AFTER everyone has initialised
-    // let divRight = document.createElement('div');
-    // divRight.className = "bottomright deadzone";
-    // document.body.appendChild(divRight);
-
-    // let divLeft = document.createElement('div');
-    // divLeft.className = "bottomleft deadzone";
-    // document.body.appendChild(divLeft);
-
-    // trigger loading of saved graph from backend
-    // let action = editorUi.actions.get("open");
-    // action.funct();
 };
 
 MoonspeakUi.prototype.addObserver = function(sourceIFrame, observerIFrame)
