@@ -160,7 +160,7 @@ MoonspeakUi = function(app)
     this.iframeinfo = new Map();
 
     // make pinch zooming slower, but do not go lower than .05 because of implicit dependencies
-    this.zoomFactorPinchMax = 0.06;
+    this.zoomFactorPinchMax = 0.067;
 
     // run the init logic
     this.runInit(app);

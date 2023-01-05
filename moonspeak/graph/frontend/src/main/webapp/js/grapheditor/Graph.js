@@ -5068,11 +5068,12 @@ Graph.prototype.reset = function()
 };
 
 /**
- * Overridden to limit zoom to 1% - 16.000%.
+ * Overridden to limit zoom to 10% - 10.000%.
  */
 Graph.prototype.zoom = function(factor, center)
 {
-    factor = Math.max(0.01, Math.min(this.view.scale * factor, 160)) / this.view.scale;
+    factor = Math.max(0.1, Math.min(this.view.scale * factor, 100)) / this.view.scale;
+    console.log("factor: " + factor);
     
     mxGraph.prototype.zoom.apply(this, arguments);
 };
