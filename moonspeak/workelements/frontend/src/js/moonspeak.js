@@ -1,3 +1,8 @@
+let primaryPointerDown = null;
+let streamPinchZoomEvents = false;
+let streamedIds = new Set();
+
+//==================================================================
 let moonspeakPorts = [];
 
 function moonspeakLog(msg, obj) {
@@ -9,13 +14,21 @@ function moonspeakLog(msg, obj) {
 }
 
 function moonspeakMessageHandler(event, userHandler) {
+    if (event.data.type === 'pleaseStreamEvents') {
+        streamPinchZoomEvents = event.data.value;
+        return;
+    };
+
     moonspeakLog("received:", event.data);
     userHandler(event);
 }
 
 function moonspeakBootstrapMasterPort(event, userHandler) {
     function isMoonspeakDevMode() {
-        return ['moonspeak.localhost', '127.0.0.1', '0.0.0.0'].includes(location.hostname);
+        // having 192.168.42.156 here allows debugging via usb tethering on android
+        // set permanent computer address to this IP, then load it from the phone
+        // then you dont have to run the router component
+        return ['moonspeak.localhost', '127.0.0.1', '0.0.0.0', '192.168.42.156'].includes(location.hostname);
     }
 
     if (event.origin !== location.origin && !isMoonspeakDevMode()) {
@@ -65,4 +78,108 @@ function moonspeakPostMessage(message, isSecondTime=false) {
     }
 }
 
-export { moonspeakInstallOnMessageHandler, moonspeakPostMessage };
+//===========================================================================================
+function pointerdown_handler(ev) {
+    if (ev.pointerType != 'touch') {
+        return;
+    }
+
+    if (ev.isPrimary == false) {
+        // this is the second pointer event on this document, so its pinch zoom
+        streamPinchZoomEvents = true;
+        streamEvent(ev);
+    } else {
+        primaryPointerDown = ev;
+    }
+}
+
+function pointerup_handler(ev) {
+    if (ev.pointerType != 'touch') {
+        return;
+    }
+
+    if (primaryPointerDown && (ev.pointerId == primaryPointerDown.pointerId)) {
+        // got here in case of a boring primary pointer click, so just forget it
+        primaryPointerDown = null;
+    }
+
+    if (streamedIds.has(ev.pointerId)) {
+        streamPinchZoomEvents = false;
+        streamEvent(ev);
+        streamedIds.delete(ev.pointerId);
+    }
+}
+
+function pointermove_handler(ev) {
+    if (ev.pointerType != 'touch') {
+        return;
+    }
+
+    if (streamPinchZoomEvents) {
+        if (primaryPointerDown != null) {
+            // after pinch zoom activation and before the first pointermove
+            // we must send pointerdown
+            streamEvent(primaryPointerDown);
+            primaryPointerDown = null;
+        }
+        // stream pointermove event to parent
+        streamEvent(ev);
+    }
+}
+
+function streamEvent(event) {
+    // when event is streamed the end event must also be streamed (e.g. pointerup), so track the ids
+    streamedIds.add(event.pointerId);
+    console.log("workelements: " + event.type)
+
+    let message = {
+        iframename: window.name,
+        info: event.type,
+        pointerEvent: {
+            isPrimary: event.isPrimary,
+            pointerId: event.pointerId,
+            ctrlKey: event.ctrlKey,
+            shiftKey: event.shiftKey,
+            bubbles: event.bubbles,
+            cancelable: event.cancelable,
+            pointerType: event.pointerType,
+            button: event.button,
+            buttons: event.buttons,
+            x: event.x,
+            y: event.y,
+            width: event.width,
+            height: event.height,
+            pageX: event.pageX,
+            pageY: event.pageY,
+            layerX: event.layerX,
+            layerY: event.layerY,
+            offsetX: event.offsetX,
+            offsetY: event.offsetY,
+            movementX: event.movementX,
+            movementY: event.movementY,
+            screenX: event.screenX,
+            screenY: event.screenY,
+
+            // clientX and clientY are used by mxClient.js for zooming, unfortunately they are relative to DOM (hence wrong when in iframe)
+            // we fake them here and feed the screenX and screenY coords.
+            // the alternative is to fix mxClient.js addMouseWheelListener function to use screenX/Y instead of clientX/Y.
+            clientX: event.screenX,
+            clientY: event.screenY,
+        },
+    };
+    window.top.postMessage(message, "*");
+}
+
+function initPitchZoom() {
+    // Install event handlers for the pointer target
+    document.addEventListener('pointerdown', pointerdown_handler);
+    document.addEventListener('pointermove', pointermove_handler);
+
+    // the finish event handler is the same in all cases
+    document.addEventListener('pointerup', pointerup_handler);
+    document.addEventListener('pointercancel', pointerup_handler);
+    document.addEventListener('pointerout', pointerup_handler);
+    document.addEventListener('pointerleave', pointerup_handler);
+}
+
+export { initPitchZoom, moonspeakInstallOnMessageHandler, moonspeakPostMessage };
