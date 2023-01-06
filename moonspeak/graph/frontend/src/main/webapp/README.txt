@@ -284,13 +284,15 @@ OR
 
 // mxShape.prototype.svgPointerEvents = 'none';
 
-Load line for when running with docker on localhost (note: must have ending slash "/" after graph):
-http://moonspeak.localhost/router/route/graph-demouser-bbb/?lang=xxxxxx
+Load line for when running with docker on localhost (note: must have ending slash "/" after graph and removed "dev=1" param to load compiled assets):
+http://moonspeak.localhost/router/route/graph-demouser-bbb/?lang=i18n&test=1&mode=moonspeak&gh=0&gl=0&splash=0&ui=sketch&noFileMenu=1&plugins=0&gapi=0&print-csp=1&math=0#Mimport?uuid=default
 
 
 Load line, see https://www.diagrams.net/doc/faq/supported-url-parameters :
 http://localhost:8001/?lang=i18n&dev=1&test=1&mode=moonspeak&gh=0&gl=0&splash=0&ui=sketch&noFileMenu=1&plugins=0&gapi=0&print-csp=1&math=0#Mimport?uuid=default
 
+For android debugging use:
+192.168.42.156 ip address
 
 
 older config lines:
