@@ -33,7 +33,7 @@ services:
     environment:
       MOONSPEAK_DOMAIN: "moonspeak.localhost"
       MOONSPEAK_DEV_MODE: ""
-      RUST_LOG: "router=info"
+      RUST_LOG: "router=debug"
 
   #===================================
   landing:

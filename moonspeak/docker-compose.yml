@@ -1,5 +1,6 @@
 #
 # ALSO MUST SEE ./docker-compose.override.yml
+# the override config is applied automatically by docker-commpose
 #
 version: "3"
 
@@ -20,8 +21,8 @@ services:
       - unixsocks:/opt/moonspeak/unixsocks
     environment:
       # the router inserts reference to hostname into each feature via <base> tag
-      # this supplies the correct name
-      MOONSPEAK_DOMAIN: "moonspeak.localhost"
+      # this supplies the correct name, the field is re-defined in override configs
+      MOONSPEAK_DOMAIN: ""
       # turn off debug features
       MOONSPEAK_DEV_MODE: ""
       RUST_LOG: "router=info"
