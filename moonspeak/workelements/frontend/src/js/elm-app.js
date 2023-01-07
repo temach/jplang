@@ -11743,7 +11743,9 @@ var $author$project$Main$renderWorkElements = function (model) {
 				A2(
 				$elm$html$Html$Events$on,
 				'click',
-				A2($elm$json$Json$Decode$map, $author$project$Main$SelectWorkElement, $elm_community$html_extra$Html$Events$Extra$targetValueIntParse))
+				A2($elm$json$Json$Decode$map, $author$project$Main$SelectWorkElement, $elm_community$html_extra$Html$Events$Extra$targetValueIntParse)),
+				A2($elm$html$Html$Attributes$style, 'overflow', 'auto'),
+				A2($elm$html$Html$Attributes$style, 'flex-grow', '1')
 			]),
 		A2($elm$core$List$indexedMap, partial, model.workElements));
 };
@@ -11753,20 +11755,28 @@ var $author$project$Main$render = function (model) {
 		_List_fromArray(
 			[
 				A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(210, 210, 210)'),
-				A2($elm$html$Html$Attributes$style, 'overflow', 'auto')
+				A2($elm$html$Html$Attributes$style, 'height', '98vh'),
+				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+				A2($elm$html$Html$Attributes$style, 'flex-direction', 'column')
 			]),
 		_List_fromArray(
 			[
-				A2($elm$html$Html$Lazy$lazy, $author$project$Main$renderUserMessages, model),
-				A3(
-				$elm$html$Html$Lazy$lazy2,
+				A2(
 				$elm$html$Html$div,
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text('{{ title }}')
+						A2($elm$html$Html$Lazy$lazy, $author$project$Main$renderUserMessages, model),
+						A3(
+						$elm$html$Html$Lazy$lazy2,
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text('{{ title }}')
+							])),
+						A3($elm$html$Html$Lazy$lazy2, $author$project$Main$renderSubmitBar, model.currentWork, model.freq)
 					])),
-				A3($elm$html$Html$Lazy$lazy2, $author$project$Main$renderSubmitBar, model.currentWork, model.freq),
 				A2($elm$html$Html$Lazy$lazy, $author$project$Main$renderWorkElements, model)
 			]));
 };

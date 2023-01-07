@@ -532,6 +532,8 @@ renderWorkElements model =
     in
     div
         [ on "click" (D.map SelectWorkElement targetValueIntParse)
+        , style "overflow" "auto"
+        , style "flex-grow" "1"
         ]
         (List.indexedMap partial model.workElements)
 
@@ -545,10 +547,16 @@ render : Model -> Html Msg
 render model =
     div
         [ style "background-color" "rgb(210, 210, 210)"
-        , style "overflow" "auto"
+        , style "height" "98vh"
+        , style "display" "flex"
+        , style "flex-direction" "column"
         ]
-        [ lazy renderUserMessages model
-        , lazy2 div [] [ text "{{ title }}" ]
-        , lazy2 renderSubmitBar model.currentWork model.freq
-        , lazy renderWorkElements model
+        [
+            div
+                []
+                [ lazy renderUserMessages model
+                , lazy2 div [] [ text "{{ title }}" ]
+                , lazy2 renderSubmitBar model.currentWork model.freq
+                ]
+            , lazy renderWorkElements model
         ]
