@@ -12652,7 +12652,9 @@ var $author$project$Main$renderSingleWorkElement = F2(
 				[
 					A2($elm$html$Html$Attributes$style, 'padding', '2px 0'),
 					A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-					$elm$html$Html$Attributes$class('moonspeak-row')
+					$elm$html$Html$Attributes$class('moonspeak-row'),
+					$elm$html$Html$Events$onClick(
+					$author$project$Main$SelectWorkElement(index))
 				]),
 			_List_fromArray(
 				[
@@ -12660,9 +12662,7 @@ var $author$project$Main$renderSingleWorkElement = F2(
 					$elm$html$Html$span,
 					_List_fromArray(
 						[
-							A2($elm$html$Html$Attributes$style, 'flex', '0 0 1.5rem'),
-							$elm$html$Html$Attributes$value(
-							$elm$core$String$fromInt(index))
+							A2($elm$html$Html$Attributes$style, 'flex', '0 0 1.5rem')
 						]),
 					_List_fromArray(
 						[
@@ -12705,46 +12705,12 @@ var $author$project$Main$renderSingleWorkElement = F2(
 						]))
 				]));
 	});
-var $elm_community$html_extra$Html$Events$Extra$customDecoder = F2(
-	function (d, f) {
-		var resultDecoder = function (x) {
-			if (x.$ === 'Ok') {
-				var a = x.a;
-				return $elm$json$Json$Decode$succeed(a);
-			} else {
-				var e = x.a;
-				return $elm$json$Json$Decode$fail(e);
-			}
-		};
-		return A2(
-			$elm$json$Json$Decode$andThen,
-			resultDecoder,
-			A2($elm$json$Json$Decode$map, f, d));
-	});
-var $elm$core$Result$fromMaybe = F2(
-	function (err, maybe) {
-		if (maybe.$ === 'Just') {
-			var v = maybe.a;
-			return $elm$core$Result$Ok(v);
-		} else {
-			return $elm$core$Result$Err(err);
-		}
-	});
-var $elm_community$html_extra$Html$Events$Extra$maybeStringToResult = $elm$core$Result$fromMaybe('could not convert string');
-var $elm_community$html_extra$Html$Events$Extra$targetValueIntParse = A2(
-	$elm_community$html_extra$Html$Events$Extra$customDecoder,
-	$elm$html$Html$Events$targetValue,
-	A2($elm$core$Basics$composeR, $elm$core$String$toInt, $elm_community$html_extra$Html$Events$Extra$maybeStringToResult));
 var $author$project$Main$renderWorkElements = function (model) {
 	var partial = $elm$html$Html$Lazy$lazy2($author$project$Main$renderSingleWorkElement);
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				A2(
-				$elm$html$Html$Events$on,
-				'click',
-				A2($elm$json$Json$Decode$map, $author$project$Main$SelectWorkElement, $elm_community$html_extra$Html$Events$Extra$targetValueIntParse)),
 				A2($elm$html$Html$Attributes$style, 'overflow', 'auto'),
 				A2($elm$html$Html$Attributes$style, 'flex-grow', '1')
 			]),

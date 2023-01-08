@@ -542,11 +542,10 @@ renderSingleWorkElement index elem =
         [ style "padding" "2px 0"
         , style "display" "flex"
         , class "moonspeak-row"
+        , onClick (SelectWorkElement index)
         ]
         [ span
-            [ style "flex" "0 0 1.5rem"
-            , value (String.fromInt index)
-            ]
+            [ style "flex" "0 0 1.5rem" ]
             [ text (String.fromInt index ++ ".") ]
         , span
             [ style "flex" "0 0 auto"
@@ -582,8 +581,7 @@ renderWorkElements model =
             lazy2 renderSingleWorkElement
     in
     div
-        [ on "click" (D.map SelectWorkElement targetValueIntParse)
-        , style "overflow" "auto"
+        [ style "overflow" "auto"
         , style "flex-grow" "1"
         ]
         (List.indexedMap partial model.workElements)
