@@ -16,12 +16,14 @@ import List.Extra
 import Platform.Cmd as Cmd
 import Url.Builder exposing (relative)
 
--- Popover
--- documentation: http://elm-bootstrap.info/popover
--- documentation code: https://github.com/rundis/elm-bootstrap.info/blob/master/src/Page/Popover.elm
--- library source code: https://github.com/rundis/elm-bootstrap/blob/master/src/Bootstrap/Popover.elm
+-- elm bootstrap: http://elm-bootstrap.info/popover
+-- source code: https://github.com/rundis/elm-bootstrap/
+-- popover usage code: https://github.com/rundis/elm-bootstrap.info/blob/master/src/Page/Popover.elm
 import Bootstrap.Popover as Popover
 import Bootstrap.Button as Button
+-- input group usage code: https://github.com/rundis/elm-bootstrap.info/blob/master/src/Page/Popover.elm
+import Bootstrap.Form.Input as Input
+import Bootstrap.Form.InputGroup as InputGroup
 
 
 
@@ -470,14 +472,15 @@ renderSubmitBar currentWork freq popoverState =
             [ text currentWork.kanji ]
         , span
             [ style "flex" "10 0 70px" ]
-            [ input
-                [ placeholder "{{ keyword_placeholder }}"
-                , value currentWork.keyword
-                , onInput KeywordInput
-                , style "width" "100%"
-                , style "box-sizing" "border-box"
-                ]
-                []
+            [ InputGroup.config
+                (InputGroup.text [
+                    Input.placeholder "{{ keyword_placeholder }}"
+                    , Input.onInput KeywordInput
+                    , Input.value currentWork.keyword
+                    ]
+                )
+                |> InputGroup.small
+                |> InputGroup.view
             ]
         , span
             [ style "flex" "1 0 auto" ]
