@@ -11966,6 +11966,11 @@ var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Primary = {$: 'Primary'};
 var $rundis$elm_bootstrap$Bootstrap$Button$outlinePrimary = $rundis$elm_bootstrap$Bootstrap$Internal$Button$Coloring(
 	$rundis$elm_bootstrap$Bootstrap$Internal$Button$Outlined($rundis$elm_bootstrap$Bootstrap$Internal$Button$Primary));
 var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Roled = function (a) {
+	return {$: 'Roled', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Button$primary = $rundis$elm_bootstrap$Bootstrap$Internal$Button$Coloring(
+	$rundis$elm_bootstrap$Bootstrap$Internal$Button$Roled($rundis$elm_bootstrap$Bootstrap$Internal$Button$Primary));
 var $rundis$elm_bootstrap$Bootstrap$General$Internal$SM = {$: 'SM'};
 var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Size = function (a) {
 	return {$: 'Size', a: a};
@@ -12291,10 +12296,16 @@ var $author$project$Main$renderSubmitBar = F3(
 					_List_fromArray(
 						[
 							A2(
-							$elm$html$Html$button,
+							$rundis$elm_bootstrap$Bootstrap$Button$button,
 							_List_fromArray(
 								[
-									$elm$html$Html$Events$onClick($author$project$Main$ElementSubmitClick)
+									$rundis$elm_bootstrap$Bootstrap$Button$small,
+									$rundis$elm_bootstrap$Bootstrap$Button$primary,
+									$rundis$elm_bootstrap$Bootstrap$Button$attrs(
+									_List_fromArray(
+										[
+											$elm$html$Html$Events$onClick($author$project$Main$ElementSubmitClick)
+										]))
 								]),
 							_List_fromArray(
 								[

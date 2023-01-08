@@ -505,7 +505,14 @@ renderSubmitBar currentWork freq popoverState =
             ]
         , span
             [ style "flex" "1 0 auto" ]
-            [ button [ onClick ElementSubmitClick ] [ text "{{ submit_button }}" ] ]
+            [ Button.button
+                    [ Button.small
+                    , Button.primary
+                    , Button.attrs [ onClick ElementSubmitClick ]
+                    ]
+                    [ text "{{ submit_button }}"
+                    ]
+            ]
         , span
             [ style "flex" "10 0 70px" ]
             [ input
