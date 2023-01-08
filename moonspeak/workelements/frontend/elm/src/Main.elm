@@ -481,32 +481,27 @@ renderSubmitBar currentWork freq popoverState =
                     , Input.value currentWork.keyword
                     ]
                 )
+                |> InputGroup.successors
+                    [ InputGroup.span
+                        []
+                        [ Popover.config
+                            (
+                                span (Popover.onClick popoverState PopoverMsg) [ text ("{{ total_freq }}" ++ (String.fromInt <| calcTotalFrequency freq))]
+                            )
+                            |> Popover.bottom
+                            |> Popover.titleH4 [ class "text-secondary" ] [ text "{{ freq_decomposition_title }}" ]
+                            |> Popover.content []
+                                [ text "{{ freq_decomposition_explanation }}"
+                                , br [] []
+                                , text ("{{ google_corpus_freq }}" ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 0 freq))
+                                , br [] []
+                                , text ("{{ subtitles_freq }}" ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 1 freq))
+                                ]
+                            |> Popover.view popoverState
+                        ]
+                    ]
                 |> InputGroup.small
                 |> InputGroup.view
-            ]
-        , span
-            [ style "flex" "1 0 auto" ]
-            [ text ("{{ total_freq }}" ++ (String.fromInt <| calcTotalFrequency freq) ++ " ")
-            , Popover.config
-                ( Button.button
-                    [ Button.small
-                    , Button.outlinePrimary
-                    , Button.attrs <|
-                        Popover.onClick popoverState PopoverMsg
-                    ]
-                    [ text "?"
-                    ]
-                )
-                |> Popover.bottom
-                |> Popover.titleH4 [] [ text "{{ freq_decomposition_title }}" ]
-                |> Popover.content []
-                    [ text "{{ freq_decomposition_explanation }}"
-                    , br [] []
-                    , text ("{{ google_corpus_freq }}" ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 0 freq))
-                    , br [] []
-                    , text ("{{ subtitles_freq }}" ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 1 freq))
-                    ]
-                |> Popover.view popoverState
             ]
         , span
             [ style "flex" "1 0 auto" ]
@@ -551,10 +546,10 @@ renderSingleWorkElement index elem =
             ]
             [ text elem.kanji ]
         , span
-            [ style "flex" "1 0 4rem"
+            [ style "flex" "0 0 10rem"
             , style "margin" "0 0.5rem"
             , if String.length elem.keyword > 0 then
-                style "background-color" "rgb(200, 210, 200)"
+                style "background-color" "rgb(220, 230, 220)"
 
               else
                 style "background-color" ""
@@ -563,7 +558,7 @@ renderSingleWorkElement index elem =
         , span
             [ style "flex" "10 1 auto"
             , if String.length elem.notes > 0 then
-                style "background-color" "rgb(200, 200, 210)"
+                style "background-color" "rgb(220, 220, 230)"
 
               else
                 style "background-color" ""
@@ -594,7 +589,7 @@ renderUserMessages model =
 render : Model -> Html Msg
 render model =
     div
-        [ style "background-color" "rgb(210, 210, 210)"
+        [ style "background-color" "rgb(245, 245, 245)"
         , style "height" "96vh"
         , style "padding" "6px"
         , style "margin" "8px"
