@@ -11984,7 +11984,6 @@ var $rundis$elm_bootstrap$Bootstrap$Form$Input$Placeholder = function (a) {
 var $rundis$elm_bootstrap$Bootstrap$Form$Input$placeholder = function (value_) {
 	return $rundis$elm_bootstrap$Bootstrap$Form$Input$Placeholder(value_);
 };
-var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
 var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Roled = function (a) {
 	return {$: 'Roled', a: a};
 };
@@ -12114,6 +12113,7 @@ var $elm$core$Maybe$map = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
+var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
 var $elm$html$Html$Attributes$readonly = $elm$html$Html$Attributes$boolProperty('readOnly');
 var $rundis$elm_bootstrap$Bootstrap$Form$Input$sizeAttribute = function (size) {
 	return A2(
@@ -12483,7 +12483,8 @@ var $author$project$Main$renderSubmitBar = F3(
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					A2($elm$html$Html$Attributes$style, 'display', 'flex')
+					A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+					A2($elm$html$Html$Attributes$style, 'text-align', 'center')
 				]),
 			_List_fromArray(
 				[
@@ -12607,17 +12608,16 @@ var $author$project$Main$renderSubmitBar = F3(
 						]),
 					_List_fromArray(
 						[
-							A2(
-							$elm$html$Html$input,
-							_List_fromArray(
-								[
-									$elm$html$Html$Attributes$placeholder('{{ notes_title }}'),
-									$elm$html$Html$Attributes$value(currentWork.notes),
-									$elm$html$Html$Events$onInput($author$project$Main$NotesInput),
-									A2($elm$html$Html$Attributes$style, 'width', '100%'),
-									A2($elm$html$Html$Attributes$style, 'box-sizing', 'border-box')
-								]),
-							_List_Nil)
+							$rundis$elm_bootstrap$Bootstrap$Form$InputGroup$view(
+							$rundis$elm_bootstrap$Bootstrap$Form$InputGroup$small(
+								$rundis$elm_bootstrap$Bootstrap$Form$InputGroup$config(
+									$rundis$elm_bootstrap$Bootstrap$Form$InputGroup$text(
+										_List_fromArray(
+											[
+												$rundis$elm_bootstrap$Bootstrap$Form$Input$placeholder('{{ notes_title }}'),
+												$rundis$elm_bootstrap$Bootstrap$Form$Input$onInput($author$project$Main$NotesInput),
+												$rundis$elm_bootstrap$Bootstrap$Form$Input$value(currentWork.notes)
+											])))))
 						]))
 				]));
 	});
@@ -12746,7 +12746,7 @@ var $author$project$Main$render = function (model) {
 		_List_fromArray(
 			[
 				A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(210, 210, 210)'),
-				A2($elm$html$Html$Attributes$style, 'height', '98vh'),
+				A2($elm$html$Html$Attributes$style, 'height', '96vh'),
 				A2($elm$html$Html$Attributes$style, 'padding', '6px'),
 				A2($elm$html$Html$Attributes$style, 'margin', '8px'),
 				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
@@ -12759,7 +12759,6 @@ var $author$project$Main$render = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						A2($elm$html$Html$Lazy$lazy, $author$project$Main$renderUserMessages, model),
 						A3(
 						$elm$html$Html$Lazy$lazy2,
 						$elm$html$Html$div,
@@ -12768,7 +12767,8 @@ var $author$project$Main$render = function (model) {
 							[
 								$elm$html$Html$text('{{ title }}')
 							])),
-						A4($elm$html$Html$Lazy$lazy3, $author$project$Main$renderSubmitBar, model.currentWork, model.freq, model.popoverState)
+						A4($elm$html$Html$Lazy$lazy3, $author$project$Main$renderSubmitBar, model.currentWork, model.freq, model.popoverState),
+						A2($elm$html$Html$Lazy$lazy, $author$project$Main$renderUserMessages, model)
 					])),
 				A2($elm$html$Html$Lazy$lazy, $author$project$Main$renderWorkElements, model)
 			]));

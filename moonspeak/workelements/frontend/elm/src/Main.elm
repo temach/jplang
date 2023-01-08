@@ -466,7 +466,9 @@ view model =
 
 renderSubmitBar : WorkElement -> Frequency -> Popover.State -> Html Msg
 renderSubmitBar currentWork freq popoverState =
-    div [ style "display" "flex" ]
+    div [ style "display" "flex"
+        , style "text-align" "center"
+        ]
         [ span
             [ style "flex" "1 0 auto" ]
             [ text currentWork.kanji ]
@@ -518,14 +520,15 @@ renderSubmitBar currentWork freq popoverState =
             ]
         , span
             [ style "flex" "10 0 70px" ]
-            [ input
-                [ placeholder "{{ notes_title }}"
-                , value currentWork.notes
-                , onInput NotesInput
-                , style "width" "100%"
-                , style "box-sizing" "border-box"
-                ]
-                []
+            [ InputGroup.config
+                (InputGroup.text [
+                    Input.placeholder "{{ notes_title }}"
+                    , Input.onInput NotesInput
+                    , Input.value currentWork.notes
+                    ]
+                )
+                |> InputGroup.small
+                |> InputGroup.view
             ]
         ]
 
@@ -592,7 +595,7 @@ render : Model -> Html Msg
 render model =
     div
         [ style "background-color" "rgb(210, 210, 210)"
-        , style "height" "98vh"
+        , style "height" "96vh"
         , style "padding" "6px"
         , style "margin" "8px"
         , style "display" "flex"
@@ -601,9 +604,9 @@ render model =
         [
             div
                 []
-                [ lazy renderUserMessages model
-                , lazy2 div [] [ text "{{ title }}" ]
+                [ lazy2 div [] [ text "{{ title }}" ]
                 , lazy3 renderSubmitBar model.currentWork model.freq model.popoverState
+                , lazy renderUserMessages model
                 ]
             , lazy renderWorkElements model
         ]
