@@ -4,7 +4,7 @@ import Browser
 import Css
 import Debug exposing (log)
 import Dict exposing (Dict)
-import Html exposing (Attribute, Html, br, button, div, input, li, ol, span, text)
+import Html exposing (Attribute, Html, br, button, div, input, li, ol, span, text, label)
 import Html.Attributes exposing (attribute, class, placeholder, style, value)
 import Html.Events exposing (on, onClick, onInput)
 import Html.Events.Extra exposing (targetValueIntParse)
@@ -22,6 +22,7 @@ import Url.Builder exposing (relative)
 import Bootstrap.Popover as Popover
 import Bootstrap.Button as Button
 -- input group usage code: https://github.com/rundis/elm-bootstrap.info/blob/master/src/Page/Popover.elm
+import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
 import Bootstrap.Form.InputGroup as InputGroup
 
@@ -481,27 +482,34 @@ renderSubmitBar currentWork freq popoverState =
                     , Input.value currentWork.keyword
                     ]
                 )
-                |> InputGroup.successors
-                    [ InputGroup.span
-                        []
-                        [ Popover.config
-                            (
-                                span (Popover.onClick popoverState PopoverMsg) [ text ("{{ total_freq }}" ++ (String.fromInt <| calcTotalFrequency freq))]
-                            )
-                            |> Popover.bottom
-                            |> Popover.titleH4 [ class "text-secondary" ] [ text "{{ freq_decomposition_title }}" ]
-                            |> Popover.content []
-                                [ text "{{ freq_decomposition_explanation }}"
-                                , br [] []
-                                , text ("{{ google_corpus_freq }}" ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 0 freq))
-                                , br [] []
-                                , text ("{{ subtitles_freq }}" ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 1 freq))
-                                ]
-                            |> Popover.view popoverState
-                        ]
-                    ]
                 |> InputGroup.small
                 |> InputGroup.view
+            ]
+        , span
+            [ style "flex" "1 0 auto" ]
+            [ label
+                []
+                [ Popover.config
+                    ( Button.button
+                        [ Button.small
+                        , Button.outlineSecondary
+                        , Button.attrs <|
+                            Popover.onClick popoverState PopoverMsg
+                        ]
+                        [ text ("{{ total_freq }}" ++ (String.fromInt <| calcTotalFrequency freq))
+                        ]
+                    )
+                    |> Popover.bottom
+                    |> Popover.titleH4 [ class "text-secondary" ] [ text "{{ freq_decomposition_title }}" ]
+                    |> Popover.content []
+                        [ text "{{ freq_decomposition_explanation }}"
+                        , br [] []
+                        , text ("{{ google_corpus_freq }}" ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 0 freq))
+                        , br [] []
+                        , text ("{{ subtitles_freq }}" ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 1 freq))
+                        ]
+                    |> Popover.view popoverState
+                ]
             ]
         , span
             [ style "flex" "1 0 auto" ]

@@ -11768,6 +11768,7 @@ var $rundis$elm_bootstrap$Bootstrap$Popover$content = F3(
 								children)))
 				}));
 	});
+var $elm$html$Html$label = _VirtualDom_node('label');
 var $elm$json$Json$Decode$andThen = _Json_andThen;
 var $rundis$elm_bootstrap$Bootstrap$Popover$DOMState = F3(
 	function (rect, offsetWidth, offsetHeight) {
@@ -11969,14 +11970,20 @@ var $rundis$elm_bootstrap$Bootstrap$Form$Input$OnInput = function (a) {
 var $rundis$elm_bootstrap$Bootstrap$Form$Input$onInput = function (toMsg) {
 	return $rundis$elm_bootstrap$Bootstrap$Form$Input$OnInput(toMsg);
 };
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Coloring = function (a) {
+	return {$: 'Coloring', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Outlined = function (a) {
+	return {$: 'Outlined', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Secondary = {$: 'Secondary'};
+var $rundis$elm_bootstrap$Bootstrap$Button$outlineSecondary = $rundis$elm_bootstrap$Bootstrap$Internal$Button$Coloring(
+	$rundis$elm_bootstrap$Bootstrap$Internal$Button$Outlined($rundis$elm_bootstrap$Bootstrap$Internal$Button$Secondary));
 var $rundis$elm_bootstrap$Bootstrap$Form$Input$Placeholder = function (a) {
 	return {$: 'Placeholder', a: a};
 };
 var $rundis$elm_bootstrap$Bootstrap$Form$Input$placeholder = function (value_) {
 	return $rundis$elm_bootstrap$Bootstrap$Form$Input$Placeholder(value_);
-};
-var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Coloring = function (a) {
-	return {$: 'Coloring', a: a};
 };
 var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Primary = {$: 'Primary'};
 var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Roled = function (a) {
@@ -11998,28 +12005,6 @@ var $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$small = function (_v0) {
 				size: $elm$core$Maybe$Just($rundis$elm_bootstrap$Bootstrap$General$Internal$SM)
 			}));
 };
-var $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$Addon = function (a) {
-	return {$: 'Addon', a: a};
-};
-var $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$span = F2(
-	function (attributes, children) {
-		return $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$Addon(
-			A2(
-				$elm$html$Html$span,
-				A2(
-					$elm$core$List$cons,
-					$elm$html$Html$Attributes$class('input-group-text'),
-					attributes),
-				children));
-	});
-var $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$successors = F2(
-	function (addons, _v0) {
-		var conf = _v0.a;
-		return $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$Config(
-			_Utils_update(
-				conf,
-				{successors: addons}));
-	});
 var $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$Input = function (a) {
 	return {$: 'Input', a: a};
 };
@@ -12525,70 +12510,80 @@ var $author$project$Main$renderSubmitBar = F3(
 						[
 							$rundis$elm_bootstrap$Bootstrap$Form$InputGroup$view(
 							$rundis$elm_bootstrap$Bootstrap$Form$InputGroup$small(
-								A2(
-									$rundis$elm_bootstrap$Bootstrap$Form$InputGroup$successors,
-									_List_fromArray(
-										[
-											A2(
-											$rundis$elm_bootstrap$Bootstrap$Form$InputGroup$span,
-											_List_Nil,
+								$rundis$elm_bootstrap$Bootstrap$Form$InputGroup$config(
+									$rundis$elm_bootstrap$Bootstrap$Form$InputGroup$text(
+										_List_fromArray(
+											[
+												$rundis$elm_bootstrap$Bootstrap$Form$Input$placeholder('{{ keyword_placeholder }}'),
+												$rundis$elm_bootstrap$Bootstrap$Form$Input$onInput($author$project$Main$KeywordInput),
+												$rundis$elm_bootstrap$Bootstrap$Form$Input$value(currentWork.keyword)
+											])))))
+						])),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'flex', '1 0 auto')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$label,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(
+									$rundis$elm_bootstrap$Bootstrap$Popover$view,
+									popoverState,
+									A3(
+										$rundis$elm_bootstrap$Bootstrap$Popover$content,
+										_List_Nil,
+										_List_fromArray(
+											[
+												$elm$html$Html$text('{{ freq_decomposition_explanation }}'),
+												A2($elm$html$Html$br, _List_Nil, _List_Nil),
+												$elm$html$Html$text(
+												'{{ google_corpus_freq }}' + $elm$core$String$fromInt(
+													A2(
+														$elm$core$Maybe$withDefault,
+														0,
+														A2($elm_community$list_extra$List$Extra$getAt, 0, freq)))),
+												A2($elm$html$Html$br, _List_Nil, _List_Nil),
+												$elm$html$Html$text(
+												'{{ subtitles_freq }}' + $elm$core$String$fromInt(
+													A2(
+														$elm$core$Maybe$withDefault,
+														0,
+														A2($elm_community$list_extra$List$Extra$getAt, 1, freq))))
+											]),
+										A3(
+											$rundis$elm_bootstrap$Bootstrap$Popover$titleH4,
 											_List_fromArray(
 												[
+													$elm$html$Html$Attributes$class('text-secondary')
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('{{ freq_decomposition_title }}')
+												]),
+											$rundis$elm_bootstrap$Bootstrap$Popover$bottom(
+												$rundis$elm_bootstrap$Bootstrap$Popover$config(
 													A2(
-													$rundis$elm_bootstrap$Bootstrap$Popover$view,
-													popoverState,
-													A3(
-														$rundis$elm_bootstrap$Bootstrap$Popover$content,
-														_List_Nil,
+														$rundis$elm_bootstrap$Bootstrap$Button$button,
 														_List_fromArray(
 															[
-																$elm$html$Html$text('{{ freq_decomposition_explanation }}'),
-																A2($elm$html$Html$br, _List_Nil, _List_Nil),
-																$elm$html$Html$text(
-																'{{ google_corpus_freq }}' + $elm$core$String$fromInt(
-																	A2(
-																		$elm$core$Maybe$withDefault,
-																		0,
-																		A2($elm_community$list_extra$List$Extra$getAt, 0, freq)))),
-																A2($elm$html$Html$br, _List_Nil, _List_Nil),
-																$elm$html$Html$text(
-																'{{ subtitles_freq }}' + $elm$core$String$fromInt(
-																	A2(
-																		$elm$core$Maybe$withDefault,
-																		0,
-																		A2($elm_community$list_extra$List$Extra$getAt, 1, freq))))
+																$rundis$elm_bootstrap$Bootstrap$Button$small,
+																$rundis$elm_bootstrap$Bootstrap$Button$outlineSecondary,
+																$rundis$elm_bootstrap$Bootstrap$Button$attrs(
+																A2($rundis$elm_bootstrap$Bootstrap$Popover$onClick, popoverState, $author$project$Main$PopoverMsg))
 															]),
-														A3(
-															$rundis$elm_bootstrap$Bootstrap$Popover$titleH4,
-															_List_fromArray(
-																[
-																	$elm$html$Html$Attributes$class('text-secondary')
-																]),
-															_List_fromArray(
-																[
-																	$elm$html$Html$text('{{ freq_decomposition_title }}')
-																]),
-															$rundis$elm_bootstrap$Bootstrap$Popover$bottom(
-																$rundis$elm_bootstrap$Bootstrap$Popover$config(
-																	A2(
-																		$elm$html$Html$span,
-																		A2($rundis$elm_bootstrap$Bootstrap$Popover$onClick, popoverState, $author$project$Main$PopoverMsg),
-																		_List_fromArray(
-																			[
-																				$elm$html$Html$text(
-																				'{{ total_freq }}' + $elm$core$String$fromInt(
-																					$author$project$Main$calcTotalFrequency(freq)))
-																			])))))))
-												]))
-										]),
-									$rundis$elm_bootstrap$Bootstrap$Form$InputGroup$config(
-										$rundis$elm_bootstrap$Bootstrap$Form$InputGroup$text(
-											_List_fromArray(
-												[
-													$rundis$elm_bootstrap$Bootstrap$Form$Input$placeholder('{{ keyword_placeholder }}'),
-													$rundis$elm_bootstrap$Bootstrap$Form$Input$onInput($author$project$Main$KeywordInput),
-													$rundis$elm_bootstrap$Bootstrap$Form$Input$value(currentWork.keyword)
-												]))))))
+														_List_fromArray(
+															[
+																$elm$html$Html$text(
+																'{{ total_freq }}' + $elm$core$String$fromInt(
+																	$author$project$Main$calcTotalFrequency(freq)))
+															])))))))
+								]))
 						])),
 					A2(
 					$elm$html$Html$span,
