@@ -4,17 +4,24 @@ import Browser
 import Css
 import Debug exposing (log)
 import Dict exposing (Dict)
-import Html exposing (Attribute, Html, button, div, input, li, ol, span, text)
+import Html exposing (Attribute, Html, br, button, div, input, li, ol, span, text)
 import Html.Attributes exposing (attribute, class, placeholder, style, value)
 import Html.Events exposing (on, onClick, onInput)
 import Html.Events.Extra exposing (targetValueIntParse)
-import Html.Lazy exposing (lazy, lazy2)
+import Html.Lazy exposing (lazy, lazy2, lazy3)
 import Http
 import Json.Decode as D
 import Json.Encode as E
 import List.Extra
 import Platform.Cmd as Cmd
 import Url.Builder exposing (relative)
+
+-- Popover
+-- documentation: http://elm-bootstrap.info/popover
+-- documentation code: https://github.com/rundis/elm-bootstrap.info/blob/master/src/Page/Popover.elm
+-- library source code: https://github.com/rundis/elm-bootstrap/blob/master/src/Bootstrap/Popover.elm
+import Bootstrap.Popover as Popover
+import Bootstrap.Button as Button
 
 
 
@@ -70,6 +77,7 @@ type alias Model =
     , freq : List Int
     , userMessages : Dict String String
     , onSubmitFailIndex : Int
+    , popoverState : Popover.State
     }
 
 
@@ -88,6 +96,7 @@ defaultModel =
     , freq = []
     , userMessages = Dict.empty
     , onSubmitFailIndex = 0
+    , popoverState = Popover.initialState
     }
 
 
@@ -149,6 +158,7 @@ type Msg
     | WorkElementsReady (Result Http.Error (List WorkElement))
     | ElementSubmitReady (Result Http.Error String)
     | KeywordCheckReady (Result Http.Error KeyCandidate)
+    | PopoverMsg Popover.State
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -361,6 +371,10 @@ update msg model =
                 Err _ ->
                     ( { model | freq = [], userMessages = Dict.insert "KeywordCheckReady" "{{ error_keyword_check }}" model.userMessages }, Cmd.none )
 
+        PopoverMsg state ->
+            ( { model | popoverState = state }, Cmd.none )
+
+
 
 buildErrorMessage : Http.Error -> String
 buildErrorMessage httpError =
@@ -435,6 +449,9 @@ submitElementEncoder element =
         , ( "notes", E.string element.notes )
         ]
 
+calcTotalFrequency : Frequency -> Int
+calcTotalFrequency freq =
+    ((Maybe.withDefault 0 <| List.Extra.getAt 0 freq) + (Maybe.withDefault 0 <| List.Extra.getAt 1 freq)) // 2
 
 
 -- VIEW
@@ -445,8 +462,8 @@ view model =
     render model
 
 
-renderSubmitBar : WorkElement -> Frequency -> Html Msg
-renderSubmitBar currentWork freq =
+renderSubmitBar : WorkElement -> Frequency -> Popover.State -> Html Msg
+renderSubmitBar currentWork freq popoverState =
     div [ style "display" "flex" ]
         [ span
             [ style "flex" "1 0 auto" ]
@@ -464,10 +481,28 @@ renderSubmitBar currentWork freq =
             ]
         , span
             [ style "flex" "1 0 auto" ]
-            [ text ("{{ google_corpus_freq }}" ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 0 freq)) ]
-        , span
-            [ style "flex" "1 0 auto" ]
-            [ text ("{{ subtitles_freq }}" ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 1 freq)) ]
+            [ text ("{{ total_freq }}" ++ (String.fromInt <| calcTotalFrequency freq) ++ " ")
+            , Popover.config
+                ( Button.button
+                    [ Button.small
+                    , Button.outlinePrimary
+                    , Button.attrs <|
+                        Popover.onClick popoverState PopoverMsg
+                    ]
+                    [ text "?"
+                    ]
+                )
+                |> Popover.bottom
+                |> Popover.titleH4 [] [ text "{{ freq_decomposition_title }}" ]
+                |> Popover.content []
+                    [ text "{{ freq_decomposition_explanation }}"
+                    , br [] []
+                    , text ("{{ google_corpus_freq }}" ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 0 freq))
+                    , br [] []
+                    , text ("{{ subtitles_freq }}" ++ (String.fromInt <| Maybe.withDefault 0 <| List.Extra.getAt 1 freq))
+                    ]
+                |> Popover.view popoverState
+            ]
         , span
             [ style "flex" "1 0 auto" ]
             [ button [ onClick ElementSubmitClick ] [ text "{{ submit_button }}" ] ]
@@ -490,7 +525,7 @@ renderSingleWorkElement index elem =
     div
         [ style "padding" "2px 0"
         , style "display" "flex"
-        , class "row"
+        , class "moonspeak-row"
         ]
         [ span
             [ style "flex" "0 0 1.5rem"
@@ -548,6 +583,8 @@ render model =
     div
         [ style "background-color" "rgb(210, 210, 210)"
         , style "height" "98vh"
+        , style "padding" "6px"
+        , style "margin" "8px"
         , style "display" "flex"
         , style "flex-direction" "column"
         ]
@@ -556,7 +593,7 @@ render model =
                 []
                 [ lazy renderUserMessages model
                 , lazy2 div [] [ text "{{ title }}" ]
-                , lazy2 renderSubmitBar model.currentWork model.freq
+                , lazy3 renderSubmitBar model.currentWork model.freq model.popoverState
                 ]
             , lazy renderWorkElements model
         ]
