@@ -487,3 +487,4 @@ With reedirects the story is similar, but there are three types of reddirects:
 nginx by default adds hostname (see "absolute_redirect on").
 lighttpd and flask do not add hostname.
 For now lets use redirects without hostname.
+
