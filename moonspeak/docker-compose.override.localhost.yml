@@ -35,42 +35,12 @@ services:
     container_name: suggestions.moonspeak.localhost
     restart: always
 
-  # #==================================
+  #==================================
   # graph address is the user's unique access url
   workelements:
-    container_name: workelements-demouser-ddd.moonspeak.localhost
+    container_name: workelements-demouser1.moonspeak.localhost
     restart: always
 
   graph:
-    container_name: graph-demouser-bbb.moonspeak.localhost
+    container_name: graph-demouser1.moonspeak.localhost
     restart: always
-    environment:
-      # this xml sets default graph value
-      MOONSPEAK_GRAPH_INITIAL_XML: >-
-        <mxGraphModel dx="2638" dy="1176" grid="1" gridSize="10" guides="1" tooltips="0" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100">
-          <root>
-            <mxCell id="0" />
-            <mxCell id="1" parent="0" />
-            <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="/router/route/workelements-demouser-ddd/" style="width: 680px; height: 560px; border: medium none;" id="2">
-              <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
-                <mxGeometry x="-80" y="-85" width="700" height="580" as="geometry" />
-              </mxCell>
-            </iframe>
-            <mxCell id="11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.003;entryY=0.384;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="4" target="2" edge="1">
-              <mxGeometry relative="1" as="geometry" />
-            </mxCell>
-            <iframe xmlns="http://www.w3.org/1999/xhtml" name="suggestions" src="/suggestions/" style="width: 380px; height: 290px; border: medium none;" id="4">
-              <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
-                <mxGeometry x="-530" y="-80" width="400" height="310" as="geometry" />
-              </mxCell>
-            </iframe>
-            <mxCell id="12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="5" target="2" edge="1">
-              <mxGeometry relative="1" as="geometry" />
-            </mxCell>
-            <iframe xmlns="http://www.w3.org/1999/xhtml" name="synonyms" src="/synonyms/" style="width: 340px; height: 530px; border: medium none;" id="5">
-              <mxCell xmlns="" style="iframe=1;" parent="1" vertex="1">
-                <mxGeometry x="650" y="-70" width="360" height="550" as="geometry" />
-              </mxCell>
-            </iframe>
-          </root>
-        </mxGraphModel>

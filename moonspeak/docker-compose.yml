@@ -1,12 +1,20 @@
 #
 # ALSO MUST SEE ./docker-compose.override.yml
-# the override config is applied automatically by docker-commpose
+# the override config is applied automatically by docker-compose
 #
 version: "3"
 
 volumes:
-  # used to share unix sockets
+  # global volume used to share unix sockets
   unixsocks:
+    # specify name to avoid default docker-compose prefixing
+    name: unixsocks
+
+networks:
+  # global network to share between all services (not all services bind to unix sockets right now)
+  moonspeaknet:
+    # specify name to avoid default docker-compose prefixing
+    name: moonspeaknet
 
 services:
   #===================================
@@ -14,11 +22,15 @@ services:
     image: "temachpool/moonspeak-gateway:${TAG:-latest}"
     volumes:
       - unixsocks:/etc/unixsocks
+    networks:
+      - moonspeaknet
 
   router:
     image: "temachpool/moonspeak-router:${TAG:-latest}"
     volumes:
       - unixsocks:/opt/moonspeak/unixsocks
+    networks:
+      - moonspeaknet
     environment:
       # the router inserts reference to hostname into each feature via <base> tag
       # this supplies the correct name, the field is re-defined in override configs
@@ -27,16 +39,36 @@ services:
       MOONSPEAK_DEV_MODE: ""
       RUST_LOG: "router=info"
 
+  manager:
+    image: "temachpool/moonspeak-manager:${TAG:-latest}"
+    volumes:
+      - unixsocks:/opt/moonspeak/unixsocks
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - moonspeaknet
+    environment:
+      # the manager writes configuration for graph service which has absolute urls
+      # this supplies the correct name, the field is re-defined in override configs
+      MOONSPEAK_DOMAIN: ""
+      MOONSPEAK_DEPLOY_SECRET: "secret"
+      # set debug to off
+      PYTHON_ON_WHALES_DEBUG: ""
+
+
   #===================================
   landing:
     image: "temachpool/moonspeak-landing:${TAG:-latest}"
     volumes:
       - unixsocks:/etc/unixsocks
+    networks:
+      - moonspeaknet
 
   synonyms:
     image: "temachpool/moonspeak-synonyms:${TAG:-latest}"
     volumes:
       - unixsocks:/opt/moonspeak/unixsocks
+    networks:
+      - moonspeaknet
     environment:
       GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsocks/synonyms.sock' "
 
@@ -44,75 +76,43 @@ services:
     image: "temachpool/moonspeak-suggestions:${TAG:-latest}"
     volumes:
       - unixsocks:/opt/moonspeak/unixsocks
+    networks:
+      - moonspeaknet
     environment:
       MOONSPEAK_PORT: 80
 
-  # #==================================
-  # this is the demo stand on production
-  workelements:
-    image: "temachpool/moonspeak-workelements:${TAG:-latest}"
-    volumes:
-      - unixsocks:/opt/moonspeak/unixsocks
-      - /opt/moonspeak/workelements/userdata
-    environment:
-      GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsocks/workelements-demouser-ddd.sock' "
-
-  graph:
-    image: "temachpool/moonspeak-graph:${TAG:-latest}"
-    volumes:
-      - unixsocks:/opt/moonspeak/unixsocks
-      - /opt/moonspeak/graph/userdata
-    environment:
-      MOONSPEAK_PORT: 80
-      # this xml sets default graph value
-      MOONSPEAK_GRAPH_INITIAL_XML: >-
-        <mxfile host="localhost" modified="2022-12-04T06:11:18.071Z" agent="5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36" etag="-J2dvMhjnH6SI7QTmTVN" version="@DRAWIO-VERSION@" type="moonspeak">
-          <diagram id="SKebBaCcsGTVzdhOYIFn" name="pageWithNumber">
-            <mxGraphModel dx="4075" dy="1171" grid="1" gridSize="10" guides="1" tooltips="0" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
-              <root>
-                <mxCell id="0" />
-                <mxCell id="1" style="locked=1;" parent="0" />
-                <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="/router/route/workelements-demouser-ddd/" style="width: 680px; height: 560px; border: medium none;" id="2">
-                  <mxCell style="iframe=1;" parent="1" xmlns="" vertex="1">
-                    <mxGeometry x="-210" y="-70" width="700" height="580" as="geometry" />
-                  </mxCell>
-                </iframe>
-                <mxCell id="11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.003;entryY=0.384;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="4" target="2" edge="1">
-                  <mxGeometry relative="1" as="geometry" />
-                </mxCell>
-                <iframe xmlns="http://www.w3.org/1999/xhtml" name="suggestions" src="/suggestions/" style="width: 380px; height: 290px; border: medium none;" id="4">
-                  <mxCell style="iframe=1;" parent="1" xmlns="" vertex="1">
-                    <mxGeometry x="-790" y="-10" width="400" height="310" as="geometry" />
-                  </mxCell>
-                </iframe>
-                <mxCell id="12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="5" target="2" edge="1">
-                  <mxGeometry relative="1" as="geometry" />
-                </mxCell>
-                <iframe xmlns="http://www.w3.org/1999/xhtml" name="synonyms" src="/synonyms/" style="width: 340px; height: 530px; border: medium none;" id="5">
-                  <mxCell style="iframe=1;" parent="1" xmlns="" vertex="1">
-                    <mxGeometry x="580" y="-100" width="360" height="550" as="geometry" />
-                  </mxCell>
-                </iframe>
-                <object label="freehand" id="JOpQ_ee-CrSYCSZTWhDq-18">
-                  <mxCell style="" parent="0" />
-                </object>
-              </root>
-            </mxGraphModel>
-          </diagram>
-        </mxfile>
-
-  #===================================
-  # Deploy is used in manual mode, see its source
-  # deploy.moonspeak.localhost:
-  #   image: moonspeak-deploy:latest
-  #   environment:
-  #     # the deploy writes configuration for graph and hud services which have absolute urls
-  #     # this supplies the correct domain
-  #     MOONSPEAK_DOMAIN: "moonspeak.localhost"
-  #     MOONSPEAK_DEPLOY_SECRET: "my_secret"
-  #   build:
-  #     context: ./deploy
+  #
+  #
+  #  keycloak:
+  #    image: quay.io/keycloak/keycloak:20.0.3
+  #    container_name: keycloak
+  #    ports:
+  #      - "8080:8080"
+  #    environment:
+  #      KEYCLOAK_ADMIN: admin
+  #      KEYCLOAK_ADMIN_PASSWORD: admin
+  #    command: start-dev
+  #
+  # portainer:
+  #   # See README.md in portainer dir for more info on working with portainer
+  #   image: "temachpool/moonspeak-portainer:${TAG:-latest}"
   #   ports:
-  #     - "127.0.0.20:80:80"
+  #     - "9443:9443"
   #   volumes:
   #     - /var/run/docker.sock:/var/run/docker.sock
+  #   # args get appended to ENTRYPOINT, see https://stackoverflow.com/questions/37366857/how-to-pass-arguments-to-entrypoint-in-docker-compose-yml
+  #   # password "adminadminadmin" because portainer has security demands
+  #   command: "--templates http://localhost:9000/templates.json --admin-password ${MOONSPEAK_PORTAINER_ADMIN_PASSWORD:-$2y$05$xZBIExnGy77DNO6QXoeTFei4JeVtjzaTj8ckYPb9hZQpFlqAK1Piu}"
+  #   # command: --templates http://localhost:9000/templates.json
+  #
+  # swarmpit:
+  #   image: "temachpool/moonspeak-portainer:${TAG:-latest}"
+  #   ports:
+  #     - "9443:9443"
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  # docker run -it --rm \
+  # --name swarmpit-installer \
+  # --volume /var/run/docker.sock:/var/run/docker.sock \
+  # swarmpit/install:1.9
+

@@ -34,12 +34,12 @@ services:
     container_name: suggestions.moonspeak.org
     restart: always
 
-  # #==================================
+  #==================================
   # graph address is the user's unique access url
   workelements:
-    container_name: workelements-demouser-ddd.moonspeak.org
+    container_name: workelements-demouser1.moonspeak.org
     restart: always
 
   graph:
-    container_name: graph-demouser-bbb.moonspeak.org
+    container_name: graph-demouser1.moonspeak.org
     restart: always
