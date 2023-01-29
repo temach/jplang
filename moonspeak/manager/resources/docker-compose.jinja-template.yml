@@ -1,0 +1,77 @@
+version: "3"
+
+volumes:
+  # global external volume used to share unix sockets
+  unixsocks:
+    external: true
+    name: unixsocks
+
+  # volume for this user
+  userdata:
+    name: "userdata-{{ moonspeak_user | default('demouser2', true) }}"
+
+networks:
+  # global external network to share between all services
+  moonspeaknet:
+    external: true
+    name: moonspeaknet
+
+services:
+  #==================================
+  workelements:
+    image: "temachpool/moonspeak-workelements:{{ moonspeak_tag | default('latest', true) }}"
+    container_name: "workelements-{{ moonspeak_user | default('demouser2', true) }}.moonspeak.{{ moonspeak_domain | default('localhost', true) }}"
+    volumes:
+      - unixsocks:/opt/moonspeak/unixsocks
+      - userdata:/opt/moonspeak/workelements/userdata
+    networks:
+      - moonspeaknet
+    environment:
+      GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsocks/workelements-{{ moonspeak_user | default('demouser2', true) }}.sock' "
+
+  graph:
+    image: "temachpool/moonspeak-graph:{{ moonspeak_tag | default('latest', true) }}"
+    container_name: "graph-{{ moonspeak_user | default('demouser2', true) }}.moonspeak.{{ moonspeak_domain | default('localhost', true) }}"
+    volumes:
+      - unixsocks:/opt/moonspeak/unixsocks
+      - userdata:/opt/moonspeak/graph/userdata
+    networks:
+      - moonspeaknet
+    environment:
+      MOONSPEAK_PORT: 80
+      # this xml sets default graph value
+      MOONSPEAK_GRAPH_INITIAL_XML: >-
+        <mxfile host="localhost" modified="2022-12-04T06:11:18.071Z" agent="5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36" etag="-J2dvMhjnH6SI7QTmTVN" version="@DRAWIO-VERSION@" type="moonspeak">
+          <diagram id="SKebBaCcsGTVzdhOYIFn" name="pageWithNumber">
+            <mxGraphModel dx="4075" dy="1171" grid="1" gridSize="10" guides="1" tooltips="0" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+              <root>
+                <mxCell id="0" />
+                <mxCell id="1" style="locked=1;" parent="0" />
+                <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="/router/route/workelements-{{ moonspeak_user | default('demouser2', true) }}/" style="width: 680px; height: 560px; border: medium none;" id="2">
+                  <mxCell style="iframe=1;" parent="1" xmlns="" vertex="1">
+                    <mxGeometry x="-210" y="-70" width="700" height="580" as="geometry" />
+                  </mxCell>
+                </iframe>
+                <mxCell id="11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.003;entryY=0.384;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="4" target="2" edge="1">
+                  <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <iframe xmlns="http://www.w3.org/1999/xhtml" name="suggestions" src="/suggestions/" style="width: 380px; height: 290px; border: medium none;" id="4">
+                  <mxCell style="iframe=1;" parent="1" xmlns="" vertex="1">
+                    <mxGeometry x="-790" y="-10" width="400" height="310" as="geometry" />
+                  </mxCell>
+                </iframe>
+                <mxCell id="12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="5" target="2" edge="1">
+                  <mxGeometry relative="1" as="geometry" />
+                </mxCell>
+                <iframe xmlns="http://www.w3.org/1999/xhtml" name="synonyms" src="/synonyms/" style="width: 340px; height: 530px; border: medium none;" id="5">
+                  <mxCell style="iframe=1;" parent="1" xmlns="" vertex="1">
+                    <mxGeometry x="580" y="-100" width="360" height="550" as="geometry" />
+                  </mxCell>
+                </iframe>
+                <object label="freehand" id="JOpQ_ee-CrSYCSZTWhDq-18">
+                  <mxCell style="" parent="0" />
+                </object>
+              </root>
+            </mxGraphModel>
+          </diagram>
+        </mxfile>

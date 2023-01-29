@@ -1,0 +1,4 @@
+bottle==0.12.23
+python-on-whales==0.56.0
+jinja2
+docker
