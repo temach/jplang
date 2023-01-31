@@ -4,7 +4,7 @@ use std::os::unix::net::UnixListener;
 use std::fs;
 
 use actix_web::{web, App, HttpServer, HttpResponse, HttpRequest, middleware::Logger, HttpMessage};
-use awc::{ClientBuilder, Connector, http::Uri};
+use awc::{ClientBuilder, Connector, http::Uri, error::SendRequestError, error::ConnectError};
 use awc_uds::UdsConnector;
 use url::Url;
 
@@ -115,11 +115,9 @@ async fn router(
             .request_from(uri, req.head())
             .insert_header((actix_web::http::header::HOST, netloc.as_str()));
 
-        debug!("Requesting {:?}", client_req);
-
         (client_req, is_unixsock)
     };
-
+    debug!("Requesting {:?}", client_req);
 
     let finalised = match body.len() {
         0 => client_req.send(),
@@ -128,9 +126,16 @@ async fn router(
 
     let mut client_resp = match finalised.await {
         Ok(r) => r,
-        Err(error) => {
-            error!("Error requesting {:?} : {:?}", infoline, error);
-            return HttpResponse::build(actix_web::http::StatusCode::BAD_GATEWAY).finish();
+        Err(error) => match error {
+            SendRequestError::Connect(ConnectError::Resolver(err)) => {
+                // errors with resolution are special because we can heal them by bringing services up
+                error!("Error resolving & connecting {:?} : {:?}", infoline, err);
+                return HttpResponse::build(actix_web::http::StatusCode::SERVICE_UNAVAILABLE).finish();
+            },
+            _ => {
+                error!("Error requesting {:?} : {:?}", infoline, error);
+                return HttpResponse::build(actix_web::http::StatusCode::BAD_GATEWAY).finish();
+            }
         },
     };
 
