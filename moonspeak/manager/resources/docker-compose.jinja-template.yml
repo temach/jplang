@@ -8,7 +8,7 @@ volumes:
 
   # volume for this user
   userdata:
-    name: "userdata-{{ moonspeak_user | default('demouser2', true) }}"
+    name: "user-{{ moonspeak_user | default('demouser2', true) }}"
 
 networks:
   # global external network to share between all services
@@ -20,7 +20,7 @@ services:
   #==================================
   workelements:
     image: "temachpool/moonspeak-workelements:{{ moonspeak_tag | default('latest', true) }}"
-    container_name: "workelements-{{ moonspeak_user | default('demouser2', true) }}.moonspeak.{{ moonspeak_domain | default('localhost', true) }}"
+    container_name: "service-workelements-user-{{ moonspeak_user | default('demouser2', true) }}.{{ moonspeak_domain | default('moonspeak.localhost', true) }}"
     volumes:
       - unixsocks:/opt/moonspeak/unixsocks
       - userdata:/opt/moonspeak/workelements/userdata
@@ -31,7 +31,7 @@ services:
 
   graph:
     image: "temachpool/moonspeak-graph:{{ moonspeak_tag | default('latest', true) }}"
-    container_name: "graph-{{ moonspeak_user | default('demouser2', true) }}.moonspeak.{{ moonspeak_domain | default('localhost', true) }}"
+    container_name: "service-graph-user-{{ moonspeak_user | default('demouser2', true) }}.{{ moonspeak_domain | default('moonspeak.localhost', true) }}"
     volumes:
       - unixsocks:/opt/moonspeak/unixsocks
       - userdata:/opt/moonspeak/graph/userdata

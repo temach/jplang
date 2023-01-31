@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+  <head>
+    <meta charset="utf-8">
+
+    <!-- Required for bootstrap -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="css/main.css" rel="stylesheet">
+    <title>{{ title }}</title>
+  </head>
+
+  <body>
+    <script type="application/javascript">
+      function checkPageAvailability() {
+        let TIMEOUT = 70;
+        let url = "{{ url }}";
+        fetch(url)
+          .then(response => {
+            if (response.status === 200) {
+              // Page is available, redirect the browser
+              window.location.href = url;
+            } else {
+              // Page is not yet available, try again in 1 second
+              setTimeout(checkPageAvailability, TIMEOUT);
+            }
+          })
+          .catch(error => {
+            // Page is not yet available, try again in 1 second
+            setTimeout(checkPageAvailability, TIMEOUT);
+          });
+      }
+
+      checkPageAvailability();
+    </script>
+
+    <h1>Checking your browser...</h1>
+  </body>
+</html>

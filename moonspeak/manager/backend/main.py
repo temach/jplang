@@ -9,9 +9,12 @@ import json
 import secrets
 import threading
 from multiprocessing import Process, SimpleQueue
+from urllib.parse import urlparse
+from pathlib import Path
+from pprint import pprint
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from bottle import route, run, get, request, HTTPResponse
+from bottle import route, run, get, request, HTTPResponse, redirect, template, static_file
 from python_on_whales import DockerClient
 
 logger = logging.getLogger(__name__)
@@ -19,6 +22,8 @@ logger.setLevel(logging.INFO)
 
 DOMAIN = os.getenv("MOONSPEAK_DOMAIN", "moonspeak.localhost")
 DEPLOY_SECRET = os.getenv("MOONSPEAK_DEPLOY_SECRET", "secret")
+STOP_AFTER_IDLE_SECONDS = int(os.getenv("MOONSPEAK_MINUTES_TO_IDLE", "20")) * 60
+FRONTEND_ROOT = "../frontend/src/"
 
 # load templates
 JINJA_ENV = Environment(
@@ -27,18 +32,14 @@ JINJA_ENV = Environment(
 )
 DOCKER_COMPOSE_TEMPLATE = JINJA_ENV.get_template("docker-compose.jinja-template.yml")
 
-RUNNING_PROJECTS = []
-
-# start the background process as a child of bottle process
 QUEUE = SimpleQueue()
-Process(target=background_task, args=(QUEUE,)).start()
 
 
 def guid(nbytes=10):
     return secrets.token_hex(nbytes)
 
 
-def submit_deployment_task(unique_id, node):
+def submit_compose_up_task(unique_id):
     yaml_string = DOCKER_COMPOSE_TEMPLATE.render(
         moonspeak_domain = DOMAIN,
         moonspeak_user = unique_id,
@@ -49,59 +50,117 @@ def submit_deployment_task(unique_id, node):
     # TODO: check that yaml is valid after templating the string
     # this is to protect against bad characters, XSS, injections
 
-    fname = f"../userdata/docker-compose.user-{unique_id}.yml"
-    with open(fname, "w") as f:
-        f.write(yaml_string)
+    fpath = Path(f"../userdata/docker-compose.{unique_id}.yml")
 
-    docker = DockerClient(compose_project_name=unique_id, compose_files=[fname])
-    docker.compose.up(detach=True)
-    RUNNING_PROJECTS.append(docker)
+    if not fpath.exists():
+        with fpath.open(mode='w') as f:
+            f.write(yaml_string)
+
+    dockercli = DockerClient(compose_project_name=unique_id, compose_files=[str(fpath)])
+    dockercli.compose.up(detach=True)
 
     QUEUE.put(unique_id)
 
-    # generate service names
-    moonspeak_graph_service = "graph-{}".format(unique_id)
-    user_unique_url = "http://{}/router/route/{}".format(DOMAIN, moonspeak_graph_service)
-    return user_unique_url
+    return True
 
 
-@route("/<deploy_secret>/new", method=["GET"])
-@route("/<deploy_secret>/new/<moonspeak_user>", method=["GET"])
-def deploy(deploy_secret, moonspeak_user):
-    if not secrets.compare_digest(deploy_secret, DEPLOY_SECRET):
-        return HTTPResponse(status=401)
 
-    # select the node on which to deploy
-    node = "localhost"
+@route("/handle/<target:re:.*>", method=["GET", "POST"])
+def handle(target):
+    # try to get username from url, if not found then this is not something we can handle
+    service = request.query.service
+    user = request.query.user
+    if not service or not user:
+        logger.info("No service or user found in request")
+        return HTTPResponse(code=503)
 
-    # generate unique id
-    unique_id = moonspeak_user if moonspeak_user else guid(6)
+    if submit_compose_up_task(user):
+        # if you could start users containeers then build a full url and place the user to wait for this url
+        root_url = urlparse(target)._replace(scheme="http", netloc=DOMAIN)
+        return template('index.template.html', template_lookup=[FRONTEND_ROOT], url=root_url.geturl(), title="manager", lang="en")
 
-    # ask to spin up personal containers for this user
-    user_unique_url = submit_deployment_task(unique_id, node)
-
-    # return the url of root service
-    return {
-        "user_unique_url": user_unique_url,
-    }
+    return "Ooops, something went wrong! Please go back to the Home page."
 
 
-def background_task(q):
+@route("/test", method=["GET", "POST"])
+def test():
+    return "This should be the user's personal workspace (and actually is just a test API handle)"
+
+
+def background_task(event_queue):
+    import docker
+    import datetime
+    import re
+
+    # Create a Docker client object
+    client = docker.from_env()
+    re_user_name = re.compile("-user-([^.]+)")
+    force_stop_timeout = 15
+
     while True:
         # block until someone signals that its time to wake up
-        data = QUEUE.get()
+        data = event_queue.get()
 
-        docker = DockerClient(compose_project_name=unique_id, compose_files=[fname])
-        docker.compose.up(detach=True)
-        RUNNING_PROJECTS.append(docker)
+        all_containers = client.containers.list(all=True)
+
+        user_containers = {}
+        for c in all_containers:
+            match = re_user_name.match(c.name)
+            if match:
+                # this is a user container
+                username = match.group(1)
+                if username in user_containers:
+                    # add this container to this user
+                    user_containers[username].append(c)
+                else:
+                    user_containers[username] = []
+
+        # find and spin down user containers that do not have any logs for the last X minutes
+        for username, containers in user_containers.items():
+            idle = True
+
+            for container in containers:
+                # Get the logs of the container
+                logs = container.logs(tail=1, timestamps=True)
+                logs_str = logs.decode()
+                # only interested in first element of latest log line
+                log = logs_str.split("\n").pop(0)
+                log_time, _ = log.split(" ", 1)
+                timestamp = datetime.datetime.strptime(log_time[:19], '%Y-%m-%dT%H:%M:%S')
+                if datetime.datetime.now() - timestamp > datetime.timedelta(minutes=20):
+                    print(f'Idle container: {container.name} Last Log Timestamp: {timestamp}')
+                    idle = False
+                    break
+
+            if idle:
+                for container in containers:
+                    try:
+                        container.stop(timeout=force_stop_timeout)
+                    except Exception as error:
+                        # should be stopped forcibly anyway, so log and ignore
+                        logger.info(error)
+                        continue
+
+
+@get("/")
+def index():
+    return "Go to <code>/handle/username</code>"
+
+
+@get("/<path:path>")
+def static(path):
+    return static_file(path, root=FRONTEND_ROOT)
 
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Run as "python main.py"')
-    parser.add_argument('--port', type=int, default=80, help='port number')
+    parser.add_argument('--port', type=int, default=8080, help='port number')
     args = parser.parse_args()
+
+    # start the background process as a child of bottle process
+    Process(target=background_task, args=(QUEUE,)).start()
 
     logger.debug("Running server on port {}".format(args.port))
     run(host="0.0.0.0", port=args.port, debug=True)
