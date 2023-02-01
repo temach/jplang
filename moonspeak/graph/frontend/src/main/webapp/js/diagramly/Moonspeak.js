@@ -26,6 +26,12 @@
     window.TrelloFile = null;
     window.TrelloLibrary = null;
 
+    App.prototype.getDiagramId = function()
+    {
+        // hard code frontend to return a fixed diagram id, then the frontend will load this diagram
+        return "Mimport?uuid=default";
+    }
+
     Sidebar.prototype.init = function()
     {
         this.entries = [];
@@ -147,6 +153,20 @@
         // if (this.picker) {
         //     this.picker.style.display = 'none';
         // }
+    }
+
+
+    // Consider all wheel events to be scroll events
+    // override in instance instead of prototype, because original func is defined during .init()
+    // let graphIsZoomWheelEvent = graph.isZoomWheelEvent;
+    Graph.prototype.isZoomWheelEvent = function(evt)
+    {
+        // if (evt.target.nodeName && evt.target.nodeName.toLowerCase() === "iframe") {
+        //     // iframe get the event anyway, without reaching this listener
+        //     // so if we are here, we must ignore it
+        //     return false;
+        // }
+        return false;
     }
 
 })();
@@ -280,19 +300,6 @@ MoonspeakUi.prototype.runInit = function(app)
     // pinch zooming is clamped with this.zoomFactorPinchMax to be slower on mobile and touchpads
     // but mouse and buttons zoom is kept aggressive
     graph.zoomFactor = 1.2;
-
-    // Consider all wheel events to be scroll events
-    // override in instance instead of prototype, because original func is defined during .init()
-    let graphIsZoomWheelEvent = graph.isZoomWheelEvent;
-    graph.isZoomWheelEvent = function(evt)
-    {
-        if (evt.target.nodeName && evt.target.nodeName.toLowerCase() === "iframe") {
-            // iframe get the event anyway, without reaching this listener
-            // so if we are here, we must ignore it
-            return false;
-        }
-        return true;
-    }
 
     // Resize IFrame and Rectangle together
     let iframeRectanglePadding = 16;
