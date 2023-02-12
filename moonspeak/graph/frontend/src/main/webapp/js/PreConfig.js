@@ -11,3 +11,19 @@ window.DRAWIO_LIGHTBOX_URL = null; // Replace with your lightbox URL, eg. https:
 window.DRAW_MATH_URL = 'math/es5';
 window.DRAWIO_CONFIG = null; // Replace with your custom draw.io configurations. For more details, https://www.diagrams.net/doc/faq/configure-diagram-editor
 urlParams['sync'] = 'manual';
+
+// Moonspeak special params
+// urlParams['dev'] = '1';
+// urlParams['lang'] = 'i18n';
+// urlParams['test'] = '1';
+urlParams['ui'] = 'sketch';
+urlParams['mode'] = 'moonspeak';
+urlParams['gh'] = '0';
+urlParams['gl'] = '0';
+urlParams['gapi'] = '0';
+urlParams['splash'] = '0';
+urlParams['noFileMenu'] = '1';
+urlParams['plugins'] = '0';
+urlParams['print-csp'] = '1';
+urlParams['math'] = '0';
+
