@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# there is no easy way around this: this service defines how the urls look
+# because it creates new containers and gives them names accordingly
+# containers are named as follows: s-SERVICE_NAME-u-USER_NAME, the "-" hyphen is used as the separator
+
 # see: https://jpmens.net/2020/02/28/dial-a-for-ansible-and-r-for-runner/
 
 import os
@@ -8,21 +12,29 @@ import pathlib
 import json
 import secrets
 import threading
-from multiprocessing import Process, SimpleQueue
-from urllib.parse import urlparse
+from multiprocessing import Process
+from multiprocessing import Queue as MPQueue # do not confuse with threading.Queue
 from pathlib import Path
-from pprint import pprint
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from bottle import route, run, get, request, HTTPResponse, redirect, template, static_file
 from python_on_whales import DockerClient
+from python_on_whales.exceptions import DockerException
+
+from spindown_process import spindown_process
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+LOGLEVEL = os.environ.get("LOGLEVEL", "DEBUG").upper()
+logging.basicConfig(level=LOGLEVEL)
 
 DOMAIN = os.getenv("MOONSPEAK_DOMAIN", "moonspeak.localhost")
 DEPLOY_SECRET = os.getenv("MOONSPEAK_DEPLOY_SECRET", "secret")
-STOP_AFTER_IDLE_SECONDS = int(os.getenv("MOONSPEAK_MINUTES_TO_IDLE", "20")) * 60
+DEVMODE = os.getenv("MOONSPEAK_DEVMODE", "1")
+
+SECONDS_BEFORE_IDLE_SPINDOWN = int(os.getenv("MOONSPEAK_CONTAINER_IDLE_TIMEOUT_SECONDS", "20"))
+MAX_INTERVAL_DURATION_SECONDS = 10  # must check at least once a minute
+MIN_INTERVAL_DURATION_SECONDS = 1  # never check more often than once every 10 seconds
+
 FRONTEND_ROOT = "../frontend/src/"
 
 # load templates
@@ -32,15 +44,18 @@ JINJA_ENV = Environment(
 )
 DOCKER_COMPOSE_TEMPLATE = JINJA_ENV.get_template("docker-compose.jinja-template.yml")
 
-QUEUE = SimpleQueue()
+QUEUE = MPQueue()
 
+DEVMODE_COUNTER = 0
+DEVMODE_SERVICE_NAME = "graph"
 
 def guid(nbytes=10):
     return secrets.token_hex(nbytes)
 
 
-def submit_compose_up_task(unique_id):
+def submit_compose_up_task(unique_id, force_recreate=False):
     yaml_string = DOCKER_COMPOSE_TEMPLATE.render(
+        moonspeak_devmode = DEVMODE,
         moonspeak_domain = DOMAIN,
         moonspeak_user = unique_id,
         moonspeak_tag = "latest",
@@ -52,99 +67,76 @@ def submit_compose_up_task(unique_id):
 
     fpath = Path(f"../userdata/docker-compose.{unique_id}.yml")
 
-    if not fpath.exists():
+    if force_recreate or not fpath.exists():
         with fpath.open(mode='w') as f:
             f.write(yaml_string)
 
     dockercli = DockerClient(compose_project_name=unique_id, compose_files=[str(fpath)])
-    dockercli.compose.up(detach=True)
+    dockercli.compose.up(detach=True, remove_orphans=True)
 
     QUEUE.put(unique_id)
 
-    return True
+    return dockercli
 
 
-
+# how to test locally?
 @route("/handle/<target:re:.*>", method=["GET", "POST"])
 def handle(target):
-    # try to get username from url, if not found then this is not something we can handle
-    service = request.query.service
-    user = request.query.user
-    if not service or not user:
-        logger.info("No service or user found in request")
-        return HTTPResponse(code=503)
+    # the target URL here is new or old url that should have worked, manager needs to figure out if it can make it work
+    # import pdb; pdb.set_trace()
 
-    if submit_compose_up_task(user):
-        # if you could start users containeers then build a full url and place the user to wait for this url
-        root_url = urlparse(target)._replace(scheme="http", netloc=DOMAIN)
+    service_name = None
+    parts = request.path.split("/")
+    for p in parts:
+        if "-u-" in p:
+            service_name = p
+            break
+
+    if not service_name and DEVMODE:
+        global DEVMODE_COUNTER
+        DEVMODE_COUNTER += 1
+        # allow to have empty servicename, we will just generate one using a counter
+        service_name = "s-{}-u-devmode{}".format(DEVMODE_SERVICE_NAME, DEVMODE_COUNTER)
+
+    if not service_name:
+        logger.info("No '-u-' found in request: {}".format(request.url))
+        return HTTPResponse(status=404)
+
+    try:
+        _, service_name, _, user_name = service_name.split("-")
+    except ValueError:
+        logger.info("Error parsing service_name, expected s-XXX-u-YYY, but found: {}".format(service_name))
+        return HTTPResponse(status=404)
+
+    dockercli = submit_compose_up_task(user_name)
+    if dockercli:
+        # started users containeers, must fix url
+        # take what was there initially (query params + fragment), change netloc and leave only the trailing part of path
+        # use "http" to allow easy testing locally
+        root_url = request.urlparts._replace(scheme="http", netloc=DOMAIN, path=target)
+
+        if DEVMODE:
+            # ugly hacks for nice and easy dev mode
+            # we need to adjust root_url to include host port, for dev mode just hardcode "graph" and "80"
+            try:
+                container_name, host_port = dockercli.compose.port(DEVMODE_SERVICE_NAME, "80")
+            except DockerException:
+                logger.warn("Previously you launched this user's services without DEVMODE enabled, so they have no open ports for you to connect!")
+                logger.warn("I will shut them down and relaunch with DEVMODE enabled, give me a minute and try the same URL again")
+                dockercli = submit_compose_up_task(user_name, force_recreate=True)
+                container_name, host_port = dockercli.compose.port(DEVMODE_SERVICE_NAME, "80")
+            # just hardcode request to root index.html in devmode
+            root_url = root_url._replace(netloc="{}:{}".format(root_url.netloc, host_port), path="/")
+
+        logger.debug("Returning target url: {}".format(root_url))
         return template('index.template.html', template_lookup=[FRONTEND_ROOT], url=root_url.geturl(), title="manager", lang="en")
 
     return "Ooops, something went wrong! Please go back to the Home page."
 
 
-@route("/test", method=["GET", "POST"])
-def test():
-    return "This should be the user's personal workspace (and actually is just a test API handle)"
-
-
-def background_task(event_queue):
-    import docker
-    import datetime
-    import re
-
-    # Create a Docker client object
-    client = docker.from_env()
-    re_user_name = re.compile("-user-([^.]+)")
-    force_stop_timeout = 15
-
-    while True:
-        # block until someone signals that its time to wake up
-        data = event_queue.get()
-
-        all_containers = client.containers.list(all=True)
-
-        user_containers = {}
-        for c in all_containers:
-            match = re_user_name.match(c.name)
-            if match:
-                # this is a user container
-                username = match.group(1)
-                if username in user_containers:
-                    # add this container to this user
-                    user_containers[username].append(c)
-                else:
-                    user_containers[username] = []
-
-        # find and spin down user containers that do not have any logs for the last X minutes
-        for username, containers in user_containers.items():
-            idle = True
-
-            for container in containers:
-                # Get the logs of the container
-                logs = container.logs(tail=1, timestamps=True)
-                logs_str = logs.decode()
-                # only interested in first element of latest log line
-                log = logs_str.split("\n").pop(0)
-                log_time, _ = log.split(" ", 1)
-                timestamp = datetime.datetime.strptime(log_time[:19], '%Y-%m-%dT%H:%M:%S')
-                if datetime.datetime.now() - timestamp > datetime.timedelta(minutes=20):
-                    print(f'Idle container: {container.name} Last Log Timestamp: {timestamp}')
-                    idle = False
-                    break
-
-            if idle:
-                for container in containers:
-                    try:
-                        container.stop(timeout=force_stop_timeout)
-                    except Exception as error:
-                        # should be stopped forcibly anyway, so log and ignore
-                        logger.info(error)
-                        continue
-
-
 @get("/")
 def index():
-    return "Go to <code>/handle/username</code>"
+    return "Go to <code>/handle/s-XXX-u-YYY</code>"
 
 
 @get("/<path:path>")
@@ -160,7 +152,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # start the background process as a child of bottle process
-    Process(target=background_task, args=(QUEUE,)).start()
+    Process(target=spindown_process, args=(QUEUE,)).start()
 
     logger.debug("Running server on port {}".format(args.port))
     run(host="0.0.0.0", port=args.port, debug=True)

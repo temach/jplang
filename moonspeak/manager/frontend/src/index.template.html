@@ -2,32 +2,25 @@
 <html lang="{{ lang }}">
   <head>
     <meta charset="utf-8">
-
-    <!-- Required for bootstrap -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-
-    <link href="css/main.css" rel="stylesheet">
     <title>{{ title }}</title>
   </head>
 
   <body>
     <script type="application/javascript">
       function checkPageAvailability() {
-        let TIMEOUT = 70;
+        let TIMEOUT = 1000;
         let url = "{{ url }}";
-        fetch(url)
+        console.log("Target url: " + url);
+        // "mode no-cors" taken from here: https://stackoverflow.com/questions/42758604/check-if-online-resource-is-reachable-with-javascript-not-requiring-the-the-sam
+        fetch(url, {mode: 'no-cors'})
           .then(response => {
-            if (response.status === 200) {
-              // Page is available, redirect the browser
-              window.location.href = url;
-            } else {
-              // Page is not yet available, try again in 1 second
-              setTimeout(checkPageAvailability, TIMEOUT);
-            }
+            // here we only have an opaque response object
+            // since we did not get an error, the page should be up
+            let link = document.getElementById("click_to_continue");
+            link.style.display = "block";
           })
           .catch(error => {
-            // Page is not yet available, try again in 1 second
+            // Page is not yet available, try again later
             setTimeout(checkPageAvailability, TIMEOUT);
           });
       }
@@ -36,5 +29,6 @@
     </script>
 
     <h1>Checking your browser...</h1>
+    <a id="click_to_continue" style="display: none;" href="{{ url }}">Click to continue!</a>
   </body>
 </html>
