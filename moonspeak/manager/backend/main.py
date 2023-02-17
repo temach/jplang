@@ -135,7 +135,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Run as "python main.py"')
-    parser.add_argument('--port', type=int, default=8080, help='port number')
+    parser.add_argument('--port', type=int, default=os.getenv("MOONSPEAK_PORT", 8010), help='port number')
     args = parser.parse_args()
 
     # start the background process as a child of bottle process
