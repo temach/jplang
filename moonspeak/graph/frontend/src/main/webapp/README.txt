@@ -285,7 +285,7 @@ OR
 // mxShape.prototype.svgPointerEvents = 'none';
 
 Load line for when running with docker on localhost (note: must have ending slash "/" after graph and removed "dev=1" param to load compiled assets):
-http://moonspeak.localhost/router/route/graph-demouser1/?lang=i18n&test=1
+http://moonspeak.localhost/router/route/u-demouser1-s-graph/?lang=i18n&test=1
 
 
 Load line, see https://www.diagrams.net/doc/faq/supported-url-parameters :
