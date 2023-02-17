@@ -40,6 +40,7 @@ services:
     ports:
       - "80:8443"   # listens on 8433 to redirect to https port 443
       - "443:443"
+    command: nginx-debug -g "daemon off; error_log stderr debug;"
 
   router:
     container_name: router.moonspeak.localhost
@@ -48,7 +49,9 @@ services:
     environment:
       MOONSPEAK_DOMAIN: "moonspeak.localhost"
       # dev mode relaxes a number of restrictions (e.g. must have access to gateway's unix socket)
-      MOONSPEAK_DEV_MODE: "1"
+      # also enables self-handling of routes instead of gateway which can be confusing!
+      # so do NOT enable this if gateway is enabled, only enable without gateway
+      MOONSPEAK_DEV_MODE: ""
       RUST_LOG: "router=debug"
 
   manager:
@@ -56,10 +59,12 @@ services:
     build:
       context: ./manager
     environment:
+      MOONSPEAK_DEVMODE: ""
       # set debug to on
       MOONSPEAK_DOMAIN: "moonspeak.localhost"
       MOONSPEAK_DEPLOY_SECRET: "secret"
       PYTHON_ON_WHALES_DEBUG: "1"
+      LOGLEVEL: "1"
 
   #===================================
   landing:
