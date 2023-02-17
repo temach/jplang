@@ -26,10 +26,11 @@
 #
 version: "3"
 
+name: demouser1
+
 volumes:
   # volume for demouser1
   userdata:
-    name: userdata-demouser1
 
 services:
   #===================================
@@ -86,7 +87,7 @@ services:
   # this is the demo user for development,  graph address is the user's unique access url
   workelements:
     image: "temachpool/moonspeak-workelements:${TAG:-latest}"
-    container_name: workelements-demouser1.moonspeak.localhost
+    container_name: u-demouser1-s-workelements.moonspeak.localhost
     build:
       context: ./workelements
     volumes:
@@ -95,11 +96,13 @@ services:
     networks:
       - moonspeaknet
     environment:
-      GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsocks/workelements-demouser1.sock' "
+      GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsocks/u-demouser1-s-workelements.sock' "
 
   graph:
     image: "temachpool/moonspeak-graph:${TAG:-latest}"
-    container_name: graph-demouser1.moonspeak.localhost
+    container_name: u-demouser1-s-graph.moonspeak.localhost
+    depends_on:
+      - workelements
     build:
       context: ./graph
     volumes:
@@ -117,7 +120,7 @@ services:
               <root>
                 <mxCell id="0" />
                 <mxCell id="1" style="locked=1;" parent="0" />
-                <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="/router/route/workelements-demouser1/" style="width: 680px; height: 560px; border: medium none;" id="2">
+                <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="/router/route/u-demouser1-s-workelements/" style="width: 680px; height: 560px; border: medium none;" id="2">
                   <mxCell style="iframe=1;" parent="1" xmlns="" vertex="1">
                     <mxGeometry x="-210" y="-70" width="700" height="580" as="geometry" />
                   </mxCell>
