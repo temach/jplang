@@ -60,12 +60,13 @@ services:
     build:
       context: ./manager
     environment:
+      MOONSPEAK_PORT: "80"
       MOONSPEAK_DEVMODE: ""
       # set debug to on
       MOONSPEAK_DOMAIN: "moonspeak.localhost"
       MOONSPEAK_DEPLOY_SECRET: "secret"
       PYTHON_ON_WHALES_DEBUG: "1"
-      LOGLEVEL: "1"
+      LOGLEVEL: "INFO"
 
   #===================================
   landing:
