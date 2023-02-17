@@ -27,7 +27,8 @@ def spindown_process(event_queue):
     # Create a Docker client object
     client = docker.from_env()
 
-    re_user_name = re.compile("-u-([^.]+)")
+    # regex: start from "u-" and take everything until a literal [.] or [-]
+    re_user_name = re.compile("^u-([^.-]+)")
     latest_check_timestamp = datetime.utcnow()
 
     min_interval_duration = timedelta(seconds=MIN_INTERVAL_DURATION_SECONDS)
@@ -85,7 +86,7 @@ def spindown_process(event_queue):
                 except Exception as error:
                     # if container is still starting and has zero logs or whatever error
                     # do not bring the manager down
-                    logger.warn("Problem evaluating log line: " + logs_str)
+                    logger.warn(f"Problem evaluating log line: '{logs_str}'", exc_info=True)
                     all_idle = False
                     break
 
@@ -99,10 +100,9 @@ def spindown_process(event_queue):
                     break
 
             if all_idle:
-                fpath = Path(f"../userdata/docker-compose.{username}.yml")
                 try:
-                    dockercli = DockerClient(compose_project_name=username, compose_files=[str(fpath)])
+                    dockercli = DockerClient(compose_project_name=username)
                     dockercli.compose.down(remove_orphans=True, timeout=FORCE_STOP_TIMEOUT, volumes=False, quiet=False)
-                except DockerException:
+                except DockerException as error:
                     # do not bring the manager down
-                    logger.warn(error)
+                    logger.warn(error, exc_info=True)

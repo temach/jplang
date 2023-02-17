@@ -12,11 +12,12 @@ import pathlib
 import json
 import secrets
 import threading
+import yaml
 from multiprocessing import Process
 from multiprocessing import Queue as MPQueue # do not confuse with threading.Queue
 from pathlib import Path
+from pprint import pprint
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
 from bottle import route, run, get, request, HTTPResponse, redirect, template, static_file
 from python_on_whales import DockerClient
 from python_on_whales.exceptions import DockerException
@@ -31,47 +32,32 @@ DOMAIN = os.getenv("MOONSPEAK_DOMAIN", "moonspeak.localhost")
 DEPLOY_SECRET = os.getenv("MOONSPEAK_DEPLOY_SECRET", "secret")
 DEVMODE = os.getenv("MOONSPEAK_DEVMODE", "1")
 
-SECONDS_BEFORE_IDLE_SPINDOWN = int(os.getenv("MOONSPEAK_CONTAINER_IDLE_TIMEOUT_SECONDS", "20"))
-MAX_INTERVAL_DURATION_SECONDS = 10  # must check at least once a minute
+SECONDS_BEFORE_IDLE_SPINDOWN = int(os.getenv("MOONSPEAK_CONTAINER_IDLE_TIMEOUT_SECONDS", "90"))
+MAX_INTERVAL_DURATION_SECONDS = 30  # must check at least once a minute
 MIN_INTERVAL_DURATION_SECONDS = 1  # never check more often than once every 10 seconds
 
 FRONTEND_ROOT = "../frontend/src/"
 
-# load templates
-JINJA_ENV = Environment(
-    loader=FileSystemLoader(pathlib.Path("../resources/")),
-    autoescape=select_autoescape()
-)
-DOCKER_COMPOSE_TEMPLATE = JINJA_ENV.get_template("docker-compose.jinja-template.yml")
-
 QUEUE = MPQueue()
 
-DEVMODE_COUNTER = 0
+# in dev mode the count is used to generate predictable usernames (devmodeXX) and open port numbers on request
+DEVMODE_COUNT = 1
 DEVMODE_SERVICE_NAME = "graph"
 
 def guid(nbytes=10):
     return secrets.token_hex(nbytes)
 
-
 def submit_compose_up_task(unique_id, force_recreate=False):
-    yaml_string = DOCKER_COMPOSE_TEMPLATE.render(
-        moonspeak_devmode = DEVMODE,
-        moonspeak_domain = DOMAIN,
-        moonspeak_user = unique_id,
-        moonspeak_tag = "latest",
-    )
-    logger.debug(yaml_string)
+    compose_files = [ str(Path("../resources/docker-compose-template.yml")) ]
 
-    # TODO: check that yaml is valid after templating the string
-    # this is to protect against bad characters, XSS, injections
+    if DEVMODE:
+        compose_files.append(str(Path("../resources/docker-compose-devmode-template.yml")))
+        # see details in devmode docker compose template, basically this allows to publish service ports in predictable manner
+        os.environ['MOONSPEAK_DEVMODE_COUNT'] = str(DEVMODE_COUNT)
 
-    fpath = Path(f"../userdata/docker-compose.{unique_id}.yml")
+    dockercli = DockerClient(compose_project_name=unique_id, compose_files=compose_files)
+    logger.info(yaml.safe_dump(dockercli.compose.config(return_json=True)))
 
-    if force_recreate or not fpath.exists():
-        with fpath.open(mode='w') as f:
-            f.write(yaml_string)
-
-    dockercli = DockerClient(compose_project_name=unique_id, compose_files=[str(fpath)])
     dockercli.compose.up(detach=True, remove_orphans=True)
 
     QUEUE.put(unique_id)
@@ -79,7 +65,8 @@ def submit_compose_up_task(unique_id, force_recreate=False):
     return dockercli
 
 
-# how to test locally?
+# to test locally query with empty <target>, e.g. localhost:8080/handle/
+# devmode will handle the rest
 @route("/handle/<target:re:.*>", method=["GET", "POST"])
 def handle(target):
     # the target URL here is new or old url that should have worked, manager needs to figure out if it can make it work
@@ -88,24 +75,24 @@ def handle(target):
     service_name = None
     parts = request.path.split("/")
     for p in parts:
-        if "-u-" in p:
+        if p.startswith("u-"):
             service_name = p
             break
 
-    if not service_name and DEVMODE:
-        global DEVMODE_COUNTER
-        DEVMODE_COUNTER += 1
+    if DEVMODE and not service_name:
+        global DEVMODE_COUNT
+        DEVMODE_COUNT += 1
         # allow to have empty servicename, we will just generate one using a counter
-        service_name = "s-{}-u-devmode{}".format(DEVMODE_SERVICE_NAME, DEVMODE_COUNTER)
+        service_name = "u-devmode{}-s-{}".format(DEVMODE_COUNT, DEVMODE_SERVICE_NAME)
 
     if not service_name:
-        logger.info("No '-u-' found in request: {}".format(request.url))
+        logger.info("No 'u-' found in request: {}".format(request.url))
         return HTTPResponse(status=404)
 
     try:
-        _, service_name, _, user_name = service_name.split("-")
+        _, user_name, _, service_name = service_name.split("-")
     except ValueError:
-        logger.info("Error parsing service_name, expected s-XXX-u-YYY, but found: {}".format(service_name))
+        logger.info("Error parsing service_name, expected u-XXX-s-YYY, but found: {}".format(service_name))
         return HTTPResponse(status=404)
 
     dockercli = submit_compose_up_task(user_name)

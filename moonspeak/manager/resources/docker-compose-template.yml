@@ -1,4 +1,10 @@
+#
+# using env variables in compose file, see: https://docs.docker.com/compose/environment-variables/env-file/#parameter-expansion
+#
+
 version: "3"
+
+name: "${COMPOSE_PROJECT_NAME:?You must set compose project name e.g. use the -p flag}"
 
 volumes:
   # global external volume used to share unix sockets
@@ -8,7 +14,6 @@ volumes:
 
   # volume for this user
   userdata:
-    name: "user-{{ moonspeak_user | default('demouser2', true) }}"
 
 networks:
   # global external network to share between all services
@@ -19,36 +24,26 @@ networks:
 services:
   #==================================
   workelements:
-    image: "temachpool/moonspeak-workelements:{{ moonspeak_tag | default('latest', true) }}"
-    container_name: "s-workelements-u-{{ moonspeak_user | default('demouser2', true) }}.{{ moonspeak_domain | default('moonspeak.localhost', true) }}"
+    image: "temachpool/moonspeak-workelements:${MOONSPEAK_TAG:-latest}"
+    container_name: "u-${COMPOSE_PROJECT_NAME}-s-workelements.moonspeak.${MOONSPEAK_TLD:-localhost}"
     volumes:
       - unixsocks:/opt/moonspeak/unixsocks
       - userdata:/opt/moonspeak/workelements/userdata
     networks:
       - moonspeaknet
-    {% if moonspeak_devmode %}
-    # with this docker-compose will chooose a random free host port to bind
-    # see: https://stackoverflow.com/questions/60109556/expose-random-port-to-docker-compose-yml
-    ports:
-      - "80"
-    {% endif %}
     environment:
-      GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsocks/workelements-{{ moonspeak_user | default('demouser2', true) }}.sock' "
+      GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsocks/u-${COMPOSE_PROJECT_NAME}-s-workelements.sock' "
 
   graph:
-    image: "temachpool/moonspeak-graph:{{ moonspeak_tag | default('latest', true) }}"
-    container_name: "s-graph-u-{{ moonspeak_user | default('demouser2', true) }}.{{ moonspeak_domain | default('moonspeak.localhost', true) }}"
+    depends_on:
+      - workelements
+    image: "temachpool/moonspeak-graph:latest"
+    container_name: "u-${COMPOSE_PROJECT_NAME}-s-graph.moonspeak.localhost"
     volumes:
       - unixsocks:/opt/moonspeak/unixsocks
       - userdata:/opt/moonspeak/graph/userdata
     networks:
       - moonspeaknet
-    {% if moonspeak_devmode %}
-    # with this docker-compose will chooose a random free host port to bind
-    # see: https://stackoverflow.com/questions/60109556/expose-random-port-to-docker-compose-yml
-    ports:
-      - "80"
-    {% endif %}
     environment:
       MOONSPEAK_PORT: 80
       # this xml sets default graph value
@@ -59,7 +54,7 @@ services:
               <root>
                 <mxCell id="0" />
                 <mxCell id="1" style="locked=1;" parent="0" />
-                <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="/router/route/workelements-{{ moonspeak_user | default('demouser2', true) }}/" style="width: 680px; height: 560px; border: medium none;" id="2">
+                <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="/router/route/u-${COMPOSE_PROJECT_NAME}-s-workelements/" style="width: 680px; height: 560px; border: medium none;" id="2">
                   <mxCell style="iframe=1;" parent="1" xmlns="" vertex="1">
                     <mxGeometry x="-210" y="-70" width="700" height="580" as="geometry" />
                   </mxCell>
