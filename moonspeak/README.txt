@@ -1,3 +1,8 @@
+TODO:
+
+1. strange bug with building synonyms, -- DEV_MODE --, htmlLint did not strip 
+2. github does not copy tags when forking, and does not copy branches it seems?!
+
 Server setup:
 - create server
 - redirect DNS to server ip
