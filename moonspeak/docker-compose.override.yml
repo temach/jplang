@@ -64,18 +64,18 @@ services:
       MOONSPEAK_DEVMODE: ""
 
       # settings for container spin down (container stop & rm)
-      SECONDS_BEFORE_IDLE_SPINDOWN: 90
+      MOONSPEAK_SECONDS_BEFORE_IDLE_SPINDOWN: 70
       # must check at least once a minute
-      MAX_INTERVAL_DURATION_SECONDS: 60
+      MOONSPEAK_MAX_INTERVAL_DURATION_SECONDS: 30
       # never check more often than once every 10 seconds
-      MIN_INTERVAL_DURATION_SECONDS: 10
+      MOONSPEAK_MIN_INTERVAL_DURATION_SECONDS: 10
 
       # manager will never spin down containers for this user, even after period of inactivity
       MOONSPEAK_IGNORED_DEMO_USER: "demouser1"
 
       # set debug to on
       PYTHON_ON_WHALES_DEBUG: "1"
-      LOGLEVEL: "INFO"
+      LOGLEVEL: "DEBUG"
 
   #===================================
   landing:
