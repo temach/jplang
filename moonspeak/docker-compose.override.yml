@@ -26,11 +26,10 @@
 #
 version: "3"
 
-name: demouser1
-
 volumes:
   # volume for demouser1
   userdata:
+    name: demouser1_userdata
 
 services:
   #===================================
@@ -60,11 +59,21 @@ services:
     build:
       context: ./manager
     environment:
+      MOONSPEAK_DOMAIN: "moonspeak.localhost"
       MOONSPEAK_PORT: "80"
       MOONSPEAK_DEVMODE: ""
+
+      # settings for container spin down (container stop & rm)
+      SECONDS_BEFORE_IDLE_SPINDOWN: 90
+      # must check at least once a minute
+      MAX_INTERVAL_DURATION_SECONDS: 60
+      # never check more often than once every 10 seconds
+      MIN_INTERVAL_DURATION_SECONDS: 10
+
+      # manager will never spin down containers for this user, even after period of inactivity
+      MOONSPEAK_IGNORED_DEMO_USER: "demouser1"
+
       # set debug to on
-      MOONSPEAK_DOMAIN: "moonspeak.localhost"
-      MOONSPEAK_DEPLOY_SECRET: "secret"
       PYTHON_ON_WHALES_DEBUG: "1"
       LOGLEVEL: "INFO"
 
