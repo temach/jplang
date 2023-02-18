@@ -59,7 +59,8 @@ services:
     build:
       context: ./manager
     environment:
-      MOONSPEAK_DOMAIN: "moonspeak.localhost"
+      TAG: "latest"
+      MOONSPEAK_TLD: "localhost"
       MOONSPEAK_PORT: "80"
       MOONSPEAK_DEVMODE: ""
 

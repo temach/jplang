@@ -49,7 +49,7 @@ services:
     environment:
       # the manager writes configuration for graph service which has absolute urls
       # this supplies the correct name, the field is re-defined in override configs
-      MOONSPEAK_DOMAIN: ""
+      MOONSPEAK_TLD: ""
       MOONSPEAK_DEPLOY_SECRET: "secret"
       # set debug to off
       PYTHON_ON_WHALES_DEBUG: ""
