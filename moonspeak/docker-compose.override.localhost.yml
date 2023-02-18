@@ -22,6 +22,15 @@ services:
     environment:
       MOONSPEAK_DOMAIN: "moonspeak.localhost"
 
+  manager:
+    container_name: manager.moonspeak.localhost
+    restart: always
+    environment:
+      TAG: "2023-02-19"
+      MOONSPEAK_TLD: "localhost"
+      # settings for container spin down (container stop & rm)
+      MOONSPEAK_SECONDS_BEFORE_IDLE_SPINDOWN: 600
+
   #===================================
   landing:
     container_name: landing.moonspeak.localhost
@@ -33,14 +42,4 @@ services:
 
   suggestions:
     container_name: suggestions.moonspeak.localhost
-    restart: always
-
-  #==================================
-  # graph address is the user's unique access url
-  workelements:
-    container_name: workelements-demouser1.moonspeak.localhost
-    restart: always
-
-  graph:
-    container_name: graph-demouser1.moonspeak.localhost
     restart: always
