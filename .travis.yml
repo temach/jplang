@@ -23,6 +23,6 @@ jobs:
       script:
         - ( cd moonspeak && TAG="$TRAVIS_BRANCH" docker-compose build )
         # remember that password with special characters must be escaped, i.e. '&pass!word' -> '\&pass\!word' in travis web gui
-        - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+        - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
         - ( cd moonspeak && TAG="$TRAVIS_BRANCH" docker-compose push )
         - docker logout
