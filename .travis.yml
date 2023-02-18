@@ -16,27 +16,13 @@ before_cache:
 
 jobs:
   include:
-    # push docker image
     - stage: build-push-latest
-      if: branch = master
+      if: branch = latest OR branch =~ ^2023
       services:
         - docker
-      install:
-        - ( cd moonspeak && TAG="latest" docker-compose build )
-      script: 
-        # remember that password with special characters must be escaped, i.e. '&pass!word' -> '\&pass\!word' in travis web gui
-        - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
-        - ( cd moonspeak && TAG="latest" docker-compose push )
-        - docker logout
-
-    - stage: build-push-tag
-      if: (branch = master) AND (tag =~ ^2023 )
-      services:
-        - docker
-      install:
-        - ( cd moonspeak && TAG="$TRAVIS_TAG" docker-compose build )
       script:
+        - ( cd moonspeak && TAG="$TRAVIS_BRANCH" docker-compose build )
         # remember that password with special characters must be escaped, i.e. '&pass!word' -> '\&pass\!word' in travis web gui
         - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
-        - ( cd moonspeak && TAG="$TRAVIS_TAG" docker-compose push )
+        - ( cd moonspeak && TAG="$TRAVIS_BRANCH" docker-compose push )
         - docker logout
