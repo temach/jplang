@@ -17,9 +17,11 @@ def spindown_process(event_queue):
     from python_on_whales.exceptions import DockerException
 
     IGNORED_DEMO_USER = os.getenv("MOONSPEAK_IGNORED_DEMO_USER", "demouser1")
-    SECONDS_BEFORE_IDLE_SPINDOWN = int(os.getenv("MOONSPEAK_CONTAINER_IDLE_TIMEOUT_SECONDS", "60"))
-    MAX_INTERVAL_DURATION_SECONDS = 10  # must check at least once in this interval
-    MIN_INTERVAL_DURATION_SECONDS = 1  # never check more often than this interval
+
+    SECONDS_BEFORE_IDLE_SPINDOWN = int(os.getenv("MOONSPEAK_SECONDS_BEFORE_IDLE_SPINDOWN", "90"))
+    MAX_INTERVAL_DURATION_SECONDS = int(os.getenv("MOONSPEAK_MAX_INTERVAL_DURATION_SECONDS", "30"))  # must check at least once in this interval
+    MIN_INTERVAL_DURATION_SECONDS = int(os.getenv("MOONSPEAK_MIN_INTERVAL_DURATION_SECONDS", "10"))  # never check more often than this interval
+
     FORCE_STOP_TIMEOUT = 15
 
     # logging inherits level from parent process, see: https://docs.python.org/3/library/multiprocessing.html#logging

@@ -31,10 +31,6 @@ logging.basicConfig(level=LOGLEVEL)
 DOMAIN = os.getenv("MOONSPEAK_DOMAIN", "moonspeak.localhost")
 DEVMODE = os.getenv("MOONSPEAK_DEVMODE", "1")
 
-SECONDS_BEFORE_IDLE_SPINDOWN = int(os.getenv("MOONSPEAK_CONTAINER_IDLE_TIMEOUT_SECONDS", "90"))
-MAX_INTERVAL_DURATION_SECONDS = 30  # must check at least once a minute
-MIN_INTERVAL_DURATION_SECONDS = 1  # never check more often than once every 10 seconds
-
 FRONTEND_ROOT = "../frontend/src/"
 
 QUEUE = MPQueue()
@@ -98,8 +94,7 @@ def handle(target):
     if dockercli:
         # started users containeers, must fix url
         # take what was there initially (query params + fragment), change netloc and leave only the trailing part of path
-        # use "http" to allow easy testing locally
-        root_url = request.urlparts._replace(scheme="http", netloc=DOMAIN, path=target)
+        root_url = request.urlparts._replace(scheme="https", netloc=DOMAIN, path=target)
 
         if DEVMODE:
             # ugly hacks for nice and easy dev mode
@@ -111,8 +106,8 @@ def handle(target):
                 logger.warn("I will shut them down and relaunch with DEVMODE enabled, give me a minute and try the same URL again")
                 dockercli = submit_compose_up_task(user_name, force_recreate=True)
                 container_name, host_port = dockercli.compose.port(DEVMODE_SERVICE_NAME, "80")
-            # just hardcode request to root index.html in devmode
-            root_url = root_url._replace(netloc="{}:{}".format(root_url.netloc, host_port), path="/")
+            # just hardcode request to root index.html in devmode and use "http" (not "https") for easy local testing
+            root_url = root_url._replace(scheme="http", netloc="{}:{}".format(root_url.netloc, host_port), path="/")
 
         logger.debug("Returning target url: {}".format(root_url))
         return template('index.template.html', template_lookup=[FRONTEND_ROOT], url=root_url.geturl(), title="manager", lang="en")
