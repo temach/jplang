@@ -16,6 +16,7 @@ def spindown_process(event_queue):
     from python_on_whales import DockerClient
     from python_on_whales.exceptions import DockerException
 
+    IGNORED_DEMO_USER = os.getenv("MOONSPEAK_IGNORED_DEMO_USER", "demouser1")
     SECONDS_BEFORE_IDLE_SPINDOWN = int(os.getenv("MOONSPEAK_CONTAINER_IDLE_TIMEOUT_SECONDS", "60"))
     MAX_INTERVAL_DURATION_SECONDS = 10  # must check at least once in this interval
     MIN_INTERVAL_DURATION_SECONDS = 1  # never check more often than this interval
@@ -55,7 +56,8 @@ def spindown_process(event_queue):
         logger.debug(f"Checking for idle containers now, at {timenow}")
 
         # every run rebuild the dictionary { user_name: list(user_containers) }
-        all_containers = client.containers.list(all=True)
+        # by default lists only running containers, see: https://docker-py.readthedocs.io/en/stable/containers.html#docker.models.containers.ContainerCollection.list
+        all_containers = client.containers.list()
         user_containers = {}
         for c in all_containers:
             match = re_user_name.search(c.name)
@@ -67,6 +69,10 @@ def spindown_process(event_queue):
                     user_containers[username].append(c)
                 else:
                     user_containers[username] = [c]
+
+        if IGNORED_DEMO_USER in user_containers:
+            # demo user should always be up, never spindown his containers
+            del user_containers[IGNORED_DEMO_USER]
 
         logger.debug(user_containers)
 

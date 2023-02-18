@@ -29,7 +29,6 @@ LOGLEVEL = os.environ.get("LOGLEVEL", "DEBUG").upper()
 logging.basicConfig(level=LOGLEVEL)
 
 DOMAIN = os.getenv("MOONSPEAK_DOMAIN", "moonspeak.localhost")
-DEPLOY_SECRET = os.getenv("MOONSPEAK_DEPLOY_SECRET", "secret")
 DEVMODE = os.getenv("MOONSPEAK_DEVMODE", "1")
 
 SECONDS_BEFORE_IDLE_SPINDOWN = int(os.getenv("MOONSPEAK_CONTAINER_IDLE_TIMEOUT_SECONDS", "90"))
