@@ -239,8 +239,23 @@ async fn handler3(
     router(req, service, path, appstate, body).await
 }
 
+async fn refuse_with_503(
+    req: HttpRequest,
+) -> HttpResponse {
+    // router is a passthrough component, to all other requests respond with 503: "I dont know that service"
+    // errors with resolution are special because we can heal them by bringing services up
+    //
+    // more detailed story:
+    // prod can be run on .localhost or on real TLD
+    // on real TLD if xxx is not up, then router/route/xxx will not resolve and we return 503
+    // on localhost if xxx is not up, then router/route/xxx will resolve to 127.0.0.1, so here we return a 503 to mimic a real TLD behavior
+    //
+    error!("Refusing to handle, I will reply with 503 SERVICE_UNAVAILABLE {:?}", req);
+    return HttpResponse::build(actix_web::http::StatusCode::SERVICE_UNAVAILABLE).finish();
+}
+
 // This handler is useful to be able to run the router + any micro-frontend
-// without having to bring up the gateway service.
+// without having to bring up the gateway service (without docker-compose).
 // Basically for out-of-docker running and debugging.
 //
 // Supports the following:
@@ -379,6 +394,7 @@ async fn main() -> std::io::Result<()> {
                 .wrap(Logger::default())
                 .route("/route/{service}", web::to(handler2))
                 .route("/route/{service}/{path:.*}", web::to(handler3))
+                .default_service(web::to(refuse_with_503))
         })
         .bind((args.host, args.port))?
         .listen_uds(uds)?
