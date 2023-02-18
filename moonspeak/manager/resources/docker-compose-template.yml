@@ -24,7 +24,7 @@ networks:
 services:
   #==================================
   workelements:
-    image: "temachpool/moonspeak-workelements:${MOONSPEAK_TAG:-latest}"
+    image: "temachpool/moonspeak-workelements:${TAG:-latest}"
     container_name: "u-${COMPOSE_PROJECT_NAME}-s-workelements.moonspeak.${MOONSPEAK_TLD:-localhost}"
     volumes:
       - unixsocks:/opt/moonspeak/unixsocks
@@ -37,8 +37,8 @@ services:
   graph:
     depends_on:
       - workelements
-    image: "temachpool/moonspeak-graph:latest"
-    container_name: "u-${COMPOSE_PROJECT_NAME}-s-graph.moonspeak.localhost"
+    image: "temachpool/moonspeak-graph:${TAG:-latest}"
+    container_name: "u-${COMPOSE_PROJECT_NAME}-s-graph.moonspeak.${MOONSPEAK_TLD:-localhost}"
     volumes:
       - unixsocks:/opt/moonspeak/unixsocks
       - userdata:/opt/moonspeak/graph/userdata

@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 LOGLEVEL = os.environ.get("LOGLEVEL", "DEBUG").upper()
 logging.basicConfig(level=LOGLEVEL)
 
-DOMAIN = os.getenv("MOONSPEAK_DOMAIN", "moonspeak.localhost")
+DOMAIN = "moonspeak." + os.getenv("MOONSPEAK_TLD", "localhost")
 DEVMODE = os.getenv("MOONSPEAK_DEVMODE", "1")
 
 FRONTEND_ROOT = "../frontend/src/"
