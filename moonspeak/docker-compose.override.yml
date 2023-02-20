@@ -51,6 +51,11 @@ services:
     build:
       context: ./suggestions
 
+  frequency:
+    container_name: frequency.moonspeak.localhost
+    build:
+      context: ./frequency
+
   # #==================================
   # graph address is the user's unique access url
   workelements:
