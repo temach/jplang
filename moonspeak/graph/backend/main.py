@@ -122,26 +122,12 @@ def db_init():
     DB.commit()
 
 
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description='Run as "python main.py"')
-    parser.add_argument('--host', type=str, default=os.getenv("MOONSPEAK_HOST", "0.0.0.0"), help='hostname or ip, does not combine with unix sock')
-    parser.add_argument('--port', type=int, default=os.getenv("MOONSPEAK_PORT", "8001"), help='port number')
-    parser.add_argument('--uds', type=str, default=os.getenv("MOONSPEAK_UDS", ""), help='Path to bind unix domain socket e.g. "./service.sock", does not combine with TCP socket')
-    args = parser.parse_args()
-
-    db_needs_init = (not os.path.isfile(DB_PATH)) or (
-        os.path.getsize(DB_PATH) == 0)
-
-    if db_needs_init:
-        db_init()
-
+def run_server(args):
     if DEVMODE:
         # this server definitely works on all platforms
         if args.uds:
             raise Exception("Uds socket not supported when MOONSPEAK_DEVMODE is active")
-        logger.info(f"Running bottle server on {args.host}:{args.port}")
+        logger.info(f"Running server on {args.host}:{args.port}")
         run(host='0.0.0.0', port=args.port, debug=True)
     else:
         # this server definitely works on linux and is used in prod
@@ -164,3 +150,22 @@ if __name__ == "__main__":
             if args.uds:
                 logger.info(f"Removing unix socket {args.uds}");
                 os.unlink(args.uds)
+
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Run as "python main.py"')
+    parser.add_argument('--host', type=str, default=os.getenv("MOONSPEAK_HOST", "0.0.0.0"), help='hostname or ip, does not combine with unix sock')
+    parser.add_argument('--port', type=int, default=os.getenv("MOONSPEAK_PORT", "8001"), help='port number')
+    parser.add_argument('--uds', type=str, default=os.getenv("MOONSPEAK_UDS", ""), help='Path to bind unix domain socket e.g. "./service.sock", does not combine with TCP socket')
+    args = parser.parse_args()
+
+    db_needs_init = (not os.path.isfile(DB_PATH)) or (
+        os.path.getsize(DB_PATH) == 0)
+
+    if db_needs_init:
+        db_init()
+
+    run_server(args)
