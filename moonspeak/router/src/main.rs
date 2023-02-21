@@ -1,6 +1,6 @@
 use std::env;
 use std::path;
-use std::os::unix::net::UnixListener;
+use std::os::unix::net::{UnixListener, UnixStream};
 use std::fs;
 
 use actix_web::{web, App, HttpServer, HttpResponse, HttpRequest, middleware::Logger, HttpMessage};
@@ -100,13 +100,19 @@ async fn router(
         let builder = ClientBuilder::new().disable_redirects();
 
         // select normal or uds client builder
-        let (client, is_unixsock) = if unixsock.exists() {
-            // uds sockets via https://docs.rs/awc-uds/0.1.1/awc_uds/
-            let uds_connector = Connector::new().connector(UdsConnector::new(unixsock));
-            debug!("{} via unixsock {:?}", infoline, unixsock);
-            (builder.connector(uds_connector).finish(), true)
-        } else {
-            (builder.finish(), false)
+        // must try actually connecting, because path might exists due to bad cleanup
+        let (client, is_unixsock) = match UnixStream::connect(&unixsock) {
+            Ok(_) => {
+                debug!("Unix socket is valid");
+                // uds sockets via https://docs.rs/awc-uds/0.1.1/awc_uds/
+                let uds_connector = Connector::new().connector(UdsConnector::new(unixsock));
+                debug!("{} via unixsock {:?}", infoline, unixsock);
+                (builder.connector(uds_connector).finish(), true)
+            },
+            Err(e) => {
+                debug!("Unix socket is invalid: {:?}", e);
+                (builder.finish(), false)
+            },
         };
 
         // make request from incoming request, copies method and headers
