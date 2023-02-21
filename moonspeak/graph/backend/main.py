@@ -16,7 +16,7 @@ logging.basicConfig(level=LOGLEVEL)
 logger = logging.getLogger(__name__)
 
 DEVMODE = os.environ.get("MOONSPEAK_DEVMODE", "1")
-DB_PATH = "../tmp/kanji-grapheditor.db"
+DB_PATH = "../userdata/kanji-grapheditor.db"
 DB = sqlite3.connect(DB_PATH)
 DB.row_factory = sqlite3.Row
 FRONTEND_ROOT="../frontend/src/main/webapp/"
