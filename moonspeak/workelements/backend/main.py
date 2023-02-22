@@ -5,14 +5,34 @@ import sqlite3
 import re
 from urllib.parse import urlparse
 from pathlib import Path
-
-import gunicorn.app.base
-import gunicorn.config
+import datetime
 
 from flask import Flask, send_from_directory, make_response, request, redirect  # type: ignore
 from nltk.stem.porter import PorterStemmer  # type: ignore
 from nltk.stem import WordNetLemmatizer  # type: ignore
 
+class AccessLogMiddleware:
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        def wrapped(status, headers, *args):
+            self.log_access(environ, status, headers)
+            return start_response(status, headers, *args)
+        return self.app(environ, wrapped)
+
+    def log_access(self, environ, status_code, headers):
+        method = environ['REQUEST_METHOD']
+        path = environ['PATH_INFO']
+        query = ''
+        if environ['QUERY_STRING']:
+            query = '?' + environ['QUERY_STRING']
+        status = status_code
+        log_message = f'{environ["REMOTE_ADDR"]} - [{self.get_time()}] "{method} {path}{query} HTTP/1.1" {status}'
+        logger.info(log_message)
+
+    def get_time(self):
+        return datetime.datetime.utcnow().strftime('%d/%b/%Y:%H:%M:%S')
 
 class KeywordInfo():
     def __init__(self, keyword, description, kanji=None):
@@ -21,76 +41,21 @@ class KeywordInfo():
         self.kanji = kanji
 
 
-class GunicornApp(gunicorn.app.base.Application):
+# threading details: https://github.com/python/cpython/blob/main/Lib/_threading_local.py
+# about GIL: https://opensource.com/article/17/4/grok-gil
+# threading vs asyncio: https://www.endpointdev.com/blog/2020/10/python-concurrency-asyncio-threading-users/
 
-    def __init__(self, app, options=None):
-        self.options = options or {}
-        self.application = app
-        super().__init__()
-
-    def init(self, parser, opts, args):
-        return None
-
-    def load(self):
-        return self.application
-
-    # Override the default load_config function from gunicorn because it
-    # tries to do parse_args and that is breaking our parse_args
-    # instead we use parse_known_args here
-    def load_config(self):
-        # parse console args
-        parser = self.cfg.parser()
-        args, argv = parser.parse_known_args()
-        if argv:
-            print('unrecognized arguments: {}'.format(argv))
-
-        # optional settings from apps
-        cfg = self.init(parser, args, args.args)
-
-        # set up import paths and follow symlinks
-        self.chdir()
-
-        # Load up the any app specific configuration
-        if cfg:
-            for k, v in cfg.items():
-                self.cfg.set(k.lower(), v)
-
-        env_args = parser.parse_args(self.cfg.get_cmd_args_from_env())
-
-        if args.config:
-            self.load_config_from_file(args.config)
-        elif env_args.config:
-            self.load_config_from_file(env_args.config)
-        else:
-            default_config = gunicorn.config.get_default_config_file()
-            if default_config is not None:
-                self.load_config_from_file(default_config)
-
-        # Load up environment configuration
-        for k, v in vars(env_args).items():
-            if v is None:
-                continue
-            if k == "args":
-                continue
-            self.cfg.set(k.lower(), v)
-
-        # Lastly, update the configuration with any command line settings.
-        for k, v in vars(args).items():
-            if v is None:
-                continue
-            if k == "args":
-                continue
-            self.cfg.set(k.lower(), v)
-
-        # current directory might be changed by the config now
-        # set up import paths and follow symlinks
-        self.chdir()
-
+import logging
+LOGLEVEL = os.environ.get("LOGLEVEL", "DEBUG").upper()
+logging.basicConfig(level=LOGLEVEL)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__, static_folder=None)
 
-KANJI_DB_PATH = "../userdata/kanji-parts.db"
-DB = sqlite3.connect(KANJI_DB_PATH)
+DB_PATH = "../userdata/kanji-parts.db"
+MOONSPEAK_THREADS = 1
+DB = sqlite3.connect(DB_PATH, check_same_thread=(MOONSPEAK_THREADS != 1))
+DEVMODE = os.environ.get("MOONSPEAK_DEVMODE", "1")
 
 # kanji in-memory list
 WORK = {}
@@ -313,9 +278,46 @@ def count_uppercase(word):
     return count
 
 
+def run_server(args):
+    if DEVMODE:
+        # this server definitely works on all platforms
+        if args.uds:
+            raise Exception("Uds socket not supported when MOONSPEAK_DEVMODE is active")
+        app.run(host='0.0.0.0', port=args.port, debug=True)
+    else:
+        # this server definitely works on linux and is used in prod
+        if args.uds:
+            try:
+                # handle the case when previous cleanup did not finish properly
+                os.unlink(args.uds)
+            except FileNotFoundError:
+                # if there was nothing to unlink, thats good
+                pass
+            except Exception:
+                logger.warn(f"Error trying to unlink existing unix socket {args.uds} before re-binding.", exc_info=True)
+        bind_addr = args.uds if args.uds else f"{args.host}:{args.port}"
+        import pyruvate
+        try:
+            pyruvate.serve(AccessLogMiddleware(app), bind_addr, MOONSPEAK_THREADS)
+        finally:
+            # when the server is shutting down
+            logger.warn("Shutting down server.")
+            if args.uds:
+                logger.info(f"Removing unix socket {args.uds}");
+                os.unlink(args.uds)
+
+
 if __name__ == "__main__":
-    db_needs_init = (not os.path.isfile(KANJI_DB_PATH)) or (
-        os.path.getsize(KANJI_DB_PATH) == 0)
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Run as "python main.py"')
+    parser.add_argument('--host', type=str, default=os.getenv("MOONSPEAK_HOST", "0.0.0.0"), help='hostname or ip, does not combine with unix sock')
+    parser.add_argument('--port', type=int, default=os.getenv("MOONSPEAK_PORT", "8040"), help='port number')
+    parser.add_argument('--uds', type=str, default=os.getenv("MOONSPEAK_UDS", ""), help='Path to bind unix domain socket e.g. "./service.sock", does not combine with TCP socket')
+    args = parser.parse_args()
+
+    db_needs_init = (not os.path.isfile(DB_PATH)) or (
+        os.path.getsize(DB_PATH) == 0)
 
     if db_needs_init:
         db_init()
@@ -358,4 +360,4 @@ if __name__ == "__main__":
             word = line.split()[0].strip()
             SUBS[word] = number
 
-    GunicornApp(app).run()
+    run_server(args)
