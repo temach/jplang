@@ -495,8 +495,8 @@ For now lets use redirects without hostname.
 
 
 Alternative python WSGI servers (https://github.com/topics/wsgi-server):
-- rust: https://gitlab.com/tschorr/pyruvate
-- rust: https://github.com/sansyrox/robyn
+- rust WSGI: https://gitlab.com/tschorr/pyruvate
+- rust ASGI: https://github.com/sansyrox/robyn
 - C: https://github.com/jamesroberts/fastwsgi
 - C: https://github.com/jonashaag/bjoern
 - python: https://github.com/cherrypy/cheroot
