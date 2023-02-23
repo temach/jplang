@@ -10,10 +10,10 @@ cache:
 
 before_install:
 - docker load -i docker_images/images.tar || true
-- docker images -a
 
 before_cache:
-- docker images -a
+# keep cache smaller by dropping redundant images
+- docker image prune --force
 - docker save -o docker_images/images.tar $(docker images -a -q)
 
 jobs:
