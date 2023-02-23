@@ -36,6 +36,7 @@ class AccessLogMiddleware:
     def get_time(self):
         return datetime.datetime.utcnow().strftime('%d/%b/%Y:%H:%M:%S')
 
+
 class KeywordInfo():
     def __init__(self, keyword, description, kanji=None):
         self.keyword = keyword
@@ -48,12 +49,13 @@ LOGLEVEL = os.environ.get("LOGLEVEL", "DEBUG").upper()
 logging.basicConfig(level=LOGLEVEL)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__, static_folder=None)
-
-DB_PATH = "../userdata/kanji-parts.db"
-MOONSPEAK_THREADS = 1
-DB = sqlite3.connect(DB_PATH, check_same_thread=(MOONSPEAK_THREADS != 1))
 DEVMODE = os.environ.get("MOONSPEAK_DEVMODE", "1")
+
+MOONSPEAK_THREADS = 1
+DB_PATH = "../userdata/kanji-parts.db"
+DB = sqlite3.connect(DB_PATH, check_same_thread=(MOONSPEAK_THREADS != 1))
+
+app = Flask(__name__, static_folder=None)
 
 # kanji in-memory list
 WORK = {}
@@ -281,7 +283,7 @@ def run_server(args):
         # this server definitely works on all platforms
         if args.uds:
             raise Exception("Uds socket not supported when MOONSPEAK_DEVMODE is active")
-        app.run(host='0.0.0.0', port=args.port, debug=True)
+        app.run(host=args.host, port=args.port, debug=True)
     else:
         # this server definitely works on linux and is used in prod
         if args.uds:
