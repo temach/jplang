@@ -47,7 +47,7 @@ services:
     networks:
       - moonspeaknet
     environment:
-      MOONSPEAK_PORT: "80"
+      MOONSPEAK_UDS: "/opt/moonspeak/unixsocks/manager.sock"
       # the manager writes configuration for graph service which has absolute urls
       # this supplies the correct name, the field is re-defined in override configs
       MOONSPEAK_TLD: ""

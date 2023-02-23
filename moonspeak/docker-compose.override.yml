@@ -62,7 +62,6 @@ services:
       TAG: "latest"
       MOONSPEAK_TLD: "localhost"
       MOONSPEAK_DEVMODE: ""
-      MOONSPEAK_UDS: "/opt/moonspeak/unixsocks/manager.sock"
 
       # settings for container spin down (container stop & rm)
       MOONSPEAK_SECONDS_BEFORE_IDLE_SPINDOWN: 70
