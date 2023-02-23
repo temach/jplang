@@ -11,6 +11,7 @@ def spindown_process(event_queue):
     from queue import Empty, Full
     from urllib.parse import urlparse
     from pathlib import Path
+    import logging
 
     import docker
     from python_on_whales import DockerClient
@@ -26,6 +27,10 @@ def spindown_process(event_queue):
 
     # logging inherits level from parent process, see: https://docs.python.org/3/library/multiprocessing.html#logging
     logger = multiprocessing.log_to_stderr()
+
+    # disable overly verbose logs from urllib3
+    urllib_logger = logging.getLogger('urllib3')
+    urllib_logger.setLevel('INFO')
 
     # Create a Docker client object
     client = docker.from_env()
