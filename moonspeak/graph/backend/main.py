@@ -167,7 +167,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Run as "python main.py"')
     parser.add_argument('--host', type=str, default=os.getenv("MOONSPEAK_HOST", "0.0.0.0"), help='hostname or ip, does not combine with unix sock')
-    parser.add_argument('--port', type=int, default=os.getenv("MOONSPEAK_PORT", "8001"), help='port number')
+    parser.add_argument('--port', type=int, default=os.getenv("MOONSPEAK_PORT", "8041"), help='port number')
     parser.add_argument('--uds', type=str, default=os.getenv("MOONSPEAK_UDS", ""), help='Path to bind unix domain socket e.g. "./service.sock", does not combine with TCP socket')
     args = parser.parse_args()
 
