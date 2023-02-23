@@ -23,7 +23,9 @@ class AccessLogMiddleware:
 
     def log_access(self, environ, status_code, headers):
         method = environ['REQUEST_METHOD']
-        path = environ['PATH_INFO']
+        # repeat wsgi_decode_dance from werkzeug here
+        # see: https://github.com/pallets/werkzeug/blob/main/src/werkzeug/_internal.py#L149
+        path = environ['PATH_INFO'].encode('latin1').decode()
         query = ''
         if environ['QUERY_STRING']:
             query = '?' + environ['QUERY_STRING']
@@ -40,10 +42,6 @@ class KeywordInfo():
         self.description = description
         self.kanji = kanji
 
-
-# threading details: https://github.com/python/cpython/blob/main/Lib/_threading_local.py
-# about GIL: https://opensource.com/article/17/4/grok-gil
-# threading vs asyncio: https://www.endpointdev.com/blog/2020/10/python-concurrency-asyncio-threading-users/
 
 import logging
 LOGLEVEL = os.environ.get("LOGLEVEL", "DEBUG").upper()
@@ -298,6 +296,12 @@ def run_server(args):
         bind_addr = args.uds if args.uds else f"{args.host}:{args.port}"
         import pyruvate
         try:
+            # only use 1 thread, otherwise must add locks for sqlite and globals. Pyruvate uses threading model (see its source).
+            # about GIL: https://opensource.com/article/17/4/grok-gil
+            # threading vs asyncio (both are a pain): https://www.endpointdev.com/blog/2020/10/python-concurrency-asyncio-threading-users/
+            # WSGI processes and threads: https://modwsgi.readthedocs.io/en/develop/user-guides/processes-and-threading.html
+            # thread locals: https://github.com/python/cpython/blob/main/Lib/_threading_local.py
+            assert MOONSPEAK_THREADS == 1, "Use only one thread or you must add locks. pyruvate uses threading model."
             pyruvate.serve(AccessLogMiddleware(app), bind_addr, MOONSPEAK_THREADS)
         finally:
             # when the server is shutting down
