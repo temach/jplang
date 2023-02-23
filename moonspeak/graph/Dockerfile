@@ -32,11 +32,12 @@ RUN cd frontend/etc/build && ant app
 
 
 FROM python:3.10-alpine
-WORKDIR /opt/ms/
+WORKDIR /opt/moonspeak/graph/
 
-RUN mkdir tmp
+RUN mkdir userdata
 
 RUN mkdir backend
+RUN apk add libgcc
 COPY backend/requirements.txt ./
 RUN pip install -r ./requirements.txt
 
@@ -45,5 +46,5 @@ COPY --from=builder /opt/moonspeak/build/frontend    frontend
 COPY backend/main.py backend/main.py
 COPY config   config
 
-WORKDIR /opt/ms/backend
+WORKDIR /opt/moonspeak/graph/backend
 CMD ["python", "main.py"]

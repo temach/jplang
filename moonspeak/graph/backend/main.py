@@ -9,19 +9,6 @@ import datetime
 
 from bottle import response, request, post, get, route, run, template, HTTPResponse, static_file, default_app  # type: ignore
 
-# we only run in single process/single thread, so re-using globals is fine
-import logging
-LOGLEVEL = os.environ.get("LOGLEVEL", "DEBUG").upper()
-logging.basicConfig(level=LOGLEVEL)
-logger = logging.getLogger(__name__)
-
-DEVMODE = os.environ.get("MOONSPEAK_DEVMODE", "1")
-DB_PATH = "../userdata/kanji-grapheditor.db"
-DB = sqlite3.connect(DB_PATH)
-DB.row_factory = sqlite3.Row
-FRONTEND_ROOT="../frontend/src/main/webapp/"
-GRAPH_INITIAL_XML = os.getenv("MOONSPEAK_GRAPH_INITIAL_XML", None)
-
 class AccessLogMiddleware:
     def __init__(self, app):
         self.app = app
@@ -34,7 +21,9 @@ class AccessLogMiddleware:
 
     def log_access(self, environ, status_code, headers):
         method = environ['REQUEST_METHOD']
-        path = environ['PATH_INFO']
+        # repeat wsgi_decode_dance from werkzeug here
+        # see: https://github.com/pallets/werkzeug/blob/main/src/werkzeug/_internal.py#L149
+        path = environ['PATH_INFO'].encode('latin1').decode()
         query = ''
         if environ['QUERY_STRING']:
             query = '?' + environ['QUERY_STRING']
@@ -44,6 +33,21 @@ class AccessLogMiddleware:
 
     def get_time(self):
         return datetime.datetime.utcnow().strftime('%d/%b/%Y:%H:%M:%S')
+
+import logging
+LOGLEVEL = os.environ.get("LOGLEVEL", "DEBUG").upper()
+logging.basicConfig(level=LOGLEVEL)
+logger = logging.getLogger(__name__)
+
+DEVMODE = os.environ.get("MOONSPEAK_DEVMODE", "1")
+
+MOONSPEAK_THREADS = 1
+DB_PATH = "../userdata/kanji-grapheditor.db"
+DB = sqlite3.connect(DB_PATH, check_same_thread=(MOONSPEAK_THREADS != 1))
+DB.row_factory = sqlite3.Row
+
+FRONTEND_ROOT="../frontend/src/main/webapp/"
+GRAPH_INITIAL_XML = os.getenv("MOONSPEAK_GRAPH_INITIAL_XML", None)
 
 
 @get("/config/<filename>")
@@ -127,8 +131,7 @@ def run_server(args):
         # this server definitely works on all platforms
         if args.uds:
             raise Exception("Uds socket not supported when MOONSPEAK_DEVMODE is active")
-        logger.info(f"Running server on {args.host}:{args.port}")
-        run(host='0.0.0.0', port=args.port, debug=True)
+        run(host=args.host, port=args.port, debug=True)
     else:
         # this server definitely works on linux and is used in prod
         if args.uds:
@@ -143,7 +146,13 @@ def run_server(args):
         bind_addr = args.uds if args.uds else f"{args.host}:{args.port}"
         import pyruvate
         try:
-            pyruvate.serve(AccessLogMiddleware(default_app()), bind_addr, 1)
+            # only use 1 thread, otherwise must add locks for sqlite and globals. Pyruvate uses threading model (see its source).
+            # about GIL: https://opensource.com/article/17/4/grok-gil
+            # threading vs asyncio (both are a pain): https://www.endpointdev.com/blog/2020/10/python-concurrency-asyncio-threading-users/
+            # WSGI processes and threads: https://modwsgi.readthedocs.io/en/develop/user-guides/processes-and-threading.html
+            # thread locals: https://github.com/python/cpython/blob/main/Lib/_threading_local.py
+            assert MOONSPEAK_THREADS == 1, "Use only one thread or you must add locks. pyruvate uses threading model."
+            pyruvate.serve(AccessLogMiddleware(default_app()), bind_addr, MOONSPEAK_THREADS)
         finally:
             # when the server is shutting down
             logger.warn("Shutting down server.")
