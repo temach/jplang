@@ -61,8 +61,8 @@ services:
     environment:
       TAG: "latest"
       MOONSPEAK_TLD: "localhost"
-      MOONSPEAK_PORT: "80"
       MOONSPEAK_DEVMODE: ""
+      MOONSPEAK_UDS: "/opt/moonspeak/unixsocks/manager.sock"
 
       # settings for container spin down (container stop & rm)
       MOONSPEAK_SECONDS_BEFORE_IDLE_SPINDOWN: 70
@@ -107,13 +107,16 @@ services:
     networks:
       - moonspeaknet
     environment:
-      GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsocks/u-demouser1-s-workelements.sock' "
+      LOGLEVEL: "INFO"
+      MOONSPEAK_DEVMODE: ""
+      MOONSPEAK_UDS: "/opt/moonspeak/unixsocks/u-demouser1-s-workelements.sock"
 
   graph:
     image: "temachpool/moonspeak-graph:${TAG:-latest}"
     container_name: u-demouser1-s-graph.moonspeak.localhost
-    depends_on:
-      - workelements
+    # prioritise graph startup time over unlikely race condition, so drop depends_on
+    # depends_on:
+    #   - workelements
     build:
       context: ./graph
     volumes:
@@ -122,7 +125,9 @@ services:
     networks:
       - moonspeaknet
     environment:
-      MOONSPEAK_PORT: 80
+      LOGLEVEL: "INFO"
+      MOONSPEAK_DEVMODE: ""
+      MOONSPEAK_UDS: "/opt/moonspeak/unixsocks/u-demouser1-s-graph.sock"
       # this xml sets default graph value
       MOONSPEAK_GRAPH_INITIAL_XML: >-
         <mxfile host="localhost" modified="2022-12-04T06:11:18.071Z" agent="5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36" etag="-J2dvMhjnH6SI7QTmTVN" version="@DRAWIO-VERSION@" type="moonspeak">
