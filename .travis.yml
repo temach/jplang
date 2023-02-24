@@ -1,6 +1,13 @@
 # see: https://itnext.io/go-continuous-integration-with-travis-ci-and-docker-4b26379e54b7
 # see: https://docs.travis-ci.com/user/docker/
 #
+
+# faster startup time
+# language see: https://docs.travis-ci.com/user/languages/minimal-and-generic/
+language: minimal
+# LXD container see: https://docs.travis-ci.com/user/reference/overview/
+virt: lxd
+
 stages:
   - build-push-latest
 
