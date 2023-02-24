@@ -1,14 +1,11 @@
 # see: https://itnext.io/go-continuous-integration-with-travis-ci-and-docker-4b26379e54b7
 # see: https://docs.travis-ci.com/user/docker/
-#
+
 
 # faster startup time
+# failed when trying to use LXD containers, they are beta and have bugs e.g. old version of docker
 # language minimal or generic see: https://docs.travis-ci.com/user/languages/minimal-and-generic/
-language: generic
-# LXD container or VM see: https://docs.travis-ci.com/user/reference/overview/
-virt: vm
-# ubuntu version for "docker compose v2 plugin" see: https://docs.travis-ci.com/user/reference/linux/
-dist: jammy
+language: minimal
 
 stages:
   - build-push-latest
