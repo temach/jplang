@@ -4,7 +4,7 @@
 
 # faster startup time
 # language see: https://docs.travis-ci.com/user/languages/minimal-and-generic/
-language: minimal
+language: generic
 # LXD container see: https://docs.travis-ci.com/user/reference/overview/
 virt: lxd
 # latest ubuntu version for "docker compose v2 plugin" see: https://docs.travis-ci.com/user/reference/linux/
