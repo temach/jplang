@@ -7,6 +7,8 @@
 language: minimal
 # LXD container see: https://docs.travis-ci.com/user/reference/overview/
 virt: lxd
+# latest ubuntu version for "docker compose v2 plugin" see: https://docs.travis-ci.com/user/reference/linux/
+dist: jammy
 
 stages:
   - build-push-latest
@@ -30,8 +32,8 @@ jobs:
       services:
         - docker
       script:
-        - ( cd moonspeak && TAG="$TRAVIS_BRANCH" docker-compose build )
+        - ( cd moonspeak && TAG="$TRAVIS_BRANCH" docker compose build )
         # remember that password with special characters must be escaped, i.e. '&pass!word' -> '\&pass\!word' in travis web gui
         - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
-        - ( cd moonspeak && TAG="$TRAVIS_BRANCH" docker-compose push )
+        - ( cd moonspeak && TAG="$TRAVIS_BRANCH" docker compose push )
         - docker logout
