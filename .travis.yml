@@ -3,12 +3,12 @@
 #
 
 # faster startup time
-# language see: https://docs.travis-ci.com/user/languages/minimal-and-generic/
+# language minimal or generic see: https://docs.travis-ci.com/user/languages/minimal-and-generic/
 language: generic
-# LXD container see: https://docs.travis-ci.com/user/reference/overview/
-virt: lxd
-# latest ubuntu version for "docker compose v2 plugin" see: https://docs.travis-ci.com/user/reference/linux/
-dist: focal
+# LXD container or VM see: https://docs.travis-ci.com/user/reference/overview/
+virt: vm
+# ubuntu version for "docker compose v2 plugin" see: https://docs.travis-ci.com/user/reference/linux/
+dist: jammy
 
 stages:
   - build-push-latest
