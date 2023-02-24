@@ -1,6 +1,12 @@
 # see: https://itnext.io/go-continuous-integration-with-travis-ci-and-docker-4b26379e54b7
 # see: https://docs.travis-ci.com/user/docker/
-#
+
+
+# faster startup time
+# failed when trying to use LXD containers, they are beta and have bugs e.g. old version of docker
+# language minimal or generic see: https://docs.travis-ci.com/user/languages/minimal-and-generic/
+language: minimal
+
 stages:
   - build-push-latest
 
@@ -12,18 +18,19 @@ before_install:
 - docker load -i docker_images/images.tar || true
 
 before_cache:
+# keep cache smaller by dropping redundant images
+- docker image prune --force
 - docker save -o docker_images/images.tar $(docker images -a -q)
 
 jobs:
   include:
-    # push docker image
     - stage: build-push-latest
-      if: branch = master
+      if: branch = latest OR branch =~ ^2023
       services:
         - docker
-      install:
-        - ( cd moonspeak && TAG="latest" docker-compose build )
-      script: 
+      script:
+        - ( cd moonspeak && TAG="$TRAVIS_BRANCH" docker-compose build )
+        # remember that password with special characters must be escaped, i.e. '&pass!word' -> '\&pass\!word' in travis web gui
         - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
-        - ( cd moonspeak && TAG="latest" docker-compose push )
+        - ( cd moonspeak && TAG="$TRAVIS_BRANCH" docker-compose push )
         - docker logout

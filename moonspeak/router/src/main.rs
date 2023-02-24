@@ -1,10 +1,10 @@
 use std::env;
 use std::path;
-use std::os::unix::net::UnixListener;
+use std::os::unix::net::{UnixListener, UnixStream};
 use std::fs;
 
 use actix_web::{web, App, HttpServer, HttpResponse, HttpRequest, middleware::Logger, HttpMessage};
-use awc::{ClientBuilder, Connector, http::Uri};
+use awc::{ClientBuilder, Connector, http::Uri, error::SendRequestError, error::ConnectError};
 use awc_uds::UdsConnector;
 use url::Url;
 
@@ -100,13 +100,19 @@ async fn router(
         let builder = ClientBuilder::new().disable_redirects();
 
         // select normal or uds client builder
-        let (client, is_unixsock) = if unixsock.exists() {
-            // uds sockets via https://docs.rs/awc-uds/0.1.1/awc_uds/
-            let uds_connector = Connector::new().connector(UdsConnector::new(unixsock));
-            debug!("{} via unixsock {:?}", infoline, unixsock);
-            (builder.connector(uds_connector).finish(), true)
-        } else {
-            (builder.finish(), false)
+        // must try actually connecting, because path might exists due to bad cleanup
+        let (client, is_unixsock) = match UnixStream::connect(&unixsock) {
+            Ok(_) => {
+                debug!("Unix socket is valid");
+                // uds sockets via https://docs.rs/awc-uds/0.1.1/awc_uds/
+                let uds_connector = Connector::new().connector(UdsConnector::new(unixsock));
+                debug!("{} via unixsock {:?}", infoline, unixsock);
+                (builder.connector(uds_connector).finish(), true)
+            },
+            Err(e) => {
+                debug!("Unix socket is invalid: {:?}", e);
+                (builder.finish(), false)
+            },
         };
 
         // make request from incoming request, copies method and headers
@@ -115,11 +121,9 @@ async fn router(
             .request_from(uri, req.head())
             .insert_header((actix_web::http::header::HOST, netloc.as_str()));
 
-        debug!("Requesting {:?}", client_req);
-
         (client_req, is_unixsock)
     };
-
+    debug!("Requesting {:?}", client_req);
 
     let finalised = match body.len() {
         0 => client_req.send(),
@@ -128,9 +132,16 @@ async fn router(
 
     let mut client_resp = match finalised.await {
         Ok(r) => r,
-        Err(error) => {
-            error!("Error requesting {:?} : {:?}", infoline, error);
-            return HttpResponse::build(actix_web::http::StatusCode::BAD_GATEWAY).finish();
+        Err(error) => match error {
+            SendRequestError::Connect(ConnectError::Resolver(err)) => {
+                // errors with resolution are special because we can heal them by bringing services up
+                error!("Error resolving & connecting {:?} : {:?}", infoline, err);
+                return HttpResponse::build(actix_web::http::StatusCode::SERVICE_UNAVAILABLE).finish();
+            },
+            _ => {
+                error!("Error requesting {:?} : {:?}", infoline, error);
+                return HttpResponse::build(actix_web::http::StatusCode::BAD_GATEWAY).finish();
+            }
         },
     };
 
@@ -234,8 +245,23 @@ async fn handler3(
     router(req, service, path, appstate, body).await
 }
 
+async fn refuse_with_503(
+    req: HttpRequest,
+) -> HttpResponse {
+    // router is a passthrough component, to all other requests respond with 503: "I dont know that service"
+    // errors with resolution are special because we can heal them by bringing services up
+    //
+    // more detailed story:
+    // prod can be run on .localhost or on real TLD
+    // on real TLD if xxx is not up, then router/route/xxx will not resolve and we return 503
+    // on localhost if xxx is not up, then router/route/xxx will resolve to 127.0.0.1, so here we return a 503 to mimic a real TLD behavior
+    //
+    error!("Refusing to handle, I will reply with 503 SERVICE_UNAVAILABLE {:?}", req);
+    return HttpResponse::build(actix_web::http::StatusCode::SERVICE_UNAVAILABLE).finish();
+}
+
 // This handler is useful to be able to run the router + any micro-frontend
-// without having to bring up the gateway service.
+// without having to bring up the gateway service (without docker-compose).
 // Basically for out-of-docker running and debugging.
 //
 // Supports the following:
@@ -374,6 +400,7 @@ async fn main() -> std::io::Result<()> {
                 .wrap(Logger::default())
                 .route("/route/{service}", web::to(handler2))
                 .route("/route/{service}/{path:.*}", web::to(handler3))
+                .default_service(web::to(refuse_with_503))
         })
         .bind((args.host, args.port))?
         .listen_uds(uds)?
