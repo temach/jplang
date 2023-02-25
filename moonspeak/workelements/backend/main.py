@@ -243,18 +243,13 @@ def root():
     return redirect(f"/{lang}/", code=307)
 
 
-@app.get("/localhost/")
-@app.get("/localhost/<path:filepath>")
-def localhost_static(filepath="index.html"):
-    # this is for dev mode only
-    root = Path("../frontend/src/")
-    return send_from_directory(root, filepath)
-
-
 @app.get("/<lang>/")
 @app.get("/<lang>/<path:filepath>")
 def static(lang, filepath="index.html"):
     root = Path("../frontend/dist/") / lang
+    if lang == "localhost":
+        # this is for dev mode only
+        root = Path("../frontend/src/")
     return send_from_directory(root, filepath)
 
 
