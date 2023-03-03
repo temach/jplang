@@ -2077,18 +2077,18 @@ EditorUi.initMinimalTheme = function()
                     addAction(ui.actions.get('lockUnlockLayer'), mxResources.get('lockUnlock'), 
                         (isLocked ? Editor.lockedImage : Editor.unlockedImage), 'L');
 
-                    addAction(ui.actions.get('toggleDarkMode'), mxResources.get('dark'),
-                        (Editor.isDarkMode() ? Editor.lightModeImage : Editor.darkModeImage), 'D');
+                    // addAction(ui.actions.get('toggleDarkMode'), mxResources.get('dark'),
+                    //     (Editor.isDarkMode() ? Editor.lightModeImage : Editor.darkModeImage), 'D');
 
-                    var freehandElt = addAction(ui.actions.get('insertFreehand'), mxResources.get('freehand'), Editor.freehandImage, 'X');
+                    // var freehandElt = addAction(ui.actions.get('insertFreehand'), mxResources.get('freehand'), Editor.freehandImage, 'X');
 
-                    var deleteAction = ui.actions.get('delete');
-                    var deleteElt = addAction(deleteAction, mxResources.get('delete'), Editor.trashImage, 'T');
-                    deleteElt.style.opacity = '0.1';
-                    deleteAction.addListener('stateChanged', function()
-                    {
-                        deleteElt.style.opacity = (deleteAction.enabled) ? '0.7' : '0.1';
-                    });
+                    // var deleteAction = ui.actions.get('delete');
+                    // var deleteElt = addAction(deleteAction, mxResources.get('delete'), Editor.trashImage, 'T');
+                    // deleteElt.style.opacity = '0.1';
+                    // deleteAction.addListener('stateChanged', function()
+                    // {
+                    //     deleteElt.style.opacity = (deleteAction.enabled) ? '0.7' : '0.1';
+                    // });
 
                 }
 

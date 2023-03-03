@@ -102,6 +102,17 @@
         return (value && value.nodeName && value.nodeName.toLowerCase() === "iframe") || mxUtilsIsNode.apply(this, arguments);
     }
 
+    // disable the blue connection arrows from nodes
+    Graph.prototype.connectionArrowsEnabled = false;
+
+    // disable the menu popup (actually not sure what this is)
+    mxPopupMenu.prototype.enabled = false;
+
+    // do no show shapePicker i.e. the insert menu displayed after double clicking on background
+    EditorUi.prototype.showShapePicker = function(x, y, source, callback, direction, hovering) {
+        return null;
+    }
+
     // allow div field on nodes and render it directly as iframe
     let mxGraphConvertValueToString = mxGraph.prototype.convertValueToString;
     mxGraph.prototype.convertValueToString = function(cell)
