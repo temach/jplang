@@ -284,7 +284,7 @@ const lintconfig = {
 function cssLintTask() {
     return gulp.src([
             path.join(UNIFIED_FILES, '**', '*.css'),
-        ])
+        ], { ignore: ['**/bootstrap.min.css'] })
         .pipe(postcss([
             simplevars(),
             nestedcss(),
