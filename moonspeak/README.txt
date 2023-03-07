@@ -1,3 +1,8 @@
+TODO:
+
+1. strange bug with building synonyms, -- DEV_MODE --, htmlLint did not strip 
+2. github does not copy tags when forking, and does not copy branches it seems?!
+
 Server setup:
 - create server
 - redirect DNS to server ip
@@ -488,3 +493,11 @@ nginx by default adds hostname (see "absolute_redirect on").
 lighttpd and flask do not add hostname.
 For now lets use redirects without hostname.
 
+
+Alternative python WSGI servers (https://github.com/topics/wsgi-server):
+- rust WSGI: https://gitlab.com/tschorr/pyruvate
+- rust ASGI: https://github.com/sansyrox/robyn
+- C: https://github.com/jamesroberts/fastwsgi
+- C: https://github.com/jonashaag/bjoern
+- python: https://github.com/cherrypy/cheroot
+- apache: https://www.modwsgi.org/en/develop/

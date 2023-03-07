@@ -14,12 +14,14 @@ COPY frontend/gulpfile.js   gulpfile.js
 RUN gulp production
 
 
-FROM python:3.10-alpine
+FROM python:3.11-alpine3.17
 WORKDIR /opt/moonspeak/workelements
 
 RUN mkdir userdata
 
 # dependencies
+# libgcc is necessary for pyruvate runtime
+RUN apk add libgcc
 COPY backend/requirements.txt       requirements.txt
 RUN pip install -r requirements.txt
 
@@ -32,7 +34,6 @@ COPY resources          resources
 COPY --from=builder /opt/moonspeak/build/frontend/dist       frontend/dist
 
 COPY backend/main.py            backend/main.py
-COPY backend/gunicorn.conf.py   backend/gunicorn.conf.py
 
 WORKDIR /opt/moonspeak/workelements/backend
 CMD ["python", "main.py"]

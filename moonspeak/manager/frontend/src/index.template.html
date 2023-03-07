@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+  <head>
+    <meta charset="utf-8">
+    <title>{{ title }}</title>
+  </head>
+
+  <body>
+    <script type="application/javascript">
+      function checkPageAvailability() {
+        let TIMEOUT = 1000;
+        let url = "{{ url }}";
+        console.log("Target url: " + url);
+        // "mode no-cors" taken from here: https://stackoverflow.com/questions/42758604/check-if-online-resource-is-reachable-with-javascript-not-requiring-the-the-sam
+        fetch(url, {mode: 'no-cors'})
+          .then(response => {
+            // here we only have an opaque response object
+            // since we did not get an error, the page should be up
+            let link = document.getElementById("click_to_continue");
+            link.style.display = "block";
+          })
+          .catch(error => {
+            // Page is not yet available, try again later
+            setTimeout(checkPageAvailability, TIMEOUT);
+          });
+      }
+
+      checkPageAvailability();
+    </script>
+
+    <h1>Checking your browser...</h1>
+    <a id="click_to_continue" style="display: none;" href="{{ url }}">Click to continue!</a>
+  </body>
+</html>
