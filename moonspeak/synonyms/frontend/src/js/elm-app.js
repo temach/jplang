@@ -10711,7 +10711,19 @@ var $elm$core$Basics$never = function (_v0) {
 	}
 };
 var $elm$browser$Browser$element = _Browser_element;
-var $author$project$Main$defaultModel = {keyword: '{{ loading_placeholder }}', synonyms: _List_Nil, userMessage: $elm$core$Dict$empty};
+var $rundis$elm_bootstrap$Bootstrap$Popover$State = function (a) {
+	return {$: 'State', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Popover$initialState = $rundis$elm_bootstrap$Bootstrap$Popover$State(
+	{
+		domState: {
+			offsetHeight: 0,
+			offsetWidth: 0,
+			rect: {height: 0, left: 0, top: 0, width: 0}
+		},
+		isActive: false
+	});
+var $author$project$Main$defaultModel = {keyword: '', popoverState: $rundis$elm_bootstrap$Bootstrap$Popover$initialState, popoverStateSimilarity: $rundis$elm_bootstrap$Bootstrap$Popover$initialState, synonyms: _List_Nil, userMessage: $elm$core$Dict$empty};
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Main$defaultModel, $elm$core$Platform$Cmd$none);
 };
@@ -10740,44 +10752,6 @@ var $elm_community$list_extra$List$Extra$getAt = F2(
 	function (idx, xs) {
 		return (idx < 0) ? $elm$core$Maybe$Nothing : $elm$core$List$head(
 			A2($elm$core$List$drop, idx, xs));
-	});
-var $author$project$Main$compareKeyCandidates = F2(
-	function (a, b) {
-		var bfreq = ((A2(
-			$elm$core$Maybe$withDefault,
-			0,
-			A2($elm_community$list_extra$List$Extra$getAt, 0, b.freq)) + A2(
-			$elm$core$Maybe$withDefault,
-			0,
-			A2($elm_community$list_extra$List$Extra$getAt, 1, b.freq))) + A2(
-			$elm$core$Maybe$withDefault,
-			0,
-			A2($elm_community$list_extra$List$Extra$getAt, 2, b.freq))) + A2(
-			$elm$core$Maybe$withDefault,
-			0,
-			A2($elm_community$list_extra$List$Extra$getAt, 3, b.freq));
-		var afreq = ((A2(
-			$elm$core$Maybe$withDefault,
-			0,
-			A2($elm_community$list_extra$List$Extra$getAt, 0, a.freq)) + A2(
-			$elm$core$Maybe$withDefault,
-			0,
-			A2($elm_community$list_extra$List$Extra$getAt, 1, a.freq))) + A2(
-			$elm$core$Maybe$withDefault,
-			0,
-			A2($elm_community$list_extra$List$Extra$getAt, 2, a.freq))) + A2(
-			$elm$core$Maybe$withDefault,
-			0,
-			A2($elm_community$list_extra$List$Extra$getAt, 3, a.freq));
-		var _v0 = A2($elm$core$Basics$compare, afreq, bfreq);
-		switch (_v0.$) {
-			case 'LT':
-				return $elm$core$Basics$LT;
-			case 'EQ':
-				return $elm$core$Basics$EQ;
-			default:
-				return $elm$core$Basics$GT;
-		}
 	});
 var $author$project$Main$SynonymsReady = function (a) {
 	return {$: 'SynonymsReady', a: a};
@@ -11094,7 +11068,6 @@ var $author$project$Main$portEncoder = function (model) {
 };
 var $author$project$Main$sendMessage = _Platform_outgoingPort('sendMessage', $elm$core$Basics$identity);
 var $elm$core$List$sortBy = _List_sortBy;
-var $elm$core$List$sortWith = _List_sortWith;
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -11103,21 +11076,16 @@ var $author$project$Main$update = F2(
 				var newModel = _Utils_update(
 					model,
 					{keyword: word});
-				return _Utils_Tuple2(
+				return ($elm$core$String$length(word) >= 2) ? _Utils_Tuple2(
 					newModel,
 					$elm$core$Platform$Cmd$batch(
 						_List_fromArray(
 							[
 								$author$project$Main$getSynonyms(newModel.keyword)
-							])));
-			case 'SortSynonymsByFreq':
-				return _Utils_Tuple2(
+							]))) : _Utils_Tuple2(
 					_Utils_update(
-						model,
-						{
-							synonyms: $elm$core$List$reverse(
-								A2($elm$core$List$sortWith, $author$project$Main$compareKeyCandidates, model.synonyms))
-						}),
+						newModel,
+						{userMessage: $elm$core$Dict$empty}),
 					$elm$core$Platform$Cmd$none);
 			case 'SortSynonymsByOrigin':
 				return _Utils_Tuple2(
@@ -11178,7 +11146,7 @@ var $author$project$Main$update = F2(
 								$author$project$Main$portEncoder(newModel)),
 								$author$project$Main$getSynonyms(newModel.keyword)
 							])));
-			default:
+			case 'Recv':
 				var jsonValue = msg.a;
 				var _v2 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$portDecoder, jsonValue);
 				if (_v2.$ === 'Ok') {
@@ -11197,14 +11165,35 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2($author$project$Main$defaultModel, $elm$core$Platform$Cmd$none);
 				}
+			case 'PopoverMsg':
+				var state = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{popoverState: state}),
+					$elm$core$Platform$Cmd$none);
+			default:
+				var state = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{popoverStateSimilarity: state}),
+					$elm$core$Platform$Cmd$none);
 		}
 	});
-var $author$project$Main$SortSynonymsByFreq = {$: 'SortSynonymsByFreq'};
-var $author$project$Main$SortSynonymsByOrigin = {$: 'SortSynonymsByOrigin'};
 var $elm$virtual_dom$VirtualDom$lazy2 = _VirtualDom_lazy2;
 var $elm$html$Html$Lazy$lazy2 = $elm$virtual_dom$VirtualDom$lazy2;
 var $author$project$Main$SelectSynonym = function (a) {
 	return {$: 'SelectSynonym', a: a};
+};
+var $author$project$Main$calcTotalFrequency = function (freq) {
+	return ((A2(
+		$elm$core$Maybe$withDefault,
+		0,
+		A2($elm_community$list_extra$List$Extra$getAt, 0, freq)) + A2(
+		$elm$core$Maybe$withDefault,
+		0,
+		A2($elm_community$list_extra$List$Extra$getAt, 1, freq))) / 2) | 0;
 };
 var $author$project$Main$renderSingleSynonym = F2(
 	function (index, synonym) {
@@ -11214,7 +11203,9 @@ var $author$project$Main$renderSingleSynonym = F2(
 				[
 					A2($elm$html$Html$Attributes$style, 'padding', '2px 0'),
 					A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-					$elm$html$Html$Attributes$class('row')
+					$elm$html$Html$Attributes$class('moonspeak-row'),
+					$elm$html$Html$Events$onClick(
+					$author$project$Main$SelectSynonym(index))
 				]),
 			_List_fromArray(
 				[
@@ -11222,30 +11213,7 @@ var $author$project$Main$renderSingleSynonym = F2(
 					$elm$html$Html$span,
 					_List_fromArray(
 						[
-							A2($elm$html$Html$Attributes$style, 'flex', '0 0 2rem'),
-							$elm$html$Html$Attributes$value(
-							$elm$core$String$fromInt(index))
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text(
-							$elm$core$String$fromInt(index) + '.')
-						])),
-					A2(
-					$elm$html$Html$span,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'flex', '0 0 2rem')
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text(synonym.metadata + ': ')
-						])),
-					A2(
-					$elm$html$Html$span,
-					_List_fromArray(
-						[
-							A2($elm$html$Html$Attributes$style, 'flex', '10 1 6rem')
+							A2($elm$html$Html$Attributes$style, 'flex', '2 1 calc(8rem + 70px)')
 						]),
 					_List_fromArray(
 						[
@@ -11255,79 +11223,1116 @@ var $author$project$Main$renderSingleSynonym = F2(
 					$elm$html$Html$span,
 					_List_fromArray(
 						[
-							A2($elm$html$Html$Attributes$style, 'flex', '1 0 4rem')
+							A2($elm$html$Html$Attributes$style, 'flex', '1 0 16rem'),
+							A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+							A2($elm$html$Html$Attributes$style, 'justify-content', 'space-evenly')
 						]),
 					_List_fromArray(
 						[
-							$elm$html$Html$text(
-							$elm$core$String$fromInt(
+							A2(
+							$elm$html$Html$span,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'flex', '0 0 4rem'),
+									A2($elm$html$Html$Attributes$style, 'text-align', 'center')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text(synonym.metadata)
+								])),
+							A2(
+							$elm$html$Html$span,
+							_List_fromArray(
+								[
+									A2($elm$html$Html$Attributes$style, 'flex', '0 0 4rem'),
+									A2($elm$html$Html$Attributes$style, 'text-align', 'right')
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text(
+									$elm$core$String$fromInt(
+										$author$project$Main$calcTotalFrequency(synonym.freq)))
+								]))
+						]))
+				]));
+	});
+var $author$project$Main$renderSynonyms = function (synonyms) {
+	var partial = $elm$html$Html$Lazy$lazy2($author$project$Main$renderSingleSynonym);
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		A2($elm$core$List$indexedMap, partial, synonyms));
+};
+var $author$project$Main$KeywordInput = function (a) {
+	return {$: 'KeywordInput', a: a};
+};
+var $author$project$Main$PopoverMsg = function (a) {
+	return {$: 'PopoverMsg', a: a};
+};
+var $author$project$Main$PopoverMsgSimilarity = function (a) {
+	return {$: 'PopoverMsgSimilarity', a: a};
+};
+var $author$project$Main$SortSynonymsByOrigin = {$: 'SortSynonymsByOrigin'};
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Attrs = function (a) {
+	return {$: 'Attrs', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Button$attrs = function (attrs_) {
+	return $rundis$elm_bootstrap$Bootstrap$Internal$Button$Attrs(attrs_);
+};
+var $rundis$elm_bootstrap$Bootstrap$Popover$Bottom = {$: 'Bottom'};
+var $rundis$elm_bootstrap$Bootstrap$Popover$Config = function (a) {
+	return {$: 'Config', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Popover$bottom = function (_v0) {
+	var conf = _v0.a;
+	return $rundis$elm_bootstrap$Bootstrap$Popover$Config(
+		_Utils_update(
+			conf,
+			{direction: $rundis$elm_bootstrap$Bootstrap$Popover$Bottom}));
+};
+var $elm$core$Maybe$andThen = F2(
+	function (callback, maybeValue) {
+		if (maybeValue.$ === 'Just') {
+			var value = maybeValue.a;
+			return callback(value);
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$applyModifier = F2(
+	function (modifier, options) {
+		switch (modifier.$) {
+			case 'Size':
+				var size = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						size: $elm$core$Maybe$Just(size)
+					});
+			case 'Coloring':
+				var coloring = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						coloring: $elm$core$Maybe$Just(coloring)
+					});
+			case 'Block':
+				return _Utils_update(
+					options,
+					{block: true});
+			case 'Disabled':
+				var val = modifier.a;
+				return _Utils_update(
+					options,
+					{disabled: val});
+			default:
+				var attrs = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						attributes: _Utils_ap(options.attributes, attrs)
+					});
+		}
+	});
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var $elm$html$Html$Attributes$classList = function (classes) {
+	return $elm$html$Html$Attributes$class(
+		A2(
+			$elm$core$String$join,
+			' ',
+			A2(
+				$elm$core$List$map,
+				$elm$core$Tuple$first,
+				A2($elm$core$List$filter, $elm$core$Tuple$second, classes))));
+};
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$defaultOptions = {attributes: _List_Nil, block: false, coloring: $elm$core$Maybe$Nothing, disabled: false, size: $elm$core$Maybe$Nothing};
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$bool(bool));
+	});
+var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$roleClass = function (role) {
+	switch (role.$) {
+		case 'Primary':
+			return 'primary';
+		case 'Secondary':
+			return 'secondary';
+		case 'Success':
+			return 'success';
+		case 'Info':
+			return 'info';
+		case 'Warning':
+			return 'warning';
+		case 'Danger':
+			return 'danger';
+		case 'Dark':
+			return 'dark';
+		case 'Light':
+			return 'light';
+		default:
+			return 'link';
+	}
+};
+var $rundis$elm_bootstrap$Bootstrap$General$Internal$screenSizeOption = function (size) {
+	switch (size.$) {
+		case 'XS':
+			return $elm$core$Maybe$Nothing;
+		case 'SM':
+			return $elm$core$Maybe$Just('sm');
+		case 'MD':
+			return $elm$core$Maybe$Just('md');
+		case 'LG':
+			return $elm$core$Maybe$Just('lg');
+		default:
+			return $elm$core$Maybe$Just('xl');
+	}
+};
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$buttonAttributes = function (modifiers) {
+	var options = A3($elm$core$List$foldl, $rundis$elm_bootstrap$Bootstrap$Internal$Button$applyModifier, $rundis$elm_bootstrap$Bootstrap$Internal$Button$defaultOptions, modifiers);
+	return _Utils_ap(
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$classList(
+				_List_fromArray(
+					[
+						_Utils_Tuple2('btn', true),
+						_Utils_Tuple2('btn-block', options.block),
+						_Utils_Tuple2('disabled', options.disabled)
+					])),
+				$elm$html$Html$Attributes$disabled(options.disabled)
+			]),
+		_Utils_ap(
+			function () {
+				var _v0 = A2($elm$core$Maybe$andThen, $rundis$elm_bootstrap$Bootstrap$General$Internal$screenSizeOption, options.size);
+				if (_v0.$ === 'Just') {
+					var s = _v0.a;
+					return _List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('btn-' + s)
+						]);
+				} else {
+					return _List_Nil;
+				}
+			}(),
+			_Utils_ap(
+				function () {
+					var _v1 = options.coloring;
+					if (_v1.$ === 'Just') {
+						if (_v1.a.$ === 'Roled') {
+							var role = _v1.a.a;
+							return _List_fromArray(
+								[
+									$elm$html$Html$Attributes$class(
+									'btn-' + $rundis$elm_bootstrap$Bootstrap$Internal$Button$roleClass(role))
+								]);
+						} else {
+							var role = _v1.a.a;
+							return _List_fromArray(
+								[
+									$elm$html$Html$Attributes$class(
+									'btn-outline-' + $rundis$elm_bootstrap$Bootstrap$Internal$Button$roleClass(role))
+								]);
+						}
+					} else {
+						return _List_Nil;
+					}
+				}(),
+				options.attributes)));
+};
+var $rundis$elm_bootstrap$Bootstrap$Button$button = F2(
+	function (options, children) {
+		return A2(
+			$elm$html$Html$button,
+			$rundis$elm_bootstrap$Bootstrap$Internal$Button$buttonAttributes(options),
+			children);
+	});
+var $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$Config = function (a) {
+	return {$: 'Config', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$config = function (input_) {
+	return $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$Config(
+		{attributes: _List_Nil, input: input_, predecessors: _List_Nil, size: $elm$core$Maybe$Nothing, successors: _List_Nil});
+};
+var $rundis$elm_bootstrap$Bootstrap$Popover$Top = {$: 'Top'};
+var $rundis$elm_bootstrap$Bootstrap$Popover$config = function (triggerElement) {
+	return $rundis$elm_bootstrap$Bootstrap$Popover$Config(
+		{content: $elm$core$Maybe$Nothing, direction: $rundis$elm_bootstrap$Bootstrap$Popover$Top, title: $elm$core$Maybe$Nothing, triggerElement: triggerElement});
+};
+var $rundis$elm_bootstrap$Bootstrap$Popover$Content = function (a) {
+	return {$: 'Content', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Popover$content = F3(
+	function (attributes, children, _v0) {
+		var conf = _v0.a;
+		return $rundis$elm_bootstrap$Bootstrap$Popover$Config(
+			_Utils_update(
+				conf,
+				{
+					content: $elm$core$Maybe$Just(
+						$rundis$elm_bootstrap$Bootstrap$Popover$Content(
+							A2(
+								$elm$html$Html$div,
 								A2(
-									$elm$core$Maybe$withDefault,
-									0,
-									A2($elm_community$list_extra$List$Extra$getAt, 0, synonym.freq))))
+									$elm$core$List$cons,
+									$elm$html$Html$Attributes$class('popover-body'),
+									attributes),
+								children)))
+				}));
+	});
+var $elm$html$Html$label = _VirtualDom_node('label');
+var $elm$json$Json$Decode$andThen = _Json_andThen;
+var $rundis$elm_bootstrap$Bootstrap$Popover$DOMState = F3(
+	function (rect, offsetWidth, offsetHeight) {
+		return {offsetHeight: offsetHeight, offsetWidth: offsetWidth, rect: rect};
+	});
+var $rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$offsetHeight = A2($elm$json$Json$Decode$field, 'offsetHeight', $elm$json$Json$Decode$float);
+var $rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$offsetWidth = A2($elm$json$Json$Decode$field, 'offsetWidth', $elm$json$Json$Decode$float);
+var $rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$className = A2(
+	$elm$json$Json$Decode$at,
+	_List_fromArray(
+		['className']),
+	$elm$json$Json$Decode$string);
+var $elm$json$Json$Decode$fail = _Json_fail;
+var $rundis$elm_bootstrap$Bootstrap$Popover$isPopover = A2(
+	$elm$json$Json$Decode$andThen,
+	function (_class) {
+		return A2($elm$core$String$contains, 'popover', _class) ? $elm$json$Json$Decode$succeed(true) : $elm$json$Json$Decode$succeed(false);
+	},
+	$rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$className);
+var $elm$json$Json$Decode$oneOf = _Json_oneOf;
+var $rundis$elm_bootstrap$Bootstrap$Popover$popper = F2(
+	function (path, decoder) {
+		return $elm$json$Json$Decode$oneOf(
+			_List_fromArray(
+				[
+					A2(
+					$elm$json$Json$Decode$andThen,
+					function (res) {
+						return res ? A2(
+							$elm$json$Json$Decode$at,
+							_Utils_ap(
+								path,
+								_List_fromArray(
+									['nextSibling'])),
+							decoder) : $elm$json$Json$Decode$fail('');
+					},
+					A2(
+						$elm$json$Json$Decode$at,
+						_Utils_ap(
+							path,
+							_List_fromArray(
+								['nextSibling'])),
+						$rundis$elm_bootstrap$Bootstrap$Popover$isPopover)),
+					A2(
+					$elm$json$Json$Decode$andThen,
+					function (_v0) {
+						return A2(
+							$rundis$elm_bootstrap$Bootstrap$Popover$popper,
+							_Utils_ap(
+								path,
+								_List_fromArray(
+									['parentElement'])),
+							decoder);
+					},
+					A2(
+						$elm$json$Json$Decode$at,
+						_Utils_ap(
+							path,
+							_List_fromArray(
+								['parentElement'])),
+						$rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$className)),
+					$elm$json$Json$Decode$fail('No popover found')
+				]));
+	});
+var $elm$json$Json$Decode$map4 = _Json_map4;
+var $rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$offsetLeft = A2($elm$json$Json$Decode$field, 'offsetLeft', $elm$json$Json$Decode$float);
+var $elm$json$Json$Decode$null = _Json_decodeNull;
+var $rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$offsetParent = F2(
+	function (x, decoder) {
+		return $elm$json$Json$Decode$oneOf(
+			_List_fromArray(
+				[
+					A2(
+					$elm$json$Json$Decode$field,
+					'offsetParent',
+					$elm$json$Json$Decode$null(x)),
+					A2($elm$json$Json$Decode$field, 'offsetParent', decoder)
+				]));
+	});
+var $rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$offsetTop = A2($elm$json$Json$Decode$field, 'offsetTop', $elm$json$Json$Decode$float);
+var $rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$scrollLeft = A2($elm$json$Json$Decode$field, 'scrollLeft', $elm$json$Json$Decode$float);
+var $rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$scrollTop = A2($elm$json$Json$Decode$field, 'scrollTop', $elm$json$Json$Decode$float);
+var $rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$position = F2(
+	function (x, y) {
+		return A2(
+			$elm$json$Json$Decode$andThen,
+			function (_v0) {
+				var x_ = _v0.a;
+				var y_ = _v0.b;
+				return A2(
+					$rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$offsetParent,
+					_Utils_Tuple2(x_, y_),
+					A2($rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$position, x_, y_));
+			},
+			A5(
+				$elm$json$Json$Decode$map4,
+				F4(
+					function (scrollLeft_, scrollTop_, offsetLeft_, offsetTop_) {
+						return _Utils_Tuple2((x + offsetLeft_) - scrollLeft_, (y + offsetTop_) - scrollTop_);
+					}),
+				$rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$scrollLeft,
+				$rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$scrollTop,
+				$rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$offsetLeft,
+				$rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$offsetTop));
+	});
+var $rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$boundingArea = A4(
+	$elm$json$Json$Decode$map3,
+	F3(
+		function (_v0, width, height) {
+			var x = _v0.a;
+			var y = _v0.b;
+			return {height: height, left: x, top: y, width: width};
+		}),
+	A2($rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$position, 0, 0),
+	$rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$offsetWidth,
+	$rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$offsetHeight);
+var $rundis$elm_bootstrap$Bootstrap$Popover$isTrigger = A2(
+	$elm$json$Json$Decode$andThen,
+	function (_class) {
+		return A2($elm$core$String$contains, 'popover-trigger', _class) ? $elm$json$Json$Decode$succeed(true) : $elm$json$Json$Decode$succeed(false);
+	},
+	$rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$className);
+var $rundis$elm_bootstrap$Bootstrap$Popover$trigger = function (path) {
+	return $elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				A2(
+				$elm$json$Json$Decode$andThen,
+				function (res) {
+					return res ? A2($elm$json$Json$Decode$at, path, $rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$boundingArea) : $elm$json$Json$Decode$fail('');
+				},
+				A2($elm$json$Json$Decode$at, path, $rundis$elm_bootstrap$Bootstrap$Popover$isTrigger)),
+				A2(
+				$elm$json$Json$Decode$andThen,
+				function (_v0) {
+					return $rundis$elm_bootstrap$Bootstrap$Popover$trigger(
+						_Utils_ap(
+							path,
+							_List_fromArray(
+								['parentElement'])));
+				},
+				A2(
+					$elm$json$Json$Decode$at,
+					_Utils_ap(
+						path,
+						_List_fromArray(
+							['parentElement'])),
+					$rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$className)),
+				$elm$json$Json$Decode$fail('No trigger found')
+			]));
+};
+var $rundis$elm_bootstrap$Bootstrap$Popover$stateDecoder = A4(
+	$elm$json$Json$Decode$map3,
+	$rundis$elm_bootstrap$Bootstrap$Popover$DOMState,
+	$rundis$elm_bootstrap$Bootstrap$Popover$trigger(
+		_List_fromArray(
+			['target'])),
+	A2(
+		$rundis$elm_bootstrap$Bootstrap$Popover$popper,
+		_List_fromArray(
+			['target']),
+		$rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$offsetWidth),
+	A2(
+		$rundis$elm_bootstrap$Bootstrap$Popover$popper,
+		_List_fromArray(
+			['target']),
+		$rundis$elm_bootstrap$Bootstrap$Utilities$DomHelper$offsetHeight));
+var $rundis$elm_bootstrap$Bootstrap$Popover$toggleState = F2(
+	function (_v0, toMsg) {
+		var state = _v0.a;
+		var isActive = state.isActive;
+		return A2(
+			$elm$json$Json$Decode$andThen,
+			function (v) {
+				return $elm$json$Json$Decode$succeed(
+					toMsg(
+						(!isActive) ? $rundis$elm_bootstrap$Bootstrap$Popover$State(
+							{domState: v, isActive: true}) : $rundis$elm_bootstrap$Bootstrap$Popover$State(
+							_Utils_update(
+								state,
+								{isActive: false}))));
+			},
+			$rundis$elm_bootstrap$Bootstrap$Popover$stateDecoder);
+	});
+var $rundis$elm_bootstrap$Bootstrap$Popover$onClick = F2(
+	function (state, toMsg) {
+		return _List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('popover-trigger'),
+				A2(
+				$elm$html$Html$Events$on,
+				'click',
+				A2($rundis$elm_bootstrap$Bootstrap$Popover$toggleState, state, toMsg))
+			]);
+	});
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$OnInput = function (a) {
+	return {$: 'OnInput', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$onInput = function (toMsg) {
+	return $rundis$elm_bootstrap$Bootstrap$Form$Input$OnInput(toMsg);
+};
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Coloring = function (a) {
+	return {$: 'Coloring', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Outlined = function (a) {
+	return {$: 'Outlined', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Secondary = {$: 'Secondary'};
+var $rundis$elm_bootstrap$Bootstrap$Button$outlineSecondary = $rundis$elm_bootstrap$Bootstrap$Internal$Button$Coloring(
+	$rundis$elm_bootstrap$Bootstrap$Internal$Button$Outlined($rundis$elm_bootstrap$Bootstrap$Internal$Button$Secondary));
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$Placeholder = function (a) {
+	return {$: 'Placeholder', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$placeholder = function (value_) {
+	return $rundis$elm_bootstrap$Bootstrap$Form$Input$Placeholder(value_);
+};
+var $rundis$elm_bootstrap$Bootstrap$General$Internal$SM = {$: 'SM'};
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Size = function (a) {
+	return {$: 'Size', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Button$small = $rundis$elm_bootstrap$Bootstrap$Internal$Button$Size($rundis$elm_bootstrap$Bootstrap$General$Internal$SM);
+var $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$small = function (_v0) {
+	var conf = _v0.a;
+	return $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$Config(
+		_Utils_update(
+			conf,
+			{
+				size: $elm$core$Maybe$Just($rundis$elm_bootstrap$Bootstrap$General$Internal$SM)
+			}));
+};
+var $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$Input = function (a) {
+	return {$: 'Input', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$input = F2(
+	function (inputFn, options) {
+		return $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$Input(
+			inputFn(options));
+	});
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$Text = {$: 'Text'};
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$Input = function (a) {
+	return {$: 'Input', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$Type = function (a) {
+	return {$: 'Type', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$create = F2(
+	function (tipe, options) {
+		return $rundis$elm_bootstrap$Bootstrap$Form$Input$Input(
+			{
+				options: A2(
+					$elm$core$List$cons,
+					$rundis$elm_bootstrap$Bootstrap$Form$Input$Type(tipe),
+					options)
+			});
+	});
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$applyModifier = F2(
+	function (modifier, options) {
+		switch (modifier.$) {
+			case 'Size':
+				var size_ = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						size: $elm$core$Maybe$Just(size_)
+					});
+			case 'Id':
+				var id_ = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						id: $elm$core$Maybe$Just(id_)
+					});
+			case 'Type':
+				var tipe = modifier.a;
+				return _Utils_update(
+					options,
+					{tipe: tipe});
+			case 'Disabled':
+				var val = modifier.a;
+				return _Utils_update(
+					options,
+					{disabled: val});
+			case 'Value':
+				var value_ = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						value: $elm$core$Maybe$Just(value_)
+					});
+			case 'Placeholder':
+				var value_ = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						placeholder: $elm$core$Maybe$Just(value_)
+					});
+			case 'OnInput':
+				var onInput_ = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						onInput: $elm$core$Maybe$Just(onInput_)
+					});
+			case 'Validation':
+				var validation_ = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						validation: $elm$core$Maybe$Just(validation_)
+					});
+			case 'Readonly':
+				var val = modifier.a;
+				return _Utils_update(
+					options,
+					{readonly: val});
+			case 'PlainText':
+				var val = modifier.a;
+				return _Utils_update(
+					options,
+					{plainText: val});
+			default:
+				var attrs_ = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						attributes: _Utils_ap(options.attributes, attrs_)
+					});
+		}
+	});
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$defaultOptions = {attributes: _List_Nil, disabled: false, id: $elm$core$Maybe$Nothing, onInput: $elm$core$Maybe$Nothing, placeholder: $elm$core$Maybe$Nothing, plainText: false, readonly: false, size: $elm$core$Maybe$Nothing, tipe: $rundis$elm_bootstrap$Bootstrap$Form$Input$Text, validation: $elm$core$Maybe$Nothing, value: $elm$core$Maybe$Nothing};
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
+var $elm$html$Html$Attributes$readonly = $elm$html$Html$Attributes$boolProperty('readOnly');
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$sizeAttribute = function (size) {
+	return A2(
+		$elm$core$Maybe$map,
+		function (s) {
+			return $elm$html$Html$Attributes$class('form-control-' + s);
+		},
+		$rundis$elm_bootstrap$Bootstrap$General$Internal$screenSizeOption(size));
+};
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$typeAttribute = function (inputType) {
+	return $elm$html$Html$Attributes$type_(
+		function () {
+			switch (inputType.$) {
+				case 'Text':
+					return 'text';
+				case 'Password':
+					return 'password';
+				case 'DatetimeLocal':
+					return 'datetime-local';
+				case 'Date':
+					return 'date';
+				case 'Month':
+					return 'month';
+				case 'Time':
+					return 'time';
+				case 'Week':
+					return 'week';
+				case 'Number':
+					return 'number';
+				case 'Email':
+					return 'email';
+				case 'Url':
+					return 'url';
+				case 'Search':
+					return 'search';
+				case 'Tel':
+					return 'tel';
+				default:
+					return 'color';
+			}
+		}());
+};
+var $rundis$elm_bootstrap$Bootstrap$Form$FormInternal$validationToString = function (validation) {
+	if (validation.$ === 'Success') {
+		return 'is-valid';
+	} else {
+		return 'is-invalid';
+	}
+};
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$validationAttribute = function (validation) {
+	return $elm$html$Html$Attributes$class(
+		$rundis$elm_bootstrap$Bootstrap$Form$FormInternal$validationToString(validation));
+};
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$toAttributes = function (modifiers) {
+	var options = A3($elm$core$List$foldl, $rundis$elm_bootstrap$Bootstrap$Form$Input$applyModifier, $rundis$elm_bootstrap$Bootstrap$Form$Input$defaultOptions, modifiers);
+	return _Utils_ap(
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class(
+				options.plainText ? 'form-control-plaintext' : 'form-control'),
+				$elm$html$Html$Attributes$disabled(options.disabled),
+				$elm$html$Html$Attributes$readonly(options.readonly || options.plainText),
+				$rundis$elm_bootstrap$Bootstrap$Form$Input$typeAttribute(options.tipe)
+			]),
+		_Utils_ap(
+			A2(
+				$elm$core$List$filterMap,
+				$elm$core$Basics$identity,
+				_List_fromArray(
+					[
+						A2($elm$core$Maybe$map, $elm$html$Html$Attributes$id, options.id),
+						A2($elm$core$Maybe$andThen, $rundis$elm_bootstrap$Bootstrap$Form$Input$sizeAttribute, options.size),
+						A2($elm$core$Maybe$map, $elm$html$Html$Attributes$value, options.value),
+						A2($elm$core$Maybe$map, $elm$html$Html$Attributes$placeholder, options.placeholder),
+						A2($elm$core$Maybe$map, $elm$html$Html$Events$onInput, options.onInput),
+						A2($elm$core$Maybe$map, $rundis$elm_bootstrap$Bootstrap$Form$Input$validationAttribute, options.validation)
+					])),
+			options.attributes));
+};
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$view = function (_v0) {
+	var options = _v0.a.options;
+	return A2(
+		$elm$html$Html$input,
+		$rundis$elm_bootstrap$Bootstrap$Form$Input$toAttributes(options),
+		_List_Nil);
+};
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$input = F2(
+	function (tipe, options) {
+		return $rundis$elm_bootstrap$Bootstrap$Form$Input$view(
+			A2($rundis$elm_bootstrap$Bootstrap$Form$Input$create, tipe, options));
+	});
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$text = $rundis$elm_bootstrap$Bootstrap$Form$Input$input($rundis$elm_bootstrap$Bootstrap$Form$Input$Text);
+var $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$text = $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$input($rundis$elm_bootstrap$Bootstrap$Form$Input$text);
+var $elm$html$Html$h4 = _VirtualDom_node('h4');
+var $rundis$elm_bootstrap$Bootstrap$Popover$Title = function (a) {
+	return {$: 'Title', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Popover$titlePrivate = F4(
+	function (elemFn, attributes, children, _v0) {
+		var conf = _v0.a;
+		return $rundis$elm_bootstrap$Bootstrap$Popover$Config(
+			_Utils_update(
+				conf,
+				{
+					title: $elm$core$Maybe$Just(
+						$rundis$elm_bootstrap$Bootstrap$Popover$Title(
+							A2(
+								elemFn,
+								A2(
+									$elm$core$List$cons,
+									$elm$html$Html$Attributes$class('popover-header'),
+									attributes),
+								children)))
+				}));
+	});
+var $rundis$elm_bootstrap$Bootstrap$Popover$titleH4 = $rundis$elm_bootstrap$Bootstrap$Popover$titlePrivate($elm$html$Html$h4);
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$Value = function (a) {
+	return {$: 'Value', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Form$Input$value = function (value_) {
+	return $rundis$elm_bootstrap$Bootstrap$Form$Input$Value(value_);
+};
+var $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$sizeAttribute = function (size) {
+	return A2(
+		$elm$core$Maybe$map,
+		function (s) {
+			return $elm$html$Html$Attributes$class('input-group-' + s);
+		},
+		$rundis$elm_bootstrap$Bootstrap$General$Internal$screenSizeOption(size));
+};
+var $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$view = function (_v0) {
+	var conf = _v0.a;
+	var _v1 = conf.input;
+	var input_ = _v1.a;
+	return A2(
+		$elm$html$Html$div,
+		_Utils_ap(
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$class('input-group')
+				]),
+			_Utils_ap(
+				A2(
+					$elm$core$List$filterMap,
+					$elm$core$Basics$identity,
+					_List_fromArray(
+						[
+							A2($elm$core$Maybe$andThen, $rundis$elm_bootstrap$Bootstrap$Form$InputGroup$sizeAttribute, conf.size)
+						])),
+				conf.attributes)),
+		_Utils_ap(
+			A2(
+				$elm$core$List$map,
+				function (_v2) {
+					var e = _v2.a;
+					return A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('input-group-prepend')
+							]),
+						_List_fromArray(
+							[e]));
+				},
+				conf.predecessors),
+			_Utils_ap(
+				_List_fromArray(
+					[input_]),
+				A2(
+					$elm$core$List$map,
+					function (_v3) {
+						var e = _v3.a;
+						return A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('input-group-append')
+								]),
+							_List_fromArray(
+								[e]));
+					},
+					conf.successors))));
+};
+var $rundis$elm_bootstrap$Bootstrap$Popover$calculatePos = F2(
+	function (pos, _v0) {
+		var rect = _v0.rect;
+		var offsetWidth = _v0.offsetWidth;
+		var offsetHeight = _v0.offsetHeight;
+		switch (pos.$) {
+			case 'Left':
+				return {
+					arrowLeft: $elm$core$Maybe$Nothing,
+					arrowTop: $elm$core$Maybe$Just((offsetHeight / 2) - 12),
+					left: (-offsetWidth) - 10,
+					top: (rect.height / 2) - (offsetHeight / 2)
+				};
+			case 'Right':
+				return {
+					arrowLeft: $elm$core$Maybe$Nothing,
+					arrowTop: $elm$core$Maybe$Just((offsetHeight / 2) - 12),
+					left: rect.width,
+					top: (rect.height / 2) - (offsetHeight / 2)
+				};
+			case 'Top':
+				return {
+					arrowLeft: $elm$core$Maybe$Just((offsetWidth / 2) - 12),
+					arrowTop: $elm$core$Maybe$Nothing,
+					left: (rect.width / 2) - (offsetWidth / 2),
+					top: (-offsetHeight) - 10
+				};
+			default:
+				return {
+					arrowLeft: $elm$core$Maybe$Just((offsetWidth / 2) - 12),
+					arrowTop: $elm$core$Maybe$Nothing,
+					left: (rect.width / 2) - (offsetWidth / 2),
+					top: rect.height
+				};
+		}
+	});
+var $elm$html$Html$Attributes$attribute = $elm$virtual_dom$VirtualDom$attribute;
+var $rundis$elm_bootstrap$Bootstrap$Popover$directionAttr = function (position) {
+	return A2(
+		$elm$html$Html$Attributes$attribute,
+		'x-placement',
+		function () {
+			switch (position.$) {
+				case 'Left':
+					return 'left';
+				case 'Right':
+					return 'right';
+				case 'Top':
+					return 'top';
+				default:
+					return 'bottom';
+			}
+		}());
+};
+var $rundis$elm_bootstrap$Bootstrap$Popover$positionClass = function (position) {
+	switch (position.$) {
+		case 'Left':
+			return _Utils_Tuple2('bs-popover-left', true);
+		case 'Right':
+			return _Utils_Tuple2('bs-popover-right', true);
+		case 'Top':
+			return _Utils_Tuple2('bs-popover-top', true);
+		default:
+			return _Utils_Tuple2('bs-popover-bottom', true);
+	}
+};
+var $rundis$elm_bootstrap$Bootstrap$Popover$popoverView = F2(
+	function (_v0, _v1) {
+		var isActive = _v0.a.isActive;
+		var domState = _v0.a.domState;
+		var conf = _v1.a;
+		var px = function (f) {
+			return $elm$core$String$fromFloat(f) + 'px';
+		};
+		var pos = A2($rundis$elm_bootstrap$Bootstrap$Popover$calculatePos, conf.direction, domState);
+		var styles = isActive ? _List_fromArray(
+			[
+				A2(
+				$elm$html$Html$Attributes$style,
+				'left',
+				px(pos.left)),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'top',
+				px(pos.top)),
+				A2($elm$html$Html$Attributes$style, 'display', 'inline-block'),
+				A2(
+				$elm$html$Html$Attributes$style,
+				'width',
+				px(domState.offsetWidth))
+			]) : _List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'left', '-5000px'),
+				A2($elm$html$Html$Attributes$style, 'top', '-5000px')
+			]);
+		var arrowStyles = A2(
+			$elm$core$List$filterMap,
+			$elm$core$Basics$identity,
+			_List_fromArray(
+				[
+					A2(
+					$elm$core$Maybe$map,
+					function (t) {
+						return A2(
+							$elm$html$Html$Attributes$style,
+							'top',
+							px(t));
+					},
+					pos.arrowTop),
+					A2(
+					$elm$core$Maybe$map,
+					function (l) {
+						return A2(
+							$elm$html$Html$Attributes$style,
+							'left',
+							px(l));
+					},
+					pos.arrowLeft)
+				]));
+		return A2(
+			$elm$html$Html$div,
+			_Utils_ap(
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$classList(
+						_List_fromArray(
+							[
+								_Utils_Tuple2('popover', true),
+								_Utils_Tuple2('fade', true),
+								_Utils_Tuple2('show', isActive),
+								$rundis$elm_bootstrap$Bootstrap$Popover$positionClass(conf.direction)
+							])),
+						$rundis$elm_bootstrap$Bootstrap$Popover$directionAttr(conf.direction)
+					]),
+				styles),
+			A2(
+				$elm$core$List$filterMap,
+				$elm$core$Basics$identity,
+				_List_fromArray(
+					[
+						$elm$core$Maybe$Just(
+						A2(
+							$elm$html$Html$div,
+							A2(
+								$elm$core$List$cons,
+								$elm$html$Html$Attributes$class('arrow'),
+								arrowStyles),
+							_List_Nil)),
+						A2(
+						$elm$core$Maybe$map,
+						function (_v2) {
+							var t = _v2.a;
+							return t;
+						},
+						conf.title),
+						A2(
+						$elm$core$Maybe$map,
+						function (_v3) {
+							var c = _v3.a;
+							return c;
+						},
+						conf.content)
+					])));
+	});
+var $rundis$elm_bootstrap$Bootstrap$Popover$view = F2(
+	function (state, conf) {
+		var triggerElement = conf.a.triggerElement;
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'position', 'relative'),
+					A2($elm$html$Html$Attributes$style, 'display', 'inline-block')
+				]),
+			_List_fromArray(
+				[
+					triggerElement,
+					A2($rundis$elm_bootstrap$Bootstrap$Popover$popoverView, state, conf)
+				]));
+	});
+var $author$project$Main$renderTitleBar = F3(
+	function (keyword, popoverStateSimilarity, popoverState) {
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'display', 'flex')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'flex', '1 1 8rem'),
+							$elm$html$Html$Events$onClick($author$project$Main$SortSynonymsByOrigin)
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text('{{ title }}')
 						])),
 					A2(
 					$elm$html$Html$span,
 					_List_fromArray(
 						[
-							A2($elm$html$Html$Attributes$style, 'flex', '1 0 4rem')
+							A2($elm$html$Html$Attributes$style, 'flex', '1 0 70px')
 						]),
 					_List_fromArray(
 						[
-							$elm$html$Html$text(
-							$elm$core$String$fromInt(
-								A2(
-									$elm$core$Maybe$withDefault,
-									0,
-									A2($elm_community$list_extra$List$Extra$getAt, 1, synonym.freq))))
+							$rundis$elm_bootstrap$Bootstrap$Form$InputGroup$view(
+							$rundis$elm_bootstrap$Bootstrap$Form$InputGroup$small(
+								$rundis$elm_bootstrap$Bootstrap$Form$InputGroup$config(
+									$rundis$elm_bootstrap$Bootstrap$Form$InputGroup$text(
+										_List_fromArray(
+											[
+												$rundis$elm_bootstrap$Bootstrap$Form$Input$placeholder('{{ keyword_placeholder }}'),
+												$rundis$elm_bootstrap$Bootstrap$Form$Input$onInput($author$project$Main$KeywordInput),
+												$rundis$elm_bootstrap$Bootstrap$Form$Input$value(keyword)
+											])))))
+						])),
+					A2(
+					$elm$html$Html$span,
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Attributes$style, 'flex', '1 0 16rem'),
+							A2($elm$html$Html$Attributes$style, 'display', 'flex'),
+							A2($elm$html$Html$Attributes$style, 'justify-content', 'space-evenly')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$label,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(
+									$rundis$elm_bootstrap$Bootstrap$Popover$view,
+									popoverStateSimilarity,
+									A3(
+										$rundis$elm_bootstrap$Bootstrap$Popover$content,
+										_List_Nil,
+										_List_fromArray(
+											[
+												$elm$html$Html$text('{{ popularity_popover_explanation }}')
+											]),
+										A3(
+											$rundis$elm_bootstrap$Bootstrap$Popover$titleH4,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$class('text-secondary')
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('{{ popularity_popover_title }}')
+												]),
+											$rundis$elm_bootstrap$Bootstrap$Popover$bottom(
+												$rundis$elm_bootstrap$Bootstrap$Popover$config(
+													A2(
+														$rundis$elm_bootstrap$Bootstrap$Button$button,
+														_List_fromArray(
+															[
+																$rundis$elm_bootstrap$Bootstrap$Button$small,
+																$rundis$elm_bootstrap$Bootstrap$Button$outlineSecondary,
+																$rundis$elm_bootstrap$Bootstrap$Button$attrs(
+																A2($rundis$elm_bootstrap$Bootstrap$Popover$onClick, popoverStateSimilarity, $author$project$Main$PopoverMsgSimilarity))
+															]),
+														_List_fromArray(
+															[
+																$elm$html$Html$text('{{ popularity_column }}')
+															])))))))
+								])),
+							A2(
+							$elm$html$Html$label,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(
+									$rundis$elm_bootstrap$Bootstrap$Popover$view,
+									popoverState,
+									A3(
+										$rundis$elm_bootstrap$Bootstrap$Popover$content,
+										_List_Nil,
+										_List_fromArray(
+											[
+												$elm$html$Html$text('{{ freq_decomposition_explanation }}')
+											]),
+										A3(
+											$rundis$elm_bootstrap$Bootstrap$Popover$titleH4,
+											_List_fromArray(
+												[
+													$elm$html$Html$Attributes$class('text-secondary')
+												]),
+											_List_fromArray(
+												[
+													$elm$html$Html$text('{{ freq_decomposition_title }}')
+												]),
+											$rundis$elm_bootstrap$Bootstrap$Popover$bottom(
+												$rundis$elm_bootstrap$Bootstrap$Popover$config(
+													A2(
+														$rundis$elm_bootstrap$Bootstrap$Button$button,
+														_List_fromArray(
+															[
+																$rundis$elm_bootstrap$Bootstrap$Button$small,
+																$rundis$elm_bootstrap$Bootstrap$Button$outlineSecondary,
+																$rundis$elm_bootstrap$Bootstrap$Button$attrs(
+																A2($rundis$elm_bootstrap$Bootstrap$Popover$onClick, popoverState, $author$project$Main$PopoverMsg))
+															]),
+														_List_fromArray(
+															[
+																$elm$html$Html$text('{{ total_freq }}')
+															])))))))
+								]))
 						]))
 				]));
 	});
-var $elm$json$Json$Decode$andThen = _Json_andThen;
-var $elm$json$Json$Decode$fail = _Json_fail;
-var $elm_community$html_extra$Html$Events$Extra$customDecoder = F2(
-	function (d, f) {
-		var resultDecoder = function (x) {
-			if (x.$ === 'Ok') {
-				var a = x.a;
-				return $elm$json$Json$Decode$succeed(a);
-			} else {
-				var e = x.a;
-				return $elm$json$Json$Decode$fail(e);
-			}
-		};
-		return A2(
-			$elm$json$Json$Decode$andThen,
-			resultDecoder,
-			A2($elm$json$Json$Decode$map, f, d));
-	});
-var $elm$core$Result$fromMaybe = F2(
-	function (err, maybe) {
-		if (maybe.$ === 'Just') {
-			var v = maybe.a;
-			return $elm$core$Result$Ok(v);
-		} else {
-			return $elm$core$Result$Err(err);
-		}
-	});
-var $elm_community$html_extra$Html$Events$Extra$maybeStringToResult = $elm$core$Result$fromMaybe('could not convert string');
-var $elm_community$html_extra$Html$Events$Extra$targetValueIntParse = A2(
-	$elm_community$html_extra$Html$Events$Extra$customDecoder,
-	$elm$html$Html$Events$targetValue,
-	A2($elm$core$Basics$composeR, $elm$core$String$toInt, $elm_community$html_extra$Html$Events$Extra$maybeStringToResult));
-var $author$project$Main$renderSynonyms = function (synonyms) {
-	var partial = $elm$html$Html$Lazy$lazy2($author$project$Main$renderSingleSynonym);
-	return A2(
-		$elm$html$Html$div,
-		_List_fromArray(
-			[
-				A2(
-				$elm$html$Html$Events$on,
-				'click',
-				A2($elm$json$Json$Decode$map, $author$project$Main$SelectSynonym, $elm_community$html_extra$Html$Events$Extra$targetValueIntParse))
-			]),
-		A2($elm$core$List$indexedMap, partial, synonyms));
-};
 var $author$project$Main$renderUserMessages = function (userMessage) {
 	return A2(
 		$elm$html$Html$div,
@@ -11346,55 +12351,13 @@ var $author$project$Main$render = function (model) {
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(190, 190, 190)'),
-				A2($elm$html$Html$Attributes$style, 'overflow', 'auto')
+				A2($elm$html$Html$Attributes$style, 'background-color', 'rgb(240, 240, 240)'),
+				A2($elm$html$Html$Attributes$style, 'padding', '1rem 1rem')
 			]),
 		_List_fromArray(
 			[
+				A4($elm$html$Html$Lazy$lazy3, $author$project$Main$renderTitleBar, model.keyword, model.popoverStateSimilarity, model.popoverState),
 				A2($elm$html$Html$Lazy$lazy, $author$project$Main$renderUserMessages, model.userMessage),
-				A3(
-				$elm$html$Html$Lazy$lazy2,
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						A2($elm$html$Html$Attributes$style, 'display', 'flex')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$elm$html$Html$span,
-						_List_fromArray(
-							[
-								A2($elm$html$Html$Attributes$style, 'flex', '10 1 calc(2rem + 2rem + 6rem)'),
-								$elm$html$Html$Events$onClick($author$project$Main$SortSynonymsByOrigin)
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('{{ title }}')
-							])),
-						A2(
-						$elm$html$Html$span,
-						_List_fromArray(
-							[
-								A2($elm$html$Html$Attributes$style, 'flex', '1 0 4rem'),
-								$elm$html$Html$Events$onClick($author$project$Main$SortSynonymsByFreq)
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('{{ google_corpus_freq }}')
-							])),
-						A2(
-						$elm$html$Html$span,
-						_List_fromArray(
-							[
-								A2($elm$html$Html$Attributes$style, 'flex', '1 0 4rem'),
-								$elm$html$Html$Events$onClick($author$project$Main$SortSynonymsByFreq)
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('{{ subtitles_freq }}')
-							]))
-					])),
 				A3(
 				$elm$html$Html$Lazy$lazy2,
 				$elm$html$Html$div,
@@ -11411,5 +12374,5 @@ var $author$project$Main$view = function (model) {
 var $author$project$Main$main = $elm$browser$Browser$element(
 	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
-	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.KeyCandidate":{"args":[],"type":"{ word : String.String, metadata : String.String, freq : List.List Basics.Int }"},"Json.Decode.Value":{"args":[],"type":"Json.Encode.Value"}},"unions":{"Main.Msg":{"args":[],"tags":{"SelectSynonym":["Basics.Int"],"SortSynonymsByFreq":[],"SortSynonymsByOrigin":[],"SynonymsReady":["Result.Result Http.Error (List.List Main.KeyCandidate)"],"KeywordInput":["String.String"],"Recv":["Json.Decode.Value"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Json.Encode.Value":{"args":[],"tags":{"Value":[]}}}}})}});}(window));
+	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.KeyCandidate":{"args":[],"type":"{ word : String.String, metadata : String.String, freq : List.List Basics.Int }"},"Json.Decode.Value":{"args":[],"type":"Json.Encode.Value"},"Bootstrap.Utilities.DomHelper.Area":{"args":[],"type":"{ top : Basics.Float, left : Basics.Float, width : Basics.Float, height : Basics.Float }"},"Bootstrap.Popover.DOMState":{"args":[],"type":"{ rect : Bootstrap.Utilities.DomHelper.Area, offsetWidth : Basics.Float, offsetHeight : Basics.Float }"}},"unions":{"Main.Msg":{"args":[],"tags":{"SelectSynonym":["Basics.Int"],"SortSynonymsByOrigin":[],"SynonymsReady":["Result.Result Http.Error (List.List Main.KeyCandidate)"],"KeywordInput":["String.String"],"Recv":["Json.Decode.Value"],"PopoverMsg":["Bootstrap.Popover.State"],"PopoverMsgSimilarity":["Bootstrap.Popover.State"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Bootstrap.Popover.State":{"args":[],"tags":{"State":["{ isActive : Basics.Bool, domState : Bootstrap.Popover.DOMState }"]}},"String.String":{"args":[],"tags":{"String":[]}},"Json.Encode.Value":{"args":[],"tags":{"Value":[]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Basics.Float":{"args":[],"tags":{"Float":[]}}}}})}});}(window));
 export const Elm = window.Elm;

@@ -6,11 +6,11 @@ import Browser
 import Css
 import Debug exposing (log)
 import Dict exposing (Dict)
-import Html exposing (Attribute, Html, button, div, input, li, ol, span, text)
+import Html exposing (Attribute, Html, br, button, div, input, li, ol, span, text, label)
 import Html.Attributes exposing (attribute, class, placeholder, style, value)
 import Html.Events exposing (on, onClick, onInput)
 import Html.Events.Extra exposing (targetValueIntParse)
-import Html.Lazy exposing (lazy, lazy2)
+import Html.Lazy exposing (lazy, lazy2, lazy3)
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -19,6 +19,15 @@ import Platform.Cmd as Cmd
 import Url.Builder exposing (relative)
 
 
+-- elm bootstrap: http://elm-bootstrap.info/popover
+-- source code: https://github.com/rundis/elm-bootstrap/
+-- popover usage code: https://github.com/rundis/elm-bootstrap.info/blob/master/src/Page/Popover.elm
+import Bootstrap.Popover as Popover
+import Bootstrap.Button as Button
+-- input group usage code: https://github.com/rundis/elm-bootstrap.info/blob/master/src/Page/Popover.elm
+import Bootstrap.Form as Form
+import Bootstrap.Form.Input as Input
+import Bootstrap.Form.InputGroup as InputGroup
 
 -- MAIN
 
@@ -51,13 +60,17 @@ type alias Model =
     { keyword : String
     , userMessage : Dict String String
     , synonyms : List KeyCandidate
+    , popoverStateSimilarity : Popover.State
+    , popoverState : Popover.State
     }
 
 
 defaultModel =
-    { keyword = "{{ loading_placeholder }}"
+    { keyword = ""
     , userMessage = Dict.empty
     , synonyms = []
+    , popoverStateSimilarity = Popover.initialState
+    , popoverState = Popover.initialState
     }
 
 
@@ -111,7 +124,7 @@ type
     Msg
     -- synonyms
     = SelectSynonym Int
-    | SortSynonymsByFreq
+    -- | SortSynonymsByFreq
     | SortSynonymsByOrigin
       -- Http responses
     | SynonymsReady (Result Http.Error (List KeyCandidate))
@@ -119,6 +132,8 @@ type
     | KeywordInput String
       -- ports
     | Recv Decode.Value
+    | PopoverMsg Popover.State
+    | PopoverMsgSimilarity Popover.State
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -129,10 +144,14 @@ update msg model =
                 newModel =
                     { model | keyword = word }
             in
-            ( newModel, Cmd.batch [ getSynonyms newModel.keyword ] )
+            if String.length word >= 2 then
+                ( newModel, Cmd.batch [ getSynonyms newModel.keyword ] )
 
-        SortSynonymsByFreq ->
-            ( { model | synonyms = List.reverse (List.sortWith compareKeyCandidates model.synonyms) }, Cmd.none )
+            else
+                ( { newModel | userMessage = Dict.empty }, Cmd.none )
+
+        -- SortSynonymsByFreq ->
+        --     ( { model | synonyms = List.reverse (List.sortWith compareKeyCandidates model.synonyms) }, Cmd.none )
 
         SortSynonymsByOrigin ->
             ( { model | synonyms = List.reverse (List.sortBy .metadata model.synonyms) }, Cmd.none )
@@ -173,6 +192,12 @@ update msg model =
 
                 Err _ ->
                     ( defaultModel, Cmd.none )
+
+        PopoverMsg state ->
+            ( { model | popoverState = state }, Cmd.none )
+
+        PopoverMsgSimilarity state ->
+            ( { model | popoverStateSimilarity = state }, Cmd.none )
 
 
 compareKeyCandidates : KeyCandidate -> KeyCandidate -> Order
@@ -225,6 +250,10 @@ getSynonyms keyword =
 
 -- VIEW
 
+calcTotalFrequency : Frequency -> Int
+calcTotalFrequency freq =
+    ((Maybe.withDefault 0 <| List.Extra.getAt 0 freq) + (Maybe.withDefault 0 <| List.Extra.getAt 1 freq)) // 2
+
 
 view : Model -> Html Msg
 view model =
@@ -241,25 +270,30 @@ renderSingleSynonym index synonym =
     div
         [ style "padding" "2px 0"
         , style "display" "flex"
-        , class "row"
+        , class "moonspeak-row"
+        , onClick (SelectSynonym index)
         ]
-        [ span
-            [ style "flex" "0 0 2rem"
-            , value (String.fromInt index)
-            ]
-            [ text (String.fromInt index ++ ".") ]
-        , span
-            [ style "flex" "0 0 2rem" ]
-            [ text (synonym.metadata ++ ": ") ]
-        , span
-            [ style "flex" "10 1 6rem" ]
+        [
+        span
+            [ style "flex" "2 1 calc(8rem + 70px)" ]
             [ text synonym.word ]
         , span
-            [ style "flex" "1 0 4rem" ]
-            [ text (String.fromInt <| Maybe.withDefault 0 <| getAt 0 synonym.freq) ]
-        , span
-            [ style "flex" "1 0 4rem" ]
-            [ text (String.fromInt <| Maybe.withDefault 0 <| getAt 1 synonym.freq) ]
+            [ style "flex" "1 0 16rem"
+            , style "display" "flex"
+            , style "justify-content" "space-evenly"
+            ]
+            [
+            span
+                [ style "flex" "0 0 4rem"
+                , style "text-align" "center"
+                ]
+                [ text synonym.metadata ]
+            , span
+                [ style "flex" "0 0 4rem"
+                , style "text-align" "right"
+                ]
+                [ text (String.fromInt <| calcTotalFrequency synonym.freq) ]
+            ]
         ]
 
 
@@ -270,35 +304,86 @@ renderSynonyms synonyms =
             lazy2 renderSingleSynonym
     in
     div
-        [ on "click" (Decode.map SelectSynonym targetValueIntParse) ]
+        [ ]
         (List.indexedMap partial synonyms)
 
+
+renderTitleBar : String -> Popover.State -> Popover.State -> Html Msg
+renderTitleBar keyword popoverStateSimilarity popoverState =
+        div
+            [ style "display" "flex" ]
+            [ span
+                [ style "flex" "1 1 8rem"
+                , onClick SortSynonymsByOrigin
+                ]
+                [ text "{{ title }}" ]
+            , span
+                [ style "flex" "1 0 70px"
+                ]
+                [ InputGroup.config
+                    (InputGroup.text [
+                        Input.placeholder "{{ keyword_placeholder }}"
+                        , Input.onInput KeywordInput
+                        , Input.value keyword
+                        ]
+                    )
+                    |> InputGroup.small
+                    |> InputGroup.view
+                ]
+            , span
+                [ style "flex" "1 0 16rem"
+                , style "display" "flex"
+                , style "justify-content" "space-evenly"
+                ]
+                [ label
+                    []
+                    [ Popover.config
+                        ( Button.button
+                            [ Button.small
+                            , Button.outlineSecondary
+                            , Button.attrs <|
+                                Popover.onClick popoverStateSimilarity PopoverMsgSimilarity
+                            ]
+                            [ text ("{{ popularity_column }}")
+                            ]
+                        )
+                        |> Popover.bottom
+                        |> Popover.titleH4 [ class "text-secondary" ] [ text "{{ popularity_popover_title }}" ]
+                        |> Popover.content []
+                            [ text "{{ popularity_popover_explanation }}"
+                            ]
+                        |> Popover.view popoverStateSimilarity
+                    ]
+                , label
+                    []
+                    [ Popover.config
+                        ( Button.button
+                            [ Button.small
+                            , Button.outlineSecondary
+                            , Button.attrs <|
+                                Popover.onClick popoverState PopoverMsg
+                            ]
+                            [ text ("{{ total_freq }}")
+                            ]
+                        )
+                        |> Popover.bottom
+                        |> Popover.titleH4 [ class "text-secondary" ] [ text "{{ freq_decomposition_title }}" ]
+                        |> Popover.content []
+                            [ text "{{ freq_decomposition_explanation }}"
+                            ]
+                        |> Popover.view popoverState
+                    ]
+                ]
+            ]
 
 render : Model -> Html Msg
 render model =
     -- Synonyms
     div
-        [ style "background-color" "rgb(190, 190, 190)"
-        , style "overflow" "auto"
+        [ style "background-color" "rgb(240, 240, 240)"
+        , style "padding" "1rem 1rem"
         ]
-        [ lazy renderUserMessages model.userMessage
-        , lazy2 div
-            [ style "display" "flex" ]
-            [ span
-                [ style "flex" "10 1 calc(2rem + 2rem + 6rem)"
-                , onClick SortSynonymsByOrigin
-                ]
-                [ text "{{ title }}" ]
-            , span
-                [ style "flex" "1 0 4rem"
-                , onClick SortSynonymsByFreq
-                ]
-                [ text "{{ google_corpus_freq }}" ]
-            , span
-                [ style "flex" "1 0 4rem"
-                , onClick SortSynonymsByFreq
-                ]
-                [ text "{{ subtitles_freq }}" ]
-            ]
+        [ lazy3 renderTitleBar model.keyword model.popoverStateSimilarity model.popoverState
+        , lazy renderUserMessages model.userMessage
         , lazy2 div [] [ renderSynonyms model.synonyms ]
         ]

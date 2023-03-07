@@ -1,8 +1,15 @@
-.row {
+.moonspeak-row {
   padding: 2px 0;
   display: flex;
 }
 
-.row:hover {
+.moonspeak-row:hover {
   background-color: rgb(200 230 230);
+}
+
+/* Override bootstrap default: set width to be smaller
+ * so that popover will definitely fit on screen
+ */
+.popover {
+  max-width: 150px;
 }
