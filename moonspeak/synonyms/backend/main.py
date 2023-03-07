@@ -152,10 +152,13 @@ def inner_synonyms(word) -> ListKeyCandidate:
     for w in result.keys():
         result[w]["metadata"] = str(popularity[w])
 
-    # sort according to popularity
+    # this constant is an impossibly large frequency value used to build the composite sorting key
+    max_freq = 1000000000
+
+    # sort according to popularity, and within each popularity grade sort according to word freq
     ordered = sorted(
         result.values(),
-        key=lambda item: int(item["metadata"]),
+        key=lambda item: int(item["metadata"]) * max_freq + sum(item["freq"]),
         reverse=True
     )
 
