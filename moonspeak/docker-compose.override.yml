@@ -136,10 +136,10 @@ services:
       MOONSPEAK_GRAPH_INITIAL_XML: >-
         <mxfile host="moonspeak.localhost" modified="2023-03-08T09:50:31.755Z" agent="5.0 (X11; Ubuntu)" etag="x1sPpmzUOXcRObYpYGWO" version="20.3.0" type="moonspeak">
           <diagram id="SKebBaCcsGTVzdhOYIFn" name="pageWithNumber">
-            <mxGraphModel dx="3702" dy="1137" grid="1" gridSize="10" guides="1" tooltips="0" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <mxGraphModel dx="3702" dy="1137" grid="1" gridSize="10" guides="1" tooltips="0" connect="1" arrows="0" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
               <root>
                 <mxCell id="0" />
-                <mxCell id="1" style="" parent="0" />
+                <mxCell id="1" style="locked=1;" parent="0" />
                 <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="/router/route/u-demouser1-s-workelements/" style="width: 680px; height: 560px; border: medium none;" pointer-events="none" id="2">
                   <mxCell style="iframe=1;" parent="1" xmlns="" vertex="1">
                     <mxGeometry x="-210" y="-70" width="700" height="580" as="geometry" />
