@@ -1,7 +1,7 @@
 # config priorities see: https://docs.gunicorn.org/en/latest/configure.html
 # config options see: https://docs.gunicorn.org/en/latest/settings.html
 
-bind=["0.0.0.0:8043"]
+bind=["moonspeak.localhost:8043"]
 
 # we use the simplest setting: multiple workers, no threads, preload between workers to save memory
 # for worker types and quantity see: https://stackoverflow.com/questions/38425620/gunicorn-workers-and-threads

@@ -146,6 +146,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Feature, run as "python main.py"')
+    parser.add_argument('--host', type=str, default=os.getenv("MOONSPEAK_HOST", "moonspeak.localhost"), help='host name to bind')
     parser.add_argument('--port', type=int, default=os.getenv("MOONSPEAK_PORT", 8042), help='port number')
     args = parser.parse_args()
 
@@ -177,4 +178,4 @@ if __name__ == "__main__":
         KANJIDAMAGE = json.load(kanjidamage)
 
     print("Running bottle server on port {}".format(args.port))
-    run(host="0.0.0.0", port=args.port)
+    run(host=args.host, port=args.port)
