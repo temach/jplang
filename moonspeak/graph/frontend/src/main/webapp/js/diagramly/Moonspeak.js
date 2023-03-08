@@ -202,6 +202,9 @@ MoonspeakUi.prototype.runInit = function(app)
     let editorUi = app.editor;
     let graph = editorUi.graph;
 
+    // disable the blue connection arrows from nodes, done here and in pre-init code
+    graph.connectionArrowsEnabled = false;
+
     // on file loaded, make iframe message connections
     // this.graph.getModel().addListener(mxEvent.CHANGE, funct);
     editorUi.addListener('fileLoaded', mxUtils.bind(this, function(editorUi)
