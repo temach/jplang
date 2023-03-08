@@ -86,5 +86,7 @@ services:
     image: "temachpool/moonspeak-frequency:${TAG:-latest}"
     volumes:
       - unixsocks:/opt/moonspeak/unixsocks
+    networks:
+      - moonspeaknet
     environment:
       MOONSPEAK_PORT: 80
