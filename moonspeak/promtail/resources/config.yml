@@ -1,0 +1,39 @@
+server:
+  # promtail container has access to docker.sock
+  # so its best to disable any entry points
+  disable: true
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: "${MOONSPEAK_LOKI_URL}/loki/api/v1/push"
+
+scrape_configs:
+# example job that monitors all containers on host, useful for debug and test, but actually too noisy
+# - job_name: allcontainers
+#   static_configs:
+#   - targets:
+#       - localhost
+#     labels:
+#       job: allcontainerlogs
+#       __path__: /var/lib/docker/containers/*/*log
+#   pipeline_stages:
+#     - docker: {}
+
+- job_name: containers
+  # Describes how to use the Docker daemon API to discover containers running on
+  # the same host as promtail
+  docker_sd_configs:
+    - host: unix:///var/run/docker.sock
+      refresh_interval: 10s
+      # maybe add filter here so we only see our network containers, not all on host
+      # see example: https://stackoverflow.com/questions/71516943/promtail-service-discovery-based-on-label-with-docker-compose-and-label-in-gra
+      # see docs: https://grafana.com/docs/loki/latest/clients/promtail/configuration/#docker_sd_config
+      # see filter types: https://docs.docker.com/engine/api/v1.41/#tag/Container/operation/ContainerList
+  pipeline_stages:
+    - docker: {}
+  relabel_configs:
+    - source_labels: ['__meta_docker_container_name']
+      regex: '/(.*)'
+      target_label: 'container'

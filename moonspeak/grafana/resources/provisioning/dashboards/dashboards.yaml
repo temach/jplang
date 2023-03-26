@@ -1,0 +1,25 @@
+apiVersion: 1
+
+providers:
+  # <string> an unique provider name. Dashboards will be stored in database under this name.
+  - name: 'moonspeak'
+    # <int> Org id. Default to 1
+    orgId: 1
+    # <string> name of the dashboard folder. If empty default will be used.
+    folder: ''
+    # <string> folder UID. will be automatically generated if not specified
+    folderUid: ''
+    # <string> provider type. Default to 'file'
+    type: file
+    # grafana deletes dashboard from database if json is not found on disk, we disable this feature. See: https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards
+    disableDeletion: true
+    # <int> how often Grafana will scan for changed dashboards
+    updateIntervalSeconds: 10
+    # <bool> allow updating provisioned dashboards from the UI, no, because changes will be overriden when underlying JSON changes
+    allowUiUpdates: false
+    options:
+      # <string, required> path to dashboard files on disk. Required when using the 'file' type
+      path: /etc/grafana/provisioning/dashboards
+      # <bool> use folder names from filesystem to create folders in Grafana
+      foldersFromFilesStructure: true
+
