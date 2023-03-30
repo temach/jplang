@@ -139,6 +139,8 @@ services:
     container_name: frequency.moonspeak.localhost
     build:
       context: ./frequency
+    ports:
+      - "8005:80"
 
   #==================================
   # this is the demo user for development,  graph address is the user's unique access url
