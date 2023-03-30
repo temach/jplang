@@ -37,6 +37,7 @@ services:
     container_name: promtail.moonspeak.localhost
     environment:
       MOONSPEAK_LOKI_URL: "${MOONSPEAK_LOKI_URL:?Set MOONSPEAK_LOKI_URL env var to stream logs to grafana cloud: https://grafana.com/orgs/moonspeakorg/hosted-logs}"
+      PROMTAIL_LOG_LEVEL: "error"
     restart: always
 
   landing:

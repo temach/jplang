@@ -85,12 +85,13 @@ services:
     build:
       context: ./promtail
     environment:
-      MOONSPEAK_LOKI_URL: "${MOONSPEAK_LOKI_URL:-http://loki.moonspeak.localhost:3100}"
+      MOONSPEAK_LOKI_URL: "http://loki.moonspeak.localhost:3100"
+      PROMTAIL_LOG_LEVEL: "error"
 
   loki:
     container_name: loki.moonspeak.localhost
     image: grafana/loki:2.7.4
-    command: -config.file=/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml -log.level=error
     networks:
       - moonspeaknet
 
@@ -100,14 +101,20 @@ services:
     build:
       context: ./grafana
     environment:
-      MOONSPEAK_LOKI_URL: "${MOONSPEAK_LOKI_URL:-http://loki.moonspeak.localhost:3100}"
-      GF_SECURITY_ADMIN_USER: "moonspeak"
-      GF_SECURITY_ADMIN_PASSWORD: "moonspeak"
+      MOONSPEAK_LOKI_URL: "http://loki.moonspeak.localhost:3100"
       GF_SERVER_DOMAIN: "grafana.moonspeak.localhost"
       GF_SERVER_ROOT_URL: ""
       GF_SERVER_SERVE_FROM_SUB_PATH: ""
       # protocol can be 'socket' for unix sock, see: https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#server
       GF_SERVER_PROTOCOL: "http"
+      GF_LOG_LEVEL: "error"
+      # allow anonymous user login, see: https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/#anonymous-authentication
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_NAME: "Main Org."
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+      # or login with moonspeak:moonspeak
+      # GF_SECURITY_ADMIN_USER: "moonspeak"
+      # GF_SECURITY_ADMIN_PASSWORD: "moonspeak"
     networks:
       - moonspeaknet
     ports:

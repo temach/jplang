@@ -2,12 +2,13 @@ server:
   # promtail container has access to docker.sock
   # so its best to disable any entry points
   disable: true
+  log_level: "${PROMTAIL_LOG_LEVEL:-info}"
 
 positions:
   filename: /tmp/positions.yaml
 
 clients:
-  - url: "${MOONSPEAK_LOKI_URL}/loki/api/v1/push"
+  - url: "${MOONSPEAK_LOKI_URL:-http://localhost:3100}/loki/api/v1/push"
 
 scrape_configs:
 # example job that monitors all containers on host, useful for debug and test, but actually too noisy
