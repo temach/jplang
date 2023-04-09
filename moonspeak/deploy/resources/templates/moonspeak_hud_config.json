@@ -1,6 +1,0 @@
-{
-    "urls": [
-        "/plus/",
-        "/router/{{ moonspeak_node }}/{{ moonspeak_graph_service }}"
-    ]
-}
