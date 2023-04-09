@@ -1,12 +1,11 @@
-from bottle import route, run, static_file, request
+from bottle import route, run, static_file, request, response
 import json
 from collections import Counter
 import os
 
-nums_ords = set(i for i in range(48, 58))
 latin_ords = set(i for i in range(97, 123))
 japan_ords = set(i for i in range(19969, 40959))
-all_ords = nums_ords | latin_ords | japan_ords
+all_ords = latin_ords | japan_ords
 
 
 def frequency(user_string: str):
@@ -24,8 +23,9 @@ def submit():
     try:
         user_string = request.json["usertext"]
     except UnicodeDecodeError as e:
-        user_string = request.json.get("usertext").encode("ISO-8859-1").decode("utf-8")
+        user_string = request.json["usertext"].encode("ISO-8859-1").decode("utf-8")
 
+    response.set_header("content-type", "application/json")
     return json.dumps(frequency(user_string.lower()), ensure_ascii=False)
 
 

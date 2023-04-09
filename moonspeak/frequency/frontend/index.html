@@ -40,7 +40,7 @@
     <script>
       function submitForm() {
         const inputText = document.getElementById("input-text").value;
-        fetch("/submit", {
+        fetch("submit", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -49,9 +49,12 @@
         })
           .then((response) => response.json())
           .then((json) => {
+            const sortedJson = Object.fromEntries(
+              Object.entries(json).sort((a, b) => b[1] - a[1])
+            );
             const tableBody = document.getElementById("table-body");
             tableBody.innerHTML = "";
-            Object.keys(json).forEach((key) => {
+            Object.keys(sortedJson).forEach((key) => {
               const row = document.createElement("tr");
               const kanjiCell = document.createElement("td");
               const frequencyCell = document.createElement("td");
