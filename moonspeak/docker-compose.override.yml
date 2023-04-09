@@ -77,6 +77,8 @@ services:
       # set debug to on
       PYTHON_ON_WHALES_DEBUG: "1"
       LOGLEVEL: "DEBUG"
+    ports:
+      - "8001:80"
 
   # loki, promtail and grafana stack for logs
   # see: https://mpolinowski.github.io/docs/DevOps/Provisioning/2021-04-07--loki-prometheus-grafana/2021-04-07/
@@ -124,16 +126,22 @@ services:
     container_name: landing.moonspeak.localhost
     build:
       context: ./landing
+    ports:
+      - "8002:8002"
 
   synonyms:
     container_name: synonyms.moonspeak.localhost
     build:
       context: ./synonyms
+    ports:
+      - "8043:80"
 
   suggestions:
     container_name: suggestions.moonspeak.localhost
     build:
       context: ./suggestions
+    ports:
+      - "8042:80"
 
   frequency:
     container_name: frequency.moonspeak.localhost
@@ -158,6 +166,8 @@ services:
       LOGLEVEL: "INFO"
       MOONSPEAK_DEVMODE: ""
       MOONSPEAK_UDS: "/opt/moonspeak/unixsocks/u-demouser1-s-workelements.sock"
+    ports:
+      - "8040:80"
 
   graph:
     image: "temachpool/moonspeak-graph:${TAG:-latest}"
@@ -172,6 +182,8 @@ services:
       - userdata:/opt/moonspeak/graph/userdata
     networks:
       - moonspeaknet
+    ports:
+      - "8041:80"
     environment:
       LOGLEVEL: "INFO"
       MOONSPEAK_DEVMODE: ""
