@@ -1,28 +1,18 @@
 from bottle import route, run, static_file, request
 import json
-import string
-from collections import defaultdict
+from collections import Counter
 import os
 
+nums_ords = set(i for i in range(48, 58))
+latin_ords = set(i for i in range(97, 123))
+japan_ords = set(i for i in range(19969, 40959))
+all_ords = nums_ords | latin_ords | japan_ords
 
-nums_ords = [i for i in range(48, 58)]
-latin_ords = [i for i in range(97, 123)]
-japan_ords = [i for i in range(19969, 40959)]
-all_ords = set(nums_ords + latin_ords + japan_ords)
 
-
-def frequency(user_string):
-    dict_chr_counter = defaultdict(int)
-    for i in user_string:
-        if ord(i) in all_ords:
-            dict_chr_counter[i] += 1
-    return {
-        key: value
-        for key, value in sorted(
-            dict_chr_counter.items(), key=lambda item: item[1], reverse=True
-        )
-    }
-
+def frequency(user_string: str):
+    result = Counter(user_string)
+    sorted_result = result.most_common()
+    return {k: v for k, v in sorted_result if ord(k) in all_ords}
 
 @route("/")
 def index():
@@ -31,7 +21,11 @@ def index():
 
 @route("/submit", method="POST")
 def submit():
-    user_string = request.forms.get("usertext").encode("ISO-8859-1").decode("utf-8")
+    try:
+        user_string = request.json["usertext"]
+    except UnicodeDecodeError as e:
+        user_string = request.json.get("usertext").encode("ISO-8859-1").decode("utf-8")
+
     return json.dumps(frequency(user_string.lower()), ensure_ascii=False)
 
 
