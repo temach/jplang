@@ -15,8 +15,7 @@ To run on specific port use:
 # python main.py --bind=127.0.0.1:8040
 ```
 
-Gunicorn will automatically pick up other settings from its config file and run the application.
-
+From time to time you might want to update nltk_data in the ./resources/nltk_data/ dir, for that just run the ./backend/download_libs.py script.
 
 # Kanji Keywords
 
