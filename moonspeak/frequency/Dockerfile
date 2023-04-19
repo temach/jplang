@@ -1,6 +1,9 @@
 FROM python:bullseye
 WORKDIR /opt/ms/
 
+#libraries for the correct operation of chromium from 
+#https://ahelpme.com/linux/ubuntu/chromium-browser-in-ubuntu-20-04-lts-without-snap-to-use-in-docker-container/
+
 RUN apt-key adv --fetch-keys "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xea6e302dc78cc4b087cfc3570ebea9b02842f111" \
 && echo 'deb http://ppa.launchpad.net/chromium-team/beta/ubuntu bionic main ' >> /etc/apt/sources.list.d/chromium-team-beta.list \
 && apt update
