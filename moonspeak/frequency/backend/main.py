@@ -31,7 +31,7 @@ def index():
 
 @route("/submit", method="POST")
 def submit():
-    dict_of_frequency = {"frequency": None, "input_type": None, "message": ""}
+    dict_of_frequency = {"frequency": {}, "input_type": "", "error": ""}
     try:
         user_string = request.json["usertext"]
     except UnicodeDecodeError as e:
@@ -40,10 +40,8 @@ def submit():
         dict_of_frequency["input_type"] = "url"
         try:
             dict_of_frequency["frequency"] = frequency(url_parse(user_string))
-        except:
-            dict_of_frequency[
-                "message"
-            ] = "You entered the correct URL, but something went wrong in our part."
+        except Exception as err:
+            dict_of_frequency["error"] = str(err)
     else:
         dict_of_frequency["frequency"] = frequency(user_string)
         dict_of_frequency["input_type"] = "text"
