@@ -23,7 +23,7 @@ def frequency(user_string: str):
         result = Counter(user_string)
         sorted_result = result.most_common()
         return {k: v for k, v in sorted_result if ord(k) in all_ords}
-    
+
 
 @route("/")
 def index():
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--host",
         type=str,
-        default=os.getenv("MOONSPEAK_HOST", "moonspeak.localhost"),
+        default=os.getenv("MOONSPEAK_HOST", "localhost"),
         help="hostname to bind",
     )
     parser.add_argument(

@@ -7,6 +7,9 @@
         border-collapse: collapse;
         width: 100%;
       }
+      #input-text {
+        width: 80%;
+      }
       th,
       td {
           padding: 8px;
@@ -14,19 +17,19 @@
           border-bottom: 1px solid #ddd;
       }
 
-      tr:hover,
-      tr:focus,
+      #table-body tr:hover,
+      #table-body tr:focus,
       .selected {
           background-color: #a0f0a0;
       }
     </style>
   </head>
   <body>
-    <form>
+    <div>
       <label for="input-text">Enter text:</label>
       <input type="text" id="input-text" name="input-text">
-      <input type="button" value="Submit" onclick="submitForm()">
-    </form>
+      <input type="button" value="Submit" onclick="submitUserInput()">
+    </div>
     <table>
       <thead>
         <tr>
@@ -38,7 +41,7 @@
       </tbody>
     </table>
     <script>
-      function submitForm() {
+      function submitUserInput() {
         const inputText = document.getElementById("input-text").value;
         fetch("submit", {
           method: "POST",
