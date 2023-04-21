@@ -1,7 +1,29 @@
-TODO:
+Building and running:
 
-1. strange bug with building synonyms, -- DEV_MODE --, htmlLint did not strip 
-2. github does not copy tags when forking, and does not copy branches it seems?!
+This will pull the latest images:
+```
+docker compose up
+```
+
+You can also specify a specific TAG:
+```
+TAG="2023-03-08" docker compose up
+```
+OR create a .env file with the TAG env variable and docker compose will pick it up automatically:
+```
+TAG="2023-03-08"
+```
+
+
+Sometimes the apline images can have toruble building, this is specifically related to apk and docker engine.
+Read more here: https://github.com/gliderlabs/docker-alpine/issues/334
+The best approach is to restart the docker engine, if that does not work, try changing docker engine DNS settings in /etc/docker/daemon.json:
+```
+{
+  "dns": ["1.1.1.1", "8.8.8.8"]
+}
+```
+
 
 Server setup:
 - create server

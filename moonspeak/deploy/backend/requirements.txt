@@ -1,4 +1,0 @@
-bottle
-ansible_runner
-jinja2
-docker

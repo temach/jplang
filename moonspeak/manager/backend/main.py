@@ -7,19 +7,15 @@
 # see: https://jpmens.net/2020/02/28/dial-a-for-ansible-and-r-for-runner/
 
 import os
-import pathlib
-import json
 import secrets
-import threading
 import yaml
 import datetime
 from multiprocessing import Process
 from multiprocessing import Queue as MPQueue # do not confuse with threading.Queue
 from pathlib import Path
-from pprint import pprint
 
-from bottle import route, run, get, request, HTTPResponse, redirect, template, static_file, default_app
-from python_on_whales import DockerClient
+from bottle import route, run, get, request, HTTPResponse, template, static_file, default_app
+from python_on_whales.docker_client import DockerClient
 from python_on_whales.exceptions import DockerException
 
 from spindown_process import spindown_process
@@ -73,15 +69,18 @@ def guid(nbytes=10):
     return secrets.token_hex(nbytes)
 
 def submit_compose_up_task(unique_id, force_recreate=False):
-    compose_files = [ str(Path("../resources/docker-compose-template.yml")) ]
+    compose_files = [ Path("../resources/docker-compose-template.yml") ]
 
     if DEVMODE:
-        compose_files.append(str(Path("../resources/docker-compose-devmode-template.yml")))
+        compose_files.append(Path("../resources/docker-compose-devmode-template.yml"))
         # see details in devmode docker compose template, basically this allows to publish service ports in predictable manner
         os.environ['MOONSPEAK_DEVMODE_COUNT'] = str(DEVMODE_COUNT)
 
     dockercli = DockerClient(compose_project_name=unique_id, compose_files=compose_files)
     logger.info(yaml.safe_dump(dockercli.compose.config(return_json=True)))
+
+    if force_recreate:
+        dockercli.compose.down(timeout=2)
 
     dockercli.compose.up(detach=True, remove_orphans=True)
 
@@ -111,8 +110,10 @@ def handle(target):
         service_name = "u-devmode{}-s-{}".format(DEVMODE_COUNT, DEVMODE_SERVICE_NAME)
 
     if not service_name:
-        logger.info("No 'u-' found in request: {}".format(request.url))
-        return HTTPResponse(status=404)
+        msg = "No 'u-' found in request: {}".format(request.url)
+        logger.info(msg)
+        long_msg = f"Error: manager received request to bring up {target}, however it can only handle requests like /handle/u-XXX-s-YYY/. Most likely router could not find your service and was redirected here."
+        return HTTPResponse(body="Erorr: manager received request to bring up ", status=404)
 
     try:
         _, user_name, _, service_name = service_name.split("-")
@@ -147,7 +148,7 @@ def handle(target):
 
 @get("/")
 def index():
-    return "Go to <code>/handle/s-XXX-u-YYY</code>"
+    return "Go to <code>/handle/u-XXX-s-YYY</code>"
 
 
 @get("/<path:path>")

@@ -54,6 +54,7 @@ services:
       MOONSPEAK_DEV_MODE: ""
       RUST_LOG: "router=debug"
 
+  #===================================
   manager:
     container_name: manager.moonspeak.localhost
     build:
@@ -76,27 +77,78 @@ services:
       # set debug to on
       PYTHON_ON_WHALES_DEBUG: "1"
       LOGLEVEL: "DEBUG"
+    ports:
+      - "8001:80"
 
-  #===================================
+  # loki, promtail and grafana stack for logs
+  # see: https://mpolinowski.github.io/docs/DevOps/Provisioning/2021-04-07--loki-prometheus-grafana/2021-04-07/
+  promtail:
+    container_name: promtail.moonspeak.localhost
+    build:
+      context: ./promtail
+    environment:
+      MOONSPEAK_LOKI_URL: "http://loki.moonspeak.localhost:3100"
+      PROMTAIL_LOG_LEVEL: "error"
+
+  loki:
+    container_name: loki.moonspeak.localhost
+    image: grafana/loki:2.7.4
+    command: -config.file=/etc/loki/local-config.yaml -log.level=error
+    networks:
+      - moonspeaknet
+
+  grafana:
+    container_name: grafana.moonspeak.localhost
+    image: "temachpool/moonspeak-grafana:${TAG:-latest}"
+    build:
+      context: ./grafana
+    environment:
+      MOONSPEAK_LOKI_URL: "http://loki.moonspeak.localhost:3100"
+      GF_SERVER_DOMAIN: "grafana.moonspeak.localhost"
+      GF_SERVER_ROOT_URL: ""
+      GF_SERVER_SERVE_FROM_SUB_PATH: ""
+      # protocol can be 'socket' for unix sock, see: https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#server
+      GF_SERVER_PROTOCOL: "http"
+      GF_LOG_LEVEL: "error"
+      # allow anonymous user login, see: https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/#anonymous-authentication
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_NAME: "Main Org."
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+      # or login with moonspeak:moonspeak
+      # GF_SECURITY_ADMIN_USER: "moonspeak"
+      # GF_SECURITY_ADMIN_PASSWORD: "moonspeak"
+    networks:
+      - moonspeaknet
+    ports:
+      - "3000:3000"
+
   landing:
     container_name: landing.moonspeak.localhost
     build:
       context: ./landing
+    ports:
+      - "8002:8002"
 
   synonyms:
     container_name: synonyms.moonspeak.localhost
     build:
       context: ./synonyms
+    ports:
+      - "8043:80"
 
   suggestions:
     container_name: suggestions.moonspeak.localhost
     build:
       context: ./suggestions
+    ports:
+      - "8042:80"
 
   frequency:
     container_name: frequency.moonspeak.localhost
     build:
       context: ./frequency
+    ports:
+      - "8005:80"
 
   #==================================
   # this is the demo user for development,  graph address is the user's unique access url
@@ -114,6 +166,8 @@ services:
       LOGLEVEL: "INFO"
       MOONSPEAK_DEVMODE: ""
       MOONSPEAK_UDS: "/opt/moonspeak/unixsocks/u-demouser1-s-workelements.sock"
+    ports:
+      - "8040:80"
 
   graph:
     image: "temachpool/moonspeak-graph:${TAG:-latest}"
@@ -128,6 +182,8 @@ services:
       - userdata:/opt/moonspeak/graph/userdata
     networks:
       - moonspeaknet
+    ports:
+      - "8041:80"
     environment:
       LOGLEVEL: "INFO"
       MOONSPEAK_DEVMODE: ""

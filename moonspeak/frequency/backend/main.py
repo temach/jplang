@@ -1,27 +1,27 @@
-from bottle import route, run, static_file, request
+from bottle import route, run, static_file, request, response
 import json
-import string
-from collections import defaultdict
+from collections import Counter
 import os
+from requests_html import HTMLSession
+import validators
 
-
-nums_ords = [i for i in range(48, 58)]
-latin_ords = [i for i in range(97, 123)]
-japan_ords = [i for i in range(19969, 40959)]
-all_ords = set(nums_ords + latin_ords + japan_ords)
+japan_ords = set(i for i in range(19969, 40959))
 
 
 def frequency(user_string):
-    dict_chr_counter = defaultdict(int)
-    for i in user_string:
-        if ord(i) in all_ords:
-            dict_chr_counter[i] += 1
-    return {
-        key: value
-        for key, value in sorted(
-            dict_chr_counter.items(), key=lambda item: item[1], reverse=True
-        )
-    }
+    return {k: v for k, v in Counter(user_string).most_common() if ord(k) in japan_ords}
+
+
+def is_url(user_string):
+    return validators.url(user_string) == True
+
+
+def url_parse(user_string):
+    session = HTMLSession()
+    parse = session.get(user_string)
+    parse.html.render(timeout=40)
+    result = parse.html.html
+    return result
 
 
 @route("/")
@@ -31,8 +31,23 @@ def index():
 
 @route("/submit", method="POST")
 def submit():
-    user_string = request.forms.get("usertext").encode("ISO-8859-1").decode("utf-8")
-    return json.dumps(frequency(user_string.lower()), ensure_ascii=False)
+    dict_of_frequency = {"frequency": {}, "input_type": "", "error": ""}
+    try:
+        user_string = request.json["usertext"]
+    except UnicodeDecodeError as e:
+        user_string = request.json["usertext"].encode("ISO-8859-1").decode("utf-8")
+    if is_url(user_string):
+        dict_of_frequency["input_type"] = "url"
+        try:
+            dict_of_frequency["frequency"] = frequency(url_parse(user_string))
+        except Exception as err:
+            dict_of_frequency["error"] = str(err)
+    else:
+        dict_of_frequency["frequency"] = frequency(user_string)
+        dict_of_frequency["input_type"] = "text"
+
+    response.set_header("content-type", "application/json")
+    return json.dumps(dict_of_frequency, ensure_ascii=False)
 
 
 if __name__ == "__main__":

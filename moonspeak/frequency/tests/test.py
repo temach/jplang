@@ -11,7 +11,7 @@ class TestStringMethods(unittest.TestCase):
 
     def test_post(self):
         payload = {"usertext": "黺黺丆丆aa00"}
-        r = requests.post("http://localhost:8005/submit", data=payload)
+        r = requests.post("http://localhost:8005/submit", json=payload)
         r_json = r.json()
         self.assertTrue(r.status_code == requests.codes.ok)
         self.assertTrue(r_json["黺"] == 2)
@@ -22,14 +22,14 @@ class TestStringMethods(unittest.TestCase):
     def test_time(self):
         start_time = time()
         payload = {"usertext": "黺黺丆丆aa00"}
-        r = requests.post("http://localhost:8005/submit", data=payload)
+        r = requests.post("http://localhost:8005/submit", json=payload)
         delta_time = time() - start_time
         self.assertTrue(delta_time <= 3)
         self.assertTrue(r.status_code == requests.codes.ok)
 
     def test_empty_string(self):
         payload = {"usertext": ""}
-        r = requests.post("http://localhost:8005/submit", data=payload)
+        r = requests.post("http://localhost:8005/submit", json=payload)
         r_json = r.json()
         self.assertTrue(r.status_code == requests.codes.ok)
         self.assertTrue(len(r_json) == 0)

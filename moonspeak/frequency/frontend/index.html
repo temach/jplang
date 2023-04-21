@@ -1,8 +1,81 @@
+<!DOCTYPE html>
 <html>
-<body>
-<form action="submit" method="post">
-            text: <input name="usertext" type="text" />
-            <input value="Submit" type="submit" />
-        </form>
-</body>
+  <head>
+    <title>Frequency</title>
+    <style>
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+          padding: 8px;
+          text-align: left;
+          border-bottom: 1px solid #ddd;
+      }
+
+      tr:hover,
+      tr:focus,
+      .selected {
+          background-color: #a0f0a0;
+      }
+    </style>
+  </head>
+  <body>
+    <form>
+      <label for="input-text">Enter text:</label>
+      <input type="text" id="input-text" name="input-text">
+      <input type="button" value="Submit" onclick="submitForm()">
+    </form>
+    <table>
+      <thead>
+        <tr>
+          <th>Kanji</th>
+          <th>Frequency</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+      </tbody>
+    </table>
+    <script>
+      function submitForm() {
+        const inputText = document.getElementById("input-text").value;
+        fetch("submit", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ usertext: inputText }),
+        })
+          .then((response) => response.json())
+          .then((json) => {
+            const sortedJson = Object.fromEntries(
+              Object.entries(json).sort((a, b) => b[1] - a[1])
+            );
+            const tableBody = document.getElementById("table-body");
+            tableBody.innerHTML = "";
+            Object.keys(sortedJson).forEach((key) => {
+              const row = document.createElement("tr");
+              const kanjiCell = document.createElement("td");
+              const frequencyCell = document.createElement("td");
+              kanjiCell.textContent = key;
+              frequencyCell.textContent = json[key];
+              row.appendChild(kanjiCell);
+              row.appendChild(frequencyCell);
+              row.addEventListener("click", () => {
+                const rowData = {
+                  kanji: key,
+                  frequency: json[key],
+                };
+                console.log("sending to parent: " + JSON.stringify(rowData));
+                window.parent.postMessage(JSON.stringify(rowData), "*");
+                row.classList.toggle("selected");
+              });
+              tableBody.appendChild(row);
+            });
+          })
+          .catch((error) => console.error(error));
+      }
+    </script>
+  </body>
 </html>

@@ -68,6 +68,19 @@ services:
       MOONSPEAK_DEVMODE: ""
 
   #===================================
+  # by default do not run grafana and loki, only promtail
+  promtail:
+    container_name: promtail.moonspeak.localhost
+    image: "temachpool/moonspeak-promtail:${TAG:-latest}"
+    volumes:
+      # hopefully we can get rid of docker sock one day and only parse docker logs
+      # for now we just disable promtails HTTP server entry point
+      # - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - moonspeaknet
+    command: -config.expand-env=true -config.file=/etc/promtail/config.yml -print-config-stderr
+
   landing:
     image: "temachpool/moonspeak-landing:${TAG:-latest}"
     volumes:

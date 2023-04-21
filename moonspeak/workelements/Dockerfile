@@ -25,8 +25,6 @@ RUN apk add libgcc
 COPY backend/requirements_prod.txt       requirements.txt
 RUN pip install -r requirements.txt
 
-RUN python -c "import nltk; nltk.download('wordnet'); nltk.download('omw-1.4');"
-
 # data resources
 COPY resources          resources
 

@@ -8,6 +8,12 @@ from pathlib import Path
 import datetime
 
 from flask import Flask, send_from_directory, make_response, request, redirect  # type: ignore
+
+# see: https://stackoverflow.com/questions/44857382/change-nltk-download-path-directory-from-default-ntlk-data
+import nltk
+nltk_data_dir = Path(__file__).parent.parent / "resources" / "nltk_data"
+nltk.data.path.append(str(nltk_data_dir))
+
 from nltk.stem.porter import PorterStemmer  # type: ignore
 from nltk.stem import WordNetLemmatizer  # type: ignore
 
