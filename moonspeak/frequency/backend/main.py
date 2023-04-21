@@ -2,16 +2,27 @@ from bottle import route, run, static_file, request, response
 import json
 from collections import Counter
 import os
+from requests_html import HTMLSession
+import validators
 
-latin_ords = set(i for i in range(97, 123))
 japan_ords = set(i for i in range(19969, 40959))
-all_ords = latin_ords | japan_ords
 
 
-def frequency(user_string: str):
-    result = Counter(user_string)
-    sorted_result = result.most_common()
-    return {k: v for k, v in sorted_result if ord(k) in all_ords}
+def frequency(user_string):
+    return {k: v for k, v in Counter(user_string).most_common() if ord(k) in japan_ords}
+
+
+def is_url(user_string):
+    return validators.url(user_string) == True
+
+
+def url_parse(user_string):
+    session = HTMLSession()
+    parse = session.get(user_string)
+    parse.html.render(timeout=40)
+    result = parse.html.html
+    return result
+
 
 @route("/")
 def index():
@@ -20,13 +31,23 @@ def index():
 
 @route("/submit", method="POST")
 def submit():
+    dict_of_frequency = {"frequency": {}, "input_type": "", "error": ""}
     try:
         user_string = request.json["usertext"]
     except UnicodeDecodeError as e:
         user_string = request.json["usertext"].encode("ISO-8859-1").decode("utf-8")
+    if is_url(user_string):
+        dict_of_frequency["input_type"] = "url"
+        try:
+            dict_of_frequency["frequency"] = frequency(url_parse(user_string))
+        except Exception as err:
+            dict_of_frequency["error"] = str(err)
+    else:
+        dict_of_frequency["frequency"] = frequency(user_string)
+        dict_of_frequency["input_type"] = "text"
 
     response.set_header("content-type", "application/json")
-    return json.dumps(frequency(user_string.lower()), ensure_ascii=False)
+    return json.dumps(dict_of_frequency, ensure_ascii=False)
 
 
 if __name__ == "__main__":
