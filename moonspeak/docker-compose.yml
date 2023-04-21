@@ -18,6 +18,17 @@ networks:
 
 services:
   #===================================
+  telegram_server_cheker:
+    image: "temachpool/moonspeak-telegram_server_cheker:${TAG:-latest}"
+    environment:
+      MOONSPEAK_TGBOT_TOKEN: "${MOONSPEAK_TGBOT_TOKEN}"
+      MOONSPEAK_ADMIN_ID_0: "${MOONSPEAK_ADMIN_ID_0}"
+      MOONSPEAK_ADMIN_ID_1: "${MOONSPEAK_ADMIN_ID_1}"
+    networks:
+      - moonspeaknet
+    build:
+      context: ./telegram_server_cheker
+
   gateway:
     image: "temachpool/moonspeak-gateway:${TAG:-latest}"
     volumes:
