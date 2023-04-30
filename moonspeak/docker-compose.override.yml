@@ -204,7 +204,7 @@ services:
                 <mxCell id="11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.003;entryY=0.384;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="4" target="2" edge="1">
                   <mxGeometry relative="1" as="geometry" />
                 </mxCell>
-                <iframe xmlns="http://www.w3.org/1999/xhtml" name="suggestions" src="/suggestions/" style="width: 380px; height: 290px; border: medium none;" pointer-events="none" id="4">
+                <iframe xmlns="http://www.w3.org/1999/xhtml" name="suggestions" src="/router/route/suggestions/" style="width: 380px; height: 290px; border: medium none;" pointer-events="none" id="4">
                   <mxCell style="iframe=1;" parent="1" xmlns="" vertex="1">
                     <mxGeometry x="-700" y="120" width="400" height="310" as="geometry" />
                   </mxCell>
@@ -212,7 +212,7 @@ services:
                 <mxCell id="12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="5" target="2" edge="1">
                   <mxGeometry relative="1" as="geometry" />
                 </mxCell>
-                <iframe xmlns="http://www.w3.org/1999/xhtml" name="synonyms" src="/synonyms/" style="width: 474px; height: 424px; border: medium none;" pointer-events="none" id="5">
+                <iframe xmlns="http://www.w3.org/1999/xhtml" name="synonyms" src="/router/route/synonyms/" style="width: 474px; height: 424px; border: medium none;" pointer-events="none" id="5">
                   <mxCell style="iframe=1;" parent="1" xmlns="" vertex="1">
                     <mxGeometry x="560" width="490" height="440" as="geometry" />
                   </mxCell>
