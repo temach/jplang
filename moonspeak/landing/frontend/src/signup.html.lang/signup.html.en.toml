@@ -2,10 +2,12 @@ lang = "en"
 title = """Moonspeak - learn kanji"""
 menu__item__index_html = """Home"""
 menu__item__documentation = """Documentation"""
-hero__title = """Launching soon!"""
+hero__title = """Learn your way!"""
+
+start_callout_button = "Open your account &#8594;"
 
 hero__description_html = """
-We are in closed beta testing right now, follow us on Telegram for updates <a class="link link--light" href="https://t.me/MoonspeakEn" title="Moonspeak" target="_blank">@MoonspeakEn</a>.
+Follow us on Telegram for updates <a class="link link--light" href="https://t.me/MoonspeakEn" title="Moonspeak" target="_blank">@MoonspeakEn</a>.
 """
 
 footer_html = """

@@ -30,12 +30,12 @@ Run nginx via docker.
 
 Execute the below command in the directory with README:
 
-- Map localhost port 80 to container port 8002
+- Map localhost port 8002 to container port 8002
 - Bind mount the config and sources folder into the container.
 - Bind mount unixsocks dir to share unix sockets.
 
 ```
-# docker run -p 80:8002 \
+# docker run -p 8002:8002 \
     --mount type=bind,src=$(pwd),dst=/etc/nginx/ \
     --mount type=bind,src=$(pwd)/../unixsocks/,dst=/etc/unixsocks/ \
     -it nginx:alpine
@@ -61,12 +61,14 @@ Execute the below command in the directory with README:
 
 ### Send a request
 
+Open http://localhost:8002
+in any browser.
+
+
 Via unix sockets:
 ```
-# curl --unix-socket ../unixsocks/landing.sock http://moonspeak.localhost/
+# curl --unix-socket ../unixsocks/landing.sock http://localhost/
 ```
-
-Or open http://moonspeak.localhost:8002/ in browser.
 
 
 

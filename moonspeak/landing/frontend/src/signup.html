@@ -39,8 +39,15 @@
       <h1 class="hero__title"> {{ hero__title }} </h1>
       <p class="hero__description"> {{{hero__description_html}}} </p>
     </div>
+    <div class="wrapper">
+      <div class="callout">
+          <!-- the default href gets overriden in register.js -->
+          <a class="button--primary" id="click_to_register" href="" title="{{start_callout_button}}" target="_blank">{{{ start_callout_button }}}</a>
+      </div>
+    </div>
     <footer class="footer"> {{{footer_html}}} </footer>
     <script src="js/scribbler.js" defer="defer"></script>
     <script src="js/fountain.js" defer="defer"></script>
+    <script src="js/register.js" defer="defer"></script>
   </body>
 </html>
