@@ -2,27 +2,30 @@
 # see: https://blog.desigeek.com/post/2022/03/podman-error-on-ubuntu-short-name-did-not-resolve-to-an-alias-and-no-unqualified-search-registries/
 
 # docker-in-docker and buildah/kaniko: https://docs.gitlab.com/ee/ci/docker/using_docker_build.html
+# podman is based on buildah.
+# buildah needs unshare permission, see: https://github.com/containers/buildah/issues/1901
+# kaniko is the actual rootless builder
 
 build-docker-images:
-  # image: "quay.io/containers/podman:latest"
-  image: "quay.io/buildah/stable:latest"
+  image: "quay.io/containers/podman:latest"
+  # image: "quay.io/buildah/stable:latest"
   stage: build
-  variables:
-    # Use vfs with buildah. Docker offers overlayfs as a default, but buildah
-    # cannot stack overlayfs on top of another overlayfs filesystem.
-    STORAGE_DRIVER: vfs
-    # Write all image metadata in the docker format, not the standard OCI format.
-    # Newer versions of docker can handle the OCI format, but older versions, like
-    # the one shipped with Fedora 30, cannot handle the format.
-    BUILDAH_FORMAT: docker
-    # You may need this workaround for some errors: https://stackoverflow.com/a/70438141/1233435
-    BUILDAH_ISOLATION: chroot
+  # variables:
+  #   # Use vfs with buildah. Docker offers overlayfs as a default, but buildah
+  #   # cannot stack overlayfs on top of another overlayfs filesystem.
+  #   STORAGE_DRIVER: vfs
+  #   # Write all image metadata in the docker format, not the standard OCI format.
+  #   # Newer versions of docker can handle the OCI format, but older versions, like
+  #   # the one shipped with Fedora 30, cannot handle the format.
+  #   BUILDAH_FORMAT: docker
+  #   # You may need this workaround for some errors: https://stackoverflow.com/a/70438141/1233435
+  #   BUILDAH_ISOLATION: chroot
   rules:
     - if: $CI_COMMIT_BRANCH == "latest"
   script:
-    - ( cd moonspeak && TAG="$CI_COMMIT_BRANCH" buildah build )
+    - ( cd moonspeak && TAG="$CI_COMMIT_BRANCH" podman build )
     # remember that password with special characters may need to be escaped, i.e. '&pass!word' -> '\&pass\!word'
-    - buildah login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" docker.io
-    - ( cd moonspeak && TAG="$CI_COMMIT_BRANCH" buildah push )
-    - buildah logout
+    - podman login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" docker.io
+    - ( cd moonspeak && TAG="$CI_COMMIT_BRANCH" podman push )
+    - podman logout
 
