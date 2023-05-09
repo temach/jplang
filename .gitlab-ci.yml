@@ -31,6 +31,7 @@ build-docker-images:
   script:
     - pwd
     - ls -la
+    - sleep 60
     - ( cd moonspeak && TAG="$CI_COMMIT_BRANCH" docker compose build )
     # remember that password with special characters may need to be escaped, i.e. '&pass!word' -> '\&pass\!word'
     - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" docker.io
