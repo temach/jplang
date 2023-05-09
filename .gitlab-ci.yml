@@ -8,7 +8,7 @@ build-docker-images:
   image: podman:latest
   stage: build
   rules:
-    - if: $CI_COMMIT_BRANCH = latest || $CI_COMMIT_BRANCH =~ /^2023/
+    - if: $CI_COMMIT_BRANCH == latest || $CI_COMMIT_BRANCH =~ /^2023/
   script:
     - ( cd moonspeak && TAG="$CI_COMMIT_BRANCH" podman build )
     # remember that password with special characters may need to be escaped, i.e. '&pass!word' -> '\&pass\!word'
