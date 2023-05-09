@@ -5,7 +5,7 @@
 # Docker-in-Docker documentation: https://docs.gitlab.com/ee/ci/docker/using_docker_build.html
 
 build-docker-images:
-  image: podman:latest
+  image: "quay.io/containers/podman:latest"
   stage: build
   rules:
     - if: $CI_COMMIT_BRANCH == "latest"
