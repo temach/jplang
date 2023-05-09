@@ -2,9 +2,11 @@
 # see: https://blog.desigeek.com/post/2022/03/podman-error-on-ubuntu-short-name-did-not-resolve-to-an-alias-and-no-unqualified-search-registries/
 
 # docker-in-docker and buildah/kaniko: https://docs.gitlab.com/ee/ci/docker/using_docker_build.html
+#
 # podman is based on buildah.
 # buildah needs unshare permission, see: https://github.com/containers/buildah/issues/1901
 # kaniko is the actual rootless builder
+# In the end settle on docker with socket binding: https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#use-the-docker-executor-with-docker-socket-binding
 
 build-docker-images:
   image: docker:latest
@@ -24,6 +26,8 @@ build-docker-images:
   rules:
     - if: $CI_COMMIT_BRANCH == "latest"
   script:
+    - pwd
+    - ls -la
     - ( cd moonspeak && TAG="$CI_COMMIT_BRANCH" docker compose build )
     # remember that password with special characters may need to be escaped, i.e. '&pass!word' -> '\&pass\!word'
     - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" docker.io
