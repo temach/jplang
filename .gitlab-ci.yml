@@ -23,6 +23,9 @@ build-docker-images:
   #   BUILDAH_FORMAT: docker
   #   # You may need this workaround for some errors: https://stackoverflow.com/a/70438141/1233435
   #   BUILDAH_ISOLATION: chroot
+  variables:
+    # the docker:latest image sets this by default DOCKER_HOST=tcp://docker:2375
+    DOCKER_HOST: "unix:///var/run/docker.sock"
   rules:
     - if: $CI_COMMIT_BRANCH == "latest"
   script:
