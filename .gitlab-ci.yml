@@ -7,7 +7,8 @@
 # kaniko is the actual rootless builder
 
 build-docker-images:
-  image: "quay.io/containers/podman:latest"
+  image: docker:latest
+  # image: "quay.io/containers/podman:latest"
   # image: "quay.io/buildah/stable:latest"
   stage: build
   # variables:
@@ -23,9 +24,9 @@ build-docker-images:
   rules:
     - if: $CI_COMMIT_BRANCH == "latest"
   script:
-    - ( cd moonspeak && TAG="$CI_COMMIT_BRANCH" podman build )
+    - ( cd moonspeak && TAG="$CI_COMMIT_BRANCH" docker compose build )
     # remember that password with special characters may need to be escaped, i.e. '&pass!word' -> '\&pass\!word'
-    - podman login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" docker.io
-    - ( cd moonspeak && TAG="$CI_COMMIT_BRANCH" podman push )
-    - podman logout
+    - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" docker.io
+    - ( cd moonspeak && TAG="$CI_COMMIT_BRANCH" docker compose push )
+    - docker logout
 
