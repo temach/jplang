@@ -1,0 +1,18 @@
+# Making podman work on ubuntu to build images without docker priviledge
+# see: https://blog.desigeek.com/post/2022/03/podman-error-on-ubuntu-short-name-did-not-resolve-to-an-alias-and-no-unqualified-search-registries/
+
+# Build a Docker image with CI/CD and push to the GitLab registry.
+# Docker-in-Docker documentation: https://docs.gitlab.com/ee/ci/docker/using_docker_build.html
+
+build-docker-images:
+  image: podman:latest
+  stage: build
+  rules:
+    - if: $CI_COMMIT_BRANCH = latest || $CI_COMMIT_BRANCH =~ /^2023/
+  script:
+    - ( cd moonspeak && TAG="$CI_COMMIT_BRANCH" podman build )
+    # remember that password with special characters may need to be escaped, i.e. '&pass!word' -> '\&pass\!word'
+    - podman login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" docker.io
+    - ( cd moonspeak && TAG="$CI_COMMIT_BRANCH" podman push )
+    - podman logout
+
