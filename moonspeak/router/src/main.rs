@@ -322,7 +322,7 @@ fn make_uds(args_uds: String) -> std::io::Result<UnixListener> {
 }
 
 fn is_dev_mode() -> bool {
-    env::var("MOONSPEAK_DEV_MODE").unwrap_or(String::new()).len() > 0
+    env::var("MOONSPEAK_DEV_MODE").unwrap_or("true".to_string()).len() > 0
 }
 
 /// Router component of moonspeak.
