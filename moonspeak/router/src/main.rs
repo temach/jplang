@@ -103,14 +103,13 @@ async fn router(
         // must try actually connecting, because path might exists due to bad cleanup
         let (client, is_unixsock) = match UnixStream::connect(&unixsock) {
             Ok(_) => {
-                debug!("Unix socket is valid");
+                info!("Unix socket is valid: {:?}", p);
                 // uds sockets via https://docs.rs/awc-uds/0.1.1/awc_uds/
                 let uds_connector = Connector::new().connector(UdsConnector::new(unixsock));
-                debug!("{} via unixsock {:?}", infoline, unixsock);
                 (builder.connector(uds_connector).finish(), true)
             },
             Err(e) => {
-                debug!("Unix socket is invalid: {:?}", e);
+                info!("Unix socket is not valid {:?}: {:?}", p, e);
                 (builder.finish(), false)
             },
         };
