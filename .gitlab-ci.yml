@@ -1,40 +1,21 @@
-# Making podman and buildah work on ubuntu to build images without docker priviledge
-# see: https://blog.desigeek.com/post/2022/03/podman-error-on-ubuntu-short-name-did-not-resolve-to-an-alias-and-no-unqualified-search-registries/
-
 # docker-in-docker and buildah/kaniko: https://docs.gitlab.com/ee/ci/docker/using_docker_build.html
 #
-# podman is based on buildah.
-# buildah needs unshare permission, see: https://github.com/containers/buildah/issues/1901
-# kaniko is the actual rootless builder
-# In the end settle on docker with socket binding: https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#use-the-docker-executor-with-docker-socket-binding
+# podman is based on buildah. Both need unshare permission, see: https://github.com/containers/buildah/issues/1901
+# kaniko is the actual rootless builder, but does not support compose spec.
+# In the end use docker with socket binding: https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#use-the-docker-executor-with-docker-socket-binding
 
 build-docker-images:
   image: docker:latest
-  # image: "quay.io/containers/podman:latest"
-  # image: "quay.io/buildah/stable:latest"
   stage: build
-  # variables:
-  #   # Use vfs with buildah. Docker offers overlayfs as a default, but buildah
-  #   # cannot stack overlayfs on top of another overlayfs filesystem.
-  #   STORAGE_DRIVER: vfs
-  #   # Write all image metadata in the docker format, not the standard OCI format.
-  #   # Newer versions of docker can handle the OCI format, but older versions, like
-  #   # the one shipped with Fedora 30, cannot handle the format.
-  #   BUILDAH_FORMAT: docker
-  #   # You may need this workaround for some errors: https://stackoverflow.com/a/70438141/1233435
-  #   BUILDAH_ISOLATION: chroot
   variables:
-    # the docker:latest image sets this by default DOCKER_HOST=tcp://docker:2375
+    # the docker:latest image sets this by default to DOCKER_HOST=tcp://docker:2375
     DOCKER_HOST: "unix:///var/run/docker.sock"
   rules:
-    - if: $CI_COMMIT_BRANCH == "latest"
+    - if: $CI_COMMIT_BRANCH == "latest" || $CI_COMMIT_BRANCH =~ /^2023/
   script:
-    - pwd
-    - ls -la
-    - sleep 600
-    - ( cd moonspeak && TAG="$CI_COMMIT_BRANCH" docker compose build )
     # remember that password with special characters may need to be escaped, i.e. '&pass!word' -> '\&pass\!word'
     - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" docker.io
+    - ( cd moonspeak && TAG="$CI_COMMIT_BRANCH" docker compose build )
     - ( cd moonspeak && TAG="$CI_COMMIT_BRANCH" docker compose push )
     - docker logout
 
