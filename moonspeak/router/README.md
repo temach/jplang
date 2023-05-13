@@ -14,14 +14,14 @@ Add moonspeak.test record to your /etc/hosts:
 
 Run router with cargo:
 ```
-MOONSPEAK_DEV_MODE="true" cargo run -- --port=8001
+MOONSPEAK_DEV_MODE="true" cargo run -- --port=8000
 ```
 
 ### Step 3
 
 Check that router does the routing correctly:
 ```
-curl -vvv http://moonspeak.test:8001/router/node/some_service_name
+curl -vvv http://moonspeak.test:8000/router/node/some_service_name
 ```
 
 
@@ -34,12 +34,12 @@ First add a record for any service you want to reach on you localhost machine:
 
 Lets sey you start a service called MYSERVICE on port 8005, then you can reach it via router like this:
 ```
-curl -vvv http://moonspeak.test:8001/router/localhost/hud-demouser-aaa:8002/mypath
+curl -vvv http://moonspeak.test:8000/router/localhost/hud-demouser-aaa:8002/mypath
 ```
 
 The above request will result in router sending a request to: `http://hud-demouser-aaa.moonspeak.test:8005/mypath` 
 
-If HTML is returned as response it will be changed to include base tag linking to its root: `http://moonspeak.test:8001/router/localhost/hud-demouser-aaa:8002/mypath`
+If HTML is returned as response it will be changed to include base tag linking to its root: `http://moonspeak.test:8000/router/localhost/hud-demouser-aaa:8002/mypath`
 
 
 # Development

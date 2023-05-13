@@ -339,7 +339,7 @@ struct RouterArgs {
     host: String,
 
     /// TCP port number on which to bind
-    #[clap(long, value_parser, default_value_t = 8001)]
+    #[clap(long, value_parser, default_value_t = 8000)]
     port: u16,
 }
 
