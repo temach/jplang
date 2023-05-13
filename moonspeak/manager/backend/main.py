@@ -93,9 +93,6 @@ def submit_compose_up_task(unique_id, force_recreate=False):
 # devmode will handle the rest
 @route("/handle/<target:re:.*>", method=["GET", "POST"])
 def handle(target):
-    # the target URL here is new or old url that should have worked, manager needs to figure out if it can make it work
-    # import pdb; pdb.set_trace()
-
     service_name = None
     parts = request.path.split("/")
     for p in parts:
@@ -113,7 +110,7 @@ def handle(target):
         msg = "No 'u-' found in request: {}".format(request.url)
         logger.info(msg)
         long_msg = f"Error: manager received request to bring up {target}, however it can only handle requests like /handle/u-XXX-s-YYY/. Most likely router could not find your service and was redirected here."
-        return HTTPResponse(body="Erorr: manager received request to bring up ", status=404)
+        return HTTPResponse(body=long_msg, status=404)
 
     try:
         _, user_name, _, service_name = service_name.split("-")
