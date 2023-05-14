@@ -132,8 +132,14 @@ async fn router(
     let mut client_resp = match finalised.await {
         Ok(r) => r,
         Err(error) => match error {
+            // errors are here: https://docs.rs/actix-web/3.3.2/actix_web/client/enum.ConnectError.html
             SendRequestError::Connect(ConnectError::Resolver(err)) => {
-                // errors with resolution are special because we can heal them by bringing services up
+                // errors with resolution are special because we can heal them by bringing services up, so return 503
+                error!("Error resolving & connecting {:?} : {:?}", infoline, err);
+                return HttpResponse::build(actix_web::http::StatusCode::SERVICE_UNAVAILABLE).finish();
+            },
+            SendRequestError::Connect(ConnectError::Io(err)) => {
+                // errors with resolution are special because we can heal them by bringing services up, so return 503
                 error!("Error resolving & connecting {:?} : {:?}", infoline, err);
                 return HttpResponse::build(actix_web::http::StatusCode::SERVICE_UNAVAILABLE).finish();
             },
