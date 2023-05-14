@@ -10,11 +10,12 @@ import os
 import secrets
 import yaml
 import datetime
+import urllib.parse
 from multiprocessing import Process
 from multiprocessing import Queue as MPQueue # do not confuse with threading.Queue
 from pathlib import Path
 
-from bottle import route, run, get, request, HTTPResponse, template, static_file, default_app
+from bottle import route, run, get, request, HTTPResponse, template, static_file, default_app, response
 from python_on_whales.docker_client import DockerClient
 from python_on_whales.exceptions import DockerException
 
@@ -55,8 +56,6 @@ logger = logging.getLogger(__name__)
 DEVMODE = os.getenv("MOONSPEAK_DEVMODE", "1")
 
 MOONSPEAK_THREADS = 1
-DOMAIN = "moonspeak." + os.getenv("MOONSPEAK_TLD", "localhost")
-
 FRONTEND_ROOT = "../frontend/src/"
 
 QUEUE = MPQueue()
@@ -66,7 +65,7 @@ DEVMODE_COUNT = 1
 DEVMODE_SERVICE_NAME = "graph"
 
 def guid(nbytes=10):
-    return secrets.token_hex(nbytes)
+    return str(secrets.token_hex(nbytes))
 
 def submit_compose_up_task(unique_id, force_recreate=False):
     compose_files = [ Path("../resources/docker-compose-template.yml") ]
@@ -88,9 +87,47 @@ def submit_compose_up_task(unique_id, force_recreate=False):
 
     return dockercli
 
+@route("/new/", method=["GET"])
+def new():
+    # Check if a moonspeak_username cookie is present
+    # happens when user clicks on sign up again instead of log in
+    user_name = request.get_cookie("moonspeak_username")
+    if user_name:
+        # redirect user to his page, do not create new user
+        # form redirect response manually to avoid sending hostname (use only root url)
+        resp = HTTPResponse("", status=307)
+        resp.set_header('Location', f"/handle/u-{user_name}-s-graph/")
+        return resp
 
-# to test locally query with empty <target>, e.g. localhost:8080/handle/
-# devmode will handle the rest
+    user_name = guid()
+
+    # fix user name in response cookie, expires 1 year from now in seconds
+    response.set_cookie('moonspeak_username', user_name, max_age=60 * 60 * 24 * 365, path='/')
+
+    if DEVMODE:
+        # to use different ports in dev mode we must increment counter for each user
+        global DEVMODE_COUNT
+        DEVMODE_COUNT += 1
+
+    # we want to keep the root_url as a complex URL object, not as a string
+    root_url = urllib.parse.urlparse(
+        urllib.parse.urlunparse(("", "", f"/router/route/u-{user_name}-s-graph/", "", "", ""))
+    )
+
+    dockercli = submit_compose_up_task(user_name)
+    if dockercli:
+        if DEVMODE:
+            # we need to adjust root_url to include host port, for dev mode just hardcode "graph" and "80"
+            container_name, host_port = dockercli.compose.port(DEVMODE_SERVICE_NAME, "80")
+            # just hardcode request to root index.html in devmode and use "http" (not "https") for easy local testing
+            root_url = root_url._replace(scheme="http", netloc="localhost:{}".format(host_port), path="/")
+
+        logger.debug("Returning target url: {}".format(root_url))
+        return template('index.template.html', template_lookup=[FRONTEND_ROOT], url=root_url.geturl(), title="manager", lang="en")
+
+    return "Ooops, something went wrong! Please go back to the Home page."
+
+
 @route("/handle/<target:re:.*>", method=["GET", "POST"])
 def handle(target):
     service_name = None
@@ -100,12 +137,6 @@ def handle(target):
             service_name = p
             break
 
-    if DEVMODE and not service_name:
-        global DEVMODE_COUNT
-        DEVMODE_COUNT += 1
-        # allow to have empty servicename, we will just generate one using a counter
-        service_name = "u-devmode{}-s-{}".format(DEVMODE_COUNT, DEVMODE_SERVICE_NAME)
-
     if not service_name:
         msg = "No 'u-' found in request: {}".format(request.url)
         logger.info(msg)
@@ -113,7 +144,7 @@ def handle(target):
         return HTTPResponse(body=long_msg, status=404)
 
     try:
-        _, user_name, _, service_name = service_name.split("-")
+        u, user_name, s, container_name = service_name.split("-")
     except ValueError:
         logger.info("Error parsing service_name, expected u-XXX-s-YYY, but found: {}".format(service_name))
         return HTTPResponse(status=404)
@@ -121,21 +152,14 @@ def handle(target):
     dockercli = submit_compose_up_task(user_name)
     if dockercli:
         # started users containeers, must fix url
-        # take what was there initially (query params + fragment), change netloc and leave only the trailing part of path
-        root_url = request.urlparts._replace(scheme="https", netloc=DOMAIN, path=target)
+        # take what was there initially (query params + fragment), change netloc to make url relative to root and set path
+        root_url = request.urlparts._replace(scheme="", netloc="", path=f"/router/route/u-{user_name}-s-graph/")
 
         if DEVMODE:
-            # ugly hacks for nice and easy dev mode
             # we need to adjust root_url to include host port, for dev mode just hardcode "graph" and "80"
-            try:
-                container_name, host_port = dockercli.compose.port(DEVMODE_SERVICE_NAME, "80")
-            except DockerException:
-                logger.warn("Previously you launched this user's services without DEVMODE enabled, so they have no open ports for you to connect!")
-                logger.warn("I will shut them down and relaunch with DEVMODE enabled, give me a minute and try the same URL again")
-                dockercli = submit_compose_up_task(user_name, force_recreate=True)
-                container_name, host_port = dockercli.compose.port(DEVMODE_SERVICE_NAME, "80")
+            container_name, host_port = dockercli.compose.port(DEVMODE_SERVICE_NAME, "80")
             # just hardcode request to root index.html in devmode and use "http" (not "https") for easy local testing
-            root_url = root_url._replace(scheme="http", netloc="{}:{}".format(root_url.netloc, host_port), path="/")
+            root_url = root_url._replace(scheme="http", netloc="localhost:{}".format(host_port), path="/")
 
         logger.debug("Returning target url: {}".format(root_url))
         return template('index.template.html', template_lookup=[FRONTEND_ROOT], url=root_url.geturl(), title="manager", lang="en")
