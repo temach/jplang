@@ -21,6 +21,7 @@ services:
     environment:
       MOONSPEAK_DOMAIN: "moonspeak.org"
 
+  #===================================
   manager:
     container_name: manager.moonspeak.org
     restart: always
@@ -30,7 +31,14 @@ services:
       # settings for container spin down (container stop & rm)
       MOONSPEAK_SECONDS_BEFORE_IDLE_SPINDOWN: 600
 
-  #===================================
+  # on prod run only promtail and send logs to grafana cloud dashboard
+  promtail:
+    container_name: promtail.moonspeak.org
+    environment:
+      MOONSPEAK_LOKI_URL: "${MOONSPEAK_LOKI_URL:?Set MOONSPEAK_LOKI_URL env var to stream logs to grafana cloud: https://grafana.com/orgs/moonspeakorg/hosted-logs}"
+      PROMTAIL_LOG_LEVEL: "error"
+    restart: always
+
   landing:
     container_name: landing.moonspeak.org
     restart: always
