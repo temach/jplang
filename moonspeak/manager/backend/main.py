@@ -17,7 +17,6 @@ from pathlib import Path
 
 from bottle import route, run, get, request, HTTPResponse, template, static_file, default_app, response
 from python_on_whales.docker_client import DockerClient
-from python_on_whales.exceptions import DockerException
 
 from spindown_process import spindown_process
 
