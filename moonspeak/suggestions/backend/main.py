@@ -135,7 +135,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--host",
         type=str,
-        default=os.getenv("MOONSPEAK_HOST", "localhost"),
+        default=os.getenv("MOONSPEAK_HOST", "0.0.0.0"),
         help="host name to bind",
     )
     parser.add_argument(
