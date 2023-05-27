@@ -5,15 +5,14 @@
 version: "3"
 
 volumes:
-  # global volume used to share unix sockets
+  # volume to share unix sockets between gateway and router
   unixsocks:
-    # specify name to avoid default docker-compose prefixing
-    name: unixsocks
 
 networks:
-  # global network to share between all services (not all services bind to unix sockets right now)
+  # global network to share between all services
   moonspeaknet:
     # specify name to avoid default docker-compose prefixing
+    # because manager must bring up containers on the exact same network
     name: moonspeaknet
 
 services:
@@ -42,12 +41,12 @@ services:
   manager:
     image: "temachpool/moonspeak-manager:${TAG:-latest}"
     volumes:
-      - unixsocks:/opt/moonspeak/unixsocks
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - moonspeaknet
     environment:
-      MOONSPEAK_UDS: "/opt/moonspeak/unixsocks/manager.sock"
+      MOONSPEAK_HOST: "0.0.0.0"
+      MOONSPEAK_PORT: "80"
       # the manager writes configuration for graph service which has absolute urls
       # this supplies the correct name, the field is re-defined in override configs
       MOONSPEAK_TLD: ""
@@ -71,25 +70,21 @@ services:
     command: -config.expand-env=true -config.file=/etc/promtail/config.yml -print-config-stderr
 
   landing:
+    # no MOONSPEAK_PORT env for landing because nginx is less flexible
+    # port 80 gets hardcoded when building the container
     image: "temachpool/moonspeak-landing:${TAG:-latest}"
-    volumes:
-      - unixsocks:/etc/unixsocks
     networks:
       - moonspeaknet
 
   synonyms:
     image: "temachpool/moonspeak-synonyms:${TAG:-latest}"
-    volumes:
-      - unixsocks:/opt/moonspeak/unixsocks
     networks:
       - moonspeaknet
     environment:
-      GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' --bind='unix:/opt/moonspeak/unixsocks/synonyms.sock' "
+      GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' "
 
   suggestions:
     image: "temachpool/moonspeak-suggestions:${TAG:-latest}"
-    volumes:
-      - unixsocks:/opt/moonspeak/unixsocks
     networks:
       - moonspeaknet
     environment:
@@ -98,8 +93,6 @@ services:
 
   frequency:
     image: "temachpool/moonspeak-frequency:${TAG:-latest}"
-    volumes:
-      - unixsocks:/opt/moonspeak/unixsocks
     networks:
       - moonspeaknet
     environment:
