@@ -22,7 +22,7 @@ Then navigate to `http://127.0.0.1:8002/frontend/test`
 
 ### The production way
 
-This is how its run in production, using nginx and unix sockets.
+This is how its run in production
 
 #### Option 1: Docker
 
@@ -32,12 +32,10 @@ Execute the below command in the directory with README:
 
 - Map localhost port 8002 to container port 8002
 - Bind mount the config and sources folder into the container.
-- Bind mount unixsocks dir to share unix sockets.
 
 ```
 # docker run -p 8002:8002 \
     --mount type=bind,src=$(pwd),dst=/etc/nginx/ \
-    --mount type=bind,src=$(pwd)/../unixsocks/,dst=/etc/unixsocks/ \
     -it nginx:alpine
 ```
 
@@ -64,11 +62,6 @@ Execute the below command in the directory with README:
 Open http://localhost:8002
 in any browser.
 
-
-Via unix sockets:
-```
-# curl --unix-socket ../unixsocks/landing.sock http://localhost/
-```
 
 
 
