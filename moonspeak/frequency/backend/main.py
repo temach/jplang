@@ -54,12 +54,15 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Feature, run as "python main.py"')
+
+    # "0.0.0.0" and "moonspeak.localhost" break on windows only "localhost" is portable
     parser.add_argument(
         "--host",
         type=str,
-        default=os.getenv("MOONSPEAK_HOST", "moonspeak.localhost"),
+        default=os.getenv("MOONSPEAK_HOST", "localhost"),
         help="hostname to bind",
     )
+
     parser.add_argument(
         "--port",
         type=int,
