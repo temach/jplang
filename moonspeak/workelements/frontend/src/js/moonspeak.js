@@ -25,10 +25,10 @@ function moonspeakMessageHandler(event, userHandler) {
 
 function moonspeakBootstrapMasterPort(event, userHandler) {
     function isMoonspeakDevMode() {
-        // having 192.168.42.156 here allows debugging via usb tethering on android
-        // set permanent computer address to this IP, then load it from the phone
-        // then you dont have to run the router component
-        return ['moonspeak.localhost', '127.0.0.1', '0.0.0.0', '192.168.42.156'].includes(location.hostname);
+        // to debug via usb tethering on android
+        // set permanent computer address, and add it to the list below 
+        // then loading it from the phone you wont have to run the router component
+        return ['moonspeak.localhost', 'localhost', '127.0.0.1', '0.0.0.0'].includes(location.hostname);
     }
 
     if (event.origin !== location.origin && !isMoonspeakDevMode()) {
