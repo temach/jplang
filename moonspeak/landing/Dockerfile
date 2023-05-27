@@ -16,3 +16,5 @@ FROM nginx:1.23-alpine
 WORKDIR /etc/nginx
 COPY --from=builder /opt/moonspeak/frontend/dist ./frontend/dist
 COPY nginx.conf  ./
+# substitute port 80 for dockerized nginx
+COPY ./listen-80.conf  ./listening-port.conf
