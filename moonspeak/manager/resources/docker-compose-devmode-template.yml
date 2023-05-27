@@ -10,6 +10,7 @@ services:
     ports:
       - "${MOONSPEAK_DEVMODE_COUNT:?You must set MOONSPEAK_DEVMODE_COUNT env var, e.g. MOONSPEAK_DEVMODE_COUNT=1}0002:80"
     environment:
+      MOONSPEAK_HOST: "0.0.0.0"
       MOONSPEAK_PORT: "80"
 
   graph:
@@ -17,6 +18,7 @@ services:
     ports:
       - "${MOONSPEAK_DEVMODE_COUNT}0001:80"
     environment:
+      MOONSPEAK_HOST: "0.0.0.0"
       MOONSPEAK_PORT: "80"
       # this xml sets default graph value
       MOONSPEAK_GRAPH_INITIAL_XML: >-
