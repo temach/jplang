@@ -294,47 +294,6 @@ def count_uppercase(word):
     return count
 
 
-def run_server(args):
-    if DEVMODE:
-        # this server definitely works on all platforms
-        if args.uds:
-            raise Exception("Uds socket not supported when MOONSPEAK_DEVMODE is active")
-        app.run(host=args.host, port=args.port, debug=True)
-    else:
-        # this server definitely works on linux and is used in prod
-        if args.uds:
-            try:
-                # handle the case when previous cleanup did not finish properly
-                os.unlink(args.uds)
-            except FileNotFoundError:
-                # if there was nothing to unlink, thats good
-                pass
-            except Exception:
-                logger.warn(
-                    f"Error trying to unlink existing unix socket {args.uds} before re-binding.",
-                    exc_info=True,
-                )
-        bind_addr = args.uds if args.uds else f"{args.host}:{args.port}"
-        import pyruvate
-
-        try:
-            # only use 1 thread, otherwise must add locks for sqlite and globals. Pyruvate uses threading model (see its source).
-            # about GIL: https://opensource.com/article/17/4/grok-gil
-            # threading vs asyncio (both are a pain): https://www.endpointdev.com/blog/2020/10/python-concurrency-asyncio-threading-users/
-            # WSGI processes and threads: https://modwsgi.readthedocs.io/en/develop/user-guides/processes-and-threading.html
-            # thread locals: https://github.com/python/cpython/blob/main/Lib/_threading_local.py
-            assert (
-                MOONSPEAK_THREADS == 1
-            ), "Use only one thread or you must add locks. pyruvate uses threading model."
-            pyruvate.serve(AccessLogMiddleware(app), bind_addr, MOONSPEAK_THREADS)
-        finally:
-            # when the server is shutting down
-            logger.warn("Shutting down server.")
-            if args.uds:
-                logger.info(f"Removing unix socket {args.uds}")
-                os.unlink(args.uds)
-
-
 if __name__ == "__main__":
     import argparse
 
@@ -342,20 +301,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--host",
         type=str,
-        default=os.getenv("MOONSPEAK_HOST", "localhost"),
-        help="hostname or ip, does not combine with unix sock",
+        default=os.getenv("MOONSPEAK_HOST", "0.0.0.0"),
+        help="hostname or ip",
     )
     parser.add_argument(
         "--port",
         type=int,
         default=os.getenv("MOONSPEAK_PORT", "8040"),
         help="port number",
-    )
-    parser.add_argument(
-        "--uds",
-        type=str,
-        default=os.getenv("MOONSPEAK_UDS", ""),
-        help='Path to bind unix domain socket e.g. "./service.sock", does not combine with TCP socket',
     )
     args = parser.parse_args()
 
@@ -416,4 +369,4 @@ if __name__ == "__main__":
             else:
                 CORPUS_AND_SUBS_WORDS[word] = (-1, number)
 
-    run_server(args)
+    app.run(host=args.host, port=args.port)
