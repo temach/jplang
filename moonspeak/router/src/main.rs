@@ -93,35 +93,13 @@ async fn router(
     let infoline = format!("{} {}", req.method(), url.as_str());
     debug!("Requesting line {}", infoline);
 
-    let (client_req, is_unixsock) = {
-        let p = format!("../unixsocks/{}.sock", service);
-        let unixsock = path::Path::new(&p);
+    let client = ClientBuilder::new().disable_redirects().finish();
+    // make request from incoming request, copies method and headers
+    let uri = Uri::from_str(url.as_str()).expect("This should never happen: could not parse a valid url");
+    let client_req = client
+        .request_from(uri, req.head())
+        .insert_header((actix_web::http::header::HOST, netloc.as_str()));
 
-        let builder = ClientBuilder::new().disable_redirects();
-
-        // select normal or uds client builder
-        // must try actually connecting, because path might exists due to bad cleanup
-        let (client, is_unixsock) = match UnixStream::connect(&unixsock) {
-            Ok(_) => {
-                info!("Unix socket is valid: {:?}", p);
-                // uds sockets via https://docs.rs/awc-uds/0.1.1/awc_uds/
-                let uds_connector = Connector::new().connector(UdsConnector::new(unixsock));
-                (builder.connector(uds_connector).finish(), true)
-            },
-            Err(e) => {
-                info!("Unix socket is not valid {:?}: {:?}", p, e);
-                (builder.finish(), false)
-            },
-        };
-
-        // make request from incoming request, copies method and headers
-        let uri = Uri::from_str(url.as_str()).expect("This should never happen: could not parse a valid url");
-        let client_req = client
-            .request_from(uri, req.head())
-            .insert_header((actix_web::http::header::HOST, netloc.as_str()));
-
-        (client_req, is_unixsock)
-    };
     debug!("Requesting {:?}", client_req);
 
     let finalised = match body.len() {
@@ -216,13 +194,9 @@ async fn router(
 
     debug!("responding {:?}", finalised);
     info!(
-        r#" '{} {}' -> {} '{}' {}"#, 
+        r#" '{} {}' -> '{}' {}"#, 
         req.method(),
         req.uri(),
-        match is_unixsock {
-            true => "unix ",
-            false => "",
-        },
         infoline,
         finalised.status()
     );
