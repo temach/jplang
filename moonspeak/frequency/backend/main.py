@@ -4,7 +4,6 @@ from collections import Counter
 import os
 from requests_html import HTMLSession
 import validators
-import imghdr
 import urllib.request
 import requests
 from urllib.parse import urlparse
@@ -12,6 +11,7 @@ import pylibmagic
 import pytesseract
 from PIL import Image
 import io
+import mimetypes
 
 japan_ords = set(i for i in range(19969, 40959))
 
@@ -19,12 +19,10 @@ japan_ords = set(i for i in range(19969, 40959))
 def frequency(user_string):
     return {k: v for k, v in Counter(user_string).most_common() if ord(k) in japan_ords}
 
+
 def is_url(user_string):
     return validators.url(user_string) == True
 
-def is_image_url(user_string):
-    image_extension = imghdr.what(None, urllib.request.urlopen(user_string).read())
-    return True if image_extension else False
 
 def url_parse(user_string):
     session = HTMLSession()
@@ -33,27 +31,58 @@ def url_parse(user_string):
     result = parse.html.html
     return result
 
+
+def is_image_url(user_string):
+    mime_type = mimetypes.guess_type(user_string)[0]
+    return True if mime_type and mime_type.startswith("image") else False
+
+
 def save_image(user_string):
-    response = requests.get(user_string, stream=True)
     parsed_url = urlparse(user_string)
     filename = os.path.basename(parsed_url.path)
-    with open(filename, 'wb') as file:
+    response = requests.get(user_string, stream=True)
+    with open(filename, "wb") as file:
         for chunk in response.iter_content(1024):
             file.write(chunk)
     return filename
 
+
 def convert_to_png(file):
     image = Image.open(file)
-    image = image.convert('RGBA')
+    image = image.convert("RGBA")
     with io.BytesIO() as mem:
-        image.save(mem, format='PNG')
+        image.save(mem, format="PNG")
         mem.seek(0)
         image_bytes = mem.read()
     return image_bytes
 
+
 def extract_text(image):
-    text = pytesseract.image_to_string(image, config=f'--psm 11 --oem 1', lang='jpn')
+    text = pytesseract.image_to_string(image, config=f"--psm 11 --oem 1", lang="jpn")
     return text
+
+
+def prepare_image_and_text_return(user_string):
+    saved_filename = save_image(user_string)
+    # This programm have a promblems with "data:"-urls
+    image_bytes = convert_to_png(saved_filename)
+    image_png = Image.open(io.BytesIO(image_bytes))
+    text = extract_text(image_png)
+    os.remove(saved_filename)
+    return text
+
+
+def catch_errors(result, func, input_type, string):
+    if input_type == "text":
+        result["input_type"] = input_type
+        result["frequency"] = func(string)
+        return
+    result["input_type"] = input_type
+    try:
+        result["frequency"] = frequency(func(string))
+    except Exception as err:
+        result["error"] = str(err)
+
 
 @route("/")
 def index():
@@ -62,35 +91,21 @@ def index():
 
 @route("/submit", method="POST")
 def submit():
-    dict_of_frequency = {"frequency": {}, "input_type": "", "error": ""}
     try:
         user_string = request.json["usertext"]
     except UnicodeDecodeError as e:
         user_string = request.json["usertext"].encode("ISO-8859-1").decode("utf-8")
 
-#    a = is_url(user_string)
-#    b = a and is_image_url(user_string)
+    dict_of_frequency = {"frequency": {}, "input_type": "", "error": ""}
+    isurl = is_url(user_string)
+    isimageurl = isurl and is_image_url(user_string)
 
-    if is_url(user_string) and is_image_url(user_string):
-        dict_of_frequency["input_type"] = "image_url"
-        try:
-            #This programm have a promblems with "data:"-urls
-            saved_filename = save_image(user_string)
-            image_bytes = convert_to_png(saved_filename)
-            image_png = Image.open(io.BytesIO(image_bytes))
-            dict_of_frequency["frequency"] = frequency(extract_text(image_png))
-            os.remove(saved_filename)
-        except Exception as err:
-            dict_of_frequency["error"] = str(err)
-    elif is_url(user_string):
-        dict_of_frequency["input_type"] = "url"
-        try:
-            dict_of_frequency["frequency"] = frequency(url_parse(user_string))
-        except Exception as err:
-            dict_of_frequency["error"] = str(err)
+    if isimageurl:
+        catch_errors(dict_of_frequency, prepare_image_and_text_return, "image", user_string)
+    elif isurl:
+        catch_errors(dict_of_frequency, url_parse, "url", user_string)
     else:
-        dict_of_frequency["frequency"] = frequency(user_string)
-        dict_of_frequency["input_type"] = "text"
+        catch_errors(dict_of_frequency, frequency, "text", user_string)
 
     response.set_header("content-type", "application/json")
     return json.dumps(dict_of_frequency, ensure_ascii=False)
