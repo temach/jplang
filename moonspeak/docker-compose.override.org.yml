@@ -26,7 +26,7 @@ services:
     container_name: manager.moonspeak.org
     restart: always
     environment:
-      TAG: "2023-02-19"
+      TAG: "${TAG:-latest}"
       MOONSPEAK_TLD: "org"
       # settings for container spin down (container stop & rm)
       MOONSPEAK_SECONDS_BEFORE_IDLE_SPINDOWN: 600
