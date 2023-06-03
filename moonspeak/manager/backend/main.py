@@ -139,7 +139,7 @@ def handle(target):
     if not service_name:
         msg = "No 'u-' found in request: {}".format(request.url)
         logger.info(msg)
-        long_msg = f"Error: manager received request to bring up {target}, however it can only handle requests like /handle/u-XXX-s-YYY/. Most likely router could not find your service and was redirected here."
+        long_msg = f"Error: manager received request to bring up {target}, however it can only handle requests like /handle/u-XXX-s-YYY/. Most likely router could not find your service and was redirected here. Check that this services is properly created in docker-compose."
         return HTTPResponse(body=long_msg, status=404)
 
     try:
