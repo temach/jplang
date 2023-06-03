@@ -25,3 +25,5 @@ docker run -d --name gitlab-runner --restart always \
 # Edit runner config manually (docker cp config to host, edit, cp back and restart gitlab-runner):
 #     privileged = false
 #     volumes = ["/var/run/docker.sock:/var/run/docker.sock", "/cache"]
+
+# And remember that you might need to run https://gitlab.com/gitlab-org/gitlab-runner-docker-cleanup to drop cache volumes etc.
