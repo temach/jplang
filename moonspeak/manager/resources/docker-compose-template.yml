@@ -1,6 +1,9 @@
 #
 # using env variables in compose file, see: https://docs.docker.com/compose/environment-variables/env-file/#parameter-expansion
 #
+# in prod we also limit all containers as a group globally to ensure resources remain for ssh access to VM
+# see the script to setup docker cgroup in infrastructure folder
+#
 
 version: "3"
 
@@ -25,6 +28,16 @@ services:
       - userdata:/opt/moonspeak/workelements/userdata
     networks:
       - moonspeaknet
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 100M
+          pids: 10
+        reservations:
+          cpus: '0.01'
+          memory: 10M
+          pids: 10
     environment:
       LOGLEVEL: "INFO"
       MOONSPEAK_HOST: "0.0.0.0"
@@ -40,6 +53,16 @@ services:
       - userdata:/opt/moonspeak/graph/userdata
     networks:
       - moonspeaknet
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 100M
+          pids: 10
+        reservations:
+          cpus: '0.01'
+          memory: 10M
+          pids: 10
     environment:
       LOGLEVEL: "INFO"
       MOONSPEAK_HOST: "0.0.0.0"
