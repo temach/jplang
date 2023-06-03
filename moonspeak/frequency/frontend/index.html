@@ -3,6 +3,9 @@
   <head>
     <title>Frequency</title>
     <style>
+      html {
+          background-color: rgb(230, 230, 230);
+      }
       table {
         border-collapse: collapse;
         width: 100%;
@@ -53,7 +56,7 @@
           .then((response) => response.json())
           .then((json) => {
             const sortedJson = Object.fromEntries(
-              Object.entries(json).sort((a, b) => b[1] - a[1])
+              Object.entries(json.frequency).sort((a, b) => b[1] - a[1])
             );
             const tableBody = document.getElementById("table-body");
             tableBody.innerHTML = "";
@@ -62,13 +65,13 @@
               const kanjiCell = document.createElement("td");
               const frequencyCell = document.createElement("td");
               kanjiCell.textContent = key;
-              frequencyCell.textContent = json[key];
+              frequencyCell.textContent = sortedJson[key];
               row.appendChild(kanjiCell);
               row.appendChild(frequencyCell);
               row.addEventListener("click", () => {
                 const rowData = {
                   kanji: key,
-                  frequency: json[key],
+                  frequency: sortedJson[key],
                 };
                 console.log("sending to parent: " + JSON.stringify(rowData));
                 window.parent.postMessage(JSON.stringify(rowData), "*");
