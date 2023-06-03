@@ -2,12 +2,32 @@
 
 To sync changes with anki, see https://github.com/FooSoft/anki-connect
 
-For venv:
+For docker-compose:
 ```
-python -m venv .venv
-source ./.venv/bin/activate
-pip install -r requirements.txt
+cd moonspeak
+docker compose up
 ```
+
+Open your web browser: http://localhost:80/
+
+
+# Contributors
+
+- justDOOVE (https://github.com/JustDOOVE)
+  - Create the frequency module (with unit tests and all):
+    - Extract kanji from URLs (website crawler or image OCR)
+    - Extract kanji from text
+
+- Shtekovski (https://github.com/Shtekovski)
+  - Create the telegram bot for dev tasks
+    - Work with server load: cpu, disk, memory.
+    - Work with docker metrics (number of containers, images)
+
+- BAStos525 (https://github.com/BAStos525)
+  - Contribute to onyomi keywords tool
+    - Read word phonetic from cmudict
+    - Logic to find onyomi keyword candidates according to phonetic rules e.g. must have trailing vowels
+    - Api to record the chosen keyword
 
 
 # Onyomi keywords
