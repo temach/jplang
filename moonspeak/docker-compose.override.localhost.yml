@@ -51,3 +51,7 @@ services:
   suggestions:
     container_name: suggestions.moonspeak.localhost
     restart: always
+
+  frequency:
+    container_name: frequency.moonspeak.localhost
+    restart: always

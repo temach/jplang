@@ -50,3 +50,7 @@ services:
   suggestions:
     container_name: suggestions.moonspeak.org
     restart: always
+
+  frequency:
+    container_name: frequency.moonspeak.org
+    restart: always
