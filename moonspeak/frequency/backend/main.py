@@ -11,7 +11,6 @@ import pylibmagic
 import pytesseract
 from PIL import Image
 import io
-import mimetypes
 
 japan_ords = set(i for i in range(19969, 40959))
 
@@ -33,8 +32,10 @@ def url_parse(user_string):
 
 
 def is_image_url(user_string):
-    mime_type = mimetypes.guess_type(user_string)[0]
-    return True if mime_type and mime_type.startswith("image") else False
+    def is_image_url(url):
+    response = requests.head(url)
+    mime_type = response.headers.get('Content-Type')
+    return True if mime_type and mime_type.startswith('image/') else False
 
 
 def save_image(user_string):
@@ -62,9 +63,10 @@ def extract_text(image):
     return text
 
 
+    # TODO:
+    # This programm have a promblems with "data:"-urls
 def prepare_image_and_text_return(user_string):
     saved_filename = save_image(user_string)
-    # This programm have a promblems with "data:"-urls
     image_bytes = convert_to_png(saved_filename)
     image_png = Image.open(io.BytesIO(image_bytes))
     text = extract_text(image_png)
