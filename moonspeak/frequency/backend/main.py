@@ -33,8 +33,8 @@ def url_parse(user_string):
 
 def is_image_url(user_string):
     response = requests.head(user_string)
-    mime_type = response.headers.get('Content-Type')
-    return True if mime_type and mime_type.startswith('image/') else False
+    mime_type = response.headers.get("Content-Type")
+    return True if mime_type and mime_type.startswith("image/") else False
 
 
 def save_image(user_string, memoryfile):
