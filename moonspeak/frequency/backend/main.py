@@ -32,24 +32,21 @@ def url_parse(user_string):
 
 
 def is_image_url(user_string):
-    def is_image_url(url):
-    response = requests.head(url)
+    response = requests.head(user_string)
     mime_type = response.headers.get('Content-Type')
     return True if mime_type and mime_type.startswith('image/') else False
 
 
-def save_image(user_string):
+def save_image(user_string, memoryfile):
     parsed_url = urlparse(user_string)
-    filename = os.path.basename(parsed_url.path)
     response = requests.get(user_string, stream=True)
-    with open(filename, "wb") as file:
-        for chunk in response.iter_content(1024):
-            file.write(chunk)
-    return filename
+    for chunk in response.iter_content(1024):
+        memoryfile.write(chunk)
+    return memoryfile
 
 
-def convert_to_png(file):
-    image = Image.open(file)
+def convert_to_png(fileobject):
+    image = Image.open(fileobject)
     image = image.convert("RGBA")
     with io.BytesIO() as mem:
         image.save(mem, format="PNG")
@@ -66,11 +63,11 @@ def extract_text(image):
     # TODO:
     # This programm have a promblems with "data:"-urls
 def prepare_image_and_text_return(user_string):
-    saved_filename = save_image(user_string)
-    image_bytes = convert_to_png(saved_filename)
-    image_png = Image.open(io.BytesIO(image_bytes))
-    text = extract_text(image_png)
-    os.remove(saved_filename)
+    with io.BytesIO() as memoryfile:
+        image_fileobject = save_image(user_string, memoryfile)
+        png_image_bytes = convert_to_png(image_fileobject)
+        image_png = Image.open(io.BytesIO(png_image_bytes))
+        text = extract_text(image_png)
     return text
 
 
