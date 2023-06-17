@@ -11,6 +11,9 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 && export DEBCONF_NONINTERACTIVE_SEEN=true \
 && apt-get -y install chromium-browser
 
+RUN apt-get update && apt-get install -y tesseract-ocr
+RUN apt-get install -y tesseract-ocr-jpn
+
 RUN mkdir userdata
 
 RUN mkdir backend
