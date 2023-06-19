@@ -1,12 +1,10 @@
-#
-# ALSO MUST SEE ./docker-compose.override.yml
-# the override config is applied automatically by docker-compose
-#
 version: "3"
 
 volumes:
   # volume to share unix sockets between gateway and router
   unixsocks:
+    # specify name to avoid default docker-compose prefixing
+    name: unixsocks
 
 networks:
   # global network to share between all services
