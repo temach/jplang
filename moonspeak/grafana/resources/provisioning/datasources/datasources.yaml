@@ -26,7 +26,7 @@ datasources:
     # Sets the upper limit for the number of log lines returned by Loki. Defaults to 1,000.
     # Lower this limit if your browser is sluggish when displaying logs in Explore.
     jsonData:
-      maxLines: 1000
+      maxLines: 3000
     # <int> Sets the organization id. Defaults to orgId 1.
     orgId: 1
     # <string> Sets a custom UID to reference this
