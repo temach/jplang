@@ -102,6 +102,8 @@ services:
       # manager will never spin down containers for this user, even after period of inactivity
       MOONSPEAK_IGNORED_DEMO_USER: "demouser1"
 
+      MOONSPEAK_ROOT_SERVICE_NAME: "graph"
+
       # set debug to on
       PYTHON_ON_WHALES_DEBUG: "1"
       LOGLEVEL: "DEBUG"
