@@ -90,10 +90,25 @@ services:
       MOONSPEAK_LOKI_URL: "http://loki.moonspeak.localhost:3100"
       PROMTAIL_LOG_LEVEL: "error"
 
+  # promtail sends log lines to loki, view in grafana
   loki:
     container_name: loki.moonspeak.localhost
     image: grafana/loki:2.8.2
     command: -config.file=/etc/loki/local-config.yaml -log.level=error
+    networks:
+      - moonspeaknet
+
+  jaeger:
+    # send tracing data to collector address: https://www.jaegertracing.io/docs/1.46/deployment/#collector
+    container_name: jaeger.moonspeak.localhost
+    image: jaegertracing/all-in-one:latest
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+      LOG_LEVEL: "debug"
+    ports:
+      - "16686:16686" # jaeger web ui port
+      - "4317:4317"   # gRPC otel collector port
+      - "4318:4318"   # HTTP otel collector port
     networks:
       - moonspeaknet
 
