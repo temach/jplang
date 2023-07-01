@@ -1,8 +1,10 @@
 #
 # This docker-compose runs production setup for .localhost domain
+# See ./.env file for other docker-compose files 
 # It should be used as a template for other production domains
 #
 version: "3"
+
 
 services:
   #===================================

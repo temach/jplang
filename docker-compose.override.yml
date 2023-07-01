@@ -12,7 +12,7 @@
 #     # use anon volume during local dev
 #     - /data
 #   build:
-#     context: ./portainer
+#     context: ./moonspeak/portainer
 #
 # Important: you might need to define moonspeak.localhost in /etc/hosts 
 #
@@ -27,42 +27,70 @@
 version: "3"
 
 volumes:
+  # volume to share unix sockets between gateway and router
+  unixsocks:
   # volume for demouser1
   userdata:
     name: demouser1_userdata
+
+networks:
+  # global network to share between all services
+  moonspeaknet:
+    # specify name to avoid default docker-compose prefixing
+    # because manager must bring up containers on the exact same network
+    name: moonspeaknet
 
 services:
   #===================================
   gateway:
     container_name: moonspeak.localhost
     build:
-      context: ./gateway
+      context: ./moonspeak/gateway
+    networks:
+      - moonspeaknet
     ports:
       - "80:8443"   # listens on 8433 to redirect to https port 443
       - "443:443"
+    volumes:
+      - unixsocks:/etc/unixsocks
     command: nginx-debug -g "daemon off; error_log stderr debug;"
 
   router:
     container_name: router.moonspeak.localhost
     build:
-      context: ./router
+      context: ./moonspeak/router
+    networks:
+      - moonspeaknet
+    volumes:
+      - unixsocks:/opt/moonspeak/unixsocks
     environment:
+      # the router inserts reference to hostname into each feature via <base> tag
+      # this supplies the correct name
       MOONSPEAK_DOMAIN: "moonspeak.localhost"
       # dev mode relaxes a number of restrictions (e.g. must have access to gateway's unix socket)
       # also enables self-handling of routes instead of gateway which can be confusing!
       # so do NOT enable this if gateway is enabled, only enable devmode without gateway
       MOONSPEAK_DEV_MODE: ""
       RUST_LOG: "router=debug"
+      RUST_LOG: "router=info"
 
   #===================================
   manager:
     container_name: manager.moonspeak.localhost
     build:
-      context: ./manager
+      context: ./moonspeak/manager
+    networks:
+      - moonspeaknet
+    ports:
+      - "8001:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       TAG: "latest"
       MOONSPEAK_TLD: "localhost"
       MOONSPEAK_DEVMODE: ""
+      MOONSPEAK_HOST: "0.0.0.0"
+      MOONSPEAK_PORT: "80"
 
       # settings for container spin down (container stop & rm)
       MOONSPEAK_SECONDS_BEFORE_IDLE_SPINDOWN: 70
@@ -74,29 +102,36 @@ services:
       # manager will never spin down containers for this user, even after period of inactivity
       MOONSPEAK_IGNORED_DEMO_USER: "demouser1"
 
+      MOONSPEAK_ROOT_SERVICE_NAME: "graph"
+
       # set debug to on
       PYTHON_ON_WHALES_DEBUG: "1"
       LOGLEVEL: "DEBUG"
-    ports:
-      - "8001:80"
 
   # loki, promtail and grafana stack for logs
   # see: https://mpolinowski.github.io/docs/DevOps/Provisioning/2021-04-07--loki-prometheus-grafana/2021-04-07/
   promtail:
     container_name: promtail.moonspeak.localhost
     build:
-      context: ./promtail
+      context: ./moonspeak/promtail
+    networks:
+      - moonspeaknet
+    volumes:
+      # hopefully we can get rid of docker sock one day and only parse docker logs
+      # for now we just disable promtails HTTP server entry point
+      # - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       MOONSPEAK_LOKI_URL: "http://loki.moonspeak.localhost:3100"
       PROMTAIL_LOG_LEVEL: "error"
+    command: -config.expand-env=true -config.file=/etc/promtail/config.yml -print-config-stderr
 
   # promtail sends log lines to loki, view in grafana
   loki:
     container_name: loki.moonspeak.localhost
-    image: grafana/loki:2.8.2
-    command: -config.file=/etc/loki/local-config.yaml -log.level=error
     networks:
       - moonspeaknet
+    command: -config.file=/etc/loki/local-config.yaml -log.level=error
 
   jaeger:
     # send tracing data to collector address: https://www.jaegertracing.io/docs/1.46/deployment/#collector
@@ -114,9 +149,12 @@ services:
 
   grafana:
     container_name: grafana.moonspeak.localhost
-    image: "temachpool/moonspeak-grafana:${TAG:-latest}"
     build:
-      context: ./grafana
+      context: ./moonspeak/grafana
+    networks:
+      - moonspeaknet
+    ports:
+      - "3000:3000"
     environment:
       MOONSPEAK_LOKI_URL: "http://loki.moonspeak.localhost:3100"
       GF_SERVER_DOMAIN: "grafana.moonspeak.localhost"
@@ -131,15 +169,15 @@ services:
       # or login with moonspeak:moonspeak
       # GF_SECURITY_ADMIN_USER: "moonspeak"
       # GF_SECURITY_ADMIN_PASSWORD: "moonspeak"
-    networks:
-      - moonspeaknet
-    ports:
-      - "3000:3000"
 
   landing:
+    # no MOONSPEAK_PORT env for landing because nginx is less flexible
+    # port 80 gets hardcoded when building the container
     container_name: landing.moonspeak.localhost
     build:
-      context: ./landing
+      context: ./moonspeak/landing
+    networks:
+      - moonspeaknet
     ports:
       - "8002:80"
     command: nginx-debug -g "daemon off; error_log stderr debug;"
@@ -147,23 +185,37 @@ services:
   synonyms:
     container_name: synonyms.moonspeak.localhost
     build:
-      context: ./synonyms
+      context: ./moonspeak/synonyms
+    networks:
+      - moonspeaknet
     ports:
       - "8043:80"
+    environment:
+      GUNICORN_CMD_ARGS: " --bind='0.0.0.0:80' "
 
   suggestions:
     container_name: suggestions.moonspeak.localhost
     build:
-      context: ./suggestions
+      context: ./moonspeak/suggestions
+    networks:
+      - moonspeaknet
     ports:
       - "8042:80"
+    environment:
+      MOONSPEAK_HOST: "0.0.0.0"
+      MOONSPEAK_PORT: 80
 
   frequency:
     container_name: frequency.moonspeak.localhost
     build:
-      context: ./frequency
+      context: ./moonspeak/frequency
+    networks:
+      - moonspeaknet
     ports:
       - "8005:80"
+    environment:
+      MOONSPEAK_HOST: "0.0.0.0"
+      MOONSPEAK_PORT: 80
 
   #==================================
   # this is the demo user for development,  graph address is the user's unique access url
@@ -171,7 +223,7 @@ services:
     image: "temachpool/moonspeak-workelements:${TAG:-latest}"
     container_name: u-demouser1-s-workelements.moonspeak.localhost
     build:
-      context: ./workelements
+      context: ./moonspeak/workelements
     volumes:
       - userdata:/opt/moonspeak/workelements/userdata
     networks:
@@ -191,7 +243,7 @@ services:
     # depends_on:
     #   - workelements
     build:
-      context: ./graph
+      context: ./moonspeak/graph
     volumes:
       - userdata:/opt/moonspeak/graph/userdata
     networks:

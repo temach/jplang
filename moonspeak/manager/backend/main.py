@@ -57,11 +57,12 @@ DEVMODE = os.getenv("MOONSPEAK_DEVMODE", "1")
 MOONSPEAK_THREADS = 1
 FRONTEND_ROOT = "../frontend/src/"
 
+ROOT_SERVICE_NAME = os.environ.get("MOONSPEAK_ROOT_SERVICE_NAME", "graph").lower()
+
 QUEUE = MPQueue()
 
 # in dev mode the count is used to generate predictable usernames (devmodeXX) and open port numbers on request
 DEVMODE_COUNT = 1
-DEVMODE_SERVICE_NAME = "graph"
 
 def guid(nbytes=10):
     return str(secrets.token_hex(nbytes))
@@ -95,7 +96,7 @@ def new():
         # redirect user to his page, do not create new user
         # form redirect response manually to avoid sending hostname (use only root url)
         resp = HTTPResponse("", status=307)
-        resp.set_header('Location', f"/handle/u-{user_name}-s-graph/")
+        resp.set_header('Location', f"/handle/u-{user_name}-s-{ROOT_SERVICE_NAME}/")
         return resp
 
     user_name = guid()
@@ -110,14 +111,14 @@ def new():
 
     # we want to keep the root_url as a complex URL object, not as a string
     root_url = urllib.parse.urlparse(
-        urllib.parse.urlunparse(("", "", f"/router/route/u-{user_name}-s-graph/", "", "", ""))
+        urllib.parse.urlunparse(("", "", f"/router/route/u-{user_name}-s-{ROOT_SERVICE_NAME}/", "", "", ""))
     )
 
     dockercli = submit_compose_up_task(user_name)
     if dockercli:
         if DEVMODE:
             # we need to adjust root_url to include host port, for dev mode just hardcode "graph" and "80"
-            container_name, host_port = dockercli.compose.port(DEVMODE_SERVICE_NAME, "80")
+            container_name, host_port = dockercli.compose.port(ROOT_SERVICE_NAME, "80")
             # just hardcode request to root index.html in devmode and use "http" (not "https") for easy local testing
             root_url = root_url._replace(scheme="http", netloc="localhost:{}".format(host_port), path="/")
 
@@ -148,14 +149,19 @@ def handle(target):
         logger.info("Error parsing service_name, expected u-XXX-s-YYY, but found: {}".format(service_name))
         return HTTPResponse(status=404)
 
+    if container_name != ROOT_SERVICE_NAME:
+        # we only bring up user services when he requests ROOT_SERVICE_NAME explicitly 
+        logger.info("Ignoring request to bring up '{}' because we only handle '{}' service name not '{}'".format(service_name, ROOT_SERVICE_NAME, container_name))
+        return HTTPResponse(status=404)
+
     dockercli = submit_compose_up_task(user_name)
     if dockercli:
         # started users containeers, must fix url
         # take what was there initially (query params + fragment), change netloc to make url relative to root and set path
-        root_url = request.urlparts._replace(scheme="", netloc="", path=f"/router/route/u-{user_name}-s-graph/")
+        root_url = request.urlparts._replace(scheme="", netloc="", path=f"/router/route/u-{user_name}-s-{ROOT_SERVICE_NAME}/")
 
         if DEVMODE:
-            # we need to adjust root_url to include host port, for dev mode just hardcode "graph" and "80"
+            # we need to adjust root_url to include host port, for dev mode just expect ROOT_SERVICE_NAME aka "graph" and "80"
             container_name, host_port = dockercli.compose.port(DEVMODE_SERVICE_NAME, "80")
             # just hardcode request to root index.html in devmode and use "http" (not "https") for easy local testing
             root_url = root_url._replace(scheme="http", netloc="localhost:{}".format(host_port), path="/")

@@ -1,0 +1,50 @@
+#
+# MUST SEE ./docker-compose.override.yml
+# the override config is applied automatically by docker-compose
+#
+version: "3"
+
+services:
+  #===================================
+  # advanced custom infra
+  gateway:
+    image: "temachpool/moonspeak-gateway:${TAG:-latest}"
+
+  router:
+    image: "temachpool/moonspeak-router:${TAG:-latest}"
+
+  manager:
+    image: "temachpool/moonspeak-manager:${TAG:-latest}"
+
+  #===================================
+  # permanent apps
+  landing:
+    image: "temachpool/moonspeak-landing:${TAG:-latest}"
+
+  synonyms:
+    image: "temachpool/moonspeak-synonyms:${TAG:-latest}"
+
+  suggestions:
+    image: "temachpool/moonspeak-suggestions:${TAG:-latest}"
+
+  frequency:
+    image: "temachpool/moonspeak-frequency:${TAG:-latest}"
+
+  #===================================
+  # short-lived apps
+  workelements:
+    image: "temachpool/moonspeak-workelements:${TAG:-latest}"
+
+  graph:
+    image: "temachpool/moonspeak-graph:${TAG:-latest}"
+
+  #===================================
+  # infra
+  promtail:
+    image: "temachpool/moonspeak-promtail:${TAG:-latest}"
+
+  loki:
+    image: grafana/loki:2.8.2
+
+  grafana:
+    image: "temachpool/moonspeak-grafana:${TAG:-latest}"
