@@ -1,4 +1,4 @@
-FROM python:bullseye
+FROM python:3.11-bullseye
 WORKDIR /opt/ms/
 
 #libraries for the correct operation of chromium from 
