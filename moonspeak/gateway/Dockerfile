@@ -11,6 +11,7 @@ COPY nginx.conf     ./
 
 # from https://opentelemetry.io/blog/2022/instrument-nginx/
 # and https://github.com/open-telemetry/opentelemetry-cpp-contrib/issues/284
+# nginx "libprotobuf ERROR" error in logs is ok: https://github.com/open-telemetry/opentelemetry-cpp-contrib/issues/255
 ADD https://github.com/open-telemetry/opentelemetry-cpp-contrib/releases/download/webserver%2Fv1.0.3/opentelemetry-webserver-sdk-x64-linux.tgz /opt
 RUN cd /opt ; tar xvfz opentelemetry-webserver-sdk-x64-linux.tgz
 RUN cd /opt/opentelemetry-webserver-sdk; ./install.sh
