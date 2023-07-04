@@ -4,10 +4,7 @@ from collections import Counter
 import os
 from requests_html import HTMLSession
 import validators
-import urllib.request
 import requests
-from urllib.parse import urlparse
-import pylibmagic
 import pytesseract
 from PIL import Image
 import io
@@ -38,7 +35,6 @@ def is_image_url(user_string):
 
 
 def save_image(user_string, memoryfile):
-    parsed_url = urlparse(user_string)
     response = requests.get(user_string, stream=True)
     for chunk in response.iter_content(1024):
         memoryfile.write(chunk)
@@ -86,6 +82,10 @@ def catch_errors(result, func, input_type, string):
 @route("/")
 def index():
     return static_file("index.html", root="../frontend/")
+
+@route("/test_page.html")
+def test_page_url():
+    return static_file("test_page.html", root="../frontend/")
 
 
 @route("/submit", method="POST")
