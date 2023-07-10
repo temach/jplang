@@ -17,7 +17,7 @@ def frequency(user_string):
 
 
 def is_url(user_string):
-    return validators.url(user_string) == True
+    return validators.url(user_string) is True
 
 
 def url_parse(user_string):
@@ -61,9 +61,14 @@ def extract_text(image):
 def prepare_image_and_text_return(user_string):
     with io.BytesIO() as memoryfile:
         image_fileobject = save_image(user_string, memoryfile)
-        png_image_bytes = convert_to_png(image_fileobject)
-        image_png = Image.open(io.BytesIO(png_image_bytes))
-        text = extract_text(image_png)
+        text = convert_imagefile_and_text_return(image_fileobject)
+    return text
+
+
+def convert_imagefile_and_text_return(user_image):
+    png_image_bytes = convert_to_png(user_image)
+    image_png = Image.open(io.BytesIO(png_image_bytes))
+    text = extract_text(image_png)
     return text
 
 
@@ -83,9 +88,13 @@ def catch_errors(result, func, input_type, string):
 def index():
     return static_file("index.html", root="../frontend/")
 
-@route("/test_page.html")
-def test_page_url():
-    return static_file("test_page.html", root="../frontend/")
+
+@route("/submit_image", method="POST")
+def submit_image():
+    dict_of_frequency = {"frequency": {}, "input_type": "", "error": ""}
+    user_image = request.files.get("image").file
+    catch_errors(dict_of_frequency, convert_imagefile_and_text_return, "image", user_image)
+    return json.dumps(dict_of_frequency, ensure_ascii=False)
 
 
 @route("/submit", method="POST")

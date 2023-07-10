@@ -33,6 +33,11 @@
       <input type="text" id="input-text" name="input-text">
       <input type="button" value="Submit" onclick="submitUserInput()">
     </div>
+    <form action="submit_image" method="POST" enctype="multipart/form-data">
+      <input type="file" name="image" accept="image/*">
+      <br><br>
+      <input type="submit" value="Upload">
+    </form>
     <table>
       <thead>
         <tr>
