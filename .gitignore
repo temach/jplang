@@ -17,5 +17,6 @@
 **/userdata
 **/.venv
 **/venv
+**/.DS_Store
 
-**/*.pyc
+*.pyc
