@@ -4,10 +4,7 @@ from collections import Counter
 import os
 from requests_html import HTMLSession
 import validators
-import urllib.request
 import requests
-from urllib.parse import urlparse
-import pylibmagic
 import pytesseract
 from PIL import Image
 import io
@@ -20,7 +17,7 @@ def frequency(user_string):
 
 
 def is_url(user_string):
-    return validators.url(user_string) == True
+    return validators.url(user_string) is True
 
 
 def url_parse(user_string):
@@ -37,8 +34,15 @@ def is_image_url(user_string):
     return True if mime_type and mime_type.startswith("image/") else False
 
 
+def is_image_file(image_file):
+    try:
+        Image.open(image_file)
+        return True
+    except:
+        return False
+
+
 def save_image(user_string, memoryfile):
-    parsed_url = urlparse(user_string)
     response = requests.get(user_string, stream=True)
     for chunk in response.iter_content(1024):
         memoryfile.write(chunk)
@@ -55,8 +59,8 @@ def convert_to_png(fileobject):
     return image_bytes
 
 
-def extract_text(image):
-    text = pytesseract.image_to_string(image, config=f"--psm 11 --oem 1", lang="jpn")
+def extract_text(file):
+    text = pytesseract.image_to_string(file, config=f"--psm 11 --oem 1", lang="jpn")
     return text
 
 
@@ -65,9 +69,14 @@ def extract_text(image):
 def prepare_image_and_text_return(user_string):
     with io.BytesIO() as memoryfile:
         image_fileobject = save_image(user_string, memoryfile)
-        png_image_bytes = convert_to_png(image_fileobject)
-        image_png = Image.open(io.BytesIO(png_image_bytes))
-        text = extract_text(image_png)
+        text = convert_imagefile_and_text_return(image_fileobject)
+    return text
+
+
+def convert_imagefile_and_text_return(user_image):
+    png_image_bytes = convert_to_png(user_image)
+    image_png = Image.open(io.BytesIO(png_image_bytes))
+    text = extract_text(image_png)
     return text
 
 
@@ -90,21 +99,32 @@ def index():
 
 @route("/submit", method="POST")
 def submit():
-    try:
-        user_string = request.json["usertext"]
-    except UnicodeDecodeError as e:
-        user_string = request.json["usertext"].encode("ISO-8859-1").decode("utf-8")
-
     dict_of_frequency = {"frequency": {}, "input_type": "", "error": ""}
-    isurl = is_url(user_string)
-    isimageurl = isurl and is_image_url(user_string)
 
-    if isimageurl:
-        catch_errors(dict_of_frequency, prepare_image_and_text_return, "image", user_string)
-    elif isurl:
-        catch_errors(dict_of_frequency, url_parse, "url", user_string)
+    if "binaryfile" in request.files:
+        user_file = request.files.get("binaryfile").file
+        isimagefile = is_image_file(user_file)
+
+        if isimagefile:
+            catch_errors(dict_of_frequency, convert_imagefile_and_text_return, "image", user_file)
+        else:
+            catch_errors(dict_of_frequency, frequency, "text", user_file.read().decode("utf-8"))
+
     else:
-        catch_errors(dict_of_frequency, frequency, "text", user_string)
+        try:
+            user_string = request.json["usertext"]
+        except UnicodeDecodeError as e:
+            user_string = request.json["usertext"].encode("ISO-8859-1").decode("utf-8")
+
+        isurl = is_url(user_string)
+        isimageurl = isurl and is_image_url(user_string)
+
+        if isimageurl:
+            catch_errors(dict_of_frequency, prepare_image_and_text_return, "image", user_string)
+        elif isurl:
+            catch_errors(dict_of_frequency, url_parse, "url", user_string)
+        else:
+            catch_errors(dict_of_frequency, frequency, "text", user_string)
 
     response.set_header("content-type", "application/json")
     return json.dumps(dict_of_frequency, ensure_ascii=False)
