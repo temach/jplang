@@ -33,11 +33,12 @@
       <input type="text" id="input-text" name="input-text">
       <input type="button" value="Submit" onclick="submitUserInput()">
     </div>
-    <form action="submit" method="POST" enctype="multipart/form-data">
-      <input type="file" name="binaryfile" accept="image/*">
-      <br><br>
-      <input type="submit" value="Upload">
-    </form>
+    <div id="dropzone">
+       <div style="margin:10px; width:300px; height:100px; border:1px dotted grey;">Drag and drop your file here</div>
+       <span>OR</span>
+       <button id="submit_binaryfile">Browse File</button>
+       <input id="input_binaryfile" type="file" hidden>
+    </div>
     <table>
       <thead>
         <tr>
@@ -49,6 +50,33 @@
       </tbody>
     </table>
     <script>
+      function formatResponse(json) {
+          const sortedJson = Object.fromEntries(
+            Object.entries(json.frequency).sort((a, b) => b[1] - a[1])
+          );
+          const tableBody = document.getElementById("table-body");
+          tableBody.innerHTML = "";
+          Object.keys(sortedJson).forEach((key) => {
+            const row = document.createElement("tr");
+            const kanjiCell = document.createElement("td");
+            const frequencyCell = document.createElement("td");
+            kanjiCell.textContent = key;
+            frequencyCell.textContent = sortedJson[key];
+            row.appendChild(kanjiCell);
+            row.appendChild(frequencyCell);
+            row.addEventListener("click", () => {
+              const rowData = {
+                kanji: key,
+                frequency: sortedJson[key],
+              };
+              console.log("sending to parent: " + JSON.stringify(rowData));
+              window.parent.postMessage(JSON.stringify(rowData), "*");
+              row.classList.toggle("selected");
+            });
+            tableBody.appendChild(row);
+          });
+      }
+
       function submitUserInput() {
         const inputText = document.getElementById("input-text").value;
         fetch("submit", {
@@ -59,33 +87,55 @@
           body: JSON.stringify({ usertext: inputText }),
         })
           .then((response) => response.json())
-          .then((json) => {
-            const sortedJson = Object.fromEntries(
-              Object.entries(json.frequency).sort((a, b) => b[1] - a[1])
-            );
-            const tableBody = document.getElementById("table-body");
-            tableBody.innerHTML = "";
-            Object.keys(sortedJson).forEach((key) => {
-              const row = document.createElement("tr");
-              const kanjiCell = document.createElement("td");
-              const frequencyCell = document.createElement("td");
-              kanjiCell.textContent = key;
-              frequencyCell.textContent = sortedJson[key];
-              row.appendChild(kanjiCell);
-              row.appendChild(frequencyCell);
-              row.addEventListener("click", () => {
-                const rowData = {
-                  kanji: key,
-                  frequency: sortedJson[key],
-                };
-                console.log("sending to parent: " + JSON.stringify(rowData));
-                window.parent.postMessage(JSON.stringify(rowData), "*");
-                row.classList.toggle("selected");
-              });
-              tableBody.appendChild(row);
-            });
-          })
+          .then((json) => formatResponse(json))
           .catch((error) => console.error(error));
+      }
+
+      function sendFile(file) {
+          const uri = "submit";
+          const xhr = new XMLHttpRequest();
+          const fd = new FormData();
+
+          xhr.open("POST", uri, true);
+          xhr.onreadystatechange = () => {
+              if (xhr.readyState === 4 && xhr.status === 200) {
+                  response_json = JSON.parse(xhr.response);
+                  formatResponse(response_json); // handle response.
+              }
+          };
+          fd.append('binaryfile', file);
+          // Initiate a multipart/form-data upload
+          xhr.send(fd);
+      }
+
+      window.onload = () => {
+          const dropzone = document.getElementById("dropzone");
+
+          dropzone.ondragover = dropzone.ondragenter = (event) => {
+              event.stopPropagation();
+              event.preventDefault();
+          }
+
+          dropzone.ondrop = (event) => {
+              event.stopPropagation();
+              event.preventDefault();
+
+              const filesArray = event.dataTransfer.files;
+              for (let i=0; i<filesArray.length; i++) {
+                  sendFile(filesArray[i]);
+              }
+          }
+
+          const input_elem = document.getElementById("input_binaryfile");
+          const button_elem = document.getElementById("submit_binaryfile");
+
+          button_elem.onclick = () => {
+            input_elem.click(); 
+          }
+
+          input_elem.addEventListener("change", function() {
+            sendFile(this.files[0]);
+          });
       }
     </script>
   </body>
