@@ -8,6 +8,10 @@ import requests
 import pytesseract
 from PIL import Image
 import io
+import whisper
+import tempfile
+import shutil
+import filetype
 
 japan_ords = set(i for i in range(19969, 40959))
 
@@ -20,6 +24,25 @@ def is_url(user_string):
     return validators.url(user_string) is True
 
 
+def is_image_url(user_string):
+    response = requests.head(user_string)
+    mime_type = response.headers.get("Content-Type")
+    return mime_type and mime_type.startswith("image/")
+
+
+def is_image_file(user_file):
+    try:
+        with Image.open(user_file) as _:
+            return True
+    except:
+        return False
+
+
+def is_audio_file(user_file):
+    audio_info = filetype.guess(user_file)
+    return audio_info and audio_info.mime.startswith("audio/")
+
+
 def url_parse(user_string):
     session = HTMLSession()
     parse = session.get(user_string)
@@ -28,18 +51,12 @@ def url_parse(user_string):
     return result
 
 
-def is_image_url(user_string):
-    response = requests.head(user_string)
-    mime_type = response.headers.get("Content-Type")
-    return True if mime_type and mime_type.startswith("image/") else False
-
-
-def is_image_file(image_file):
-    try:
-        Image.open(image_file)
-        return True
-    except:
-        return False
+def audio_transcribe(user_file):
+    with tempfile.NamedTemporaryFile() as fp:
+        shutil.copyfileobj(user_file, fp)
+        model = whisper.load_model("base")
+        result = model.transcribe(fp.name, language="ja", fp16=False)
+        return result["text"]
 
 
 def save_image(user_string, memoryfile):
@@ -69,11 +86,11 @@ def extract_text(file):
 def prepare_image_and_text_return(user_string):
     with io.BytesIO() as memoryfile:
         image_fileobject = save_image(user_string, memoryfile)
-        text = convert_imagefile_and_text_return(image_fileobject)
+        text = convert_image_file_and_text_return(image_fileobject)
     return text
 
 
-def convert_imagefile_and_text_return(user_image):
+def convert_image_file_and_text_return(user_image):
     png_image_bytes = convert_to_png(user_image)
     image_png = Image.open(io.BytesIO(png_image_bytes))
     text = extract_text(image_png)
@@ -104,9 +121,12 @@ def submit():
     if "binaryfile" in request.files:
         user_file = request.files.get("binaryfile").file
         isimagefile = is_image_file(user_file)
+        isaudiofile = is_audio_file(user_file)
 
         if isimagefile:
-            catch_errors(dict_of_frequency, convert_imagefile_and_text_return, "image", user_file)
+            catch_errors(dict_of_frequency, convert_image_file_and_text_return, "image", user_file,)
+        elif isaudiofile:
+            catch_errors(dict_of_frequency, audio_transcribe, "audio", user_file)
         else:
             catch_errors(dict_of_frequency, frequency, "text", user_file.read().decode("utf-8"))
 

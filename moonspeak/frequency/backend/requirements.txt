@@ -4,5 +4,5 @@ validators
 requests
 Pillow
 pytesseract
-python-magic
-pylibmagic
+openai-whisper
+filetype
