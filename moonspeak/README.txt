@@ -523,3 +523,24 @@ Alternative python WSGI servers (https://github.com/topics/wsgi-server):
 - C: https://github.com/jonashaag/bjoern
 - python: https://github.com/cherrypy/cheroot
 - apache: https://www.modwsgi.org/en/develop/
+
+
+Writing the manager component basically means we are receating part of kubernetes here unfortunatelly :(
+Would be nice to avoid this but not sure how:
+- docker swarm startup time for containers was really slow
+- kubernetes is way over the head for this project
+- docker-compose is fast and simple and can be tested locally BUT needs an orchestrator component, which is the "manager". 
+
+The manager will need to schedule containers to node, update DNS records and de-schedule containers. No more than that.
+Maybe we can even avoid DNS record handling, if every node runs docker compose virtual network which has own DNS server,
+and user url container both node and service names, then to reach the service only node DNS needs to be kept updated by me.
+This looks simple enougth to implement and avoid kubernetes/docker-swarm.
+
+When testing all services on localhost outside of docker, we use ports to bind between services, when running in
+docker-compose we use DNS names. In prod it will be a multi-node setup so DNS names and virtual 
+docker-compose network are the way.
+Is there any way to unify these approaches? Would be nice to test outside of docker in similar way to how it runs in docker.
+Maybe run a custom DNS server, but how to handle multiple services on same port?
+Unfortunatelly looks like docker-compose is the only cross-platform solution for virtual networking :(
+
+
