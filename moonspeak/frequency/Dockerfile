@@ -1,4 +1,4 @@
-FROM python:bullseye
+FROM python:3.11-bookworm
 WORKDIR /opt/ms/
 
 #libraries for the correct operation of chromium from 
@@ -19,6 +19,8 @@ RUN mkdir userdata
 RUN mkdir backend
 COPY backend/requirements.txt ./
 RUN pip install -r ./requirements.txt
+
+RUN apt-get install -y ffmpeg
 
 COPY frontend    frontend
 
