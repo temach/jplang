@@ -25,6 +25,7 @@ RUN apt-get install -y ffmpeg
 COPY frontend    frontend
 
 COPY backend/main.py backend/main.py
+COPY backend/utils.py backend/utils.py
 COPY resources   resources
 
 WORKDIR /opt/ms/backend
