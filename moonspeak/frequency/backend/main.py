@@ -14,17 +14,25 @@ def submit():
     dict_of_frequency = {"frequency": {}, "input_type": "", "error": ""}
 
     if "binaryfile" in request.files:
-        user_file = request.files.get("binaryfile").file
+        if utils.is_file_size_ok():
+            user_file = request.files.get("binaryfile").file
 
-        isimagefile = utils.is_image_file(user_file)
-        isaudiofile = utils.is_audio_file(user_file)
+            isimagefile = utils.is_image_file(user_file)
+            isaudiofile = utils.is_audio_file(user_file)
+            isvideofile = utils.is_video_file(user_file)
 
-        if isimagefile:
-            utils.catch_errors(dict_of_frequency, utils.convert_image_file_and_text_return, "image", user_file)
-        elif isaudiofile:
-            utils.catch_errors(dict_of_frequency, utils.audio_transcribe, "audio", user_file)
+            if isimagefile:
+                utils.catch_errors(dict_of_frequency, utils.convert_image_file_and_text_return, "image", user_file)
+            elif isaudiofile:
+                utils.catch_errors(dict_of_frequency, utils.audio_transcribe, "audio", user_file)
+            elif isvideofile:
+                utils.catch_errors(dict_of_frequency, utils.audio_transcribe, "video", user_file)
+            else:
+                utils.catch_errors(dict_of_frequency, utils.frequency, "text", user_file.read().decode("utf-8"))
+
         else:
-            utils.catch_errors(dict_of_frequency, utils.frequency, "text", user_file.read().decode("utf-8"))
+            dict_of_frequency["input_type"] = "file"
+            dict_of_frequency["error"] = "file is oversize(max 10MB)"
 
     else:
         try:

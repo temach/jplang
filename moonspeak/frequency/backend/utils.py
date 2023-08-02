@@ -1,3 +1,4 @@
+from bottle import request
 from requests_html import HTMLSession
 import validators
 import requests
@@ -9,7 +10,6 @@ import tempfile
 import shutil
 import filetype
 from collections import Counter
-
 import os
 
 japan_ords = set(i for i in range(19969, 40959))
@@ -38,8 +38,18 @@ def is_image_file(user_file):
 
 
 def is_audio_file(user_file):
-    audio_info = filetype.guess(user_file)
-    return audio_info and (audio_info.mime.startswith("audio/") or audio_info.mime.startswith("video/"))
+    file_info = filetype.guess(user_file)
+    return file_info and file_info.mime.startswith("audio/")
+
+
+def is_video_file(user_file):
+    file_info = filetype.guess(user_file)
+    return file_info and file_info.mime.startswith("video/")
+
+
+def is_file_size_ok():
+    file_size_bytes = int(request.headers.get('Content-Length', 0))
+    return file_size_bytes <= 10 * 1024 * 1024  # max 10MB
 
 
 def url_parse(user_string):
@@ -52,10 +62,9 @@ def url_parse(user_string):
 
 def audio_transcribe(user_file):
     # weird bug: sometimes large files do not load load fully (missing a few bytes from the end)
-    # unless we seek to the end at least once, mayhbe this is a bottle.py bug?
+    # unless we seek to the end at least once, maybe this is a bottle.py bug?
     user_file.seek(0, os.SEEK_END)
     user_file.seek(0, os.SEEK_SET)
-
     with tempfile.NamedTemporaryFile(dir=".") as fp:
         shutil.copyfileobj(user_file, fp)
         fp.flush()
@@ -84,6 +93,7 @@ def convert_to_png(fileobject):
 def extract_text(file):
     text = pytesseract.image_to_string(file, config=f"--psm 11 --oem 1", lang="jpn")
     return text
+
 
     # TODO:
     # This program have a problems with "data:"-urls

@@ -36,7 +36,7 @@ class TestStringMethods(unittest.TestCase):
             self.assertTrue(r_json["input_type"] == "text")
             self.assertTrue(r_json["error"] == "")
 
-    def test_post_audio_file(self):
+    def test_post_audio_file_mp3(self):
         with open("./testdata/test_audio.mp3", "rb") as file:
             payload = {"binaryfile": file}
             r = requests.post("http://localhost:8005/submit", files=payload)
@@ -46,6 +46,54 @@ class TestStringMethods(unittest.TestCase):
             self.assertTrue(r_json["frequency"]["死"] == 1)
             self.assertTrue(len(r_json["frequency"]) == 2)
             self.assertTrue(r_json["input_type"] == "audio")
+            self.assertTrue(r_json["error"] == "")
+
+    def test_post_audio_file_wav(self):
+        with open("./testdata/test_audio.wav", "rb") as file:
+            payload = {"binaryfile": file}
+            r = requests.post("http://localhost:8005/submit", files=payload)
+            r_json = r.json()
+            self.assertTrue(r.status_code == requests.codes.ok)
+            self.assertTrue(r_json["frequency"]["前"] == 1)
+            self.assertTrue(r_json["frequency"]["死"] == 1)
+            self.assertTrue(len(r_json["frequency"]) == 2)
+            self.assertTrue(r_json["input_type"] == "audio")
+            self.assertTrue(r_json["error"] == "")
+
+    def test_post_audio_file_ogg(self):
+        with open("./testdata/test_audio.ogg", "rb") as file:
+            payload = {"binaryfile": file}
+            r = requests.post("http://localhost:8005/submit", files=payload)
+            r_json = r.json()
+            self.assertTrue(r.status_code == requests.codes.ok)
+            self.assertTrue(r_json["frequency"]["前"] == 1)
+            self.assertTrue(r_json["frequency"]["死"] == 1)
+            self.assertTrue(len(r_json["frequency"]) == 2)
+            self.assertTrue(r_json["input_type"] == "audio")
+            self.assertTrue(r_json["error"] == "")
+
+    def test_post_video_file_mp4(self):
+        with open("./testdata/test_video.mp4", "rb") as file:
+            payload = {"binaryfile": file}
+            r = requests.post("http://localhost:8005/submit", files=payload)
+            r_json = r.json()
+            self.assertTrue(r.status_code == requests.codes.ok)
+            self.assertTrue(r_json["frequency"]["前"] == 1)
+            self.assertTrue(r_json["frequency"]["死"] == 1)
+            self.assertTrue(len(r_json["frequency"]) == 2)
+            self.assertTrue(r_json["input_type"] == "video")
+            self.assertTrue(r_json["error"] == "")
+
+    def test_post_video_file_avi(self):
+        with open("./testdata/test_video.avi", "rb") as file:
+            payload = {"binaryfile": file}
+            r = requests.post("http://localhost:8005/submit", files=payload)
+            r_json = r.json()
+            self.assertTrue(r.status_code == requests.codes.ok)
+            self.assertTrue(r_json["frequency"]["前"] == 1)
+            self.assertTrue(r_json["frequency"]["死"] == 1)
+            self.assertTrue(len(r_json["frequency"]) == 2)
+            self.assertTrue(r_json["input_type"] == "video")
             self.assertTrue(r_json["error"] == "")
 
     def test_post_image_file(self):
@@ -117,6 +165,16 @@ class TestStringMethods(unittest.TestCase):
         r_json = r.json()
         self.assertTrue(r.status_code == requests.codes.ok)
         self.assertTrue(len(r_json["frequency"]) == 0)
+
+    def test_file_size(self):
+        with open("./testdata/test_oversize_file.txt", "rb") as file:
+            payload = {"binaryfile": file}
+            r = requests.post("http://localhost:8005/submit", files=payload)
+            r_json = r.json()
+            self.assertTrue(r.status_code == requests.codes.ok)
+            self.assertTrue(len(r_json["frequency"]) == 0)
+            self.assertTrue(r_json["input_type"] == "file")
+            self.assertTrue(r_json["error"] == "file is oversize(max 10MB)")
 
 
 if __name__ == "__main__":
