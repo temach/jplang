@@ -38,7 +38,7 @@ def is_image_file(user_file):
 
 def is_audio_file(user_file):
     audio_info = filetype.guess(user_file)
-    return audio_info and audio_info.mime.startswith("audio/")
+    return audio_info and (audio_info.mime.startswith("audio/") or audio_info.mime.startswith("video/"))
 
 
 def url_parse(user_string):
@@ -50,8 +50,9 @@ def url_parse(user_string):
 
 
 def audio_transcribe(user_file):
-    with tempfile.NamedTemporaryFile() as fp:
+    with tempfile.NamedTemporaryFile(dir=".") as fp:
         shutil.copyfileobj(user_file, fp)
+        fp.flush()
         model = whisper.load_model("base")
         result = model.transcribe(fp.name, language="ja", fp16=False)
         return result["text"]

@@ -15,6 +15,12 @@ def submit():
 
     if "binaryfile" in request.files:
         user_file = request.files.get("binaryfile").file
+
+        # weird bug: sometimes large files do not load load fully (missing a few bytes from the end)
+        # unless we seek to the end at least once, mayhbe this is a bottle.py bug?
+        user_file.seek(0, os.SEEK_END)
+        user_file.seek(0, os.SEEK_SET)
+
         isimagefile = utils.is_image_file(user_file)
         isaudiofile = utils.is_audio_file(user_file)
 
