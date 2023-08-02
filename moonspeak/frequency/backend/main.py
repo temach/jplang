@@ -19,23 +19,11 @@ def submit():
         isaudiofile = utils.is_audio_file(user_file)
 
         if isimagefile:
-            utils.catch_errors(
-                dict_of_frequency,
-                utils.convert_image_file_and_text_return,
-                "image",
-                user_file,
-            )
+            utils.catch_errors(dict_of_frequency, utils.convert_image_file_and_text_return, "image", user_file)
         elif isaudiofile:
-            utils.catch_errors(
-                dict_of_frequency, utils.audio_transcribe, "audio", user_file
-            )
+            utils.catch_errors(dict_of_frequency, utils.audio_transcribe, "audio", user_file)
         else:
-            utils.catch_errors(
-                dict_of_frequency,
-                utils.frequency,
-                "text",
-                user_file.read().decode("utf-8"),
-            )
+            utils.catch_errors(dict_of_frequency, utils.frequency, "text", user_file.read().decode("utf-8"))
 
     else:
         try:
@@ -47,12 +35,7 @@ def submit():
         isimageurl = isurl and utils.is_image_url(user_string)
 
         if isimageurl:
-            utils.catch_errors(
-                dict_of_frequency,
-                utils.prepare_image_and_text_return,
-                "image",
-                user_string,
-            )
+            utils.catch_errors(dict_of_frequency, utils.prepare_image_and_text_return, "image", user_string)
         elif isurl:
             utils.catch_errors(dict_of_frequency, utils.url_parse, "url", user_string)
         else:

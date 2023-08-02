@@ -80,8 +80,6 @@ def extract_text(file):
 
     # TODO:
     # This program have a problems with "data:"-urls
-
-
 def prepare_image_and_text_return(user_string):
     with io.BytesIO() as memoryfile:
         image_fileobject = save_image(user_string, memoryfile)
