@@ -1,5 +1,5 @@
 FROM python:3.11-bookworm
-WORKDIR /opt/ms/
+WORKDIR /frequency_django
 
 #libraries for the correct operation of chromium from 
 #https://ahelpme.com/linux/ubuntu/chromium-browser-in-ubuntu-20-04-lts-without-snap-to-use-in-docker-container/
@@ -14,19 +14,13 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update && apt-get install -y tesseract-ocr
 RUN apt-get install -y tesseract-ocr-jpn
 
-RUN mkdir userdata
-
-RUN mkdir backend
-COPY backend/requirements.txt ./
-RUN pip install -r ./requirements.txt
+COPY /frequency/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
 RUN apt-get install -y ffmpeg
+RUN apt-get install -y libgtk-3-dev
 
-COPY frontend    frontend
-
-COPY backend/main.py backend/main.py
-COPY backend/utils.py backend/utils.py
-COPY resources   resources
-
-WORKDIR /opt/ms/backend
-CMD ["python", "main.py"]
+COPY . /frequency_django/
+RUN python manage.py makemigrations
+RUN python manage.py migrate
+CMD ["python", "manage.py", "runserver", "--noreload", "--nothreading", "0.0.0.0:8005"]

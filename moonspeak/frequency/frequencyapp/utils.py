@@ -1,4 +1,3 @@
-from bottle import request
 from requests_html import HTMLSession
 import validators
 import requests
@@ -11,6 +10,7 @@ import shutil
 import filetype
 from collections import Counter
 import os
+from .models import RequestCounter
 
 japan_ords = set(i for i in range(19969, 40959))
 
@@ -47,9 +47,9 @@ def is_video_file(user_file):
     return file_info and file_info.mime.startswith("video/")
 
 
-def is_file_size_ok():
-    file_size_bytes = int(request.headers.get('Content-Length', 0))
-    return file_size_bytes <= 10 * 1024 * 1024  # max 10MB
+def is_file_size_ok(request):
+    file_size_bytes = int(request.META.get("CONTENT_LENGTH", -1))
+    return 0 < file_size_bytes <= 10 * 1024 * 1024  # max 10MB
 
 
 def url_parse(user_string):
@@ -61,8 +61,9 @@ def url_parse(user_string):
 
 
 def audio_transcribe(user_file):
-    # weird bug: sometimes large files do not load load fully (missing a few bytes from the end)
+    # weird bug: sometimes large files do not load fully (missing a few bytes from the end)
     # unless we seek to the end at least once, maybe this is a bottle.py bug?
+
     user_file.seek(0, os.SEEK_END)
     user_file.seek(0, os.SEEK_SET)
     with tempfile.NamedTemporaryFile(dir=".") as fp:
@@ -121,3 +122,9 @@ def catch_errors(result, func, input_type, string):
         result["frequency"] = frequency(func(string))
     except Exception as err:
         result["error"] = str(err)
+
+
+def request_counter(content_type):
+        counter = RequestCounter.objects.get(content_type=content_type)
+        counter.count += 1
+        counter.save()

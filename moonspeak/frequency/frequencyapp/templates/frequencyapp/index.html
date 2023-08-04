@@ -28,6 +28,7 @@
     </style>
   </head>
   <body>
+    {% csrf_token %}
     <div>
       <label for="input-text">Enter text:</label>
       <input type="text" id="input-text" name="input-text">
@@ -79,10 +80,12 @@
 
       function submitUserInput() {
         const inputText = document.getElementById("input-text").value;
+        const csrftoken = document.getElementsByName('csrfmiddlewaretoken')[0].value;
         fetch("submit", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken,
           },
           body: JSON.stringify({ usertext: inputText }),
         })
@@ -95,8 +98,10 @@
           const uri = "submit";
           const xhr = new XMLHttpRequest();
           const fd = new FormData();
+          const csrftoken = document.getElementsByName('csrfmiddlewaretoken')[0].value;
 
           xhr.open("POST", uri, true);
+          xhr.setRequestHeader("X-CSRFToken", csrftoken);
           xhr.onreadystatechange = () => {
               if (xhr.readyState === 4 && xhr.status === 200) {
                   response_json = JSON.parse(xhr.response);
@@ -130,7 +135,7 @@
           const button_elem = document.getElementById("submit_binaryfile");
 
           button_elem.onclick = () => {
-            input_elem.click(); 
+            input_elem.click();
           }
 
           input_elem.addEventListener("change", function() {

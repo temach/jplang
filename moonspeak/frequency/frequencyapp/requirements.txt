@@ -1,4 +1,4 @@
-bottle
+django
 requests-html
 validators
 requests

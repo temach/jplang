@@ -174,7 +174,7 @@ class TestStringMethods(unittest.TestCase):
             self.assertTrue(r.status_code == requests.codes.ok)
             self.assertTrue(len(r_json["frequency"]) == 0)
             self.assertTrue(r_json["input_type"] == "file")
-            self.assertTrue(r_json["error"] == "file is oversize(max 10MB)")
+            self.assertTrue(r_json["error"] == "oversize")
 
 
 if __name__ == "__main__":
