@@ -1,0 +1,8 @@
+django
+requests-html
+validators
+requests
+Pillow
+pytesseract
+openai-whisper
+filetype
