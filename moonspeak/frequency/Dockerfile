@@ -1,5 +1,5 @@
 FROM python:3.11-bookworm
-WORKDIR /frequency_django
+WORKDIR /frequency
 
 #libraries for the correct operation of chromium from 
 #https://ahelpme.com/linux/ubuntu/chromium-browser-in-ubuntu-20-04-lts-without-snap-to-use-in-docker-container/
@@ -14,13 +14,16 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update && apt-get install -y tesseract-ocr
 RUN apt-get install -y tesseract-ocr-jpn
 
-COPY /frequency/requirements.txt ./
+COPY /frequencyapp/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
+# to extract audio for whisper
 RUN apt-get install -y ffmpeg
+# to run chromium
 RUN apt-get install -y libgtk-3-dev
 
-COPY . /frequency_django/
+COPY . .
 RUN python manage.py makemigrations
 RUN python manage.py migrate
+RUN python -m unittest discover -v tests
 CMD ["python", "manage.py", "runserver", "--noreload", "--nothreading", "0.0.0.0:8005"]
