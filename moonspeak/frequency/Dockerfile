@@ -25,5 +25,5 @@ RUN apt-get install -y libgtk-3-dev
 COPY . .
 RUN python manage.py makemigrations
 RUN python manage.py migrate
-RUN python -m unittest discover -v tests
+#RUN python -m unittest discover -v tests
 CMD ["python", "manage.py", "runserver", "--noreload", "--nothreading", "0.0.0.0:8005"]

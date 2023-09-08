@@ -10,7 +10,7 @@ import shutil
 import filetype
 from collections import Counter
 import os
-from .models import RequestCounter
+from .models import RequestCounter, Tasks
 
 japan_ords = set(i for i in range(19969, 40959))
 
@@ -95,7 +95,6 @@ def extract_text(file):
     text = pytesseract.image_to_string(file, config=f"--psm 11 --oem 1", lang="jpn")
     return text
 
-
     # TODO:
     # This program have a problems with "data:"-urls
 def prepare_image_and_text_return(user_string):
@@ -125,6 +124,32 @@ def catch_errors(result, func, input_type, string):
 
 
 def request_counter(content_type):
-        counter = RequestCounter.objects.get(content_type=content_type)
-        counter.count += 1
-        counter.save()
+    counter = RequestCounter.objects.get(content_type=content_type)
+    counter.count += 1
+    counter.save()
+
+
+def create_task(data):
+    new_task = Tasks(request=data, status="pending")
+    new_task.save()
+    return new_task.id, new_task.status
+
+
+def get_task_to_work():
+    pending_tasks = Tasks.objects.filter(status="pending")
+    if pending_tasks.exists():
+        id_pending_to_processing = pending_tasks.order_by('id').first()
+        id_pending_to_processing.status = "processing"
+        id_pending_to_processing.save()
+        return id_pending_to_processing
+
+
+def write_result_and_finish_task(task, result):
+    task.response = result
+    task.status = "finish"
+    task.save()
+
+
+def delete_task(task_id):
+    task_to_delete = Tasks.objects.get(id=task_id)
+    task_to_delete.delete()

@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from . import utils
 import json
+from .models import Tasks
 
 
 def index(request):
@@ -33,18 +34,19 @@ def submit(request):
 
     else:
         user_string = json.loads(request.body)["usertext"]
-
-        isurl = utils.is_url(user_string)
-        isimageurl = isurl and utils.is_image_url(user_string)
-
-        if isimageurl:
-            utils.catch_errors(dict_of_frequency, utils.prepare_image_and_text_return, "image", user_string)
-        elif isurl:
-            utils.catch_errors(dict_of_frequency, utils.url_parse, "url", user_string)
-        else:
-            utils.catch_errors(dict_of_frequency, utils.frequency, "text", user_string)
-
-    # the input_type field is filled after the catch_errors function call
-    utils.request_counter(dict_of_frequency["input_type"])
+        task_id, task_status = utils.create_task(user_string)
+        return JsonResponse({"id": task_id, "status": task_status}, json_dumps_params={'ensure_ascii': False})
 
     return JsonResponse(dict_of_frequency, json_dumps_params={'ensure_ascii': False})
+
+
+def result(request):
+    task_id = json.loads(request.body)["id"]
+    task = Tasks.objects.get(id=task_id)
+    status = task.status
+    if status == "finish":
+        response = task.response
+        utils.delete_task(task_id)
+        return JsonResponse(response, json_dumps_params={'ensure_ascii': False})
+    else:
+        return JsonResponse({"id": task_id, "status": status}, json_dumps_params={'ensure_ascii': False})
