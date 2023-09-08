@@ -10,6 +10,8 @@ cmd_django_server = "python /frequency/manage.py runserver 0.0.0.0:8005" \
 cmd_python_sever = "python -m http.server -b 127.0.0.1" \
                    " -d /frequency/tests/testdata/ 8000"
 
+cmd_run_worker = "python /frequency/manage.py worker"
+
 class TestDjangoServer(unittest.TestCase):
     """
     in default settings on requests module not needed to pass headers
@@ -159,12 +161,14 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
     def setUpClass(cls):
         cls.server_process = subprocess.Popen(cmd_django_server.split())
         cls.test_server_process = subprocess.Popen(cmd_python_sever.split())
+        cls.worker_process = subprocess.Popen(cmd_run_worker.split())
         time.sleep(5)
 
     @classmethod
     def tearDownClass(cls):
         cls.server_process.kill()
         cls.test_server_process.kill()
+        cls.worker_process.kill()
 
     # these tests were written for docker
     # for local tests use path: "./testdata/..."

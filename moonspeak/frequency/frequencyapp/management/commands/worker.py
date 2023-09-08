@@ -16,7 +16,6 @@ class Command(BaseCommand):
                 elif isurl:
                     catch_errors(dict_of_frequency, url_parse, "url", task.request)
                 else:
-                    print("kek")
                     catch_errors(dict_of_frequency, frequency, "text", task.request)
 
                 # the input_type field is filled after the catch_errors function call
