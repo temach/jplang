@@ -6,7 +6,7 @@ class RequestCounter(models.Model):
     count = models.PositiveIntegerField(default=0)
 
 
-class Tasks(models.Model):
+class Task(models.Model):
     id = models.AutoField(primary_key=True)
     request = models.TextField()
     response = models.JSONField(null=True)

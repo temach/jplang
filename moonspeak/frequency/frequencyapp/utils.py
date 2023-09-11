@@ -10,7 +10,7 @@ import shutil
 import filetype
 from collections import Counter
 import os
-from .models import RequestCounter, Tasks
+from .models import RequestCounter, Task
 
 japan_ords = set(i for i in range(19969, 40959))
 
@@ -60,17 +60,10 @@ def url_parse(user_string):
     return result
 
 
-def audio_transcribe(user_file):
-    # weird bug: sometimes large files do not load fully (missing a few bytes from the end)
-    # unless we seek to the end at least once, maybe this is a bottle.py bug?
-
-    user_file.seek(0, os.SEEK_END)
-    user_file.seek(0, os.SEEK_SET)
-    with tempfile.NamedTemporaryFile(dir=".") as fp:
-        shutil.copyfileobj(user_file, fp)
-        fp.flush()
+def audio_transcribe(temp_file_name):
+    with open(temp_file_name, "rb") as f:
         model = whisper.load_model("base")
-        result = model.transcribe(fp.name, language="ja", fp16=False)
+        result = model.transcribe(f.name, language="ja", fp16=False)
         return result["text"]
 
 
@@ -95,6 +88,7 @@ def extract_text(file):
     text = pytesseract.image_to_string(file, config=f"--psm 11 --oem 1", lang="jpn")
     return text
 
+
     # TODO:
     # This program have a problems with "data:"-urls
 def prepare_image_and_text_return(user_string):
@@ -111,11 +105,12 @@ def convert_image_file_and_text_return(user_image):
     return text
 
 
+def text_from_textfile(file_path):
+    with open(file_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
 def catch_errors(result, func, input_type, string):
-    if input_type == "text":
-        result["input_type"] = input_type
-        result["frequency"] = func(string)
-        return
     result["input_type"] = input_type
     try:
         result["frequency"] = frequency(func(string))
@@ -124,24 +119,25 @@ def catch_errors(result, func, input_type, string):
 
 
 def request_counter(content_type):
+    """RequestCounter database update func. We can see the number of requests of each type"""
     counter = RequestCounter.objects.get(content_type=content_type)
     counter.count += 1
     counter.save()
 
 
-def create_task(data):
-    new_task = Tasks(request=data, status="pending")
+def create_task(data, is_file=False):
+    new_task = Task(request=data, status="pending", file=is_file)
     new_task.save()
     return new_task.id, new_task.status
 
 
 def get_task_to_work():
-    pending_tasks = Tasks.objects.filter(status="pending")
+    pending_tasks = Task.objects.filter(status="pending")
     if pending_tasks.exists():
-        id_pending_to_processing = pending_tasks.order_by('id').first()
-        id_pending_to_processing.status = "processing"
-        id_pending_to_processing.save()
-        return id_pending_to_processing
+        task_to_processing = pending_tasks.order_by('id').first()
+        task_to_processing.status = "processing"
+        task_to_processing.save()
+        return task_to_processing
 
 
 def write_result_and_finish_task(task, result):
@@ -150,6 +146,20 @@ def write_result_and_finish_task(task, result):
     task.save()
 
 
-def delete_task(task_id):
-    task_to_delete = Tasks.objects.get(id=task_id)
+def delete_task_and_files(task_id):
+    task_to_delete = Task.objects.get(id=task_id)
+    if task_to_delete.file is True:
+        print(task_to_delete.request)
+        os.remove(task_to_delete.request)
     task_to_delete.delete()
+
+
+def create_temp_file(user_file):
+    # weird bug: sometimes large files do not load fully (missing a few bytes from the end)
+    # unless we seek to the end at least once, maybe this is a bottle.py bug?
+    user_file.seek(0, os.SEEK_END)
+    user_file.seek(0, os.SEEK_SET)
+    with tempfile.NamedTemporaryFile(dir=".", delete=False) as f:
+        shutil.copyfileobj(user_file, f)
+        f.flush()
+        return f.name
