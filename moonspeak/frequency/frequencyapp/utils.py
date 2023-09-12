@@ -159,7 +159,7 @@ def get_task_to_work():
     """The worker takes the task to work and returns a database object"""
     pending_tasks = Task.objects.filter(status="pending")
     if pending_tasks.exists():
-        task_to_processing = pending_tasks.order_by("id").first()
+        task_to_processing = pending_tasks.order_by("timestamp_created").first()
         task_to_processing.status = "processing"
         task_to_processing.save()
         return task_to_processing
