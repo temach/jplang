@@ -149,7 +149,6 @@ def write_result_and_finish_task(task, result):
 def delete_task_and_files(task_id):
     task_to_delete = Task.objects.get(id=task_id)
     if task_to_delete.file is True:
-        print(task_to_delete.request)
         os.remove(task_to_delete.request)
     task_to_delete.delete()
 
