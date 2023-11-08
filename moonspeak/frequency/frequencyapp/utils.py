@@ -17,7 +17,7 @@ japan_ords = set(i for i in range(19969, 40959))
 
 def frequency(user_string: str) -> dict:
     """Checks whether a symbol is a Japanese character"""
-    return {k: v for k, v in Counter(user_string).most_common() if ord(k) in japan_ords}
+    return {k: v for k, v in Counter(user_string).most_common(1000) if ord(k) in japan_ords}
 
 
 def is_url(user_string: str) -> bool:
@@ -133,7 +133,7 @@ def text_from_textfile(file_path):
         return f.read()
 
 
-def catch_errors(result, func, input_type, string):
+def catch_errors(result, func, input_type, string) -> None:
     result["input_type"] = input_type
     try:
         result["frequency"] = frequency(func(string))
@@ -141,7 +141,7 @@ def catch_errors(result, func, input_type, string):
         result["error"] = str(err)
 
 
-def request_counter(content_type):
+def bump_request_counter(content_type) -> None:
     """RequestCounter database update func. We can see the number of requests of each type"""
     counter = RequestCounter.objects.get(content_type=content_type)
     counter.count += 1
@@ -165,14 +165,14 @@ def get_task_to_work():
         return task_to_processing
 
 
-def write_result_and_finish_task(task, result):
+def write_result_and_finish_task(task, result) -> None:
     """The worker writes the result of the task to the database"""
     task.response = result
     task.status = "finish"
     task.save()
 
 
-def delete_task_and_files(task_id):
+def delete_task_and_files(task_id) -> None:
     """The function deletes the task from the database and the temporary file"""
     task_to_delete = Task.objects.get(id=task_id)
     if task_to_delete.file is True:
@@ -181,13 +181,7 @@ def delete_task_and_files(task_id):
 
 
 def create_temp_file(user_file):
-    """
-    The function creates a temporary file.
-    # weird bug: sometimes large files do not load fully (missing a few bytes from the end)
-    # unless we seek to the end at least once, maybe this is a bottle.py bug?
-    # user_file.seek(0, os.SEEK_END)
-    # user_file.seek(0, os.SEEK_SET)
-    """
+    """The function creates a temporary file"""
     with tempfile.NamedTemporaryFile(dir=".", delete=False) as f:
         shutil.copyfileobj(user_file, f)
         f.flush()
