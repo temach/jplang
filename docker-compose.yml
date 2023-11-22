@@ -116,7 +116,7 @@ services:
     image: "temachpool/moonspeak-promtail:${TAG:-latest}"
     container_name: promtail.moonspeak.localhost
     build:
-      context: ./moonspeak/promtail
+      context: ./infra/promtail
     networks:
       - moonspeaknet
     volumes:
@@ -155,7 +155,7 @@ services:
     image: "temachpool/moonspeak-grafana:${TAG:-latest}"
     container_name: grafana.moonspeak.localhost
     build:
-      context: ./moonspeak/grafana
+      context: ./infra/grafana
     networks:
       - moonspeaknet
     ports:
