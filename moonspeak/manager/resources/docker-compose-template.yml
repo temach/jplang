@@ -14,10 +14,10 @@ volumes:
   userdata:
 
 networks:
-  # global external network to share between all services
   moonspeaknet:
     external: true
-    name: moonspeaknet
+    # will try connecting docker container to already exising network
+    name: "${MOONSPEAK_COMPOSE_NETWORK}"
 
 services:
   #==================================

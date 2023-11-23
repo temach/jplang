@@ -33,13 +33,6 @@ volumes:
   userdata:
     name: demouser1_userdata
 
-networks:
-  # global network to share between all services
-  moonspeaknet:
-    # specify name to avoid default docker-compose prefixing
-    # because manager must bring up containers on the exact same network
-    name: moonspeaknet
-
 services:
   #===================================
   gateway:
@@ -47,8 +40,6 @@ services:
     container_name: moonspeak.localhost
     build:
       context: ./moonspeak/gateway
-    networks:
-      - moonspeaknet
     ports:
       - "80:8443"   # listens on 8433 to redirect to https port 443
       - "443:443"
@@ -61,8 +52,6 @@ services:
     container_name: router.moonspeak.localhost
     build:
       context: ./moonspeak/router
-    networks:
-      - moonspeaknet
     volumes:
       - unixsocks:/opt/moonspeak/unixsocks
     environment:
@@ -81,8 +70,6 @@ services:
     container_name: manager.moonspeak.localhost
     build:
       context: ./moonspeak/manager
-    networks:
-      - moonspeaknet
     ports:
       - "8001:80"
     volumes:
@@ -93,6 +80,8 @@ services:
       MOONSPEAK_DEVMODE: ""
       MOONSPEAK_HOST: "0.0.0.0"
       MOONSPEAK_PORT: "80"
+      # manager attaches user container to the same default compose network, here we derive this network name
+      MOONSPEAK_COMPOSE_NETWORK: "${COMPOSE_PROJECT_NAME}_default"
 
       # settings for container spin down (container stop & rm)
       MOONSPEAK_SECONDS_BEFORE_IDLE_SPINDOWN: 70
@@ -117,8 +106,6 @@ services:
     container_name: promtail.moonspeak.localhost
     build:
       context: ./infra/promtail
-    networks:
-      - moonspeaknet
     volumes:
       # hopefully we can get rid of docker sock one day and only parse docker logs
       # for now we just disable promtails HTTP server entry point
@@ -133,8 +120,6 @@ services:
   loki:
     image: "grafana/loki:2.8.2"
     container_name: loki.moonspeak.localhost
-    networks:
-      - moonspeaknet
     command: -config.file=/etc/loki/local-config.yaml -log.level=error
 
   jaeger:
@@ -148,16 +133,12 @@ services:
       - "16686:16686" # jaeger web ui port
       - "4317:4317"   # gRPC otel collector port
       - "4318:4318"   # HTTP otel collector port
-    networks:
-      - moonspeaknet
 
   grafana:
     image: "temachpool/moonspeak-grafana:${TAG:-latest}"
     container_name: grafana.moonspeak.localhost
     build:
       context: ./infra/grafana
-    networks:
-      - moonspeaknet
     ports:
       - "3000:3000"
     environment:
@@ -182,8 +163,6 @@ services:
     container_name: landing.moonspeak.localhost
     build:
       context: ./moonspeak/landing
-    networks:
-      - moonspeaknet
     ports:
       - "8002:80"
     command: nginx-debug -g "daemon off; error_log stderr debug;"
@@ -193,8 +172,6 @@ services:
     container_name: synonyms.moonspeak.localhost
     build:
       context: ./moonspeak/synonyms
-    networks:
-      - moonspeaknet
     ports:
       - "8043:80"
     environment:
@@ -205,8 +182,6 @@ services:
     container_name: suggestions.moonspeak.localhost
     build:
       context: ./moonspeak/suggestions
-    networks:
-      - moonspeaknet
     ports:
       - "8042:80"
     environment:
@@ -218,8 +193,6 @@ services:
     container_name: frequency.moonspeak.localhost
     build:
       context: ./moonspeak/frequency
-    networks:
-      - moonspeaknet
     ports:
       - "8005:80"
     environment:
@@ -235,8 +208,6 @@ services:
       context: ./moonspeak/workelements
     volumes:
       - userdata:/opt/moonspeak/workelements/userdata
-    networks:
-      - moonspeaknet
     environment:
       LOGLEVEL: "INFO"
       MOONSPEAK_DEVMODE: ""
@@ -255,8 +226,6 @@ services:
       context: ./moonspeak/graph
     volumes:
       - userdata:/opt/moonspeak/graph/userdata
-    networks:
-      - moonspeaknet
     ports:
       - "8041:80"
     environment:

@@ -1,6 +1,7 @@
 bottle==0.12.23
+pydantic==1.10.5
 python-on-whales==0.56.0
 docker==6.0.1
-PyYAML==6.0
+PyYAML==6.0.1
 pyruvate==1.2.1
 requests<2.29.0
