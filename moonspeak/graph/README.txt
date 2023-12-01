@@ -3,13 +3,19 @@
 
 ## Running locally
 
+Install apache with mod_wsgi and mod_oidc, install python, install python requirements.
+Then run:
+```
+# cd backend
+# apachectl -f $(pwd)/apache2.conf -DFOREGROUND
+```
+
+Alternatively to view/debug the frontend run the python-only version:
 ```
 # cd backend
 # pip install -r requirements.txt
 # python main.py
 ```
-Will run by default on port 8001
-
 
 To run on specific port use:
 ```
