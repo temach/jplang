@@ -17,7 +17,7 @@ GRAPH_INITIAL_XML = os.getenv("MOONSPEAK_GRAPH_INITIAL_XML", None)
 
 APP = default_app()
 
-@get("/import")
+@get("/api/import")
 def work():
     # set to return xml
     response.set_header("Content-Type", "text/xml;charset=UTF-8")
@@ -44,7 +44,7 @@ def work():
             return static_file("graph.xml", root="../config/")
 
 
-@post("/save")
+@post("/api/save")
 def submit():
     vals = dict(request.params)
 
