@@ -31,20 +31,34 @@ COPY frontend 	frontend
 RUN cd frontend/etc/build && ant app
 
 
-FROM python:3.10-alpine
+FROM debian:bookworm-slim
+RUN apt update
+RUN apt install -y python3 python3-pip
+
 WORKDIR /opt/moonspeak/graph/
+
+RUN apt install -y apache2 apache2-utils
+# see: https://github.com/OpenIDC/mod_auth_openidc#quickstart-with-a-generic-openid-connect-provider
+RUN apt install -y libapache2-mod-auth-openidc
+RUN apt install -y libapache2-mod-wsgi-py3
+# alternative to apt install from official mod_wsgi docs:
+# RUN pip3 install mod_wsgi --break-system-packages
+# RUN export MOD_WSGI_PATH=$(mod_wsgi-express module-location)
 
 RUN mkdir userdata
 
 RUN mkdir backend
-RUN apk add libgcc
 COPY backend/requirements.txt ./
-RUN pip install -r ./requirements.txt
+RUN pip install --break-system-packages -r ./requirements.txt
 
 COPY --from=builder /opt/moonspeak/build/frontend    frontend
 
-COPY backend/main.py backend/main.py
+COPY backend/*  backend/
 COPY config   config
 
+# own all files as www-data user, otherwise apache will not read
+RUN chown -R www-data:www-data .
+
 WORKDIR /opt/moonspeak/graph/backend
-CMD ["python", "main.py"]
+# CMD ["python", "main.py"]
+CMD ["apachectl", "-f", "/opt/moonspeak/graph/backend/apache2.conf", "-D", "FOREGROUND", "-D", "MOONSPEAK_DOCKER"]
