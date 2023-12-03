@@ -28,7 +28,7 @@
   "enabled": true,
   "sslRequired": "external",
   "registrationAllowed": false,
-  "registrationEmailAsUsername": true,
+  "registrationEmailAsUsername": false,
   "rememberMe": false,
   "verifyEmail": false,
   "loginWithEmailAllowed": true,
@@ -1453,7 +1453,20 @@
     "xXSSProtection": "1; mode=block",
     "strictTransportSecurity": "max-age=31536000; includeSubDomains"
   },
-  "smtpServer": {},
+  "smtpServer": {
+    "replyToDisplayName": "",
+    "starttls": "true",
+    "auth": "true",
+    "envelopeFrom": "",
+    "ssl": "true",
+    "password": "${KEYCLOAK_SMTP_PASSWORD}",
+    "port": "465",
+    "host": "smtp.gmail.com",
+    "replyTo": "",
+    "from": "no-reply@moonspeak.org",
+    "fromDisplayName": "",
+    "user": "${KEYCLOAK_SMTP_USER}"
+  },
   "eventsEnabled": false,
   "eventsListeners": [
     "jboss-logging"
