@@ -16,6 +16,7 @@
 # other stuff
 **/.env
 **/.env.example
+**/.env.template
 **/README.md
 **/experiments
 **/webapp/mxgraph/jsnice

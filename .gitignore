@@ -21,3 +21,12 @@
 
 *.pyc
 *.sqlite3
+
+# ignore graph build files
+**/graph/frontend/etc/build/base-viewer.min.js
+**/graph/frontend/etc/build/base.min.js
+**/graph/frontend/src/main/webapp/js/app.min.js
+**/graph/frontend/src/main/webapp/js/shapes-14-6-5.min.js
+**/graph/frontend/src/main/webapp/js/stencils.min.js
+**/graph/frontend/src/main/webapp/js/viewer-static.min.js
+**/graph/frontend/src/main/webapp/js/viewer.min.js
