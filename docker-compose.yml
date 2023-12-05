@@ -134,6 +134,42 @@ services:
       - "4317:4317"   # gRPC otel collector port
       - "4318:4318"   # HTTP otel collector port
 
+  postgres:
+    image: docker.io/postgres:15.2
+    container_name: postgres.moonspeak.localhost
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+    healthcheck:
+      test: "pg_isready -U keycloak -d keycloak"
+
+  keycloak:
+    image: "temachpool/moonspeak-keycloak:${TAG:-latest}"
+    container_name: keycloak.moonspeak.localhost
+    build:
+      context: ./infra/keycloak
+    depends_on:
+      - postgres
+    command: --verbose start-dev --import-realm
+    ports:
+      - "8443:8443"
+    environment:
+      # KC_HTTPS_CERTIFICATE_FILE: "/opt/keycloak/certs/server.crt.pem"
+      # KC_HTTPS_CERTIFICATE_KEY_FILE: "/opt/keycloak/certs/server.key.pem"
+      KEYCLOAK_ADMIN: keycloak
+      KEYCLOAK_ADMIN_PASSWORD: keycloak
+      KC_HTTP_PORT: 8443
+      # KC_HTTPS_PORT: 8443
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres.moonspeak.localhost:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      # used when importing moonspeak.json realm
+      GRAPH_CLIENT_SECRET: "graph-client-secret"
+      KEYCLOAK_SMTP_USER: "${KEYCLOAK_SMTP_USER}"
+      KEYCLOAK_SMTP_PASSWORD: "${KEYCLOAK_SMTP_PASSWORD}"
+
   grafana:
     image: "temachpool/moonspeak-grafana:${TAG:-latest}"
     container_name: grafana.moonspeak.localhost
@@ -233,6 +269,9 @@ services:
       MOONSPEAK_DEVMODE: ""
       MOONSPEAK_HOST: "0.0.0.0"
       MOONSPEAK_PORT: "80"
+      MOONSPEAK_OIDC_ENABLED: "1"
+      MOONSPEAK_OIDC_CRYPTO_PASSPHRASE: "long-random-passphrase-to-secure-apache-mod-oidc-cookies"
+      MOONSPEAK_OIDC_CLIENT_SECRET: "graph-client-secret"
       # this xml sets default graph value
       MOONSPEAK_GRAPH_INITIAL_XML: >-
         <mxfile host="moonspeak.localhost" modified="2023-03-08T09:50:31.755Z" agent="5.0 (X11; Ubuntu)" etag="x1sPpmzUOXcRObYpYGWO" version="20.3.0" type="moonspeak">
