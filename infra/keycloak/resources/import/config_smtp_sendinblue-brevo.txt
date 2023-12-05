@@ -1,0 +1,14 @@
+  "smtpServer": {
+    "replyToDisplayName": "",
+    "starttls": "true",
+    "auth": "true",
+    "envelopeFrom": "",
+    "ssl": "false",
+    "password": "${KEYCLOAK_SMTP_PASSWORD}",
+    "port": "587",
+    "host": "smtp-relay.sendinblue.com",
+    "replyTo": "",
+    "from": "no-reply@moonspeak.org",
+    "fromDisplayName": "",
+    "user": "${KEYCLOAK_SMTP_USER}"
+  },

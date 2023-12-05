@@ -790,31 +790,7 @@
             ]
           }
         ],
-        "policies": [
-          {
-            "id": "c03fbc88-7fcd-42a2-94cf-2cb01c79dcfd",
-            "name": "Default Policy",
-            "description": "A policy that grants access only for users within this realm",
-            "type": "js",
-            "logic": "POSITIVE",
-            "decisionStrategy": "AFFIRMATIVE",
-            "config": {
-              "code": "// by default, grants any permission associated with this policy\n$evaluation.grant();\n"
-            }
-          },
-          {
-            "id": "6dd26a88-7c76-4293-b21c-807573eae713",
-            "name": "Default Permission",
-            "description": "A permission that applies to the default resource type",
-            "type": "resource",
-            "logic": "POSITIVE",
-            "decisionStrategy": "UNANIMOUS",
-            "config": {
-              "defaultResourceType": "urn:graph:resources:default",
-              "applyPolicies": "[\"Default Policy\"]"
-            }
-          }
-        ],
+        "policies": [],
         "scopes": [],
         "decisionStrategy": "UNANIMOUS"
       }
@@ -1458,10 +1434,10 @@
     "starttls": "true",
     "auth": "true",
     "envelopeFrom": "",
-    "ssl": "true",
+    "ssl": "false",
     "password": "${KEYCLOAK_SMTP_PASSWORD}",
-    "port": "465",
-    "host": "smtp.gmail.com",
+    "port": "587",
+    "host": "smtp-relay.sendinblue.com",
     "replyTo": "",
     "from": "no-reply@moonspeak.org",
     "fromDisplayName": "",

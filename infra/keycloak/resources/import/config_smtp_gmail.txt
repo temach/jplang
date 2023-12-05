@@ -1,0 +1,14 @@
+  "smtpServer": {
+    "replyToDisplayName": "",
+    "starttls": "true",
+    "auth": "true",
+    "envelopeFrom": "",
+    "ssl": "true",
+    "password": "${KEYCLOAK_SMTP_PASSWORD}",
+    "port": "465",
+    "host": "smtp.gmail.com",
+    "replyTo": "",
+    "from": "no-reply@moonspeak.org",
+    "fromDisplayName": "",
+    "user": "${KEYCLOAK_SMTP_USER}"
+  },
