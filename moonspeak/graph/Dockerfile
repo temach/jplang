@@ -39,4 +39,4 @@ RUN chown -R www-data:www-data .
 
 WORKDIR /opt/moonspeak/graph/backend
 # CMD ["python", "main.py"]
-CMD ["apachectl", "-f", "/opt/moonspeak/graph/backend/apache2.conf", "-D", "FOREGROUND", "-D", "MOONSPEAK_DOCKER"]
+CMD ["/usr/sbin/apache2", "-f", "/opt/moonspeak/graph/backend/apache2.conf", "-D", "FOREGROUND", "-D", "MOONSPEAK_DOCKER_MODE", "-D", "DUMP_CONFIG"]
