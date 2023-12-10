@@ -22,8 +22,6 @@ To run on specific port use:
 # python main.py --port=8001
 ```
 
-You can change default port using MOONSPEAK_PORT env variable.
-
 
 ## Solving the IFrame re-size issue
 
