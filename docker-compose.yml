@@ -113,10 +113,9 @@ services:
     env_file:
       - docker_secrets.env
     environment:
+      # default user/pass is admin/admin
       # KC_HTTPS_CERTIFICATE_FILE: "/opt/keycloak/certs/server.crt.pem"
       # KC_HTTPS_CERTIFICATE_KEY_FILE: "/opt/keycloak/certs/server.key.pem"
-      KEYCLOAK_ADMIN: keycloak
-      KEYCLOAK_ADMIN_PASSWORD: keycloak
       KC_LOG_CONSOLE_COLOR: "true"
       KC_LOG_LEVEL: "INFO,io.phasetwo.keycloak:all"
       # plain http port is only used with start-dev
