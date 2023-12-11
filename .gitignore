@@ -6,6 +6,7 @@
 **/dist
 **/elm-stuff
 **/.env
+**/docker_secrets.env
 **/.idea
 **/.ideadebug
 **/*.iml

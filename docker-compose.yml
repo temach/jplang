@@ -1,25 +1,13 @@
+# Also must see the override file: docker-compose.override.yml
 #
-# This file is applied automatically by docker-compose
-# see: https://docs.docker.com/compose/extends/
+# This docker-compose is used to run everything with verbose logging for development
 #
-# This docker-compose is used to run everything in production setup on .localhost domain
-#
-# portainer:
-#   # See README.md in portainer dir for more info on working with portainer
-#   container_name: portainer.moonspeak.localhost
-#   volumes:
-#     - /var/run/docker.sock:/var/run/docker.sock
-#     # use anon volume during local dev
-#     - /data
-#   build:
-#     context: ./moonspeak/portainer
-#
-# Important: you might need to define moonspeak.localhost in /etc/hosts 
+# Important: you might need to edit /etc/hosts to redirect .moonspeaknet domain to 127.0.0.1
 #
 # port definitions for services are for debug/development,
 # except the gateway service which is expected to be exposed to the internet
 #
-# For pdb debug add to service definition:
+# For interactive pdb debug add to service definition:
 #   stdin_open: true  # docker run -i
 #   tty: true         # docker run -t
 # and run "docker attach CONTAINER_NAME"
@@ -36,6 +24,9 @@ volumes:
 networks:
   default:
     # the network name is also the alternative top domain for containers e.g. keycloak.moonspeaknet
+    # previously used .localhost TLD, but libcurl force resolves it to 127.0.0.1 since version v7.85
+    # see: https://serverfault.com/questions/1128965/curl-has-incorrect-dns-resolution-in-a-dind-context
+    # but some TLD is needed, because its uses must be located and changed for prod
     name: moonspeaknet
 
 services:
@@ -104,48 +95,6 @@ services:
       PYTHON_ON_WHALES_DEBUG: "1"
       LOGLEVEL: "DEBUG"
 
-  # loki, promtail and grafana stack for logs
-  # see: https://mpolinowski.github.io/docs/DevOps/Provisioning/2021-04-07--loki-prometheus-grafana/2021-04-07/
-  promtail:
-    image: "temachpool/moonspeak-promtail:${TAG:-latest}"
-    container_name: promtail.moonspeak.localhost
-    build:
-      context: ./infra/promtail
-    volumes:
-      # hopefully we can get rid of docker sock one day and only parse docker logs
-      # for now we just disable promtails HTTP server entry point
-      # - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      MOONSPEAK_LOKI_URL: "http://loki.moonspeak.localhost:3100"
-      PROMTAIL_LOG_LEVEL: "error"
-    command: -config.expand-env=true -config.file=/etc/promtail/config.yml -print-config-stderr
-
-  # promtail sends log lines to loki, view in grafana
-  loki:
-    image: "grafana/loki:2.8.2"
-    command: -config.file=/etc/loki/local-config.yaml -log.level=error
-
-  jaeger:
-    # send tracing data to collector address: https://www.jaegertracing.io/docs/1.46/deployment/#collector
-    image: "jaegertracing/all-in-one:latest"
-    environment:
-      COLLECTOR_OTLP_ENABLED: "true"
-      # LOG_LEVEL: "debug"
-    ports:
-      - "16686:16686" # jaeger web ui port
-      - "4317:4317"   # gRPC otel collector port
-      - "4318:4318"   # HTTP otel collector port
-
-  mailhog:
-    image: mailhog/mailhog:v1.0.1
-    ports:
-      - "587:587"
-      - "8025:8025"
-    environment:
-      # use the same smtp port as public services
-      MH_SMTP_BIND_ADDR: "0.0.0.0:587"
-
   postgres:
     image: docker.io/postgres:15.2
     environment:
@@ -187,27 +136,7 @@ services:
       # graph public url, for user browser
       GRAPH_PUBLIC_URL: "http://localhost:8041"
       # GRAPH_CLIENT_SECRET: "graph-client-secret"
-
-  grafana:
-    image: "temachpool/moonspeak-grafana:${TAG:-latest}"
-    build:
-      context: ./infra/grafana
-    ports:
-      - "3000:3000"
-    environment:
-      MOONSPEAK_LOKI_URL: "http://loki.moonspeaknet:3100"
-      GF_SERVER_DOMAIN: "grafana.moonspeaknet"
-      GF_SERVER_ROOT_URL: ""
-      GF_SERVER_SERVE_FROM_SUB_PATH: ""
-      GF_SERVER_PROTOCOL: "http"
-      GF_LOG_LEVEL: "error"
-      # allow anonymous user login, see: https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/#anonymous-authentication
-      GF_AUTH_ANONYMOUS_ENABLED: "true"
-      GF_AUTH_ANONYMOUS_ORG_NAME: "Main Org."
-      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
-      # or login with moonspeak:moonspeak
-      # GF_SECURITY_ADMIN_USER: "moonspeak"
-      # GF_SECURITY_ADMIN_PASSWORD: "moonspeak"
+      KEYCLOAK_SMTP_HOSTNAME: "mailhog.moonspeaknet"
 
   landing:
     # no MOONSPEAK_PORT env for landing because nginx is less flexible

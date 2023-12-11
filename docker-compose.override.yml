@@ -1,0 +1,72 @@
+# this docker compose is for dev only services
+# this is a rough division, not 100% accurate
+#
+# This override file is applied automatically by docker-compose
+# see: https://docs.docker.com/compose/extends/
+version: "3"
+
+services:
+
+  # loki, promtail and grafana stack for logs
+  # promtail sends log lines to loki, view in grafana
+  # see: https://mpolinowski.github.io/docs/DevOps/Provisioning/2021-04-07--loki-prometheus-grafana/2021-04-07/
+  loki:
+    image: "grafana/loki:2.8.2"
+    command: -config.file=/etc/loki/local-config.yaml -log.level=error
+
+  promtail:
+    image: "temachpool/moonspeak-promtail:${TAG:-latest}"
+    container_name: promtail.moonspeak.localhost
+    build:
+      context: ./infra/promtail
+    volumes:
+      # hopefully we can get rid of docker sock one day and only parse docker logs
+      # for now we just disable promtails HTTP server entry point
+      # - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      MOONSPEAK_LOKI_URL: "http://loki.moonspeak.localhost:3100"
+      PROMTAIL_LOG_LEVEL: "error"
+    command: -config.expand-env=true -config.file=/etc/promtail/config.yml -print-config-stderr
+
+  grafana:
+    image: "temachpool/moonspeak-grafana:${TAG:-latest}"
+    build:
+      context: ./infra/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      MOONSPEAK_LOKI_URL: "http://loki.moonspeaknet:3100"
+      GF_SERVER_DOMAIN: "grafana.moonspeaknet"
+      GF_SERVER_ROOT_URL: ""
+      GF_SERVER_SERVE_FROM_SUB_PATH: ""
+      GF_SERVER_PROTOCOL: "http"
+      GF_LOG_LEVEL: "error"
+      # allow anonymous user login, see: https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/#anonymous-authentication
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_NAME: "Main Org."
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+      # or login with moonspeak:moonspeak
+      # GF_SECURITY_ADMIN_USER: "moonspeak"
+      # GF_SECURITY_ADMIN_PASSWORD: "moonspeak"
+
+  jaeger:
+    # send tracing data to collector address: https://www.jaegertracing.io/docs/1.46/deployment/#collector
+    image: "jaegertracing/all-in-one:latest"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+      # LOG_LEVEL: "debug"
+    ports:
+      - "16686:16686" # jaeger web ui port
+      - "4317:4317"   # gRPC otel collector port
+      - "4318:4318"   # HTTP otel collector port
+
+  # fake SMTP to receive any mail and view it in browser webgui on port 8025 
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - "587:587"
+      - "8025:8025"
+    environment:
+      # use the same smtp port as public services
+      MH_SMTP_BIND_ADDR: "0.0.0.0:587"
