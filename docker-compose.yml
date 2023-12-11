@@ -33,7 +33,6 @@ services:
   #===================================
   gateway:
     image: "temachpool/moonspeak-gateway:${TAG:-latest}"
-    container_name: gateway
     build:
       context: ./moonspeak/gateway
     ports:
@@ -45,7 +44,6 @@ services:
 
   router:
     image: "temachpool/moonspeak-router:${TAG:-latest}"
-    container_name: router
     build:
       context: ./moonspeak/router
     volumes:
@@ -63,7 +61,6 @@ services:
   #===================================
   manager:
     image: "temachpool/moonspeak-manager:${TAG:-latest}"
-    container_name: manager.moonspeak.localhost
     build:
       context: ./moonspeak/manager
     ports:
@@ -142,7 +139,6 @@ services:
     # no MOONSPEAK_PORT env for landing because nginx is less flexible
     # port 80 gets hardcoded when building the container
     image: "temachpool/moonspeak-landing:${TAG:-latest}"
-    container_name: landing.moonspeak.localhost
     build:
       context: ./moonspeak/landing
     ports:
@@ -151,7 +147,6 @@ services:
 
   synonyms:
     image: "temachpool/moonspeak-synonyms:${TAG:-latest}"
-    container_name: synonyms.moonspeak.localhost
     build:
       context: ./moonspeak/synonyms
     ports:
@@ -161,7 +156,6 @@ services:
 
   suggestions:
     image: "temachpool/moonspeak-suggestions:${TAG:-latest}"
-    container_name: suggestions.moonspeak.localhost
     build:
       context: ./moonspeak/suggestions
     ports:
@@ -172,7 +166,6 @@ services:
 
   frequency:
     image: "temachpool/moonspeak-frequency:${TAG:-latest}"
-    container_name: frequency.moonspeak.localhost
     build:
       context: ./moonspeak/frequency
     ports:
@@ -216,6 +209,9 @@ services:
       MOONSPEAK_USER: "demouser1"
       MOONSPEAK_KEYCLOAK_BACKEND_URL: "http://keycloak.moonspeaknet:8443"
       LOGLEVEL: "INFO"
+      MOONSPEAK_HOST: "0.0.0.0"
+      MOONSPEAK_PORT: "80"
+      MOONSPEAK_DEVMODE: ""
       MOONSPEAK_OIDC_CRYPTO_PASSPHRASE: "long-random-passphrase-to-secure-apache-mod-oidc-cookies"
       # this xml sets default graph value
       MOONSPEAK_GRAPH_INITIAL_XML: >-
