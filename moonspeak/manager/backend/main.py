@@ -20,33 +20,6 @@ from python_on_whales.docker_client import DockerClient
 
 from spindown_process import spindown_process
 
-
-class AccessLogMiddleware:
-    def __init__(self, app):
-        self.app = app
-
-    def __call__(self, environ, start_response):
-        def wrapped(status, headers, *args):
-            self.log_access(environ, status, headers)
-            return start_response(status, headers, *args)
-        return self.app(environ, wrapped)
-
-    def log_access(self, environ, status_code, headers):
-        method = environ['REQUEST_METHOD']
-        # repeat wsgi_decode_dance from werkzeug here
-        # see: https://github.com/pallets/werkzeug/blob/main/src/werkzeug/_internal.py#L149
-        path = environ['PATH_INFO'].encode('latin1').decode()
-        query = ''
-        if environ['QUERY_STRING']:
-            query = '?' + environ['QUERY_STRING']
-        status = status_code
-        log_message = f'{environ["REMOTE_ADDR"]} - [{self.get_time()}] "{method} {path}{query} HTTP/1.1" {status}'
-        logger.info(log_message)
-
-    def get_time(self):
-        return datetime.datetime.utcnow().strftime('%d/%b/%Y:%H:%M:%S')
-
-
 import logging
 LOGLEVEL = os.environ.get("LOGLEVEL", "DEBUG").upper()
 logging.basicConfig(level=LOGLEVEL)
