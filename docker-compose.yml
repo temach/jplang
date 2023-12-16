@@ -92,21 +92,14 @@ services:
       PYTHON_ON_WHALES_DEBUG: "1"
       LOGLEVEL: "DEBUG"
 
-  postgres:
-    image: docker.io/postgres:15.2
-    environment:
-      POSTGRES_DB: keycloak
-      POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: keycloak
-    healthcheck:
-      test: "pg_isready -U keycloak -d keycloak"
-
   keycloak:
     image: "temachpool/moonspeak-keycloak:${TAG:-latest}"
     build:
       context: ./infra/keycloak
     depends_on:
+      # see docker-compose.override.yml
       - postgres
+      - mailhog
     command: --verbose start-dev --import-realm
     ports:
       - "8443:8443"
@@ -192,9 +185,6 @@ services:
 
   graph:
     image: "temachpool/moonspeak-graph:${TAG:-latest}"
-    # prioritise graph startup time over unlikely race condition, so drop depends_on
-    # depends_on:
-    #   - workelements
     build:
       context: ./moonspeak/graph
     volumes:

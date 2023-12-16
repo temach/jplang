@@ -70,3 +70,10 @@ services:
     environment:
       # use the same smtp port as public services
       MH_SMTP_BIND_ADDR: "0.0.0.0:587"
+
+  postgres:
+    image: docker.io/postgres:15.2
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
