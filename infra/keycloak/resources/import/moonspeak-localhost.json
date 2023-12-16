@@ -800,18 +800,17 @@
           }
         }
       ],
-      "defaultClientScopes": [
+      "defaultClientScopes": [],
+      "optionalClientScopes": [
         "web-origins",
         "acr",
-        "profile",
-        "roles",
-        "email"
-      ],
-      "optionalClientScopes": [
         "address",
         "phone",
+        "profile",
         "offline_access",
-        "microprofile-jwt"
+        "roles",
+        "microprofile-jwt",
+        "email"
       ],
       "authorizationSettings": {
         "allowRemoteResourceManagement": true,
@@ -919,18 +918,17 @@
           }
         }
       ],
-      "defaultClientScopes": [
+      "defaultClientScopes": [],
+      "optionalClientScopes": [
         "web-origins",
         "acr",
-        "profile",
-        "roles",
-        "email"
-      ],
-      "optionalClientScopes": [
         "address",
         "phone",
+        "profile",
         "offline_access",
-        "microprofile-jwt"
+        "roles",
+        "microprofile-jwt",
+        "email"
       ],
       "authorizationSettings": {
         "allowRemoteResourceManagement": true,
@@ -1567,19 +1565,18 @@
       ]
     }
   ],
-  "defaultDefaultClientScopes": [
-    "role_list",
-    "profile",
-    "email",
-    "roles",
-    "web-origins",
-    "acr"
-  ],
+  "defaultDefaultClientScopes": [],
   "defaultOptionalClientScopes": [
     "offline_access",
     "address",
     "phone",
-    "microprofile-jwt"
+    "microprofile-jwt",
+    "role_list",
+    "roles",
+    "web-origins",
+    "profile",
+    "acr",
+    "email"
   ],
   "browserSecurityHeaders": {
     "contentSecurityPolicyReportOnly": "",
