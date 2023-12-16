@@ -37,6 +37,8 @@ QUEUE = MPQueue()
 # in dev mode the count is used to generate predictable usernames (devmodeXX) and open port numbers on request
 DEVMODE_COUNT = 1
 
+APP = default_app()
+
 def guid(nbytes=10):
     return str(secrets.token_hex(nbytes))
 
@@ -60,7 +62,7 @@ def submit_compose_up_task(unique_id, force_recreate=False):
 
     return dockercli
 
-@route("/new/", method=["GET"])
+@route("/api/new/", method=["GET"])
 def new():
     # Check if a moonspeak_username cookie is present
     # happens when user clicks on sign up again instead of log in
@@ -101,7 +103,7 @@ def new():
     return "Ooops, something went wrong! Please go back to the Home page."
 
 
-@route("/handle/<target:re:.*>", method=["GET", "POST"])
+@route("/api/handle/<target:re:.*>", method=["GET", "POST"])
 def handle(target):
     service_name = None
     parts = request.path.split("/")
@@ -145,17 +147,15 @@ def handle(target):
     return "Ooops, something went wrong! Please go back to the Home page."
 
 
-@get("/")
-def index():
-    return "Go to <code>/handle/u-XXX-s-YYY</code>"
-
-
-@get("/<path:path>")
-def static(path):
-    return static_file(path, root=FRONTEND_ROOT)
-
-
 if __name__ == "__main__":
+    @get("/")
+    def index():
+        return "Go to <code>/handle/u-XXX-s-YYY</code>"
+
+    @get("/<path:path>")
+    def static(path):
+        return static_file(path, root=FRONTEND_ROOT)
+
     import argparse
 
     parser = argparse.ArgumentParser(description='Run as "python main.py"')
@@ -167,4 +167,4 @@ if __name__ == "__main__":
     # start the background process as a child of bottle process
     Process(target=spindown_process, args=(QUEUE,)).start()
 
-    run(host=args.host, port=args.port)
+    APP.run(host=args.host, port=args.port)
