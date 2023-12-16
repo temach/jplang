@@ -727,7 +727,7 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "${GRAPH_CLIENT_SECRET}",
       "redirectUris": [
-        "/*"
+        "${GRAPH_PUBLIC_URL}/oauth2callback"
       ],
       "webOrigins": [],
       "notBefore": 0,
@@ -846,7 +846,7 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "${MANAGER_CLIENT_SECRET}",
       "redirectUris": [
-        "/*"
+        "${MANAGER_PUBLIC_URL}/oauth2callback"
       ],
       "webOrigins": [
         ""
