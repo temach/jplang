@@ -22,7 +22,7 @@ datasources:
     # but proxy (Server).
     access: proxy
     # Loki url
-    url: $MOONSPEAK_LOKI_URL
+    url: $MOONSPEAK_SECRET_LOKI_URL
     # Sets the upper limit for the number of log lines returned by Loki. Defaults to 1,000.
     # Lower this limit if your browser is sluggish when displaying logs in Explore.
     jsonData:
