@@ -24,9 +24,9 @@ services:
       # for now we just disable promtails HTTP server entry point
       # - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      MOONSPEAK_LOKI_URL: "http://loki.moonspeak.localhost:3100"
-      PROMTAIL_LOG_LEVEL: "error"
+    env_file:
+      - docker-env/all.env
+      - docker-env/promtail.env
     command: -config.expand-env=true -config.file=/etc/promtail/config.yml -print-config-stderr
 
   grafana:
@@ -35,27 +35,15 @@ services:
       context: ./infra/grafana
     ports:
       - "3000:3000"
-    environment:
-      MOONSPEAK_LOKI_URL: "http://loki.moonspeaknet:3100"
-      GF_SERVER_DOMAIN: "grafana.moonspeaknet"
-      GF_SERVER_ROOT_URL: ""
-      GF_SERVER_SERVE_FROM_SUB_PATH: ""
-      GF_SERVER_PROTOCOL: "http"
-      GF_LOG_LEVEL: "error"
-      # allow anonymous user login, see: https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/#anonymous-authentication
-      GF_AUTH_ANONYMOUS_ENABLED: "true"
-      GF_AUTH_ANONYMOUS_ORG_NAME: "Main Org."
-      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
-      # or login with moonspeak:moonspeak
-      # GF_SECURITY_ADMIN_USER: "moonspeak"
-      # GF_SECURITY_ADMIN_PASSWORD: "moonspeak"
+    env_file:
+      - docker-env/all.env
+      - docker-env/grafana.env
 
   jaeger:
     # send tracing data to collector address: https://www.jaegertracing.io/docs/1.46/deployment/#collector
     image: "jaegertracing/all-in-one:latest"
-    environment:
-      COLLECTOR_OTLP_ENABLED: "true"
-      # LOG_LEVEL: "debug"
+    env_file:
+      - docker-env/jaeger.env
     ports:
       - "16686:16686" # jaeger web ui port
       - "4317:4317"   # gRPC otel collector port
@@ -67,13 +55,10 @@ services:
     ports:
       - "587:587"
       - "8025:8025"
-    environment:
-      # use the same smtp port as public services
-      MH_SMTP_BIND_ADDR: "0.0.0.0:587"
+    env_file:
+      - docker-env/mailhog.env
 
   postgres:
     image: docker.io/postgres:15.2
-    environment:
-      POSTGRES_DB: keycloak
-      POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: keycloak
+    env_file:
+      - docker-env/postgres.env
