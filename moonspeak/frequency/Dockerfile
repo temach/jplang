@@ -14,7 +14,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update && apt-get install -y tesseract-ocr
 RUN apt-get install -y tesseract-ocr-jpn
 
-COPY /frequency/requirements.txt ./
+COPY frequencyapp/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 RUN apt-get install -y ffmpeg
