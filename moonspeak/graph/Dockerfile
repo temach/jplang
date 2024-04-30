@@ -1,6 +1,8 @@
-# Multistage build: first the frontend, then move to backend container
+# args are defined in top level docker-compose
+ARG BASE_IMAGE
+ARG BUILDER_IMAGE
 
-FROM debian:bookworm-slim as builder
+FROM ${BUILDER_IMAGE} as builder
 WORKDIR /opt/moonspeak/build/
 RUN apt-get update
 RUN apt-get install -y ant
@@ -9,7 +11,7 @@ COPY frontend/ 	frontend/
 RUN cd frontend/etc/build && ant app
 
 
-FROM debian:bookworm-slim
+FROM ${BASE_IMAGE}
 WORKDIR /opt/moonspeak/
 RUN apt update
 RUN apt install -y python3 python3-pip

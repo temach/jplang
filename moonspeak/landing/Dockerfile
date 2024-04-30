@@ -1,4 +1,8 @@
-FROM node:19.2 as builder
+# args are defined in top level docker-compose
+ARG BASE_IMAGE
+ARG BUILDER_IMAGE
+
+FROM ${BUILDER_IMAGE} as builder
 
 WORKDIR /opt/moonspeak/frontend
 
@@ -12,7 +16,7 @@ COPY frontend/gulpfile.js   gulpfile.js
 RUN gulp
  
 
-FROM nginx:1.23-alpine
+FROM ${BASE_IMAGE}
 WORKDIR /etc/nginx
 COPY --from=builder /opt/moonspeak/frontend/dist ./frontend/dist
 COPY nginx.conf  ./

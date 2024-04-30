@@ -4,7 +4,11 @@
 #
 # alternative (brittle) solution with buildkit: https://vsupalov.com/buildkit-cache-mount-dockerfile/
 
-FROM rust:1.66-bullseye as builder
+# args are defined in top level docker-compose
+ARG BASE_IMAGE
+ARG BUILDER_IMAGE
+
+FROM ${BUILDER_IMAGE} as builder
 
 RUN rustup target add x86_64-unknown-linux-musl
 
@@ -24,7 +28,7 @@ COPY src/ src/
 RUN touch src/main.rs
 RUN cargo build --target=x86_64-unknown-linux-musl --release 
 
-FROM alpine:3.17
+FROM ${BASE_IMAGE}
 WORKDIR /opt/moonspeak/router
 COPY --from=builder /opt/moonspeak/router/target/x86_64-unknown-linux-musl/release/router ./
 CMD ["/opt/moonspeak/router/router"]

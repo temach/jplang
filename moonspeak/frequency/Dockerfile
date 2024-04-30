@@ -1,4 +1,7 @@
-FROM python:3.11-bookworm
+# args are defined in top level docker-compose
+ARG BASE_IMAGE
+
+FROM ${BASE_IMAGE}
 WORKDIR /frequency_django
 
 #libraries for the correct operation of chromium from 

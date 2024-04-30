@@ -34,6 +34,7 @@ services:
   gateway:
     image: "temachpool/moonspeak-gateway:${TAG:-latest}"
     build:
+      # nginx version is hard linked to opentelemetry version in Dockerfile
       context: ./moonspeak/gateway
     ports:
       - "80:8443"   # listens on 8433 to redirect to https port 443
@@ -46,6 +47,9 @@ services:
     image: "temachpool/moonspeak-router:${TAG:-latest}"
     build:
       context: ./moonspeak/router
+      args:
+        BUILDER_IMAGE: "rust:1.66-bullseye"
+        BASE_IMAGE: "alpine:3.17"
     volumes:
       - unixsocks:/opt/moonspeak/unixsocks
     env_file:
@@ -56,6 +60,8 @@ services:
     image: "temachpool/moonspeak-manager:${TAG:-latest}"
     build:
       context: ./moonspeak/manager
+      args:
+        BASE_IMAGE: "debian:bookworm-slim"
     ports:
       - "8001:80"
     volumes:
@@ -64,27 +70,15 @@ services:
       - docker-env/all.env
       - docker-env/manager.env
 
-  keycloak:
-    image: "temachpool/moonspeak-keycloak:${TAG:-latest}"
-    build:
-      context: ./infra/keycloak
-    depends_on:
-      # see docker-compose.override.yml
-      - postgres
-      - mailhog
-    command: --verbose start-dev --import-realm
-    ports:
-      - "8443:8443"
-    env_file:
-      - docker-env/all.env
-      - docker-env/keycloak.env
-
   landing:
     # no MOONSPEAK_PORT env for landing because nginx is less flexible
     # port 80 gets hardcoded when building the container
     image: "temachpool/moonspeak-landing:${TAG:-latest}"
     build:
       context: ./moonspeak/landing
+      args:
+        BUILDER_IMAGE: "node:19.2"
+        BASE_IMAGE: "nginx:1.23-alpine"
     ports:
       - "8002:80"
     command: nginx-debug -g "daemon off; error_log stderr debug;"
@@ -93,6 +87,9 @@ services:
     image: "temachpool/moonspeak-synonyms:${TAG:-latest}"
     build:
       context: ./moonspeak/synonyms
+      args:
+        BUILDER_IMAGE: "node:19.2"
+        BASE_IMAGE: "python:3.11-alpine"
     ports:
       - "8043:80"
     env_file:
@@ -102,6 +99,9 @@ services:
     image: "temachpool/moonspeak-suggestions:${TAG:-latest}"
     build:
       context: ./moonspeak/suggestions
+      args:
+        BUILDER_IMAGE: "node:19.2"
+        BASE_IMAGE: "python:3.11-alpine"
     ports:
       - "8042:80"
     env_file:
@@ -111,6 +111,8 @@ services:
     image: "temachpool/moonspeak-frequency:${TAG:-latest}"
     build:
       context: ./moonspeak/frequency
+      args:
+        BASE_IMAGE: "python:3.11-bookworm"
     ports:
       - "8005:80"
     env_file:
@@ -123,6 +125,9 @@ services:
     container_name: u-demouser1-s-workelements.moonspeak.localhost
     build:
       context: ./moonspeak/workelements
+      args:
+        BUILDER_IMAGE: "node:19.2"
+        BASE_IMAGE: "python:3.11-alpine"
     volumes:
       - userdata:/opt/moonspeak/workelements/userdata
     ports:
@@ -134,6 +139,9 @@ services:
     image: "temachpool/moonspeak-graph:${TAG:-latest}"
     build:
       context: ./moonspeak/graph
+      args:
+        BUILDER_IMAGE: "debian:bookworm-slim"
+        BASE_IMAGE: "debian:bookworm-slim"
     volumes:
       - userdata:/opt/moonspeak/graph/userdata
     ports:

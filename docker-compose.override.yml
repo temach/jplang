@@ -49,6 +49,20 @@ services:
       - "4317:4317"   # gRPC otel collector port
       - "4318:4318"   # HTTP otel collector port
 
+  keycloak:
+    image: "temachpool/moonspeak-keycloak:${TAG:-latest}"
+    build:
+      context: ./infra/keycloak
+    depends_on:
+      - postgres
+      - mailhog
+    command: --verbose start-dev --import-realm
+    ports:
+      - "8443:8443"
+    env_file:
+      - docker-env/all.env
+      - docker-env/keycloak.env
+
   # fake SMTP to receive any mail and view it in browser webgui on port 8025 
   mailhog:
     image: mailhog/mailhog:v1.0.1

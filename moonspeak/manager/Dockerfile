@@ -1,4 +1,7 @@
-FROM debian:bookworm-slim
+# args are defined in top level docker-compose
+ARG BASE_IMAGE
+
+FROM ${BASE_IMAGE}
 WORKDIR /opt/moonspeak/
 RUN apt update
 RUN apt install -y python3 python3-pip
