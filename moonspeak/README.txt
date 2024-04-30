@@ -507,7 +507,7 @@ Instead of gulp replace, consider using: https://www.npmjs.com/package/gulp-proc
 
 Right now links should be relaive in each service, if a link is absolute then it ignores the base tag and goes to root of moonspeak server.
 With reedirects the story is similar, but there are three types of reddirects:
-- redirects that specify hostname e.g. http://moonspeak.localhost/landing/en/
+- redirects that specify hostname e.g. http://selfhosted.moonspeak.org/landing/en/
 - redirects without hostname, that start with root slash e.g. /landing/en/
 - redirects without hostname, without root slash e.g. landing/en/
 

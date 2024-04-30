@@ -28,7 +28,7 @@ function moonspeakBootstrapMasterPort(event, userHandler) {
         // to debug via usb tethering on android
         // set permanent computer address, and add it to the list below 
         // then loading it from the phone you wont have to run the router component
-        return ['moonspeak.localhost', 'localhost', '127.0.0.1', '0.0.0.0'].includes(location.hostname);
+        return ['selfhosted.moonspeak.org', 'localhost', '127.0.0.1', '0.0.0.0'].includes(location.hostname);
     }
 
     if (event.origin !== location.origin && !isMoonspeakDevMode()) {

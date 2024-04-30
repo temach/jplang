@@ -16,7 +16,6 @@ services:
 
   promtail:
     image: "temachpool/moonspeak-promtail:${TAG:-latest}"
-    container_name: promtail.moonspeak.localhost
     build:
       context: ./infra/promtail
     volumes:

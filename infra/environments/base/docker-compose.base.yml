@@ -56,7 +56,6 @@ services:
   #===================================
   # by default do not run grafana and loki, only promtail
   promtail:
-    container_name: promtail.moonspeak.localhost
     image: "temachpool/moonspeak-promtail:${TAG:-latest}"
     volumes:
       # hopefully we can get rid of docker sock one day and only parse docker logs

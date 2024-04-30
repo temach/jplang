@@ -30,7 +30,7 @@ services:
     restart: always
     environment:
       TAG: "${TAG:-latest}"
-      MOONSPEAK_TLD: "localhost"
+      MOONSPEAK_TLD: "selfhosted.moonspeak.org"
       # settings for container spin down (container stop & rm)
       MOONSPEAK_SECONDS_BEFORE_IDLE_SPINDOWN: 600
 

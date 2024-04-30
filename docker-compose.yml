@@ -2,7 +2,7 @@
 #
 # This docker-compose is used to run everything with verbose logging for development
 #
-# Important: you might need to edit /etc/hosts to redirect .moonspeaknet domain to 127.0.0.1
+# *.selfhosted.moonspeak.org points to 127.0.0.1, when resolved from inside container it gets overriden by docker-compose built-in DNS server
 #
 # port definitions for services are for debug/development,
 # except the gateway service which is expected to be exposed to the internet
@@ -23,11 +23,11 @@ volumes:
 
 networks:
   default:
-    # the network name is also the alternative top domain for containers e.g. keycloak.moonspeaknet
-    # previously used .localhost TLD, but libcurl force resolves it to 127.0.0.1 since version v7.85
+    # the network name is also the alternative top domain for containers e.g. keycloak.selfhosted.moonspeak.org
+    # previously used .localhost (and .moonspeaknet) TLD, but libcurl force resolves it to 127.0.0.1 since version v7.85
     # see: https://serverfault.com/questions/1128965/curl-has-incorrect-dns-resolution-in-a-dind-context
     # but some TLD is needed, because its uses must be located and changed for prod
-    name: moonspeaknet
+    name: selfhosted.moonspeak.org
 
 services:
   #===================================
@@ -122,7 +122,7 @@ services:
   # this is the demo user for development, graph address is the user's unique access url
   workelements:
     image: "temachpool/moonspeak-workelements:${TAG:-latest}"
-    container_name: u-demouser1-s-workelements.moonspeak.localhost
+    container_name: u-demouser1-s-workelements
     build:
       context: ./moonspeak/workelements
       args:
@@ -137,6 +137,7 @@ services:
 
   graph:
     image: "temachpool/moonspeak-graph:${TAG:-latest}"
+    container_name: u-demouser1-s-graph
     build:
       context: ./moonspeak/graph
       args:
@@ -146,14 +147,13 @@ services:
       - userdata:/opt/moonspeak/graph/userdata
     ports:
       - "8041:80"
-    container_name: u-demouser1-s-graph
     env_file:
       - docker-env/all.env
       - docker-env/graph.env
     environment:
       # this xml sets default graph value, put here because its multiline
       MOONSPEAK_GRAPH_INITIAL_XML: >-
-        <mxfile host="moonspeak.localhost" modified="2023-03-08T09:50:31.755Z" agent="5.0 (X11; Ubuntu)" etag="x1sPpmzUOXcRObYpYGWO" version="20.3.0" type="moonspeak">
+        <mxfile host="selfhosted.moonspeak.org" modified="2023-03-08T09:50:31.755Z" agent="5.0 (X11; Ubuntu)" etag="x1sPpmzUOXcRObYpYGWO" version="20.3.0" type="moonspeak">
           <diagram id="SKebBaCcsGTVzdhOYIFn" name="pageWithNumber">
             <mxGraphModel dx="3702" dy="1137" grid="1" gridSize="10" guides="1" tooltips="0" connect="1" arrows="0" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
               <root>

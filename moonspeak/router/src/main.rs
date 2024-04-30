@@ -337,7 +337,7 @@ async fn main() -> std::io::Result<()> {
 
     let args = RouterArgs::parse();
     info!("CLI arguments: {:?}", args);
-    info!("Appstate domain: {:?}", env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.localhost".to_string()));
+    info!("Appstate domain: {:?}", env::var("MOONSPEAK_DOMAIN").unwrap_or("selfhosted.moonspeak.org".to_string()));
     info!("Appstate dev_mode: {:?}", is_dev_mode());
 
     if is_dev_mode() {
@@ -346,7 +346,7 @@ async fn main() -> std::io::Result<()> {
         let server = HttpServer::new(|| {
             App::new()
                 .app_data(web::Data::new(AppState {
-                    domain: env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.localhost".to_string()),
+                    domain: env::var("MOONSPEAK_DOMAIN").unwrap_or("selfhosted.moonspeak.org".to_string()),
                     dev_mode: is_dev_mode(),
                 }))
                 .wrap(Logger::default())
@@ -373,7 +373,7 @@ async fn main() -> std::io::Result<()> {
         HttpServer::new(|| {
             App::new()
                 .app_data(web::Data::new(AppState {
-                    domain: env::var("MOONSPEAK_DOMAIN").unwrap_or("moonspeak.localhost".to_string()),
+                    domain: env::var("MOONSPEAK_DOMAIN").unwrap_or("selfhosted.moonspeak.org".to_string()),
                     dev_mode: is_dev_mode(),
                 }))
                 .wrap(Logger::default())
