@@ -14,11 +14,11 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update && apt-get install -y tesseract-ocr
 RUN apt-get install -y tesseract-ocr-jpn
 
-COPY frequencyapp/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-
 RUN apt-get install -y ffmpeg
 RUN apt-get install -y libgtk-3-dev
+
+COPY frequencyapp/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /frequency_django/
 RUN python manage.py makemigrations

@@ -1,4 +1,6 @@
 django
+# lxml_html_clean is necessary for requests-html
+lxml_html_clean
 requests-html
 validators
 requests
