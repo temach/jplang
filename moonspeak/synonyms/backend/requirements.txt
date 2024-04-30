@@ -1,4 +1,4 @@
-flask==2.0.3
-gunicorn==20.1.0
-typing==3.7.4.3
+flask
+gunicorn
+typing
 nltk==3.7
