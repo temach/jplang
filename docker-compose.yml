@@ -37,7 +37,7 @@ services:
       # nginx version is hard linked to opentelemetry version in Dockerfile
       context: ./moonspeak/gateway
     ports:
-      - "80:8443"   # listens on 8433 to redirect to https port 443
+      - "80:80"
       - "443:443"
     volumes:
       - unixsocks:/etc/unixsocks
