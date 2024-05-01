@@ -369,7 +369,11 @@ async fn main() -> std::io::Result<()> {
     } else {
 
         // prod configuration
-        let uds = make_uds(args.uds.clone())?;
+        let uds = match make_uds(args.uds.clone()) {
+            Ok(uds) => uds,
+            Err(e) => panic!("Could not bind to unix socket {:?} due to error {:?}. Try deleting the unixsock file/volume.", args.uds, e),
+        };
+
         HttpServer::new(|| {
             App::new()
                 .app_data(web::Data::new(AppState {
