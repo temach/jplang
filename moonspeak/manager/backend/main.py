@@ -25,7 +25,7 @@ LOGLEVEL = os.environ.get("LOGLEVEL", "DEBUG").upper()
 logging.basicConfig(level=LOGLEVEL)
 logger = logging.getLogger(__name__)
 
-DEVMODE = os.getenv("MOONSPEAK_DEVMODE", "1")
+PORT_ROUTING = (os.getenv("MOONSPEAK_BROWSER_ROUTING", "dns") == "port")
 
 MOONSPEAK_THREADS = 1
 FRONTEND_ROOT = "../frontend/src/"
@@ -34,8 +34,8 @@ ROOT_SERVICE_NAME = os.environ.get("MOONSPEAK_ROOT_SERVICE_NAME", "graph").lower
 
 QUEUE = MPQueue()
 
-# in dev mode the count is used to generate predictable usernames (devmodeXX) and open port numbers on request
-DEVMODE_COUNT = 1
+# in port routing mode the count is used to generate predictable open port numbers on request
+PORT_ROUTING_COUNT = 1
 
 APP = default_app()
 
@@ -45,10 +45,10 @@ def guid(nbytes=10):
 def submit_compose_up_task(unique_id, force_recreate=False):
     compose_files = [ Path("../resources/docker-compose-template.yml") ]
 
-    if DEVMODE:
-        compose_files.append(Path("../resources/docker-compose-devmode-template.yml"))
-        # see details in devmode docker compose template, basically this allows to publish service ports in predictable manner
-        os.environ['MOONSPEAK_DEVMODE_COUNT'] = str(DEVMODE_COUNT)
+    if PORT_ROUTING:
+        compose_files.append(Path("../resources/docker-compose-portmode-template.yml"))
+        # see details in port mode docker compose template, basically this allows to publish service ports in predictable manner
+        os.environ['MOONSPEAK_PORT_ROUTING_COUNT'] = str(PORT_ROUTING_COUNT)
 
     dockercli = DockerClient(compose_project_name=unique_id, compose_files=compose_files)
     logger.info(yaml.safe_dump(dockercli.compose.config(return_json=True)))
@@ -79,10 +79,10 @@ def new():
     # fix user name in response cookie, expires 1 year from now in seconds
     response.set_cookie('moonspeak_username', user_name, max_age=60 * 60 * 24 * 365, path='/')
 
-    if DEVMODE:
-        # to use different ports in dev mode we must increment counter for each user
-        global DEVMODE_COUNT
-        DEVMODE_COUNT += 1
+    if PORT_ROUTING:
+        # to use different ports in port routing mode we must increment counter for each user
+        global PORT_ROUTING_COUNT
+        PORT_ROUTING_COUNT += 1
 
     # we want to keep the root_url as a complex URL object, not as a string
     root_url = urllib.parse.urlparse(
@@ -91,10 +91,10 @@ def new():
 
     dockercli = submit_compose_up_task(user_name)
     if dockercli:
-        if DEVMODE:
-            # we need to adjust root_url to include host port, for dev mode just hardcode "graph" and "80"
+        if PORT_ROUTING:
+            # we need to adjust root_url to include host port, for port routing mode just hardcode "graph" and "80"
             container_name, host_port = dockercli.compose.port(ROOT_SERVICE_NAME, "80")
-            # just hardcode request to root index.html in devmode and use "http" (not "https") for easy local testing
+            # just hardcode request to root index.html in port routing and use "http" (not "https") for easy local testing
             root_url = root_url._replace(scheme="http", netloc="localhost:{}".format(host_port), path="/")
 
         logger.debug("Returning target url: {}".format(root_url))
@@ -135,10 +135,10 @@ def handle(target):
         # take what was there initially (query params + fragment), change netloc to make url relative to root and set path
         root_url = request.urlparts._replace(scheme="", netloc="", path=f"/router/route/u-{user_name}-s-{ROOT_SERVICE_NAME}/")
 
-        if DEVMODE:
-            # we need to adjust root_url to include host port, for dev mode just expect ROOT_SERVICE_NAME aka "graph" and "80"
-            container_name, host_port = dockercli.compose.port(DEVMODE_SERVICE_NAME, "80")
-            # just hardcode request to root index.html in devmode and use "http" (not "https") for easy local testing
+        if PORT_ROUTING:
+            # we need to adjust root_url to include host port, for port routing mode just expect ROOT_SERVICE_NAME aka "graph" and "80"
+            container_name, host_port = dockercli.compose.port(ROOT_SERVICE_NAME, "80")
+            # just hardcode request to root index.html in port routing and use "http" (not "https") for easy local testing
             root_url = root_url._replace(scheme="http", netloc="localhost:{}".format(host_port), path="/")
 
         logger.debug("Returning target url: {}".format(root_url))

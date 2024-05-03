@@ -6,17 +6,17 @@ version: "3"
 
 services:
   workelements:
-    # if devmode user count is 1, will give port mapping like "12000:80"
+    # if port mode user count is 1, will give port mapping like "12002:80"
     ports:
-      - "${MOONSPEAK_DEVMODE_COUNT:?You must set MOONSPEAK_DEVMODE_COUNT env var, e.g. MOONSPEAK_DEVMODE_COUNT=1}0002:80"
+      - "${MOONSPEAK_PORT_ROUTING_COUNT:?You must set MOONSPEAK_PORT_ROUTING_COUNT env var, e.g. MOONSPEAK_PORT_ROUTING_COUNT=1}0002:80"
     environment:
       MOONSPEAK_HOST: "0.0.0.0"
       MOONSPEAK_PORT: "80"
 
   graph:
-    # if devmode user count is 1, will give port mapping like "12000:80"
+    # if port mode user count is 1, will give port mapping like "12001:80"
     ports:
-      - "${MOONSPEAK_DEVMODE_COUNT}0001:80"
+      - "${MOONSPEAK_PORT_ROUTING_COUNT}0001:80"
     environment:
       MOONSPEAK_HOST: "0.0.0.0"
       MOONSPEAK_PORT: "80"
@@ -28,7 +28,7 @@ services:
               <root>
                 <mxCell id="0" />
                 <mxCell id="1" style="locked=1;" parent="0" />
-                <iframe xmlns="http://www.w3.org/1999/xhtml" name="workelements" src="http://selfhosted.moonspeak.org:${MOONSPEAK_DEVMODE_COUNT}0002" style="width: 680px; height: 560px; border: medium none;" pointer-events="none" id="2">
+                <iframe xmlns="www.w3.org/1999/xhtml" name="workelements" src="workelements.selfhosted.moonspeak.org:${MOONSPEAK_PORT_ROUTING_COUNT}0002" style="width: 680px; height: 560px; border: medium none;" pointer-events="none" id="2">
                   <mxCell style="iframe=1;" parent="1" xmlns="" vertex="1">
                     <mxGeometry x="-210" y="-70" width="700" height="580" as="geometry" />
                   </mxCell>
@@ -36,7 +36,7 @@ services:
                 <mxCell id="11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.003;entryY=0.384;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="4" target="2" edge="1">
                   <mxGeometry relative="1" as="geometry" />
                 </mxCell>
-                <iframe xmlns="http://www.w3.org/1999/xhtml" name="suggestions" src="http://selfhosted.moonspeak.org:8042" style="width: 380px; height: 290px; border: medium none;" pointer-events="none" id="4">
+                <iframe xmlns="www.w3.org/1999/xhtml" name="suggestions" src="suggestions.selfhosted.moonspeak.org:8042" style="width: 380px; height: 290px; border: medium none;" pointer-events="none" id="4">
                   <mxCell style="iframe=1;" parent="1" xmlns="" vertex="1">
                     <mxGeometry x="-700" y="120" width="400" height="310" as="geometry" />
                   </mxCell>
@@ -44,12 +44,12 @@ services:
                 <mxCell id="12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="5" target="2" edge="1">
                   <mxGeometry relative="1" as="geometry" />
                 </mxCell>
-                <iframe xmlns="http://www.w3.org/1999/xhtml" name="synonyms" src="http://selfhosted.moonspeak.org:8043" style="width: 474px; height: 424px; border: medium none;" pointer-events="none" id="5">
+                <iframe xmlns="www.w3.org/1999/xhtml" name="synonyms" src="synonyms.selfhosted.moonspeak.org:8043" style="width: 474px; height: 424px; border: medium none;" pointer-events="none" id="5">
                   <mxCell style="iframe=1;" parent="1" xmlns="" vertex="1">
                     <mxGeometry x="560" width="490" height="440" as="geometry" />
                   </mxCell>
                 </iframe>
-                <iframe xmlns="http://www.w3.org/1999/xhtml" name="frequency" src="http://selfhosted.moonspeak.org:8005" style="width: 380px; height: 290px; border: medium none;" pointer-events="none" id="6">
+                <iframe xmlns="www.w3.org/1999/xhtml" name="frequency" src="frequency.selfhosted.moonspeak.org:8005" style="width: 380px; height: 290px; border: medium none;" pointer-events="none" id="6">
                   <mxCell style="iframe=1;" parent="1" xmlns="" vertex="1">
                     <mxGeometry x="-700" y="-260" width="400" height="310" as="geometry" />
                   </mxCell>
