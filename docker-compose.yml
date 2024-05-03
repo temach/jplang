@@ -43,18 +43,6 @@ services:
       - unixsocks:/etc/unixsocks
     command: nginx-debug -g "daemon off; error_log stderr debug;"
 
-  router:
-    image: "temachpool/moonspeak-router:${TAG:-latest}"
-    build:
-      context: ./moonspeak/router
-      args:
-        BUILDER_IMAGE: "rust:1.66-bullseye"
-        BASE_IMAGE: "alpine:3.17"
-    volumes:
-      - unixsocks:/opt/moonspeak/unixsocks
-    env_file:
-      - docker-env/router.env
-
   #===================================
   manager:
     image: "temachpool/moonspeak-manager:${TAG:-latest}"
