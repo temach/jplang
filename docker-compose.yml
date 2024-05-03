@@ -81,6 +81,7 @@ services:
     ports:
       - "8043:80"
     env_file:
+      - docker-env/all.env
       - docker-env/synonyms.env
 
   suggestions:
@@ -104,6 +105,7 @@ services:
     ports:
       - "8005:80"
     env_file:
+      - docker-env/all.env
       - docker-env/frequency.env
 
   #==================================
@@ -121,6 +123,7 @@ services:
     ports:
       - "8040:80"
     env_file:
+      - docker-env/all.env
       - docker-env/workelements.env
 
   graph:
