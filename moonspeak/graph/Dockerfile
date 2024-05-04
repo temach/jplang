@@ -13,12 +13,13 @@ RUN cd frontend/etc/build && ant app
 
 FROM ${BASE_IMAGE}
 WORKDIR /opt/moonspeak/
-RUN apt update
-RUN apt install -y python3 python3-pip
-RUN apt install -y apache2 apache2-utils libapache2-mod-auth-openidc libapache2-mod-wsgi-py3
-# fix apache's www-data user HOME dir to the actual working directory, wsgi HOME is taken from /etc/passwd only
-# permission problems with docker if HOME is not properly set: https://github.com/docker/compose/issues/11126
-RUN usermod --home $PWD www-data
+
+RUN apt update \
+    && apt install -y --no-install-recommends python3 wget ca-certificates apache2 libapache2-mod-auth-openidc libapache2-mod-wsgi-py3 \
+		&& rm -rf /var/lib/apt/lists/*
+RUN wget https://bootstrap.pypa.io/get-pip.py \
+    && python3 get-pip.py --break-system-packages \
+    && rm get-pip.py
 
 RUN mkdir userdata
 
