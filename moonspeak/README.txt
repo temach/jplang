@@ -544,3 +544,29 @@ Maybe run a custom DNS server, but how to handle multiple services on same port?
 Unfortunatelly looks like docker-compose is the only cross-platform solution for virtual networking :(
 
 
+"git l --oneline | rg ' [a-z0-9-]+: ' -o | sort | uniq -c | sort --human-numeric-sort -r"
+Most common tags for repo commits, preferably choose one of them:
+ 127  graph:
+  57  docker-compose:
+  45  workelements:
+  35  landing:
+  35  gateway:
+  34  frequency:
+  33  manager:
+  29  synonyms:
+  21  router:
+  19  travis:
+  17  hud:
+  16  keycloak:
+  15  suggestions:
+  13  gitlab:
+  12  readme:
+   8  docs:
+   5  docker:
+   4  infra:
+   4  grafana:
+   4  bash:
+   3  submit:
+   3  repo:
+   3  plus:
+   3  deploy:
