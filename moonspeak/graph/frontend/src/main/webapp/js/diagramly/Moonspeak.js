@@ -370,10 +370,16 @@ MoonspeakUi.prototype.runInit = function(app)
         this.addObserver(target.value, source.value);
     });
 
+    // do the regex building dance so its possible to find/replace all uses of "selfhosted.moonspeak.org"
+    // using sub-domain, using just "selfhosted.example.org", using port number, using http/https is allowed, regex is case insensitive
+    const domain = "selfhosted.moonspeak.org";
+    const regexPattern = '^http(s)?://([a-z0-9-]+\\.)?' + domain.replace(/\./g, '\\.') + '(:[0-9]+)?$';
+    const originRegex = new RegExp(regexPattern, "i");
     let onMessage = (event) =>
     {
-        if (event.origin !== location.origin && ! this.isMoonspeakDevMode()) {
-            // accept only messages from same origin, but ignore this rule for dev mode
+        if (! originRegex.test(event.origin)) {
+            // accept only messages from same origin
+            console.log('Dropping event due to origin mismatch:', event.origin);
             return;
         }
 
@@ -420,8 +426,7 @@ MoonspeakUi.prototype.registerChildIframe = function(iframe)
     };
     info.iframeport.onmessage = (event) => this.onChildMessage(event, iframe);
     iframe.onload = () => {
-        // if host on dev origin, soften developer pain by relaxing security, else be strict
-        let targetOrigin = this.isMoonspeakDevMode() ? "*" : location.origin;
+        const targetOrigin = iframe.src;
         iframe.contentWindow.postMessage({"info": "port"}, targetOrigin, [channel.port2]);
     };
     this.iframeinfo.set(iframe, info);
@@ -437,14 +442,6 @@ MoonspeakUi.prototype.onChildMessage = function(event, iframe)
     for (const connectedPort of info.observers) {
         connectedPort.postMessage(event.data);
     }
-};
-
-MoonspeakUi.prototype.isMoonspeakDevMode = function()
-{
-    // having 192.168.42.156 here allows debugging via usb tethering on android
-    // set permanent computer address to this IP, then load it from the phone
-    // then you dont have to run the router component
-    return ['selfhosted.moonspeak.org', '127.0.0.1', '0.0.0.0', '192.168.42.156'].includes(location.hostname);
 };
 
 MoonspeakUi.prototype.clampPinchZoom = function(value)

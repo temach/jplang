@@ -231,4 +231,3 @@ mxscript(drawDevUrl + 'js/diagramly/miro/MiroImporter.js');
 
 // Moonspeak custom code
 mxscript(drawDevUrl + 'js/diagramly/Moonspeak.js');
-mxscript(drawDevUrl + 'js/diagramly/dev_mode.js');
