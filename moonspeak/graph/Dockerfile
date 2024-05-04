@@ -36,4 +36,4 @@ RUN chown -R www-data:www-data .
 
 WORKDIR /opt/moonspeak/backend
 # CMD ["python", "main.py"]
-CMD ["/usr/sbin/apache2", "-f", "/opt/moonspeak/backend/apache2.conf", "-DFOREGROUND", "-DMOONSPEAK_DOCKER_MODE", "-DDUMP_CONFIG"]
+CMD ["/usr/sbin/apache2", "-f", "/opt/moonspeak/backend/apache2.conf", "-DFOREGROUND", "-DDUMP_CONFIG"]
