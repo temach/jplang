@@ -8,12 +8,8 @@ import datetime
 
 from bottle import response, request, post, get, route, template, HTTPResponse, static_file, default_app  # type: ignore
 
-DB_PATH = "../userdata/kanji-grapheditor.db"
-# only check if threadsafety is not 3, see: https://docs.python.org/3/library/sqlite3.html#sqlite3.threadsafety
-DB = sqlite3.connect(DB_PATH, check_same_thread=(sqlite3.threadsafety != 3))
-DB.row_factory = sqlite3.Row
-
 GRAPH_INITIAL_XML = os.getenv("MOONSPEAK_GRAPH_INITIAL_XML", None)
+USERDATA_GRAPH_PATH = '../userdata/graph.xml'
 
 APP = default_app()
 
@@ -27,40 +23,23 @@ def work():
     response.set_header("Cache-Control", "no-store")
     response.set_header("Expires", "0")
 
-    try:
-        c = DB.cursor()
-        c.execute("SELECT * FROM diagrams where uuid = :uuid ;", dict(request.params))
-        row = c.fetchone()
-        xml = row["xml"]
-        print("Returning xml from db")
-        return xml
-    except Exception as e:
-        print(f"Got exception {e}")
-        if GRAPH_INITIAL_XML:
-            print("Returning xml from env var")
-            return GRAPH_INITIAL_XML
-        else:
-            print("Returning xml from static file")
-            return static_file("graph.xml", root="../config/")
+    if os.path.exists(USERDATA_GRAPH_PATH):
+        print("Returning xml from custom userdata")
+        return static_file("graph.xml", root="../userdata/")
+    elif GRAPH_INITIAL_XML:
+        print("Returning xml from static env var")
+        return GRAPH_INITIAL_XML
+    else:
+        print("Returning xml from static config file")
+        return static_file("graph.xml", root="../config/")
 
 
 @post("/api/save")
 def submit():
-    vals = dict(request.params)
-
-    if "uuid" not in vals:
-        vals["uuid"] = "default"
-
-    vals["xml"] = request.body.read()
-
     try:
-        c = DB.cursor()
-        # https://www.sqlite.org/lang_replace.html
-        # https://www.sqlite.org/lang_UPSERT.html
-        c.execute("""INSERT OR ABORT INTO diagrams VALUES (:uuid, :xml)
-                ON CONFLICT(uuid) DO UPDATE SET xml=excluded.xml;
-                """, vals)
-        DB.commit()
+        data = request.body.read()
+        with open(USERDATA_GRAPH_PATH, 'wb') as file:
+            file.write(data)
     except Exception as e:
         return HTTPResponse(status=500, body="{}".format(e))
 
@@ -68,18 +47,7 @@ def submit():
 
 
 def init():
-    db_needs_init = (not os.path.isfile(DB_PATH)) or (
-        os.path.getsize(DB_PATH) == 0)
-
-    if db_needs_init:
-        c = DB.cursor()
-        c.execute("""CREATE TABLE diagrams (
-                uuid TEXT NOT NULL UNIQUE
-                , xml TEXT NOT NULL UNIQUE
-                , PRIMARY KEY (uuid)
-            );
-            """)
-        DB.commit()
+    pass
 
 
 if __name__ == "__main__":
