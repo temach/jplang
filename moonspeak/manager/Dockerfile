@@ -3,9 +3,15 @@ ARG BASE_IMAGE
 
 FROM ${BASE_IMAGE}
 WORKDIR /opt/moonspeak/
-RUN apt update
-RUN apt install -y python3 python3-pip
-RUN apt install -y apache2 apache2-utils libapache2-mod-auth-openidc libapache2-mod-wsgi-py3
+
+RUN apt update \
+    && apt install -y --no-install-recommends python3 wget ca-certificates apache2 libapache2-mod-auth-openidc libapache2-mod-wsgi-py3 \
+		&& rm -rf /var/lib/apt/lists/*
+
+RUN wget https://bootstrap.pypa.io/get-pip.py \
+    && python3 get-pip.py --break-system-packages \
+    && rm get-pip.py
+
 # fix apache's www-data user HOME dir to the actual working directory, wsgi HOME is taken from /etc/passwd only
 # permission problems with docker if HOME is not properly set: https://github.com/docker/compose/issues/11126
 RUN usermod --home $PWD www-data
@@ -30,4 +36,4 @@ RUN chown -R www-data:www-data .
 
 WORKDIR /opt/moonspeak/backend
 # CMD ["python", "main.py"]
-CMD ["/usr/sbin/apache2", "-f", "/opt/moonspeak/backend/apache2.conf", "-DFOREGROUND", "-DMOONSPEAK_DOCKER_MODE", "-DDUMP_CONFIG"]
+CMD ["/usr/sbin/apache2", "-f", "/opt/moonspeak/backend/apache2.conf", "-DFOREGROUND", "-DDUMP_CONFIG"]
