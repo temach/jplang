@@ -22,6 +22,12 @@ To run on specific port use:
 # python main.py --port=8001
 ```
 
+To run with python and view the dev=1 raw javascript files (not the minified ones) access one of:
+```
+http://graph.selfhosted.moonspeak.org:8041/?dev=1
+http://graph.selfhosted.moonspeak.org:8041/?dev=1#Mapi/import?uuid=default
+```
+
 
 ## Solving the IFrame re-size issue
 
@@ -43,3 +49,9 @@ So make sure to start each sub component on the appropriate port, e.g. workeleme
 
 
 When running in docker compose, the config/graph.xml is passed as an environment variable, see docker-compose.override.yml
+
+## graph js
+
+More info about frontend in README.txt: frontend/src/main/webapp/README.txt
+
+
