@@ -15,8 +15,6 @@
 version: "3"
 
 volumes:
-  # volume to share unix sockets between gateway and router
-  unixsocks:
   # volume for demouser1
   userdata:
     name: demouser1_userdata
@@ -39,8 +37,6 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    volumes:
-      - unixsocks:/etc/unixsocks
     command: nginx-debug -g "daemon off; error_log stderr info;"
 
   #===================================
