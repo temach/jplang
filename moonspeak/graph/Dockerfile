@@ -21,19 +21,18 @@ RUN wget https://bootstrap.pypa.io/get-pip.py \
     && python3 get-pip.py --break-system-packages \
     && rm get-pip.py
 
-RUN mkdir userdata
-
 RUN mkdir backend
 COPY backend/requirements.txt ./
 RUN pip install --break-system-packages -r ./requirements.txt
 
-COPY --from=builder /opt/moonspeak/build/frontend    frontend
+# must chown as www-data user, otherwise apache will not access
+COPY --chown=www-data --from=builder /opt/moonspeak/build/frontend/src/main/webapp    frontend/src/main/webapp
+COPY --chown=www-data --from=builder /opt/moonspeak/build/frontend/apache_oidc_htlm_error_template.html    frontend/apache_oidc_htlm_error_template.html
 
-COPY backend/  backend/
-COPY config/   config/
+COPY --chown=www-data backend/  backend/
+COPY --chown=www-data config/   config/
 
-# own all files as www-data user, otherwise apache will not read
-RUN chown -R www-data:www-data .
+RUN mkdir userdata && chown www-data:www-data userdata
 
 WORKDIR /opt/moonspeak/backend
 # CMD ["python", "main.py"]

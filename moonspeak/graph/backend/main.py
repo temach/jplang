@@ -5,6 +5,7 @@ import sqlite3
 import re
 import urllib
 import datetime
+import traceback
 
 from bottle import response, request, post, get, route, template, HTTPResponse, static_file, default_app  # type: ignore
 
@@ -41,6 +42,7 @@ def submit():
         with open(USERDATA_GRAPH_PATH, 'wb') as file:
             file.write(data)
     except Exception as e:
+        print(traceback.format_exc())
         return HTTPResponse(status=500, body="{}".format(e))
 
     return HTTPResponse(status=200)
