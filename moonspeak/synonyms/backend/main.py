@@ -6,83 +6,8 @@ import os
 from pathlib import Path
 from collections import defaultdict
 
-import gunicorn.app.base
-import gunicorn.config
-
 from flask import Flask, send_from_directory, make_response, request, redirect  # type: ignore
 from typing import TypedDict, Any
-
-
-class GunicornApp(gunicorn.app.base.Application):
-
-    def __init__(self, app, options=None):
-        self.options = options or {}
-        self.application = app
-        super().__init__()
-
-    def init(self, parser, opts, args):
-        # config = {key: value for key, value in self.options.items()
-        #     if key in self.cfg.settings and value is not None}
-        # for key, value in config.items():
-        #     self.cfg.set(key.lower(), value)
-        # return self.option
-        return None
-
-    def load(self):
-        return self.application
-
-    # Override the default load_config function from gunicorn because it
-    # tries to do parse_args and that is breaking our parse_args
-    # instead we use parse_known_args here
-    def load_config(self):
-        # parse console args
-        parser = self.cfg.parser()
-        args, argv = parser.parse_known_args()
-        if argv:
-            print('unrecognized arguments: {}'.format(argv))
-
-        # optional settings from apps
-        cfg = self.init(parser, args, args.args)
-
-        # set up import paths and follow symlinks
-        self.chdir()
-
-        # Load up the any app specific configuration
-        if cfg:
-            for k, v in cfg.items():
-                self.cfg.set(k.lower(), v)
-
-        env_args = parser.parse_args(self.cfg.get_cmd_args_from_env())
-
-        if args.config:
-            self.load_config_from_file(args.config)
-        elif env_args.config:
-            self.load_config_from_file(env_args.config)
-        else:
-            default_config = gunicorn.config.get_default_config_file()
-            if default_config is not None:
-                self.load_config_from_file(default_config)
-
-        # Load up environment configuration
-        for k, v in vars(env_args).items():
-            if v is None:
-                continue
-            if k == "args":
-                continue
-            self.cfg.set(k.lower(), v)
-
-        # Lastly, update the configuration with any command line settings.
-        for k, v in vars(args).items():
-            if v is None:
-                continue
-            if k == "args":
-                continue
-            self.cfg.set(k.lower(), v)
-
-        # current directory might be changed by the config now
-        # set up import paths and follow symlinks
-        self.chdir()
-
 
 class KeyCandidate(TypedDict):
     word: str
@@ -93,7 +18,6 @@ class KeyCandidate(TypedDict):
 ListKeyCandidate = list[KeyCandidate]
 Thesaurus = dict[str, list[str]]
 app = Flask(__name__, static_folder=None)
-app.config['DEV_MODE'] = len(os.getenv("MOONSPEAK_DEV_MODE", "")) > 1
 
 
 def get_en_freq(word):
@@ -262,5 +186,3 @@ if __name__ == "__main__":
                 WORDNET[key].extend(synonyms)
             else:
                 WORDNET[key] = synonyms
-
-    GunicornApp(app).run()

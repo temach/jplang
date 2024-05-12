@@ -1,4 +1,3 @@
 flask
-gunicorn
 typing
 nltk==3.7
