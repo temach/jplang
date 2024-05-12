@@ -27,7 +27,7 @@ RUN pip install --break-system-packages -r ./requirements.txt
 
 # must chown as www-data user, otherwise apache will not access
 COPY --chown=www-data --from=builder /opt/moonspeak/build/frontend/src/main/webapp    frontend/src/main/webapp
-COPY --chown=www-data --from=builder /opt/moonspeak/build/frontend/apache_oidc_htlm_error_template.html    frontend/apache_oidc_htlm_error_template.html
+COPY --chown=www-data --from=builder /opt/moonspeak/build/frontend/apache_oidc_html_error_template.html    frontend/apache_oidc_html_error_template.html
 
 COPY --chown=www-data backend/  backend/
 COPY --chown=www-data config/   config/
