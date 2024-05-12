@@ -16,14 +16,13 @@ WORKDIR /opt/moonspeak/
 
 RUN apt update \
     && apt install -y --no-install-recommends python3 wget ca-certificates apache2 libapache2-mod-auth-openidc libapache2-mod-wsgi-py3 \
-		&& rm -rf /var/lib/apt/lists/*
+		&& rm -rf /var/lib/apt/lists/*  /var/cache/*  /usr/lib/python3*/__pycache__/
 RUN wget https://bootstrap.pypa.io/get-pip.py \
     && python3 get-pip.py --break-system-packages \
-    && rm get-pip.py
+    && rm -rf ~/.cache/*
 
-RUN mkdir backend
 COPY backend/requirements.txt ./
-RUN pip install --break-system-packages -r ./requirements.txt
+RUN pip install --no-cache-dir --break-system-packages -r ./requirements.txt
 
 # must chown as www-data user, otherwise apache will not access
 COPY --chown=www-data --from=builder /opt/moonspeak/build/frontend/src/main/webapp    frontend/src/main/webapp
