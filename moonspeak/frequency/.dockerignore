@@ -18,6 +18,7 @@
 **/.env.example
 **/.env.template
 **/README.md
+**/README.txt
 **/experiments
 **/webapp/mxgraph/jsnice
 **/webapp/WEB-INF

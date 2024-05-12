@@ -1,0 +1,26 @@
+# ignore python files
+**/__pycache__
+
+# ignore git files
+**/.git
+**/.gitignore
+**/.gitkeep
+
+# ignore previous rust builds
+**/target
+
+# javascript files
+**/node_modules
+**/elm-stuff
+
+# other stuff
+**/.env
+**/.env.example
+**/.env.template
+**/README.md
+**/README.txt
+**/experiments
+**/webapp/mxgraph/jsnice
+**/webapp/WEB-INF
+**/resources/artifacts
+
