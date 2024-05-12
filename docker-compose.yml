@@ -73,7 +73,7 @@ services:
       context: ./moonspeak/synonyms
       args:
         BUILDER_IMAGE: "node:19.2"
-        BASE_IMAGE: "python:3.11-alpine"
+        BASE_IMAGE: "debian:bookworm-slim"
     ports:
       - "8043:80"
     env_file:

@@ -19,23 +19,29 @@ RUN gulp production
 
 
 FROM ${BASE_IMAGE}
-WORKDIR /opt/moonspeak/synonyms
+WORKDIR /opt/moonspeak/
+
+RUN apt update \
+    && apt install -y --no-install-recommends python3 wget ca-certificates apache2 libapache2-mod-auth-openidc libapache2-mod-wsgi-py3 \
+		&& rm -rf /var/lib/apt/lists/*
+RUN wget https://bootstrap.pypa.io/get-pip.py \
+    && python3 get-pip.py --break-system-packages \
+    && rm get-pip.py
 
 # dependencies
-COPY backend/requirements.txt       requirements.txt
-RUN pip install -r requirements.txt
-
-RUN python -c "import nltk; nltk.download('wordnet');"
-
-# data resources
-COPY resources          resources
+COPY backend/requirements.txt  ./
+RUN pip install --break-system-packages -r requirements.txt
+RUN python3 -c "import nltk; nltk.download('wordnet');"
 
 # code
+COPY --chown=www-data resources/       resources/
 COPY --from=builder /opt/moonspeak/build/frontend/dist       frontend/dist
+COPY backend/ backend/
 
-COPY backend/main.py            backend/main.py
-COPY backend/gunicorn.conf.py   backend/gunicorn.conf.py
+# own all files as www-data user, otherwise apache will not read
+RUN chown -R www-data:www-data .
 
 # command
-WORKDIR /opt/moonspeak/synonyms/backend
-CMD ["python", "main.py"]
+WORKDIR /opt/moonspeak/backend
+CMD ["python3", "main.py"]
+# CMD ["/usr/sbin/apache2", "-f", "/opt/moonspeak/backend/apache2.conf", "-DFOREGROUND", "-DDUMP_CONFIG"]
