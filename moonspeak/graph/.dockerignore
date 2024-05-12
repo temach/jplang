@@ -21,6 +21,8 @@
 **/README.txt
 **/experiments
 **/webapp/mxgraph/jsnice
+**/webapp/mxgraph/mxClient*demangled*js
+**/webapp/templates
 **/webapp/WEB-INF
 **/resources/artifacts
 
