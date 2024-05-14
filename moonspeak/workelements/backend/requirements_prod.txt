@@ -1,4 +1,0 @@
-flask
-typing
-nltk==3.7
-pyruvate

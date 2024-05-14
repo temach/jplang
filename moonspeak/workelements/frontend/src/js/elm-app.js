@@ -10980,27 +10980,6 @@ var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
 		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
-var $elm$url$Url$Builder$toQueryPair = function (_v0) {
-	var key = _v0.a;
-	var value = _v0.b;
-	return key + ('=' + value);
-};
-var $elm$url$Url$Builder$toQuery = function (parameters) {
-	if (!parameters.b) {
-		return '';
-	} else {
-		return '?' + A2(
-			$elm$core$String$join,
-			'&',
-			A2($elm$core$List$map, $elm$url$Url$Builder$toQueryPair, parameters));
-	}
-};
-var $elm$url$Url$Builder$relative = F2(
-	function (pathSegments, parameters) {
-		return _Utils_ap(
-			A2($elm$core$String$join, '/', pathSegments),
-			$elm$url$Url$Builder$toQuery(parameters));
-	});
 var $elm$json$Json$Decode$index = _Json_decodeIndex;
 var $author$project$Main$workElementsDecoder = A2(
 	$elm$json$Json$Decode$field,
@@ -11015,11 +10994,7 @@ var $author$project$Main$workElementsDecoder = A2(
 var $author$project$Main$getWorkElements = $elm$http$Http$get(
 	{
 		expect: A2($elm$http$Http$expectJson, $author$project$Main$WorkElementsReady, $author$project$Main$workElementsDecoder),
-		url: A2(
-			$elm$url$Url$Builder$relative,
-			_List_fromArray(
-				['api', 'work']),
-			_List_Nil)
+		url: '/api/work'
 	});
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2($author$project$Main$defaultModel, $author$project$Main$getWorkElements);
@@ -11116,11 +11091,7 @@ var $author$project$Main$getKeywordCheck = F2(
 		return $elm$http$Http$get(
 			{
 				expect: A2($elm$http$Http$expectJson, $author$project$Main$KeywordCheckReady, $author$project$Main$keyCandidateDecoder),
-				url: A2(
-					$elm$url$Url$Builder$relative,
-					_List_fromArray(
-						['api', 'keywordcheck/' + (kanji + ('/' + keyword))]),
-					_List_Nil)
+				url: '/api/keywordcheck/' + (kanji + ('/' + keyword))
 			});
 	});
 var $author$project$Main$keywordDecoder = A2($elm$json$Json$Decode$field, 'keyword', $elm$json$Json$Decode$string);
@@ -11327,11 +11298,7 @@ var $author$project$Main$submitElement = function (element) {
 			body: $elm$http$Http$jsonBody(
 				$author$project$Main$submitElementEncoder(element)),
 			expect: $elm$http$Http$expectString($author$project$Main$ElementSubmitReady),
-			url: A2(
-				$elm$url$Url$Builder$relative,
-				_List_fromArray(
-					['api', 'submit']),
-				_List_Nil)
+			url: '/api/submit'
 		});
 };
 var $author$project$Main$update = F2(

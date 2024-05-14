@@ -14,7 +14,6 @@ import Json.Decode as D
 import Json.Encode as E
 import List.Extra
 import Platform.Cmd as Cmd
-import Url.Builder exposing (relative)
 
 -- elm bootstrap: http://elm-bootstrap.info/popover
 -- source code: https://github.com/rundis/elm-bootstrap/
@@ -401,7 +400,7 @@ buildErrorMessage httpError =
 getKeywordCheck : String -> String -> Cmd Msg
 getKeywordCheck kanji keyword =
     Http.get
-        { url = relative [ "api", "keywordcheck/" ++ kanji ++ "/" ++ keyword ] []
+        { url = "/api/keywordcheck/" ++ kanji ++ "/" ++ keyword 
         , expect = Http.expectJson KeywordCheckReady keyCandidateDecoder
         }
 
@@ -417,7 +416,7 @@ keyCandidateDecoder =
 getWorkElements : Cmd Msg
 getWorkElements =
     Http.get
-        { url = relative [ "api", "work" ] []
+        { url = "/api/work"
         , expect = Http.expectJson WorkElementsReady workElementsDecoder
         }
 
@@ -438,7 +437,7 @@ workElementsDecoder =
 submitElement : WorkElement -> Cmd Msg
 submitElement element =
     Http.post
-        { url = relative [ "api", "submit" ] []
+        { url = "/api/submit"
         , body = Http.jsonBody (submitElementEncoder element)
         , expect = Http.expectString ElementSubmitReady
         }

@@ -17,34 +17,6 @@ nltk.data.path.append(str(nltk_data_dir))
 from nltk.stem.porter import PorterStemmer  # type: ignore
 from nltk.stem import WordNetLemmatizer  # type: ignore
 
-
-class AccessLogMiddleware:
-    def __init__(self, app):
-        self.app = app
-
-    def __call__(self, environ, start_response):
-        def wrapped(status, headers, *args):
-            self.log_access(environ, status, headers)
-            return start_response(status, headers, *args)
-
-        return self.app(environ, wrapped)
-
-    def log_access(self, environ, status_code, headers):
-        method = environ["REQUEST_METHOD"]
-        # repeat wsgi_decode_dance from werkzeug here
-        # see: https://github.com/pallets/werkzeug/blob/main/src/werkzeug/_internal.py#L149
-        path = environ["PATH_INFO"].encode("latin1").decode()
-        query = ""
-        if environ["QUERY_STRING"]:
-            query = "?" + environ["QUERY_STRING"]
-        status = status_code
-        log_message = f'{environ["REMOTE_ADDR"]} - [{self.get_time()}] "{method} {path}{query} HTTP/1.1" {status}'
-        logger.info(log_message)
-
-    def get_time(self):
-        return datetime.datetime.utcnow().strftime("%d/%b/%Y:%H:%M:%S")
-
-
 class KeywordInfo:
     def __init__(self, keyword, description, kanji=None):
         self.keyword = keyword
@@ -58,13 +30,10 @@ LOGLEVEL = os.environ.get("LOGLEVEL", "DEBUG").upper()
 logging.basicConfig(level=LOGLEVEL)
 logger = logging.getLogger(__name__)
 
-DEVMODE = os.environ.get("MOONSPEAK_DEVMODE", "1")
-
-MOONSPEAK_THREADS = 1
 DB_PATH = "../userdata/kanji-parts.db"
-DB = sqlite3.connect(DB_PATH, check_same_thread=(MOONSPEAK_THREADS != 1))
+DB = sqlite3.connect(DB_PATH)
 
-app = Flask(__name__, static_folder=None)
+APP = Flask(__name__, static_folder=None)
 
 # kanji in-memory list
 WORK = {}
@@ -78,8 +47,8 @@ STEMMER = PorterStemmer()
 LEMMATIZER = WordNetLemmatizer()
 
 
-@app.route("/<lang>/api/work")
-def work(lang):
+@APP.route("/api/work")
+def work():
     c = DB.cursor()
     c.execute("SELECT * FROM kanjikeywords;")
     rows = c.fetchall()
@@ -99,8 +68,8 @@ def get_en_freq_regex(word):
     return CORPUS_AND_SUBS_WORDS.get(word, (-1, -1))
 
 
-@app.route("/<lang>/api/keywordcheck/<kanji>/<keyword>")
-def keyword_check(lang, kanji, keyword):
+@APP.route("/api/keywordcheck/<kanji>/<keyword>")
+def keyword_check(kanji, keyword):
     """
     Test conflict search with a database like this
     Note that stem for 'children' is 'child' and overrides the 'child' keyword:
@@ -179,8 +148,8 @@ def keyword_check(lang, kanji, keyword):
     return response
 
 
-@app.post("/<lang>/api/submit")
-def submit(lang):
+@APP.post("/api/submit")
+def submit():
     payload = request.json
 
     try:
@@ -203,7 +172,7 @@ def submit(lang):
             },
             ensure_ascii=False,
         )
-
+        print(traceback.format_exc())
         response = make_response(body_str, 202, {"Content-Type": "application/json"})
         return response
 
@@ -222,54 +191,6 @@ def submit(lang):
     response = make_response("", 200, {"Content-Type": "text/plain"})
     return response
 
-
-@app.get("/")
-def root():
-    def choose_lang(request):
-        # find the language and redirect to that, otherwise relative paths break
-        # language check order:
-        # 0 - what language cookie you have
-        cookie_lang = request.cookies.get("lang")
-        if cookie_lang:
-            return cookie_lang
-
-        # 1 - what does accept_language header have
-        accept_language_header = request.headers.get("Accept-Language")
-        if accept_language_header:
-            m = re.match(
-                "[a-z]{2,3}", accept_language_header.strip(), flags=re.IGNORECASE
-            )
-            if m:
-                return m.group()
-
-        # 2 - what domain are you targetting, useful for tools that normally dont supply accept_language header
-        hostname = urlparse(request.headers.get("Host")).hostname
-        if hostname:
-            m = re.match(".*[.]([a-z0-9]+)$", hostname, flags=re.IGNORECASE)
-            if m:
-                return m.group()
-
-        # finally use english by default
-        return "en"
-
-    lang = choose_lang(request)
-
-    # in dev mode, language dirs may be absent, then redirect to /localhost/
-    langdir = Path(f"../frontend/dist/{lang}")
-    if not langdir.exists():
-        return redirect("/localhost/", code=307)
-
-    return redirect(f"/{lang}/", code=307)
-
-
-@app.get("/<lang>/")
-@app.get("/<lang>/<path:filepath>")
-def static(lang, filepath="index.html"):
-    root = Path("../frontend/dist/") / lang
-    if lang == "localhost":
-        # this is for dev mode only
-        root = Path("../frontend/src/")
-    return send_from_directory(root, filepath)
 
 
 def db_init():
@@ -293,26 +214,7 @@ def count_uppercase(word):
             count += 1
     return count
 
-
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description='Run as "python main.py"')
-    # "0.0.0.0" and "moonspeak.localhost" break on windows only "localhost" is portable
-    parser.add_argument(
-        "--host",
-        type=str,
-        default=os.getenv("MOONSPEAK_HOST", "localhost"),
-        help="hostname or ip",
-    )
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=os.getenv("MOONSPEAK_PORT", "8040"),
-        help="port number",
-    )
-    args = parser.parse_args()
-
+def init():
     db_needs_init = (not os.path.isfile(DB_PATH)) or (os.path.getsize(DB_PATH) == 0)
 
     if db_needs_init:
@@ -370,4 +272,53 @@ if __name__ == "__main__":
             else:
                 CORPUS_AND_SUBS_WORDS[word] = (-1, number)
 
-    app.run(host=args.host, port=args.port)
+
+if __name__ == "__main__":
+    # when running without apache, add code to serve static files
+    def choose_lang(request):
+        # find the language and redirect to that, otherwise relative paths break
+        # language check order:
+        # 0 - what language cookie you have
+        cookie_lang = request.cookies.get("lang")
+        if cookie_lang:
+            return cookie_lang
+
+        # 1 - what does accept_language header have
+        accept_language_header = request.headers.get("Accept-Language")
+        if accept_language_header:
+            m = re.match(
+                "[a-z]{2,3}", accept_language_header.strip(), flags=re.IGNORECASE
+            )
+            if m:
+                return m.group()
+
+        # finally use english by default
+        return "en"
+
+    @APP.get("/")
+    def root():
+        lang = choose_lang(request)
+
+        # in dev mode, language dirs may be absent, then redirect to /localhost/
+        langdir = Path(f"../frontend/dist/{lang}")
+        if not langdir.exists():
+            return redirect("/localhost/", code=307)
+
+        return redirect(f"/{lang}/", code=307)
+
+    @APP.get("/<lang>/")
+    @APP.get("/<lang>/<path:filepath>")
+    def static(lang, filepath="index.html"):
+        root = Path("../frontend/dist/") / lang
+        if lang == "localhost":
+            # this is for dev mode only
+            root = Path("../frontend/src/")
+        return send_from_directory(root, filepath)
+
+    import argparse
+    parser = argparse.ArgumentParser(description='Run as "python main.py"')
+    parser.add_argument('--host', type=str, default=os.getenv("MOONSPEAK_HOST", "localhost"), help='hostname or ip')
+    parser.add_argument('--port', type=int, default=os.getenv("MOONSPEAK_PORT", "8040"), help='port number')
+    args = parser.parse_args()
+
+    APP.run(host=args.host, port=args.port)

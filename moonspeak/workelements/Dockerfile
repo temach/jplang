@@ -18,23 +18,17 @@ COPY frontend/gulpfile.js   gulpfile.js
 RUN gulp production
 
 FROM ${BASE_IMAGE}
-WORKDIR /opt/moonspeak/workelements
-
-RUN mkdir userdata
+WORKDIR /opt/moonspeak/
 
 # dependencies
-# libgcc is necessary for pyruvate runtime
-RUN apk add libgcc
-COPY backend/requirements_prod.txt       requirements.txt
-RUN pip install -r requirements.txt
+COPY backend/requirements.txt  ./
+RUN pip install --no-cache-dir --break-system-packages -r requirements.txt
 
-# data resources
-COPY resources          resources
+# own all files as www-data user, otherwise apache will not read
+COPY --chown=www-data resources           resources
+COPY --chown=www-data --from=builder /opt/moonspeak/build/frontend/dist       frontend/dist
+COPY --chown=www-data backend             backend
 
-# code
-COPY --from=builder /opt/moonspeak/build/frontend/dist       frontend/dist
-
-COPY backend/main.py            backend/main.py
-
-WORKDIR /opt/moonspeak/workelements/backend
-CMD ["python", "main.py"]
+WORKDIR /opt/moonspeak/backend
+# CMD ["python", "main.py"]
+CMD ["/usr/sbin/apache2", "-f", "/opt/moonspeak/backend/apache.conf", "-DFOREGROUND", "-DDUMP_CONFIG"]
