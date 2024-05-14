@@ -16,7 +16,6 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import List.Extra exposing (getAt)
 import Platform.Cmd as Cmd
-import Url.Builder exposing (relative)
 
 
 -- elm bootstrap: http://elm-bootstrap.info/popover
@@ -242,7 +241,7 @@ synonymsDecoder =
 getSynonyms : String -> Cmd Msg
 getSynonyms keyword =
     Http.get
-        { url = relative [ "api", "synonyms/" ++ keyword ] []
+        { url = "/api/synonyms/" ++ keyword 
         , expect = Http.expectJson SynonymsReady synonymsDecoder
         }
 

@@ -11004,27 +11004,6 @@ var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
 		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
-var $elm$url$Url$Builder$toQueryPair = function (_v0) {
-	var key = _v0.a;
-	var value = _v0.b;
-	return key + ('=' + value);
-};
-var $elm$url$Url$Builder$toQuery = function (parameters) {
-	if (!parameters.b) {
-		return '';
-	} else {
-		return '?' + A2(
-			$elm$core$String$join,
-			'&',
-			A2($elm$core$List$map, $elm$url$Url$Builder$toQueryPair, parameters));
-	}
-};
-var $elm$url$Url$Builder$relative = F2(
-	function (pathSegments, parameters) {
-		return _Utils_ap(
-			A2($elm$core$String$join, '/', pathSegments),
-			$elm$url$Url$Builder$toQuery(parameters));
-	});
 var $author$project$Main$KeyCandidate = F3(
 	function (word, metadata, freq) {
 		return {freq: freq, metadata: metadata, word: word};
@@ -11043,11 +11022,7 @@ var $author$project$Main$getSynonyms = function (keyword) {
 	return $elm$http$Http$get(
 		{
 			expect: A2($elm$http$Http$expectJson, $author$project$Main$SynonymsReady, $author$project$Main$synonymsDecoder),
-			url: A2(
-				$elm$url$Url$Builder$relative,
-				_List_fromArray(
-					['api', 'synonyms/' + keyword]),
-				_List_Nil)
+			url: '/api/synonyms/' + keyword
 		});
 };
 var $author$project$Main$MsgDecoded = function (keyword) {

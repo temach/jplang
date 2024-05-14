@@ -23,25 +23,21 @@ WORKDIR /opt/moonspeak/
 
 RUN apt update \
     && apt install -y --no-install-recommends python3 wget ca-certificates apache2 libapache2-mod-auth-openidc libapache2-mod-wsgi-py3 \
-		&& rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*  /var/cache/*
 RUN wget https://bootstrap.pypa.io/get-pip.py \
     && python3 get-pip.py --break-system-packages \
-    && rm get-pip.py
+    && rm -rf ~/.cache/*
 
 # dependencies
 COPY backend/requirements.txt  ./
-RUN pip install --break-system-packages -r requirements.txt
+RUN pip install --no-cache-dir --break-system-packages -r requirements.txt
 RUN python3 -c "import nltk; nltk.download('wordnet');"
 
-# code
-COPY --chown=www-data resources/       resources/
-COPY --from=builder /opt/moonspeak/build/frontend/dist       frontend/dist
-COPY backend/ backend/
-
 # own all files as www-data user, otherwise apache will not read
-RUN chown -R www-data:www-data .
+COPY --chown=www-data resources/       resources
+COPY --chown=www-data --from=builder /opt/moonspeak/build/frontend/dist/       frontend/dist
+COPY --chown=www-data backend/         backend
 
-# command
 WORKDIR /opt/moonspeak/backend
-CMD ["python3", "main.py"]
-# CMD ["/usr/sbin/apache2", "-f", "/opt/moonspeak/backend/apache2.conf", "-DFOREGROUND", "-DDUMP_CONFIG"]
+# CMD ["python3", "main.py"]
+CMD ["/usr/sbin/apache2", "-f", "/opt/moonspeak/backend/apache2.conf", "-DFOREGROUND", "-DDUMP_CONFIG"]

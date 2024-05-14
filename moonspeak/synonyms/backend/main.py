@@ -17,8 +17,15 @@ class KeyCandidate(TypedDict):
 
 ListKeyCandidate = list[KeyCandidate]
 Thesaurus = dict[str, list[str]]
-app = Flask(__name__, static_folder=None)
+APP = Flask(__name__, static_folder=None)
 
+# english frequency
+CORPUS = {}
+SUBS = {}
+# thesaurus
+WORDNET: Thesaurus = {}
+MOBY: Thesaurus = {}
+OPENOFFICE: Thesaurus = {}
 
 def get_en_freq(word):
     return [
@@ -27,9 +34,14 @@ def get_en_freq(word):
     ]
 
 
-@app.get("/<lang>/api/synonyms/<word>")
-def synonyms(lang, word):
-    res = inner_synonyms(word)
+@APP.get("/api/synonyms/<word>")
+def synonyms(word):
+    try:
+        res = inner_synonyms(word)
+    except Exception as e:
+        print(traceback.format_exc())
+        return make_response(json.dumps(str(e)), 500, {"Content-Type": "application/json"})
+
     response = make_response(json.dumps(res), 200, {"Content-Type": "application/json"})
     return response
 
@@ -89,63 +101,8 @@ def inner_synonyms(word) -> ListKeyCandidate:
     return ordered
 
 
-@app.get("/")
-def root():
 
-    def choose_lang(request):
-        # find the language and redirect to that, otherwise relative paths break
-        # language check order:
-        # 0 - what language cookie you have
-        cookie_lang = request.cookies.get("lang")
-        if cookie_lang:
-            return cookie_lang
-
-        # 1 - what does accept_language header have
-        accept_language_header = request.headers.get("Accept-Language")
-        if accept_language_header:
-            m = re.match('[a-z]{2,3}', accept_language_header.strip(), flags=re.IGNORECASE)
-            if m:
-                return m.group()
-
-        # 2 - what domain are you targetting, useful for tools that normally dont supply accept_language header
-        hostname = urlparse(request.headers.get("Host")).hostname
-        if hostname:
-            m = re.match('.*[.]([a-z0-9]+)$', hostname, flags=re.IGNORECASE)
-            if m:
-                return m.group()
-
-        # finally use english by default
-        return "en"
-
-    lang = choose_lang(request)
-
-    # in dev mode, language dirs may be absent, then redirect to /localhost/
-    langdir = Path(f"../frontend/dist/{lang}")
-    if not langdir.exists():
-        return redirect("/localhost/", code=307)
-
-    return redirect(f"/{lang}/", code=307)
-
-
-@app.get("/<lang>/")
-@app.get("/<lang>/<path:filepath>")
-def static(lang, filepath="index.html"):
-    root = Path("../frontend/dist/") / lang
-    if lang == "localhost":
-        # this is for dev mode only
-        root = Path("../frontend/src/")
-    return send_from_directory(root, filepath)
-
-
-if __name__ == "__main__":
-    # english frequency
-    CORPUS = {}
-    SUBS = {}
-    # thesaurus
-    WORDNET: Thesaurus = {}
-    MOBY: Thesaurus = {}
-    OPENOFFICE: Thesaurus = {}
-
+def init():
     with open("../resources/english-from-gogle-corpus-by-freq.txt") as f:
         for number, line in enumerate(f, start=1):
             word = line.split()[0].strip()
@@ -186,3 +143,54 @@ if __name__ == "__main__":
                 WORDNET[key].extend(synonyms)
             else:
                 WORDNET[key] = synonyms
+
+
+if __name__ == "__main__":
+    # when running without apache, add code to serve static files
+    def choose_lang(request):
+        # find the language and redirect to that, otherwise relative paths break
+        # language check order:
+        # 0 - what language cookie you have
+        cookie_lang = request.cookies.get("lang")
+        if cookie_lang:
+            return cookie_lang
+
+        # 1 - what does accept_language header have
+        accept_language_header = request.headers.get("Accept-Language")
+        if accept_language_header:
+            m = re.match('[a-z]{2,3}', accept_language_header.strip(), flags=re.IGNORECASE)
+            if m:
+                return m.group()
+
+        # finally use english by default
+        return "en"
+
+    @APP.get("/")
+    def root():
+        lang = choose_lang(request)
+
+        # in dev mode, language dirs may be absent, then redirect to /localhost/
+        langdir = Path(f"../frontend/dist/{lang}")
+        if not langdir.exists():
+            return redirect("/localhost/", code=307)
+
+        return redirect(f"/{lang}/", code=307)
+
+    @APP.get("/<lang>/")
+    @APP.get("/<lang>/<path:filepath>")
+    def static(lang, filepath="index.html"):
+        root = Path("../frontend/dist/") / lang
+        if lang == "localhost":
+            # this is for dev mode only
+            root = Path("../frontend/src/")
+        return send_from_directory(root, filepath)
+
+
+    import argparse
+    parser = argparse.ArgumentParser(description='Run as "python main.py"')
+    parser.add_argument('--host', type=str, default=os.getenv("MOONSPEAK_HOST", "localhost"), help='hostname or ip')
+    parser.add_argument('--port', type=int, default=os.getenv("MOONSPEAK_PORT", "8043"), help='port number')
+    args = parser.parse_args()
+
+    init()
+    APP.run(host=args.host, port=args.port)
