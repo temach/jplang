@@ -45,7 +45,7 @@ services:
     build:
       context: ./moonspeak/manager
       args:
-        BASE_IMAGE: "debian:bookworm-slim"
+        BASE_IMAGE: "temachpool/moonspeak-apachepython:latest"
     ports:
       - "8001:80"
     volumes:
@@ -73,7 +73,7 @@ services:
       context: ./moonspeak/synonyms
       args:
         BUILDER_IMAGE: "node:19.2"
-        BASE_IMAGE: "debian:bookworm-slim"
+        BASE_IMAGE: "temachpool/moonspeak-apachepython:latest"
     ports:
       - "8043:80"
     env_file:
@@ -129,7 +129,7 @@ services:
       context: ./moonspeak/graph
       args:
         BUILDER_IMAGE: "debian:bookworm-slim"
-        BASE_IMAGE: "debian:bookworm-slim"
+        BASE_IMAGE: "temachpool/moonspeak-apachepython:latest"
     volumes:
       - userdata:/opt/moonspeak/graph/userdata
     ports:

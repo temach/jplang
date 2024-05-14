@@ -3,17 +3,6 @@ ARG BASE_IMAGE
 
 FROM ${BASE_IMAGE}
 
-RUN apt update \
-    && apt install -y --no-install-recommends python3 wget ca-certificates apache2 libapache2-mod-auth-openidc libapache2-mod-wsgi-py3 \
-    && rm -rf /var/lib/apt/lists/*  /var/cache/*  /usr/lib/python3*/__pycache__/
-RUN wget https://bootstrap.pypa.io/get-pip.py \
-    && python3 get-pip.py --break-system-packages \
-    && rm -rf ~/.cache/*
-
-# fix apache's www-data user HOME dir to the actual working directory, wsgi HOME is taken from /etc/passwd only
-# permission problems with docker if HOME is not properly set: https://github.com/docker/compose/issues/11126
-RUN usermod --home $PWD www-data
-
 # install docker client and compose plugin: https://docs.docker.com/engine/install/debian/#install-from-a-package
 WORKDIR /opt/docker
 RUN wget "https://download.docker.com/linux/debian/dists/bookworm/pool/stable/amd64/docker-ce-cli_24.0.7-1~debian.12~bookworm_amd64.deb" \
@@ -21,10 +10,14 @@ RUN wget "https://download.docker.com/linux/debian/dists/bookworm/pool/stable/am
     && dpkg -i /opt/docker/docker-* \
     && rm -rf /opt/docker/docker-*
 
+WORKDIR /opt/moonspeak
+
 # must make www-data equivalent to root, to give access to docker.sock under wsgi
 RUN usermod -G root www-data
 
-WORKDIR /opt/moonspeak
+# fix apache's www-data user HOME dir to the actual working directory, wsgi HOME is taken from /etc/passwd only
+# permission problems with docker if HOME is not properly set: https://github.com/docker/compose/issues/11126
+RUN usermod --home $PWD www-data
 
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir --break-system-packages -r ./requirements.txt

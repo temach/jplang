@@ -21,13 +21,6 @@ RUN gulp production
 FROM ${BASE_IMAGE}
 WORKDIR /opt/moonspeak/
 
-RUN apt update \
-    && apt install -y --no-install-recommends python3 wget ca-certificates apache2 libapache2-mod-auth-openidc libapache2-mod-wsgi-py3 \
-    && rm -rf /var/lib/apt/lists/*  /var/cache/*
-RUN wget https://bootstrap.pypa.io/get-pip.py \
-    && python3 get-pip.py --break-system-packages \
-    && rm -rf ~/.cache/*
-
 # dependencies
 COPY backend/requirements.txt  ./
 RUN pip install --no-cache-dir --break-system-packages -r requirements.txt

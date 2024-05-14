@@ -14,13 +14,6 @@ RUN cd frontend/etc/build && ant app
 FROM ${BASE_IMAGE}
 WORKDIR /opt/moonspeak/
 
-RUN apt update \
-    && apt install -y --no-install-recommends python3 wget ca-certificates apache2 libapache2-mod-auth-openidc libapache2-mod-wsgi-py3 \
-		&& rm -rf /var/lib/apt/lists/*  /var/cache/*  /usr/lib/python3*/__pycache__/
-RUN wget https://bootstrap.pypa.io/get-pip.py \
-    && python3 get-pip.py --break-system-packages \
-    && rm -rf ~/.cache/*
-
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir --break-system-packages -r ./requirements.txt
 
@@ -30,8 +23,6 @@ COPY --chown=www-data --from=builder /opt/moonspeak/build/frontend/apache_oidc_h
 
 COPY --chown=www-data backend/  backend/
 COPY --chown=www-data config/   config/
-
-RUN mkdir userdata && chown www-data:www-data userdata
 
 WORKDIR /opt/moonspeak/backend
 # CMD ["python", "main.py"]
