@@ -113,7 +113,7 @@ services:
       context: ./moonspeak/workelements
       args:
         BUILDER_IMAGE: "node:19.2"
-        BASE_IMAGE: "python:3.11-alpine"
+        BASE_IMAGE: "temachpool/moonspeak-apachepython:latest"
     volumes:
       - userdata:/opt/moonspeak/workelements/userdata
     ports:
