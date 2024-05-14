@@ -6,6 +6,11 @@
 version: "3"
 
 services:
+  # build image that is used for further building of services
+  apachepython:
+    image: "temachpool/moonspeak-apachepython:${TAG:-latest}"
+    build:
+      context: ./infra/apachepython
 
   # loki, promtail and grafana stack for logs
   # promtail sends log lines to loki, view in grafana
