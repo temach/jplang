@@ -10,6 +10,15 @@ RUN wget https://bootstrap.pypa.io/get-pip.py \
     && python3 get-pip.py --break-system-packages \
     && rm -rf ~/.cache/*
 
+# install it into /opt/ dir because apache config must specify fullpath
+# see: https://opentelemetry.io/blog/2022/instrument-apache-httpd-server/#installing-opentelemetry-module-in-target-system
+RUN wget https://github.com/open-telemetry/opentelemetry-cpp-contrib/releases/download/webserver%2Fv1.1.0/opentelemetry-webserver-sdk-x64-linux.tgz \
+    && tar -xvf opentelemetry-webserver-sdk-x64-linux.tgz -C /opt \
+    && rm opentelemetry-webserver-sdk-x64-linux.tgz \
+    && cd /opt/opentelemetry-webserver-sdk  \
+    && ./install.sh
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/opentelemetry-webserver-sdk/sdk_lib/lib
+
 # must chown all files as www-data user, otherwise apache will not read
 
 # make the userdata dir and make it accessible to apache's www-data user
