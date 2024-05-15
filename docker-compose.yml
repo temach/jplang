@@ -115,7 +115,7 @@ services:
         BUILDER_IMAGE: "node:19.2"
         BASE_IMAGE: "temachpool/moonspeak-apachepython:latest"
     volumes:
-      - userdata:/opt/moonspeak/workelements/userdata
+      - userdata:/opt/moonspeak/userdata
     ports:
       - "8040:80"
     env_file:
@@ -131,7 +131,7 @@ services:
         BUILDER_IMAGE: "debian:bookworm-slim"
         BASE_IMAGE: "temachpool/moonspeak-apachepython:latest"
     volumes:
-      - userdata:/opt/moonspeak/graph/userdata
+      - userdata:/opt/moonspeak/userdata
     ports:
       - "8041:80"
     env_file:
