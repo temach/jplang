@@ -12,36 +12,13 @@ services:
     build:
       context: ./infra/apachepython
 
-  # loki, promtail and grafana stack for logs
-  # promtail sends log lines to loki, view in grafana
-  # see: https://mpolinowski.github.io/docs/DevOps/Provisioning/2021-04-07--loki-prometheus-grafana/2021-04-07/
-  loki:
-    image: "grafana/loki:2.8.2"
-    command: -config.file=/etc/loki/local-config.yaml -log.level=error
-
-  promtail:
-    image: "temachpool/moonspeak-promtail:${TAG:-latest}"
-    build:
-      context: ./infra/promtail
+  dozzle:
+    # view docker logs nicely in browser
+    image: amir20/dozzle:latest
     volumes:
-      # hopefully we can get rid of docker sock one day and only parse docker logs
-      # for now we just disable promtails HTTP server entry point
-      # - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock
-    env_file:
-      - docker-env/all.env
-      - docker-env/promtail.env
-    command: -config.expand-env=true -config.file=/etc/promtail/config.yml -print-config-stderr
-
-  grafana:
-    image: "temachpool/moonspeak-grafana:${TAG:-latest}"
-    build:
-      context: ./infra/grafana
     ports:
-      - "3000:3000"
-    env_file:
-      - docker-env/all.env
-      - docker-env/grafana.env
+      - 3000:8080
 
   jaeger:
     # send tracing data to collector address: https://www.jaegertracing.io/docs/1.46/deployment/#collector
