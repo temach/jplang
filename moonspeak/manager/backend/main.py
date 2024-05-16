@@ -121,7 +121,7 @@ def handle(target):
         return HTTPResponse(body=long_msg, status=404)
 
     try:
-        empty_match, user_name, container_name = re.split(r'u-|-s-', service_name)
+        empty_match, user_name, container_name = re.split(r'^u-|-s-', service_name)
     except ValueError:
         logger.info("Error parsing service_name, expected u-XXX-s-YYY, but found: {}".format(service_name))
         return HTTPResponse(status=404)
