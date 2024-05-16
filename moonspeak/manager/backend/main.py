@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 PORT_ROUTING = (os.getenv("MOONSPEAK_BROWSER_ROUTING", "dns") == "port")
 
-MOONSPEAK_THREADS = 1
+MOONSPEAK_DISABLE_AUTH = os.getenv("MOONSPEAK_DISABLE_AUTH", "0")
 FRONTEND_ROOT = "../frontend/src/"
 
 ROOT_SERVICE_NAME = os.environ.get("MOONSPEAK_ROOT_SERVICE_NAME", "graph").lower()
@@ -39,8 +39,8 @@ PORT_ROUTING_COUNT = 1
 
 APP = default_app()
 
-def guid(nbytes=10):
-    return str(secrets.token_hex(nbytes))
+def guid():
+    return str(uuid.uuid4())
 
 def submit_compose_up_task(unique_id, force_recreate=False):
     compose_files = [ Path("../resources/docker-compose-template.yml") ]
@@ -64,9 +64,8 @@ def submit_compose_up_task(unique_id, force_recreate=False):
 
 @route("/api/new/", method=["GET"])
 def new():
-    # Check if a moonspeak_username cookie is present
-    # happens when user clicks on sign up again instead of log in
-    user_name = request.get_cookie("moonspeak_username")
+    # Check if a cookie is present happens when user clicks on sign up again instead of log in
+    user_name = request.get_cookie("moonspeak_user_name")
     if user_name:
         # redirect user to his page, do not create new user
         # form redirect response manually to avoid sending hostname (use only root url)
@@ -74,10 +73,13 @@ def new():
         resp.set_header('Location', f"/handle/u-{user_name}-s-{ROOT_SERVICE_NAME}/")
         return resp
 
-    user_name = guid()
+    if MOONSPEAK_DISABLE_AUTH == "1":
+        user_name = guid()
+    else:
+        user_name = request.environ["OIDC_CLAIM_sub"]
 
     # fix user name in response cookie, expires 1 year from now in seconds
-    response.set_cookie('moonspeak_username', user_name, max_age=60 * 60 * 24 * 365, path='/')
+    response.set_cookie('moonspeak_user_name', user_name, max_age=60 * 60 * 24 * 365, path='/')
 
     if PORT_ROUTING:
         # to use different ports in port routing mode we must increment counter for each user
@@ -119,7 +121,7 @@ def handle(target):
         return HTTPResponse(body=long_msg, status=404)
 
     try:
-        u, user_name, s, container_name = service_name.split("-")
+        empty_match, user_name, container_name = re.split(r'u-|-s-', service_name)
     except ValueError:
         logger.info("Error parsing service_name, expected u-XXX-s-YYY, but found: {}".format(service_name))
         return HTTPResponse(status=404)
