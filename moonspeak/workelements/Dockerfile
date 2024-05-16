@@ -31,4 +31,4 @@ COPY --chown=www-data backend             backend
 
 WORKDIR /opt/moonspeak/backend
 # CMD ["python", "main.py"]
-CMD ["/usr/sbin/apache2", "-f", "/opt/moonspeak/backend/apache.conf", "-DFOREGROUND", "-DDUMP_CONFIG"]
+CMD /usr/sbin/apache2 -t -DDUMP_CONFIG -f /opt/moonspeak/backend/apache.conf && /usr/sbin/apache2 -DFOREGROUND -f /opt/moonspeak/backend/apache.conf
