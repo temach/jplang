@@ -24,19 +24,19 @@ function moonspeakMessageHandler(event, userHandler) {
 }
 
 function moonspeakBootstrapMasterPort(event, userHandler) {
-    function isMoonspeakDevMode() {
-        // having 192.168.42.156 here allows debugging via usb tethering on android
-        // set permanent computer address to this IP, then load it from the phone
-        // then you dont have to run the router component
-        return ['selfhosted.moonspeak.org', '127.0.0.1', '0.0.0.0', '192.168.42.156'].includes(location.hostname);
-    }
-
-    if (event.origin !== location.origin && !isMoonspeakDevMode()) {
-        // accept only messages from same origin, but ignore this rule for dev mode
+    // do the regex building dance so its possible to find/replace all uses of "selfhosted.moonspeak.org"
+    // using sub-domain, using just "selfhosted.example.org", using port number, using http/https is allowed, regex is case insensitive
+    const domain = "selfhosted.moonspeak.org";
+    const regexPattern = '^http(s)?://([a-z0-9-]+\\.)?' + domain.replace(/\./g, '\\.') + '(:[0-9]+)?$';
+    const originRegex = new RegExp(regexPattern, "i");
+    
+    if (! originRegex.test(event.origin)) {
+        // accept only messages from same origin
+        moonspeakLog('Dropping event due to origin mismatch:', event);
         return;
     }
 
-    moonspeakLog("receiving once:", event.data);
+    moonspeakLog("receiving once on main windows postMessage:", event.data);
 
     if ("info" in event.data && event.data["info"].includes("port")) {
         const masterport = event.ports[0];
@@ -45,6 +45,7 @@ function moonspeakBootstrapMasterPort(event, userHandler) {
         return;
     }
 
+    // handling anyway to allow easy sending of messages manually via console during development
     moonspeakLog("Can not understand message info, handling anyway.");
     userHandler(event);
 }
@@ -52,7 +53,7 @@ function moonspeakBootstrapMasterPort(event, userHandler) {
 // use this function to subscribe to messages
 function moonspeakInstallOnMessageHandler(userHandler) {
     // see: https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage
-    // this listener is called ONCE to transfer the message channel for further communication
+    // this listener should be called once to transfer the message channel which is used for further communication
     window.addEventListener("message", (event) => moonspeakBootstrapMasterPort(event, userHandler));
 }
 
@@ -72,7 +73,13 @@ function moonspeakPostMessage(message, isSecondTime=false) {
         // if no ports listening, nothing to do
         return;
     }
-    moonspeakLog("posted:", message);
+
+    if (message.info && message.info.startsWith("pointer")) {
+        moonspeakLog(event.type)
+    } else {
+        moonspeakLog("posted:", message);
+    }
+
     for (const port of moonspeakPorts) {
         port.postMessage(message);
     }
@@ -130,7 +137,6 @@ function pointermove_handler(ev) {
 function streamEvent(event) {
     // when event is streamed the end event must also be streamed (e.g. pointerup), so track the ids
     streamedIds.add(event.pointerId);
-    console.log("workelements: " + event.type)
 
     let message = {
         iframename: window.name,
@@ -167,7 +173,7 @@ function streamEvent(event) {
             clientY: event.screenY,
         },
     };
-    window.top.postMessage(message, "*");
+    moonspeakPostMessage(message);
 }
 
 function initPitchZoom() {
