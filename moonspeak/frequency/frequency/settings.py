@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import sys
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,13 +21,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
+ALLOWED_HOSTS = ["*"]
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-j1y3ak@heo%r5z-30in$g7enswg=+@3rm^j3w=u2yq8zv@x0y8"
+SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = (os.environ["DJANGO_DEBUG"] == "1")
 
-ALLOWED_HOSTS = []
+SILENCED_SYSTEM_CHECKS = os.environ["DJANGO_SILENCED_SYSTEM_CHECKS"].split()
+
+SESSION_COOKIE_SECURE = (os.environ["DJANGO_SESSION_COOKIE_SECURE"] == "1")
+CSRF_COOKIE_SECURE = (os.environ["DJANGO_CSRF_COOKIE_SECURE"] == "1")
 
 
 # Application definition
@@ -124,9 +130,3 @@ STATIC_ROOT = BASE_DIR / 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# Settings for running tests
-TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
-
-if TESTING:
-    CSRF_COOKIE_SECURE = False
