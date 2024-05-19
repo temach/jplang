@@ -97,7 +97,7 @@ services:
     build:
       context: ./moonspeak/frequency
       args:
-        BASE_IMAGE: "python:3.11-bookworm"
+        BASE_IMAGE: "temachpool/moonspeak-apachepython:latest"
     ports:
       - "8005:80"
     env_file:
