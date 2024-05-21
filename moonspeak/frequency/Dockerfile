@@ -6,6 +6,7 @@ WORKDIR /opt/moonspeak/
 
 # ffmpeg is necessary to extract audio with wisper
 # libgtk-3-dev is necessary for chromium
+# chromium dependencies see also: https://github.com/puppeteer/puppeteer/tree/533f83af5a33f9480fce7821140bc50b1b5e511f/docker
 RUN apt update \
     && apt install -y --no-install-recommends chromium tesseract-ocr tesseract-ocr-jpn ffmpeg libgtk-3-dev \
     && apt clean \
@@ -13,6 +14,9 @@ RUN apt update \
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir --break-system-packages -r requirements.txt
+
+# download whisper "base" model to ~/.cache/whisper/base.pt
+RUN python3 -c "import whisper; whisper.load_model('base')"
 
 COPY manage.py     ./
 COPY runservers.py ./
