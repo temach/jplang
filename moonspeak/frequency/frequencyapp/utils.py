@@ -11,6 +11,7 @@ import filetype
 from collections import Counter
 import os
 from .models import RequestCounter, Task
+import traceback
 
 japan_ords = set(i for i in range(19969, 40959))
 
@@ -138,6 +139,8 @@ def catch_errors(result, func, input_type, string) -> None:
     try:
         result["frequency"] = frequency(func(string))
     except Exception as err:
+        print("".join(traceback.format_stack()))
+        print(traceback.format_exc())
         result["error"] = str(err)
 
 
