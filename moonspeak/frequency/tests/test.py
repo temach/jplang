@@ -2,13 +2,14 @@ import unittest
 import requests
 import time
 import subprocess
+import shlex
 
+cmd_django_server = shlex.split("python3 manage.py runserver 0.0.0.0:8005 --noreload --nothreading --settings=frequency.test_settings")
 
-cmd_django_server = "python3 manage.py runserver 0.0.0.0:8005 --noreload --nothreading --settings=frequency.test_settings"
+cmd_python_sever = shlex.split("python3 -m http.server -b 127.0.0.1 -d ./tests/testdata/ 8000")
 
-cmd_python_sever = "python3 -m http.server -b 127.0.0.1 -d ./tests/testdata/ 8000"
+cmd_run_worker = shlex.split("python3 manage.py worker")
 
-cmd_run_worker = "python3 manage.py worker"
 
 
 class TestLocalAndDjangoSevers(unittest.TestCase):
@@ -19,9 +20,9 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.server_process = subprocess.Popen(cmd_django_server.split())
-        cls.test_server_process = subprocess.Popen(cmd_python_sever.split())
-        cls.worker_process = subprocess.Popen(cmd_run_worker.split())
+        cls.server_process = subprocess.Popen(cmd_django_server)
+        cls.test_server_process = subprocess.Popen(cmd_python_sever)
+        cls.worker_process = subprocess.Popen(cmd_run_worker)
         time.sleep(6)
 
     @classmethod
