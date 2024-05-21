@@ -1,4 +1,4 @@
-from requests_html import HTMLSession
+from .requests_html_wrapper import MoonspeakHTMLSession
 import validators
 import requests
 import pytesseract
@@ -62,7 +62,7 @@ def is_file_size_ok(request) -> bool:
 
 def url_parse(user_url: str) -> str:
     """Takes all characters from the HTML page"""
-    session = HTMLSession()
+    session = MoonspeakHTMLSession()
     parse = session.get(user_url)
     parse.html.render(timeout=40)
     result = parse.html.html
