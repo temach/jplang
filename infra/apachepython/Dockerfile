@@ -27,4 +27,7 @@ RUN mkdir userdata && chown -R www-data:www-data userdata
 # add apache config, this should be included in each project config
 COPY --chown=www-data apache_docker.conf    /opt/moonspeak/apache_docker.conf
 
+# force python to use unbuffered output, important else exception traceback can remain invisible
+ENV PYTHONUNBUFFERED="1"
+
 CMD ["/bin/bash"]
