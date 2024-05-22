@@ -8,7 +8,8 @@ ENV PYTHONDONTWRITEBYTECODE="1"
 RUN apt update \
     && apt install -y --no-install-recommends python3 wget ca-certificates apache2 libapache2-mod-auth-openidc libapache2-mod-wsgi-py3 \
     && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /var/cache/*
+    && rm -rf /var/cache/* \
+    && find / -type d -name "__pycache__" -prune -delete
 
 RUN wget https://bootstrap.pypa.io/get-pip.py \
     && python3 get-pip.py --break-system-packages \
