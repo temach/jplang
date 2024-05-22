@@ -2,9 +2,13 @@ FROM debian:bookworm-slim
 
 WORKDIR /opt/moonspeak/
 
+# byte code helps load source files into memory faster (its byte code not ascii), but after loading the speed is the same
+ENV PYTHONDONTWRITEBYTECODE="1"
+
 RUN apt update \
     && apt install -y --no-install-recommends python3 wget ca-certificates apache2 libapache2-mod-auth-openidc libapache2-mod-wsgi-py3 \
-    && rm -rf /var/lib/apt/lists/*  /var/cache/*  /usr/lib/python3*/__pycache__/
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/cache/*
 
 RUN wget https://bootstrap.pypa.io/get-pip.py \
     && python3 get-pip.py --break-system-packages \
