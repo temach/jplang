@@ -8,7 +8,7 @@ WORKDIR /opt/docker
 RUN wget "https://download.docker.com/linux/debian/dists/bookworm/pool/stable/amd64/docker-ce-cli_24.0.7-1~debian.12~bookworm_amd64.deb" \
     && wget "https://download.docker.com/linux/debian/dists/bookworm/pool/stable/amd64/docker-compose-plugin_2.21.0-1~debian.12~bookworm_amd64.deb" \
     && dpkg -i /opt/docker/docker-* \
-    && rm -rf /opt/docker/docker-*
+    && rm /opt/docker/docker-*
 
 WORKDIR /opt/moonspeak
 
@@ -20,7 +20,7 @@ RUN usermod -G root www-data
 RUN usermod --home $PWD www-data
 
 COPY backend/requirements.txt ./
-RUN pip install --no-cache-dir --break-system-packages -r ./requirements.txt
+RUN pip install --no-cache-dir --break-system-packages -r ./requirements.txt && py3clean /
 
 # own all files as www-data user, otherwise apache will not read
 COPY --chown=www-data resources/ resources/

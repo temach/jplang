@@ -23,8 +23,8 @@ WORKDIR /opt/moonspeak/
 
 # dependencies
 COPY backend/requirements.txt  ./
-RUN pip install --no-cache-dir --break-system-packages -r requirements.txt
-RUN python3 -c "import nltk; nltk.download('wordnet');"
+RUN pip install --no-cache-dir --break-system-packages -r requirements.txt && py3clean /
+RUN python3 -c "import nltk; nltk.download('wordnet');" && py3clean /
 
 # own all files as www-data user, otherwise apache will not read
 COPY --chown=www-data resources/       resources

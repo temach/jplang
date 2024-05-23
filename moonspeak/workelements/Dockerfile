@@ -17,12 +17,13 @@ COPY frontend/gulpfile.js   gulpfile.js
 
 RUN gulp production
 
+
 FROM ${BASE_IMAGE}
 WORKDIR /opt/moonspeak/
 
 # dependencies
 COPY backend/requirements.txt  ./
-RUN pip install --no-cache-dir --break-system-packages -r requirements.txt
+RUN pip install --no-cache-dir --break-system-packages -r requirements.txt && py3clean /
 
 # own all files as www-data user, otherwise apache will not read
 COPY --chown=www-data resources           resources

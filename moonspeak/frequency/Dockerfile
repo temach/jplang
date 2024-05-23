@@ -13,10 +13,10 @@ RUN apt update \
     && rm -rf /var/lib/apt/lists/*  /var/cache/*  /usr/lib/python3*/__pycache__/  /var/tmp/*  /tmp/*
 
 COPY requirements.txt ./
-RUN pip install --no-cache-dir --break-system-packages -r requirements.txt
+RUN pip install --no-cache-dir --break-system-packages -r requirements.txt && py3clean /
 
 # download whisper "base" model to ~/.cache/whisper/base.pt
-RUN python3 -c "import whisper; whisper.load_model('base')"
+RUN python3 -c "import whisper; whisper.load_model('base')" && py3clean /
 
 COPY manage.py     ./
 COPY runservers.py ./
