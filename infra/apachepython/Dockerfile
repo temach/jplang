@@ -3,9 +3,9 @@ FROM debian:bookworm-slim
 WORKDIR /opt/moonspeak/
 
 # byte code helps load source files into memory faster (its byte code not ascii), but after loading the speed is the same
+# however .pyc and __pycache__ still get created, so use py3clean script that debian python ships with
 ENV PYTHONDONTWRITEBYTECODE="1"
 
-# installing via apt-get still generates byte code, debian python ships with a useful py3clean script
 RUN apt update \
     && apt install -y --no-install-recommends python3 wget ca-certificates apache2 libapache2-mod-auth-openidc libapache2-mod-wsgi-py3 \
     && rm -rf /var/lib/apt/lists/*  /var/cache/* \
@@ -13,7 +13,8 @@ RUN apt update \
 
 RUN wget https://bootstrap.pypa.io/get-pip.py \
     && python3 get-pip.py --no-cache-dir --break-system-packages \
-    && rm get-pip.py
+    && rm get-pip.py \
+    && py3clean /
 
 # install it into /opt/ dir because apache config must specify fullpath
 # see: https://opentelemetry.io/blog/2022/instrument-apache-httpd-server/#installing-opentelemetry-module-in-target-system
