@@ -83,25 +83,23 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties:
-                  oneOf:
-                    - type: object
-                      properties:
-                        id:
-                          type: string
-                        status:
-                          type: string
-                    - type: object
-                      properties:
-                        frequency:
-                          type: object
-                          additionalProperties:
-                            type: integer
-                        input_type:
-                          type: string
-                        error:
-                          type: string
+                oneOf:
+                  - type: object
+                    properties:
+                      frequency:
+                        type: object
+                        additionalProperties:
+                          type: integer
+                      input_type:
+                        type: string
+                      error:
+                        type: string
+                  - type: object
+                    properties:
+                      id:
+                        type: string
+                      status:
+                        type: string
         '404':
           description: Task not found
           content:
