@@ -1,8 +1,8 @@
 # do not show diff for large opaque ascii files
 # see: https://git-scm.com/docs/gitattributes#_marking_files_as_binary
 *.min.js             -diff
-*.min.js.map         -diff
+*.min.css            -diff
+*.js.map             -diff
+*.css.map            -diff
 swagger*.js          -diff
-swagger*.js.map      -diff
 swagger*.css         -diff
-swagger*.css.map     -diff
