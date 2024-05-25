@@ -8,7 +8,7 @@ class Command(BaseCommand):
         while True:
             dict_of_frequency = {"frequency": {}, "input_type": "", "error": ""}
             task = utils.get_task_to_work()
-            
+
             if not task:
                 time.sleep(0.5)
                 continue
