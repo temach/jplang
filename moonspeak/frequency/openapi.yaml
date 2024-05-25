@@ -1,0 +1,114 @@
+openapi: 3.0.1
+info:
+  title: File and Text Submission API chatGPT generated
+  version: 1.0.0
+paths:
+  /submit:
+    post:
+      summary: Submit a file or text for processing
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                binaryfile:
+                  type: string
+                  format: binary
+                  description: Binary file to be processed
+          application/json:
+            schema:
+              type: object
+              properties:
+                usertext:
+                  type: string
+                  description: Text to be processed
+              required:
+                - usertext
+      responses:
+        '200':
+          description: Task successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                  frequency:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                  input_type:
+                    type: string
+                  error:
+                    type: string
+        '400':
+          description: Bad request, possibly due to file size being too large
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  frequency:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                  input_type:
+                    type: string
+                  error:
+                    type: string
+
+  /result:
+    post:
+      summary: Get the current status/result of a task by passing task ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: ID of the task
+              required:
+                - id
+      responses:
+        '200':
+          description: Task result retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  oneOf:
+                    - type: object
+                      properties:
+                        id:
+                          type: string
+                        status:
+                          type: string
+                    - type: object
+                      properties:
+                        frequency:
+                          type: object
+                          additionalProperties:
+                            type: integer
+                        input_type:
+                          type: string
+                        error:
+                          type: string
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message indicating that the task was not found
