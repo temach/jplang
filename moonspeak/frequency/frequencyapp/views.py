@@ -15,7 +15,9 @@ def submit(request):
         if not utils.is_file_size_ok(request):
             return JsonResponse(
                 {"frequency": {}, "input_type": "file", "error": "oversize"},
-                json_dumps_params={"ensure_ascii": False}
+                json_dumps_params={"ensure_ascii": False},
+                status=400
+
             )
         else:
             user_file = request.FILES["binaryfile"].file
@@ -52,6 +54,7 @@ def result(request, task_id):
     if status == "finish":
         response = task.response
         utils.delete_task_and_files(task_id)
-        return JsonResponse(response, json_dumps_params={'ensure_ascii': False})
+        status = 200 if not response.error else 400
+        return JsonResponse(response, json_dumps_params={'ensure_ascii': False}, status = status)
     else:
         return JsonResponse({"id": task_id, "status": status}, json_dumps_params={'ensure_ascii': False})

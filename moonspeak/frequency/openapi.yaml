@@ -1,8 +1,9 @@
 openapi: 3.0.1
 info:
-  title: File and Text Submission API chatGPT generated
+  title: File and Text submission API ChatGPT generated
   version: 1.0.0
 paths:
+
   /submit:
     post:
       summary: Submit a file or text for processing
@@ -26,9 +27,13 @@ paths:
                   type: string
                   format: binary
                   description: Binary file to be processed
+              required:
+                - binaryfile
+
       responses:
-        '200':
-          description: Task successfully created
+
+        '202':
+          description: Task successfully created, you can start polling to get result
           content:
             application/json:
               schema:
@@ -39,14 +44,13 @@ paths:
                     format: uuid
                   status:
                     type: string
-                  frequency:
-                    type: object
-                    additionalProperties:
-                      type: integer
-                  input_type:
-                    type: string
-                  error:
-                    type: string
+                    enum:
+                      - pending
+                      - processing
+                required:
+                  - id
+                  - status
+
         '400':
           description: Bad request, possibly due to file size being too large
           content:
@@ -62,6 +66,11 @@ paths:
                     type: string
                   error:
                     type: string
+                required:
+                  - frequency
+                  - input_type
+                  - error
+
 
   /result/{id}:
     get:
@@ -74,37 +83,62 @@ paths:
           in: path
           required: true
           description: UUID of the task, e.g. d129c05a-9b0c-47fd-93cd-c07c3a918611
+
       responses:
+
         '200':
-          description: Task result retrieved successfully
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - type: object
-                    properties:
-                      frequency:
-                        type: object
-                        additionalProperties:
-                          type: integer
-                      input_type:
-                        type: string
-                      error:
-                        type: string
-                  - type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                      status:
-                        type: string
-        '404':
-          description: Task not found
+          description: Task is finished, the result is in the browser
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  frequency:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                  input_type:
+                    type: string
                   error:
                     type: string
-                    description: Error message indicating that the task was not found
+                required:
+                  - frequency
+                  - input_type
+                  - error
+
+        '202':
+          description: Task is still processing, please poll again
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum:
+                      - pending
+                      - processing
+                required:
+                  - id
+                  - status
+
+        '404':
+          description: Task uuid not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum:
+                      - notfound
+                required:
+                  - id
+                  - status
