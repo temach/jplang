@@ -37,8 +37,7 @@ def submit(request):
         return JsonResponse({"id": task_id, "status": task_status}, json_dumps_params={"ensure_ascii": False})
 
 
-def result(request):
-    task_id = json.loads(request.body)["id"]
+def result(request, task_id):
     try:
         task = Task.objects.get(id=task_id)
     except Exception as err:
