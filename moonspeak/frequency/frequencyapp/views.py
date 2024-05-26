@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from . import utils
 import json
 from .models import Task
+import traceback
 
 
 def index(request):
@@ -22,14 +23,32 @@ def submit(request):
             task_id, task_status = utils.create_task(temp_file_name, is_file=True)
             return JsonResponse({"id": task_id, "status": task_status}, json_dumps_params={"ensure_ascii": False})
     else:
-        user_string = json.loads(request.body)["usertext"]
+        try:
+            user_string = json.loads(request.body)["usertext"]
+        except Exception as err:
+            print("".join(traceback.format_stack()))
+            print(traceback.format_exc())
+            return JsonResponse(
+                {"frequency": {}, "input_type": "text", "error": 'no valid "usertext" field'},
+                json_dumps_params={"ensure_ascii": False},
+                status=400
+            )
         task_id, task_status = utils.create_task(user_string)
         return JsonResponse({"id": task_id, "status": task_status}, json_dumps_params={"ensure_ascii": False})
 
 
 def result(request):
     task_id = json.loads(request.body)["id"]
-    task = Task.objects.get(id=task_id)
+    try:
+        task = Task.objects.get(id=task_id)
+    except Exception as err:
+        print("".join(traceback.format_stack()))
+        print(traceback.format_exc())
+        return JsonResponse(
+            {"id": task_id, "status": 'notfound'},
+            json_dumps_params={"ensure_ascii": False},
+            status=404,
+        )
     status = task.status
     if status == "finish":
         response = task.response
