@@ -36,6 +36,7 @@ paths:
                 properties:
                   id:
                     type: string
+                    format: uuid
                   status:
                     type: string
                   frequency:
@@ -62,15 +63,16 @@ paths:
                   error:
                     type: string
 
-  /result/{task_id}:
+  /result/{id}:
     get:
       summary: Get the current status/result of a task by task ID
       parameters:
-        - name: task_id
-          in: path
-          required: true
+        - name: id
           schema:
             type: string
+            format: uuid
+          in: path
+          required: true
           description: UUID of the task, e.g. d129c05a-9b0c-47fd-93cd-c07c3a918611
       responses:
         '200':
@@ -93,6 +95,7 @@ paths:
                     properties:
                       id:
                         type: string
+                        format: uuid
                       status:
                         type: string
         '404':
