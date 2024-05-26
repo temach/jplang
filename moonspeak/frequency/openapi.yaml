@@ -4,7 +4,7 @@ info:
   version: 1.0.0
 paths:
 
-  /submit:
+  '/submit':
     post:
       summary: Submit a file or text for processing
       requestBody:
@@ -34,6 +34,11 @@ paths:
 
         '202':
           description: Task successfully created, you can start polling to get result
+          links:
+            GetTaskResult:
+              operationId: getTaskResultById
+              parameters:
+                id: '$response.body#/id'
           content:
             application/json:
               schema:
@@ -72,9 +77,10 @@ paths:
                   - error
 
 
-  /result/{id}:
+  '/result/{id}':
     get:
       summary: Get the current status/result of a task by task ID
+      operationId: getTaskResultById
       parameters:
         - name: id
           schema:
