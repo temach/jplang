@@ -9,14 +9,6 @@ paths:
       requestBody:
         required: true
         content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                binaryfile:
-                  type: string
-                  format: binary
-                  description: Binary file to be processed
           application/json:
             schema:
               type: object
@@ -26,6 +18,14 @@ paths:
                   description: Text to be processed
               required:
                 - usertext
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                binaryfile:
+                  type: string
+                  format: binary
+                  description: Binary file to be processed
       responses:
         '200':
           description: Task successfully created
@@ -62,21 +62,16 @@ paths:
                   error:
                     type: string
 
-  /result:
-    post:
-      summary: Get the current status/result of a task by passing task ID
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                id:
-                  type: string
-                  description: ID of the task
-              required:
-                - id
+  /result/{task_id}:
+    get:
+      summary: Get the current status/result of a task by task ID
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: UUID of the task, e.g. d129c05a-9b0c-47fd-93cd-c07c3a918611
       responses:
         '200':
           description: Task result retrieved successfully
