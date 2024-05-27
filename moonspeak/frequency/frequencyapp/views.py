@@ -10,6 +10,11 @@ def index(request):
     return render(request, "frequencyapp/index.html")
 
 
+def api_404_catchall(request):
+    # substitutes django's 404 page so we match the openapi schema
+    return HttpResponse(status=404)
+
+
 def submit(request):
     if "binaryfile" in request.FILES:
         if not utils.is_file_size_ok(request):
@@ -17,7 +22,6 @@ def submit(request):
                 {"frequency": {}, "input_type": "file", "error": "oversize"},
                 json_dumps_params={"ensure_ascii": False},
                 status=400
-
             )
         else:
             user_file = request.FILES["binaryfile"].file

@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path('submit', views.submit, name='submit'),
-    path('result/<str:task_id>', views.result, name='result'),
+    path('/api/submit', views.submit, name='submit'),
+    path('/api/result/<str:task_id>', views.result, name='result'),
+    path('/api/<path:path>', views.api_404_catchall, name='catchall'),
 ]
