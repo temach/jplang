@@ -11,24 +11,29 @@ def index(request):
 
 
 def api_404_catchall(request):
-    # substitutes django's 404 page so we match the openapi schema
+    # return this instead of django's 404 html page to match openapi schema
     return HttpResponse(status=404)
 
 
 def submit(request):
-    if "binaryfile" in request.FILES:
+    if request.content_type == "multipart/form-data":
         if not utils.is_file_size_ok(request):
             return JsonResponse(
-                {"frequency": {}, "input_type": "file", "error": "oversize"},
-                json_dumps_params={"ensure_ascii": False},
-                status=400
+                {"frequency": {}, "input_type": "file", "error": "oversize"}, status=400
             )
-        else:
+        try:
             user_file = request.FILES["binaryfile"].file
-            temp_file_name = utils.create_temp_file(user_file)
-            task_id, task_status = utils.create_task(temp_file_name, is_file=True)
-            return JsonResponse({"id": task_id, "status": task_status}, json_dumps_params={"ensure_ascii": False}, status=202)
-    else:
+        except Exception as err:
+            print("".join(traceback.format_stack()))
+            print(traceback.format_exc())
+            return JsonResponse(
+                {"frequency": {}, "input_type": "file", "error": 'no valid "binaryfile" field'}, status=400
+            )
+        temp_file_name = utils.create_temp_file(user_file)
+        task_id, task_status = utils.create_task(temp_file_name, is_file=True)
+        return JsonResponse({"id": task_id, "status": task_status}, status=202)
+
+    elif request.content_type == "application/json":
         try:
             user_string = json.loads(request.body)["usertext"]
         except Exception as err:
@@ -40,7 +45,12 @@ def submit(request):
                 status=400
             )
         task_id, task_status = utils.create_task(user_string)
-        return JsonResponse({"id": task_id, "status": task_status}, json_dumps_params={"ensure_ascii": False}, status=202)
+        return JsonResponse({"id": task_id, "status": task_status}, status=202)
+
+    else:
+        return JsonResponse(
+            {"frequency": {}, "input_type": "unknown", "error": "invalid content-type header"}, status=400
+        )
 
 
 def result(request, task_id):
