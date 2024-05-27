@@ -94,7 +94,9 @@ paths:
       responses:
 
         '200':
-          description: Task is finished, the result is in the browser
+          # whether there was error in job or not, the api request was successful
+          # from HTTP protocol standpoint both cases are 200 and failure is at business logic level
+          description: Task is finished, the result is in the browser, but client must verify that error field is empty
           content:
             application/json:
               schema:
