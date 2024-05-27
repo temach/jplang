@@ -10,6 +10,8 @@ class Command(BaseCommand):
             task = utils.get_task_to_work()
 
             if not task:
+                # when nothing to do, cleanup db
+                utils.clean_reported_tasks()
                 time.sleep(0.5)
                 continue
 

@@ -175,12 +175,20 @@ def write_result_and_finish_task(task, result) -> None:
     task.save()
 
 
-def delete_task_and_files(task_id) -> None:
-    """The function deletes the task from the database and the temporary file"""
-    task_to_delete = Task.objects.get(id=task_id)
-    if task_to_delete.file is True:
-        os.remove(task_to_delete.request)
-    task_to_delete.delete()
+def clean_reported_tasks():
+    """The worker cleans the database and filesystem when its idle"""
+    reported_tasks = Task.objects.filter(status="resultreported")
+    if reported_tasks.exists():
+        for task_to_delete in reported_tasks:
+            if task_to_delete.file is True:
+                os.remove(task_to_delete.request)
+            task_to_delete.delete()
+
+
+def mark_task_as_reported(task) -> None:
+    """The function marks the task as result reported, its files will be cleaned up later"""
+    task.status = "resultreported"
+    task.save()
 
 
 def create_temp_file(user_file):

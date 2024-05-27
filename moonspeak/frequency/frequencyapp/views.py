@@ -53,8 +53,7 @@ def result(request, task_id):
     status = task.status
     if status == "finish":
         response = task.response
-        utils.delete_task_and_files(task_id)
-        status = 200 if not response.error else 400
-        return JsonResponse(response, json_dumps_params={'ensure_ascii': False}, status = status)
+        utils.mark_task_as_reported(task)
+        return JsonResponse(response, json_dumps_params={'ensure_ascii': False})
     else:
         return JsonResponse({"id": task_id, "status": status}, json_dumps_params={'ensure_ascii': False})
