@@ -35,6 +35,7 @@ paths:
         '202':
           description: Task successfully created, you can start polling to get result
           links:
+            # see: https://swagger.io/docs/specification/links/
             GetTaskResult:
               operationId: getTaskResultById
               parameters:
