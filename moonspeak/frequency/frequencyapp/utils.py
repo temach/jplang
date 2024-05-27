@@ -12,6 +12,9 @@ from collections import Counter
 import os
 from .models import RequestCounter, Task
 import traceback
+import datetime
+from django.utils import timezone
+from django.db import connection
 
 japan_ords = set(i for i in range(19969, 40959))
 
@@ -175,20 +178,24 @@ def write_result_and_finish_task(task, result) -> None:
     task.save()
 
 
-def clean_reported_tasks():
-    """The worker cleans the database and filesystem when its idle"""
-    reported_tasks = Task.objects.filter(status="resultreported")
+def clean_useless_tasks():
+    """
+    The worker when idle cleans really old tasks from the database and filesystem irrespective of task status
+    Status is not checked, because a task being around for more than 24 hours is an error for sure
+    """
+    # Calculate the time stale time, all in UTC, see: https://docs.djangoproject.com/en/5.0/ref/utils/#django.utils.timezone.now
+    hours_ago = timezone.now() - datetime.timedelta(hours=24)
+    # for filter query syntax see: https://docs.djangoproject.com/en/5.0/ref/models/querysets/#field-lookups
+    reported_tasks = Task.objects.filter(timestamp_created__lte=hours_ago)
     if reported_tasks.exists():
         for task_to_delete in reported_tasks:
             if task_to_delete.file is True:
                 os.remove(task_to_delete.request)
             task_to_delete.delete()
 
-
-def mark_task_as_reported(task) -> None:
-    """The function marks the task as result reported, its files will be cleaned up later"""
-    task.status = "resultreported"
-    task.save()
+    # trigger slq vacuum
+    with connection.cursor() as cursor:
+        cursor.execute("VACUUM")
 
 
 def create_temp_file(user_file):

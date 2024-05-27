@@ -11,7 +11,7 @@ class Command(BaseCommand):
 
             if not task:
                 # when nothing to do, cleanup db
-                utils.clean_reported_tasks()
+                utils.clean_useless_tasks()
                 time.sleep(0.5)
                 continue
 

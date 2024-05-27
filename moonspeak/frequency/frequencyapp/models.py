@@ -16,6 +16,7 @@ class Task(models.Model):
     response = models.JSONField(null=True)
     status = models.CharField(max_length=20)
     file = models.BooleanField(default=False)
+    # this time is in UTC, see: https://docs.djangoproject.com/en/5.0/ref/utils/#django.utils.timezone.now
     timestamp_created = models.DateTimeField(default=timezone.now, editable=False)
     timestamp_finished = models.DateTimeField(null=True, blank=True, editable=False)
 
