@@ -49,7 +49,7 @@ def submit(request):
 
     else:
         return JsonResponse(
-            {"frequency": {}, "input_type": "unknown", "error": "invalid content-type header"}, status=400
+            {"frequency": {}, "input_type": "unknown", "error": 'no valid "content-type" header'}, status=400
         )
 
 
