@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from . import utils
 import json
 from .models import Task
@@ -10,7 +10,7 @@ def index(request):
     return render(request, "frequencyapp/index.html")
 
 
-def api_404_catchall(request):
+def api_404_catchall(request, badpath):
     # return this instead of django's 404 html page to match openapi schema
     return HttpResponse(status=404)
 
