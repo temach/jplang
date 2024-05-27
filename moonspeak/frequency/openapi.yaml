@@ -4,7 +4,7 @@ info:
   version: 1.0.0
 paths:
 
-  '/submit':
+  '/api/submit':
     post:
       summary: Submit a file or text for processing
       requestBody:
@@ -78,7 +78,7 @@ paths:
                   - error
 
 
-  '/result/{id}':
+  '/api/result/{id}':
     get:
       summary: Get the current status/result of a task by task ID
       operationId: getTaskResultById
@@ -135,19 +135,4 @@ paths:
                   - status
 
         '404':
-          description: Task uuid not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                  status:
-                    type: string
-                    enum:
-                      - notfound
-                required:
-                  - id
-                  - status
+          description: Task uuid not found, no more info
