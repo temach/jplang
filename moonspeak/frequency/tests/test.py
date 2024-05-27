@@ -36,10 +36,10 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
     def test_post_text_file(self):
         with open("./tests/testdata/test_page.html", "rb") as file:
             payload = {"binaryfile": file}
-            r = requests.post("http://localhost:8005/submit", files=payload)
+            r = requests.post("http://localhost:8005/api/submit", files=payload)
             r_json = r.json()
             while "id" in r_json:
-                r_json = requests.post("http://localhost:8005/result", json=r_json).json()
+                r_json = requests.post("http://localhost:8005/api/result", json=r_json).json()
                 time.sleep(2)
             self.assertTrue(r.status_code == requests.codes.ok)
             self.assertTrue(r_json["frequency"]["黺"] == 2)
@@ -51,10 +51,10 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
     def test_post_audio_file_mp3(self):
         with open("./tests/testdata/test_audio.mp3", "rb") as file:
             payload = {"binaryfile": file}
-            r = requests.post("http://localhost:8005/submit", files=payload)
+            r = requests.post("http://localhost:8005/api/submit", files=payload)
             r_json = r.json()
             while "id" in r_json:
-                r_json = requests.post("http://localhost:8005/result", json=r_json).json()
+                r_json = requests.post("http://localhost:8005/api/result", json=r_json).json()
                 time.sleep(2)
             self.assertTrue(r.status_code == requests.codes.ok)
             self.assertTrue(r_json["frequency"]["前"] == 1)
@@ -66,10 +66,10 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
     def test_post_audio_file_wav(self):
         with open("./tests/testdata/test_audio.wav", "rb") as file:
             payload = {"binaryfile": file}
-            r = requests.post("http://localhost:8005/submit", files=payload)
+            r = requests.post("http://localhost:8005/api/submit", files=payload)
             r_json = r.json()
             while "id" in r_json:
-                r_json = requests.post("http://localhost:8005/result", json=r_json).json()
+                r_json = requests.post("http://localhost:8005/api/result", json=r_json).json()
                 time.sleep(2)
             self.assertTrue(r.status_code == requests.codes.ok)
             self.assertTrue(r_json["frequency"]["前"] == 1)
@@ -81,10 +81,10 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
     def test_post_audio_file_ogg(self):
         with open("./tests/testdata/test_audio.ogg", "rb") as file:
             payload = {"binaryfile": file}
-            r = requests.post("http://localhost:8005/submit", files=payload)
+            r = requests.post("http://localhost:8005/api/submit", files=payload)
             r_json = r.json()
             while "id" in r_json:
-                r_json = requests.post("http://localhost:8005/result", json=r_json).json()
+                r_json = requests.post("http://localhost:8005/api/result", json=r_json).json()
                 time.sleep(2)
             self.assertTrue(r.status_code == requests.codes.ok)
             self.assertTrue(r_json["frequency"]["前"] == 1)
@@ -96,10 +96,10 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
     def test_post_video_file_mp4(self):
         with open("./tests/testdata/test_video.mp4", "rb") as file:
             payload = {"binaryfile": file}
-            r = requests.post("http://localhost:8005/submit", files=payload)
+            r = requests.post("http://localhost:8005/api/submit", files=payload)
             r_json = r.json()
             while "id" in r_json:
-                r_json = requests.post("http://localhost:8005/result", json=r_json).json()
+                r_json = requests.post("http://localhost:8005/api/result", json=r_json).json()
                 time.sleep(2)
             self.assertTrue(r.status_code == requests.codes.ok)
             self.assertTrue(r_json["frequency"]["前"] == 1)
@@ -111,10 +111,10 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
     def test_post_video_file_avi(self):
         with open("./tests/testdata/test_video.avi", "rb") as file:
             payload = {"binaryfile": file}
-            r = requests.post("http://localhost:8005/submit", files=payload)
+            r = requests.post("http://localhost:8005/api/submit", files=payload)
             r_json = r.json()
             while "id" in r_json:
-                r_json = requests.post("http://localhost:8005/result", json=r_json).json()
+                r_json = requests.post("http://localhost:8005/api/result", json=r_json).json()
                 time.sleep(2)
             self.assertTrue(r.status_code == requests.codes.ok)
             self.assertTrue(r_json["frequency"]["前"] == 1)
@@ -126,10 +126,10 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
     def test_post_image_file(self):
         with open("./tests/testdata/test_image.jpg", "rb") as file:
             payload = {"binaryfile": file}
-            r = requests.post("http://localhost:8005/submit", files=payload)
+            r = requests.post("http://localhost:8005/api/submit", files=payload)
             r_json = r.json()
             while "id" in r_json:
-                r_json = requests.post("http://localhost:8005/result", json=r_json).json()
+                r_json = requests.post("http://localhost:8005/api/result", json=r_json).json()
                 time.sleep(2)
             self.assertTrue(r.status_code == requests.codes.ok)
             self.assertTrue(r_json["frequency"]["田"] == 1)
@@ -142,10 +142,10 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
     def test_file_size(self):
         with open("./tests/testdata/test_oversize_file.txt", "rb") as file:
             payload = {"binaryfile": file}
-            r = requests.post("http://localhost:8005/submit", files=payload)
+            r = requests.post("http://localhost:8005/api/submit", files=payload)
             r_json = r.json()
             while "id" in r_json:
-                r_json = requests.post("http://localhost:8005/result", json=r_json).json()
+                r_json = requests.post("http://localhost:8005/api/result", json=r_json).json()
                 time.sleep(2)
             self.assertTrue(r.status_code == requests.codes.ok)
             self.assertTrue(len(r_json["frequency"]) == 0)
@@ -156,10 +156,10 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
     # for local tests use path: "./testdata/..."
     def test_post_url(self):
         payload = {"usertext": f"http://127.0.0.1:8000/test_page.html"}
-        r = requests.post("http://localhost:8005/submit", json=payload)
+        r = requests.post("http://localhost:8005/api/submit", json=payload)
         r_json = r.json()
         while "id" in r_json:
-            r_json = requests.post("http://localhost:8005/result", json=r_json).json()
+            r_json = requests.post("http://localhost:8005/api/result", json=r_json).json()
             time.sleep(2)
         self.assertTrue(r.status_code == requests.codes.ok)
         self.assertTrue(r_json["frequency"]["黺"] == 2)
@@ -170,10 +170,10 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
 
     def test_post_image_url(self):
         payload = {"usertext": f"http://127.0.0.1:8000/test_image.jpg"}
-        r = requests.post("http://localhost:8005/submit", json=payload)
+        r = requests.post("http://localhost:8005/api/submit", json=payload)
         r_json = r.json()
         while "id" in r_json:
-            r_json = requests.post("http://localhost:8005/result", json=r_json).json()
+            r_json = requests.post("http://localhost:8005/api/result", json=r_json).json()
             time.sleep(2)
         self.assertTrue(r.status_code == requests.codes.ok)
         self.assertTrue(r_json["frequency"]["田"] == 1)
@@ -186,10 +186,10 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
     def test_time(self):
         start_time = time.time()
         payload = {"usertext": "黺黺丆丆aa00"}
-        r = requests.post("http://localhost:8005/submit", json=payload)
+        r = requests.post("http://localhost:8005/api/submit", json=payload)
         r_json = r.json()
         while "id" in r_json:
-            r_json = requests.post("http://localhost:8005/result", json=r_json).json()
+            r_json = requests.post("http://localhost:8005/api/result", json=r_json).json()
             # time.sleep(2), do not sleep here, because its a time test
         delta_time = time.time() - start_time
         self.assertTrue(delta_time <= 3)
@@ -197,10 +197,10 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
 
     def test_post_text(self):
         payload = {"usertext": "黺黺丆丆aa00"}
-        r = requests.post("http://localhost:8005/submit", json=payload)
+        r = requests.post("http://localhost:8005/api/submit", json=payload)
         r_json = r.json()
         while "id" in r_json:
-            r_json = requests.post("http://localhost:8005/result", json=r_json).json()
+            r_json = requests.post("http://localhost:8005/api/result", json=r_json).json()
             time.sleep(2)
         self.assertTrue(r.status_code == requests.codes.ok)
         self.assertTrue(r_json["frequency"]["黺"] == 2)
@@ -211,10 +211,10 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
 
     def test_empty_string(self):
         payload = {"usertext": ""}
-        r = requests.post("http://localhost:8005/submit", json=payload)
+        r = requests.post("http://localhost:8005/api/submit", json=payload)
         r_json = r.json()
         while "id" in r_json:
-            r_json = requests.post("http://localhost:8005/result", json=r_json).json()
+            r_json = requests.post("http://localhost:8005/api/result", json=r_json).json()
             time.sleep(2)
         self.assertTrue(r.status_code == requests.codes.ok)
         self.assertTrue(len(r_json["frequency"]) == 0)
