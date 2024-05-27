@@ -23,7 +23,7 @@ def submit(request):
             user_file = request.FILES["binaryfile"].file
             temp_file_name = utils.create_temp_file(user_file)
             task_id, task_status = utils.create_task(temp_file_name, is_file=True)
-            return JsonResponse({"id": task_id, "status": task_status}, json_dumps_params={"ensure_ascii": False})
+            return JsonResponse({"id": task_id, "status": task_status}, json_dumps_params={"ensure_ascii": False}, status=202)
     else:
         try:
             user_string = json.loads(request.body)["usertext"]
@@ -36,7 +36,7 @@ def submit(request):
                 status=400
             )
         task_id, task_status = utils.create_task(user_string)
-        return JsonResponse({"id": task_id, "status": task_status}, json_dumps_params={"ensure_ascii": False})
+        return JsonResponse({"id": task_id, "status": task_status}, json_dumps_params={"ensure_ascii": False}, status=202)
 
 
 def result(request, task_id):
