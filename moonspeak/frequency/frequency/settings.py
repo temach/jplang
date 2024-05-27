@@ -27,7 +27,7 @@ ALLOWED_HOSTS = ["*"]
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = (os.environ["DJANGO_DEBUG"] == "1")
+DEBUG = (os.environ.get("DJANGO_DEBUG") == "1")
 
 SILENCED_SYSTEM_CHECKS = os.environ["DJANGO_SILENCED_SYSTEM_CHECKS"].split()
 
