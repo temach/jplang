@@ -58,10 +58,6 @@ paths:
               schema:
                 type: object
                 properties:
-                  frequency:
-                    type: object
-                    additionalProperties:
-                      type: integer
                   input_type:
                     type: string
                   error:
