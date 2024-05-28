@@ -36,6 +36,7 @@ def submit(request):
     elif request.content_type == "application/json":
         try:
             user_string = json.loads(request.body)["usertext"]
+            assert len(user_string) > 0, 'json "usertext" field has invalid value'
         except Exception as err:
             print("".join(traceback.format_stack()))
             print(traceback.format_exc())
