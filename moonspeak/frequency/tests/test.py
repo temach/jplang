@@ -184,6 +184,10 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
         self.assertTrue(r_json["error"] == "")
 
     def test_time(self):
+        """
+        On windows sometimes requests would take really long to load, its due to IPv6 query first:
+        https://stackoverflow.com/questions/47766158/why-is-python-requests-to-localhost-slow
+        """
         start_time = time.time()
         payload = {"usertext": "黺黺丆丆aa00"}
         r = requests.post("http://localhost:8005/api/submit", json=payload)
