@@ -11,3 +11,8 @@ dev-proxy urlsToWatch:
 
 schemathesis:
 st run --verbosity --hypothesis-max-examples=1500 --hypothesis-deadline=15000  --max-response-time=2000 --contrib-openapi-fill-missing-examples --contrib-openapi-formats-uuid  --validate-schema=true --data-generation-method=all --checks=all --base-url http://localhost:8005 --schemathesis-io-telemetry=false /opt/moonspeak/openapi.yaml
+
+
+Other fuzzers to consider:
+- https://github.com/Endava/cats
+- https://github.com/isa-group/RESTest
