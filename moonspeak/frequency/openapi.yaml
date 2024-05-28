@@ -48,14 +48,8 @@ paths:
                   id:
                     type: string
                     format: uuid
-                  status:
-                    type: string
-                    enum:
-                      - pending
-                      - processing
                 required:
                   - id
-                  - status
 
         '400':
           description: Bad request, possibly due to file size being too large
@@ -73,7 +67,6 @@ paths:
                   error:
                     type: string
                 required:
-                  - frequency
                   - input_type
                   - error
 
@@ -117,22 +110,6 @@ paths:
 
         '202':
           description: Task is still processing, please poll again
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                  status:
-                    type: string
-                    enum:
-                      - pending
-                      - processing
-                required:
-                  - id
-                  - status
 
         '404':
           description: Task uuid not found, no more info

@@ -42,10 +42,11 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
             payload = {"binaryfile": file}
             r = requests.post("http://localhost:8005/api/submit", files=payload)
             r_json = r.json()
-            while "id" in r_json:
-                r_json = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}').json()
+            while r.status_code == 202:
+                r = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}')
                 time.sleep(1)
             self.assertTrue(r.ok)
+            r_json = r.json()
             self.assertTrue(r_json["frequency"]["黺"] == 2)
             self.assertTrue(r_json["frequency"]["丆"] == 2)
             self.assertTrue(len(r_json["frequency"]) == 2)
@@ -57,10 +58,11 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
             payload = {"binaryfile": file}
             r = requests.post("http://localhost:8005/api/submit", files=payload)
             r_json = r.json()
-            while "id" in r_json:
-                r_json = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}').json()
+            while r.status_code == 202:
+                r = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}')
                 time.sleep(1)
             self.assertTrue(r.ok)
+            r_json = r.json()
             self.assertTrue(r_json["frequency"]["前"] == 1)
             self.assertTrue(r_json["frequency"]["死"] == 1)
             self.assertTrue(len(r_json["frequency"]) == 2)
@@ -72,10 +74,11 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
             payload = {"binaryfile": file}
             r = requests.post("http://localhost:8005/api/submit", files=payload)
             r_json = r.json()
-            while "id" in r_json:
-                r_json = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}').json()
+            while r.status_code == 202:
+                r = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}')
                 time.sleep(1)
             self.assertTrue(r.ok)
+            r_json = r.json()
             self.assertTrue(r_json["frequency"]["前"] == 1)
             self.assertTrue(r_json["frequency"]["死"] == 1)
             self.assertTrue(len(r_json["frequency"]) == 2)
@@ -87,10 +90,11 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
             payload = {"binaryfile": file}
             r = requests.post("http://localhost:8005/api/submit", files=payload)
             r_json = r.json()
-            while "id" in r_json:
-                r_json = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}').json()
+            while r.status_code == 202:
+                r = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}')
                 time.sleep(1)
             self.assertTrue(r.ok)
+            r_json = r.json()
             self.assertTrue(r_json["frequency"]["前"] == 1)
             self.assertTrue(r_json["frequency"]["死"] == 1)
             self.assertTrue(len(r_json["frequency"]) == 2)
@@ -102,10 +106,11 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
             payload = {"binaryfile": file}
             r = requests.post("http://localhost:8005/api/submit", files=payload)
             r_json = r.json()
-            while "id" in r_json:
-                r_json = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}').json()
+            while r.status_code == 202:
+                r = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}')
                 time.sleep(1)
             self.assertTrue(r.ok)
+            r_json = r.json()
             self.assertTrue(r_json["frequency"]["前"] == 1)
             self.assertTrue(r_json["frequency"]["死"] == 1)
             self.assertTrue(len(r_json["frequency"]) == 2)
@@ -117,10 +122,11 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
             payload = {"binaryfile": file}
             r = requests.post("http://localhost:8005/api/submit", files=payload)
             r_json = r.json()
-            while "id" in r_json:
-                r_json = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}').json()
+            while r.status_code == 202:
+                r = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}')
                 time.sleep(1)
             self.assertTrue(r.ok)
+            r_json = r.json()
             self.assertTrue(r_json["frequency"]["前"] == 1)
             self.assertTrue(r_json["frequency"]["死"] == 1)
             self.assertTrue(len(r_json["frequency"]) == 2)
@@ -132,10 +138,11 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
             payload = {"binaryfile": file}
             r = requests.post("http://localhost:8005/api/submit", files=payload)
             r_json = r.json()
-            while "id" in r_json:
-                r_json = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}').json()
+            while r.status_code == 202:
+                r = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}')
                 time.sleep(1)
             self.assertTrue(r.ok)
+            r_json = r.json()
             self.assertTrue(r_json["frequency"]["田"] == 1)
             self.assertTrue(r_json["frequency"]["力"] == 1)
             self.assertTrue(r_json["frequency"]["男"] == 1)
@@ -148,11 +155,10 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
             payload = {"binaryfile": file}
             r = requests.post("http://localhost:8005/api/submit", files=payload)
             r_json = r.json()
-            while "id" in r_json:
-                r_json = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}').json()
+            while r.status_code == 202:
+                r = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}')
                 time.sleep(1)
             self.assertTrue(r.status_code == 400)
-            self.assertTrue(len(r_json["frequency"]) == 0)
             self.assertTrue(r_json["input_type"] == "file")
             self.assertTrue(r_json["error"] == "oversize")
 
@@ -162,10 +168,11 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
         payload = {"usertext": f"http://127.0.0.1:8000/test_page.html"}
         r = requests.post("http://localhost:8005/api/submit", json=payload)
         r_json = r.json()
-        while "id" in r_json:
-            r_json = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}').json()
+        while r.status_code == 202:
+            r = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}')
             time.sleep(1)
         self.assertTrue(r.ok)
+        r_json = r.json()
         self.assertTrue(r_json["frequency"]["黺"] == 2)
         self.assertTrue(r_json["frequency"]["丆"] == 2)
         self.assertTrue(len(r_json["frequency"]) == 2)
@@ -176,10 +183,11 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
         payload = {"usertext": f"http://127.0.0.1:8000/test_image.jpg"}
         r = requests.post("http://localhost:8005/api/submit", json=payload)
         r_json = r.json()
-        while "id" in r_json:
-            r_json = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}').json()
+        while r.status_code == 202:
+            r = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}')
             time.sleep(1)
         self.assertTrue(r.ok)
+        r_json = r.json()
         self.assertTrue(r_json["frequency"]["田"] == 1)
         self.assertTrue(r_json["frequency"]["力"] == 1)
         self.assertTrue(r_json["frequency"]["男"] == 1)
@@ -196,21 +204,23 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
         payload = {"usertext": "黺黺丆丆aa00"}
         r = requests.post("http://localhost:8005/api/submit", json=payload)
         r_json = r.json()
-        while "id" in r_json:
-            r_json = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}').json()
+        while r.status_code == 202:
+            r = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}')
             time.sleep(1)
         delta_time = time.time() - start_time
         self.assertTrue(delta_time <= 3)
         self.assertTrue(r.ok)
+        r_json = r.json()
 
     def test_post_text(self):
         payload = {"usertext": "黺黺丆丆aa00"}
         r = requests.post("http://localhost:8005/api/submit", json=payload)
         r_json = r.json()
-        while "id" in r_json:
-            r_json = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}').json()
+        while r.status_code == 202:
+            r = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}')
             time.sleep(1)
         self.assertTrue(r.ok)
+        r_json = r.json()
         self.assertTrue(r_json["frequency"]["黺"] == 2)
         self.assertTrue(r_json["frequency"]["丆"] == 2)
         self.assertTrue(len(r_json["frequency"]) == 2)
@@ -221,6 +231,20 @@ class TestLocalAndDjangoSevers(unittest.TestCase):
         payload = {"usertext": ""}
         r = requests.post("http://localhost:8005/api/submit", json=payload)
         self.assertTrue(not r.ok)
+        r_json = r.json()
+        self.assertTrue(len(r_json["error"]) > 0)
+
+    def test_bad_url_returns_server_error(self):
+        payload = {"usertext": "http://some-domain-that-will-never-ever-resolve.com"}
+        r = requests.post("http://localhost:8005/api/submit", json=payload)
+        r_json = r.json()
+        while r.status_code == 202:
+            r = requests.get(f'http://localhost:8005/api/result/{r_json["id"]}')
+            time.sleep(1)
+        self.assertTrue(r.ok)
+        r_json = r.json()
+        self.assertTrue(len(r_json["error"]) > 0)
+        self.assertTrue(len(r_json["input_type"]) > 0)
 
 
 class TestZApiWithFuzzer(unittest.TestCase):

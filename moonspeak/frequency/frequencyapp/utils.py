@@ -137,14 +137,9 @@ def text_from_textfile(file_path):
         return f.read()
 
 
-def catch_errors(result, func, input_type, string) -> None:
+def apply_func(result, func, input_type, string) -> None:
     result["input_type"] = input_type
-    try:
-        result["frequency"] = frequency(func(string))
-    except Exception as err:
-        print("".join(traceback.format_stack()))
-        print(traceback.format_exc())
-        result["error"] = str(err)
+    result["frequency"] = frequency(func(string))
 
 
 def bump_request_counter(content_type) -> None:

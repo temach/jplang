@@ -10,28 +10,19 @@ def index(request):
     return render(request, "frequencyapp/index.html")
 
 
-def api_404_catchall(request, badpath):
-    # return this instead of django's 404 html page to match openapi schema
-    return HttpResponse(status=404)
-
-
 def submit(request):
     if request.content_type == "multipart/form-data":
         if not utils.is_file_size_ok(request):
-            return JsonResponse(
-                {"frequency": {}, "input_type": "file", "error": "oversize"}, status=400
-            )
+            return JsonResponse({"error": "oversize", "input_type": "file"}, status=400)
         try:
             user_file = request.FILES["binaryfile"].file
         except Exception as err:
             print("".join(traceback.format_stack()))
             print(traceback.format_exc())
-            return JsonResponse(
-                {"frequency": {}, "input_type": "file", "error": 'no valid "binaryfile" field'}, status=400
-            )
+            return JsonResponse({"error": 'no valid "binaryfile" field', "input_type": "file"}, status=400)
         temp_file_name = utils.create_temp_file(user_file)
         task_id, task_status = utils.create_task(temp_file_name, is_file=True)
-        return JsonResponse({"id": task_id, "status": task_status}, status=202)
+        return JsonResponse({"id": task_id}, status=202)
 
     elif request.content_type == "application/json":
         try:
@@ -40,18 +31,12 @@ def submit(request):
         except Exception as err:
             print("".join(traceback.format_stack()))
             print(traceback.format_exc())
-            return JsonResponse(
-                {"frequency": {}, "input_type": "text", "error": 'no valid "usertext" field'},
-                json_dumps_params={"ensure_ascii": False},
-                status=400
-            )
+            return JsonResponse({"error": 'no valid "usertext" field', "input_type": "text"}, status=400)
         task_id, task_status = utils.create_task(user_string)
-        return JsonResponse({"id": task_id, "status": task_status}, status=202)
+        return JsonResponse({"id": task_id}, status=202)
 
     else:
-        return JsonResponse(
-            {"frequency": {}, "input_type": "unknown", "error": 'no valid "content-type" header'}, status=400
-        )
+        return JsonResponse({"error": 'no valid "content-type" header', "input_type": "unknown"}, status=400)
 
 
 def result(request, task_id):
@@ -60,14 +45,8 @@ def result(request, task_id):
     except Exception as err:
         print("".join(traceback.format_stack()))
         print(traceback.format_exc())
-        return JsonResponse(
-            {"id": task_id, "status": 'notfound'},
-            json_dumps_params={"ensure_ascii": False},
-            status=404,
-        )
-    status = task.status
-    if status == "finish":
-        response = task.response
-        return JsonResponse(response, json_dumps_params={'ensure_ascii': False})
+        return HttpResponse(status=404)
+    if task.status == "finish":
+        return JsonResponse(task.response, json_dumps_params={'ensure_ascii': False}, status=200)
     else:
-        return JsonResponse({"id": task_id, "status": status}, json_dumps_params={'ensure_ascii': False}, status=202)
+        return HttpResponse(status=202)
