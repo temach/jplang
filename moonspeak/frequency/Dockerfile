@@ -18,6 +18,7 @@ RUN pip install --no-cache-dir --break-system-packages -r requirements.txt && py
 # download whisper "base" model to ~/.cache/whisper/base.pt
 RUN python3 -c "import whisper; whisper.load_model('base')" && py3clean /
 
+COPY openapi.yaml  ./
 COPY manage.py     ./
 COPY runservers.py ./
 COPY frequency/     frequency/
@@ -25,15 +26,19 @@ COPY frequencyapp/  frequencyapp/
 
 
 FROM base AS tests
+RUN pip install --no-cache-dir --break-system-packages schemathesis
 COPY tests/         tests/
+# use testing settings and rm general settings to ensure they are not mixed up
 ENV DJANGO_SETTINGS_MODULE="frequency.test_settings"
-RUN python3 manage.py makemigrations \
-    && python3 manage.py migrate \
-    && python3 -m unittest discover -v tests
+RUN rm frequency/settings.py
+RUN python3 manage.py makemigrations && python3 manage.py migrate
+RUN python3 -m unittest discover -v tests
+# special form to force quick shutdown on CTRL-C
+CMD ["bash", "-c", "trap 'exit 0' SIGTERM; sleep infinity & wait"]
 
 
 FROM base AS prod
-RUN --mount=type=bind,from=tests,target=/dummy,source=/ echo "dummy command to trigger tests during build"
+RUN --mount=type=bind,from=tests,target=/dummy,source=/mnt echo "dummy command to trigger tests during docker build"
 CMD python3 manage.py makemigrations \
     && python3 manage.py migrate \
     && python3 manage.py collectstatic --noinput \
