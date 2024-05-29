@@ -16,3 +16,19 @@ st run --verbosity --hypothesis-max-examples=1500 --hypothesis-deadline=15000  -
 Other fuzzers to consider:
 - https://github.com/Endava/cats
 - https://github.com/isa-group/RESTest
+
+
+
+Add sample record:
+sqlite> insert into frequencyapp_task (id, status, request, file, timestamp_created) values ('3fa85f6457174562b3fc2c963f66afa6', 'finish', '{}', false, CURRENT_TIMESTAMP);
+
+
+sqlite creates file with default hardcoded permissions, see: https://stackoverflow.com/questions/28454551/pdo-sqlite-create-database-default-permissions
+it does not respect umask
+
+e.g. add this to settings.py
+# must touch the database file with correct mask so mod_wsgi under www-data can read/write
+# see: https://sqlite.org/forum/info/063bc23e0b4264c87d5c6deae445fa3381aa62220a9e309ef794b9e8370816c4
+# see: https://stackoverflow.com/questions/28454551/pdo-sqlite-create-database-default-permissions
+# use os module, because for pathlib must also force umask
+import os; os.close(os.open(DATABASES["default"]["NAME"], os.O_WRONLY | os.O_CREAT, 0o664))
