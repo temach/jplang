@@ -24,15 +24,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 ALLOWED_HOSTS = ["*"]
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (os.environ.get("DJANGO_DEBUG") == "1")
 
-SILENCED_SYSTEM_CHECKS = os.environ["DJANGO_SILENCED_SYSTEM_CHECKS"].split()
+SILENCED_SYSTEM_CHECKS = os.environ.get("DJANGO_SILENCED_SYSTEM_CHECKS", "").split()
 
-SESSION_COOKIE_SECURE = (os.environ["DJANGO_SESSION_COOKIE_SECURE"] == "1")
-CSRF_COOKIE_SECURE = (os.environ["DJANGO_CSRF_COOKIE_SECURE"] == "1")
+SESSION_COOKIE_SECURE = (os.environ.get("DJANGO_SESSION_COOKIE_SECURE") == "1")
+CSRF_COOKIE_SECURE = (os.environ.get("DJANGO_CSRF_COOKIE_SECURE") == "1")
 
 
 # Application definition
