@@ -10,38 +10,47 @@ WORKDIR /opt/moonspeak/
 RUN apt update \
     && apt install -y --no-install-recommends chromium tesseract-ocr tesseract-ocr-jpn ffmpeg libgtk-3-dev \
     && apt clean \
-    && rm -rf /var/lib/apt/lists/*  /var/cache/*  /usr/lib/python3*/__pycache__/  /var/tmp/*  /tmp/*
+    && rm -rf /var/lib/apt/lists/*  /var/cache/*  \
+    && py3clean /
 
-COPY requirements.txt ./
+COPY frequency/requirements.txt ./
 RUN pip install --no-cache-dir --break-system-packages -r requirements.txt && py3clean /
+
+USER www-data
 
 # download whisper "base" model to ~/.cache/whisper/base.pt
 RUN python3 -c "import whisper; whisper.load_model('base')" && py3clean /
 
-COPY openapi.yaml  ./
-COPY manage.py     ./
-COPY runservers.py ./
-COPY frequency/     frequency/
-COPY frequencyapp/  frequencyapp/
+COPY --chown=www-data openapi.yaml   ./
+COPY --chown=www-data manage.py      ./
+COPY --chown=www-data frequency/     frequency/
+COPY --chown=www-data frequencyapp/  frequencyapp/
 
 
 FROM base AS tests
+USER root
 RUN pip install --no-cache-dir --break-system-packages schemathesis
 COPY tests/         tests/
 # use testing settings and rm general settings to ensure they are not mixed up
 ENV DJANGO_SETTINGS_MODULE="frequency.test_settings"
 RUN rm frequency/settings.py
-RUN python3 manage.py makemigrations && python3 manage.py migrate
+RUN python3 manage.py migrate
 RUN python3 -m unittest discover -v tests
 # special form to force quick shutdown on CTRL-C
-CMD ["bash", "-c", "trap 'exit 0' SIGTERM; sleep infinity & wait"]
+CMD trap 'exit 0' TERM INT; sleep infinity & wait
 
 
 FROM base AS prod
-RUN --mount=type=bind,from=tests,target=/dummy,source=/mnt echo "dummy command to trigger tests during docker build"
-CMD python3 manage.py makemigrations \
-    && python3 manage.py migrate \
-    && python3 manage.py collectstatic --noinput \
-    && python3 manage.py check --deploy \
-    && python3 manage.py diffsettings \
-    && python3 runservers.py
+RUN --mount=type=bind,from=tests,target=/dummy,source=/mnt echo "dummy command creates dependency on tests during docker build"
+ENV DJANGO_SETTINGS_MODULE="frequency.settings"
+WORKDIR /opt/moonspeak/frequency/
+# must create database and static as www-data, but start apache as root
+USER root
+CMD su www-data -s /bin/bash -c ' \
+       python3 ../manage.py migrate \
+    && python3 ../manage.py collectstatic \
+    && python3 ../manage.py check --deploy \
+    && python3 ../manage.py diffsettings \
+    ' \
+    && /usr/sbin/apache2 -t -DDUMP_CONFIG -f /opt/moonspeak/frequency/apache.conf \
+    && exec /usr/sbin/apache2 -DFOREGROUND -f /opt/moonspeak/frequency/apache.conf
