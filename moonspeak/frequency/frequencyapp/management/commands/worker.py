@@ -2,11 +2,12 @@ from django.core.management.base import BaseCommand
 from ... import utils
 import time
 import traceback
+import signal
 
 
 class Command(BaseCommand):
 
-    def safe_handle_task(self, task, output_dict_of_frequency):
+    def process_task(self, task, output_dict_of_frequency):
         if task.file:
             if utils.is_image_file(task.request):
                 utils.apply_func(output_dict_of_frequency, utils.convert_image_file_and_text_return, "image", task.request)
@@ -28,7 +29,15 @@ class Command(BaseCommand):
 
 
     def handle(self, *args, **options):
-        while True:
+        # handler and variable capture to exit infinite loop nicely when signalled
+        keep_running = True
+        def handle_shutdown(signum, frame):
+            nonlocal keep_running
+            keep_running = False
+        signal.signal(signal.SIGTERM, handle_shutdown)
+        signal.signal(signal.SIGINT, handle_shutdown)
+
+        while keep_running:
             dict_of_frequency = {"frequency": {}, "input_type": "", "error": ""}
             task = utils.get_task_to_work()
 
@@ -39,7 +48,7 @@ class Command(BaseCommand):
                 continue
 
             try:
-                self.safe_handle_task(task, dict_of_frequency)
+                self.process_task(task, dict_of_frequency)
             except Exception as err:
                 print("".join(traceback.format_stack()))
                 print(traceback.format_exc())
