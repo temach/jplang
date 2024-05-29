@@ -29,15 +29,7 @@ class Command(BaseCommand):
 
 
     def handle(self, *args, **options):
-        # handler and variable capture to exit infinite loop nicely when signalled
-        keep_running = True
-        def handle_shutdown(signum, frame):
-            nonlocal keep_running
-            keep_running = False
-        signal.signal(signal.SIGTERM, handle_shutdown)
-        signal.signal(signal.SIGINT, handle_shutdown)
-
-        while keep_running:
+        while True:
             dict_of_frequency = {"frequency": {}, "input_type": "", "error": ""}
             task = utils.get_task_to_work()
 
