@@ -28,15 +28,13 @@ COPY --chown=www-data frequencyapp/  frequencyapp/
 
 
 FROM base AS tests
-USER root
 RUN pip install --no-cache-dir --break-system-packages schemathesis
-COPY tests/         tests/
+COPY --chown=www-data tests/ tests/
 # use testing settings and rm general settings to ensure they are not mixed up
 ENV DJANGO_SETTINGS_MODULE="frequency.test_settings"
 RUN rm frequency/settings.py
 RUN python3 manage.py migrate
 RUN python3 -m unittest discover -v tests
-# special form to force quick shutdown on CTRL-C
 CMD trap 'exit 0' TERM INT; sleep infinity & wait
 
 
