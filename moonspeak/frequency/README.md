@@ -22,6 +22,9 @@ Other fuzzers to consider:
 Add sample record:
 sqlite> insert into frequencyapp_task (id, status, request, file, timestamp_created) values ('3fa85f6457174562b3fc2c963f66afa6', 'finish', '{}', false, CURRENT_TIMESTAMP);
 
+Add sample mp3 audio record to test worker:
+sqlite> insert into frequencyapp_task (id, status, request, file, timestamp_created) values ('3fa85f6457174562b3fc2c963f66afa6', 'pending', '/opt/moonspeak/tests/testdata/test_audio.mp3', true, CURRENT_TIMESTAMP);
+
 
 sqlite creates file with default hardcoded permissions, see: https://stackoverflow.com/questions/28454551/pdo-sqlite-create-database-default-permissions
 it does not respect umask
@@ -32,3 +35,7 @@ e.g. add this to settings.py
 # see: https://stackoverflow.com/questions/28454551/pdo-sqlite-create-database-default-permissions
 # use os module, because for pathlib must also force umask
 import os; os.close(os.open(DATABASES["default"]["NAME"], os.O_WRONLY | os.O_CREAT, 0o664))
+
+
+Why mod_wsgi should not run python code with signals:
+https://modwsgi.readthedocs.io/en/develop/configuration-directives/WSGIRestrictSignal.html

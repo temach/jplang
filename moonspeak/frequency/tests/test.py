@@ -11,7 +11,7 @@ cmd_django_server = shlex.split("python3 manage.py runserver 0.0.0.0:8005 --nore
 
 cmd_data_server = shlex.split("python3 -m http.server -b 127.0.0.1 -d ./tests/testdata/ 8000")
 
-cmd_run_fuzzer = shlex.split("""st run /opt/moonspeak/openapi.yaml --base-url http://localhost:8005 --hypothesis-max-examples=1000
+cmd_run_fuzzer = shlex.split("""schemathesis run /opt/moonspeak/openapi.yaml --base-url http://localhost:8005 --hypothesis-max-examples=1000
                        --contrib-openapi-fill-missing-examples --contrib-openapi-formats-uuid  --validate-schema=true --data-generation-method=all --checks=all
                        --force-color --verbosity --schemathesis-io-telemetry=false""")
 
