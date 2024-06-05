@@ -6,6 +6,9 @@ WORKDIR /opt/moonspeak/
 # however .pyc and __pycache__ still get created, so use py3clean script that debian python ships with
 ENV PYTHONDONTWRITEBYTECODE="1"
 
+# force python to use unbuffered output, important else exception traceback can remain invisible
+ENV PYTHONUNBUFFERED="1"
+
 RUN apt update \
     && apt install -y --no-install-recommends python3 wget ca-certificates apache2 libapache2-mod-auth-openidc libapache2-mod-wsgi-py3 \
     && rm -rf /var/lib/apt/lists/*  /var/cache/* \
@@ -38,6 +41,10 @@ RUN chown -R www-data:www-data $PWD
 # also 'python -c "import & download"' style commands ususally download to $HOME dir, so www-data needs a $HOME
 RUN usermod --home $PWD www-data
 
+# after setting $HOME for www-data add pip installed binaries to www-data PATH
+# result of "python3 -m site --user-base"
+ENV PATH=$PATH:/opt/moonspeak/.local/bin
+
 # gives www-data readonly access to root files
 # can not give write access as docker does not support umask, see: https://github.com/moby/moby/issues/19189)
 # also necessary when giving access to docker.sock under wsgi
@@ -48,9 +55,6 @@ RUN mkdir userdata && chown -R www-data:www-data userdata
 
 # add apache config, this should be included in each project config
 COPY --chown=www-data apache_docker.conf    /opt/moonspeak/apache_docker.conf
-
-# force python to use unbuffered output, important else exception traceback can remain invisible
-ENV PYTHONUNBUFFERED="1"
 
 # infinite sleep that easily quits on CTRL-C
 CMD trap 'exit 0' TERM INT; sleep infinity & wait
