@@ -1,3 +1,6 @@
+#
+# must mount age_keys.txt to /home/kms/.ssh/age_keys.txt
+#
 FROM debian:bookworm-slim
 
 RUN apt update \
