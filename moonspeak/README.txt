@@ -570,3 +570,84 @@ Most common tags for repo commits, preferably choose one of them:
    3  repo:
    3  plus:
    3  deploy:
+
+
+
+**Secrets enctyprion with sops and age**
+
+# install age: https://github.com/FiloSottile/age?tab=readme-ov-file#installation
+
+# generate keys.txt
+# When decrypting a file with the corresponding identity, SOPS will look for a text file name keys.txt located in a sops subdirectory of user config directory.
+# Linux: $XDG_CONFIG_HOME/sops/age/keys.txt
+# macOS: $HOME/Library/Application Support/sops/age/keys.txt
+# Windows: %AppData%\sops\age\keys.txt. 
+# SOPS_AGE_KEY_FILE = You can specify the location of this file manually by setting the environment variable 
+# Alternatively, you can provide the key(s) directly by setting the SOPS_AGE_KEY environment variable.
+age-keygen -o ~/.config/sops/age/keys.txt
+
+
+Attempt 1, without TLS and access-control-lists
+
+On remote machine run the server:
+SOPS_AGE_KEY_FILE=/home/ops/.config/sops/age/keys.txt sops keyservice --address 0.0.0.0:5000 --verbose
+
+on local machine, decrypt:
+sops --keyservice tcp://10.0.0.10:5000 tmp.yaml
+
+
+
+Attempt 2, adding TLS but without access-control-lists
+
+on remote machine run server: 
+SOPS_AGE_KEY_FILE=/home/ops/.config/sops/age/keys.txt sops keyservice --address 127.0.0.1:5000 --verbose
+
+on local machine, run tunnel and decrypt:
+ssh -L 127.0.0.1:5000:127.0.0.1:5000 -N ops@10.0.0.10
+sops --keyservice tcp://127.0.0.1:5000 tmp.yaml
+
+also here is local machine ssh_config for easy tunnel setup via "ssh sops_tunnel"
+Host sops_tunnel
+  # you will have to reconnect manually
+  HostName 10.0.0.10
+  User ops
+  LocalForward 127.0.0.1:5000 127.0.0.1:5000
+  ServerAliveInterval 60
+  ExitOnForwardFailure yes
+  RemoteCommand none
+  RequestTTY no
+
+
+
+Attempt 3, TLS and access-control-lists (users that login as der will only find certain keys in filesystem, vs users who login as ops):
+
+on remote machine run two servers, one for OPS and one for DEV keys:
+sudo su ops SOPS_AGE_KEY_FILE=$HOME/.config/sops/age/keys.txt sops keyservice -network unix --address ~/sops.sock --verbose
+sudo su dev SOPS_AGE_KEY_FILE=$HOME/.config/sops/age/keys.txt sops keyservice -network unix --address ~/sops.sock --verbose
+
+
+on local as OPS:
+ssh -L 127.0.0.1:5000:/home/ops/sops.sock -N ops@10.0.0.10
+sops --keyservice tcp://127.0.0.1:5000 tmp.yaml
+
+on local as DEV:
+ssh -L 127.0.0.1:5000:/home/dev/sops.sock -N dev@10.0.0.10
+sops --keyservice tcp://127.0.0.1:5000 tmp.yaml
+
+ssh config for easy tunnel running:
+Host sops_tunnel_dev
+  # you will have to reconnect manually
+  HostName 10.0.0.10
+  User dev
+  LocalForward 127.0.0.1:5000 /home/dev/sops.sock
+  ServerAliveInterval 60
+  ExitOnForwardFailure yes
+
+Host sops_tunnel_ops
+  # you will have to reconnect manually
+  HostName 10.0.0.10
+  User ops
+  LocalForward 127.0.0.1:5000 /home/ops/sops.sock
+  ServerAliveInterval 60
+  ExitOnForwardFailure yes
+

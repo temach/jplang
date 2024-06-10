@@ -1,0 +1,9 @@
+# Public ssh key must be added to authorized_keys on remote sops keyservice KMS machine.
+# ssh into that machine to get further instructions on how to configure your SSH tunnel.
+#
+# Run the tunnel and run sops editor in another terminal:
+# ssh sops_tunnel_sops
+# sops --keyservice tcp://127.0.0.1:5000 secret.yaml
+#
+creation_rules:
+    - age: 'age1juh4qksrx7d0rql7s8rmhtn5qprxhuy84a0cs2k8trl3eu4ss3lqlq7vaq'
