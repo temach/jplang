@@ -6,7 +6,7 @@
 su - kms -s /bin/bash -c "SOPS_AGE_KEY_FILE=~/.ssh/age_keys.txt sops keyservice --network unix --address ~/.ssh/sops.sock --verbose" &
 
 # ssh will auto fork into background
-/usr/sbin/sshd -e -D -p 2222 &
+/usr/sbin/sshd -e -D -p 2202 &
 
 # kill child jobs if CTRL-C is received in main, see: https://linuxconfig.org/how-to-propagate-a-signal-to-child-processes-from-a-bash-script
 trap "kill $(jobs -p);" TERM INT

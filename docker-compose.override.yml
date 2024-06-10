@@ -18,7 +18,7 @@ services:
     build:
       context: ./infra/sopskeyservice
     ports:
-      - 2222:2222
+      - 2202:2202
     # volumes:
     #   # mount the age_keys.txt into /home/kms/.ssh/age_keys.txt
     #   - ./age_keys.txt:/home/kms/.ssh/age_keys.txt

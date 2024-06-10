@@ -4,7 +4,7 @@ Edit your local ssh config, open ssh tunnel and then always pass keyservice opti
 # cat ~/.ssh/config
 Host sops-tunnel-kms
   HostName moonspeak.org
-  Port 2222
+  Port 2202
   User kms
   # tunnel from localhost port 5000 to remote unix socket
   LocalForward 127.0.0.1:5000 /home/kms/.ssh/sops.sock
