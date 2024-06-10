@@ -6,4 +6,4 @@
 # sops --keyservice tcp://127.0.0.1:5000 secret.yaml
 #
 creation_rules:
-    - age: 'age1juh4qksrx7d0rql7s8rmhtn5qprxhuy84a0cs2k8trl3eu4ss3lqlq7vaq'
+    - age: 'age1c40j6v9s9pfmxdnuqxatx6gqv0ygukh95h48sr5uh735f5cvpf9sdef6qz'
