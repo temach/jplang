@@ -12,8 +12,19 @@ services:
     build:
       context: ./infra/apachepython
 
+  # image to run KMS service that allows decoding all secrets
+  sopskeyservice:
+    image: "temachpool/moonspeak-sopskeyservice:${TAG:-latest}"
+    build:
+      context: ./infra/sopskeyservice
+    ports:
+      - 2222:2222
+    # volumes:
+    #   # mount the age_keys.txt into /home/kms/.ssh/age_keys.txt
+    #   - ./age_keys.txt:/home/kms/.ssh/age_keys.txt
+
+  # view docker logs nicely in browser
   dozzle:
-    # view docker logs nicely in browser
     image: amir20/dozzle:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
