@@ -46,7 +46,7 @@ WORKDIR /opt/moonspeak/frequency/
 USER root
 CMD su www-data -s /bin/bash -c ' \
        python3 ../manage.py migrate \
-    && python3 ../manage.py collectstatic \
+    && python3 ../manage.py collectstatic --no-input \
     && python3 ../manage.py check --deploy \
     && python3 ../manage.py diffsettings \
     ' \
