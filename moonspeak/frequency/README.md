@@ -39,3 +39,33 @@ import os; os.close(os.open(DATABASES["default"]["NAME"], os.O_WRONLY | os.O_CRE
 
 Why mod_wsgi should not run python code with signals:
 https://modwsgi.readthedocs.io/en/develop/configuration-directives/WSGIRestrictSignal.html
+
+
+Make initial translation locales:
+# python3 manage.py makemessages -d djangojs --locale en --locale ru -v 3
+# python3 manage.py makemessages -d django --locale en --locale ru -v 3
+
+Translations will generate ".po" files for django and djangojs:
+./locale/ru/LC_MESSAGES/django.po
+./locale/en/LC_MESSAGES/django.po
+./frequencyapp/locale/ru/LC_MESSAGES/djangojs.po
+./frequencyapp/locale/ru/LC_MESSAGES/django.po
+./frequencyapp/locale/en/LC_MESSAGES/djangojs.po
+./frequencyapp/locale/en/LC_MESSAGES/django.po
+
+Then run periocally to update translations (this re-reads files and appends new strings):
+# python3 manage.py makemessages -a -d djangojs -v 3
+# python3 manage.py makemessages -a -d django -v 3
+
+In Javascript gettext("") is detected, in templates {% translate "" %} is detected
+
+After editing the translation files, compile them to binary:
+# python3 manage.py compilemessages -v 3
+
+Binary translations will generate ".mo" files:
+./locale/ru/LC_MESSAGES/django.mo
+./locale/en/LC_MESSAGES/django.mo
+./frequencyapp/locale/ru/LC_MESSAGES/django.mo
+./frequencyapp/locale/ru/LC_MESSAGES/djangojs.mo
+./frequencyapp/locale/en/LC_MESSAGES/django.mo
+./frequencyapp/locale/en/LC_MESSAGES/djangojs.mo
