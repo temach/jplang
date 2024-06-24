@@ -23,6 +23,10 @@
 *.pyc
 *.sqlite3
 
+# django translation files
+**/django.mo
+**/djangojs.mo
+
 # ignore graph build files
 **/graph/frontend/etc/build/base-viewer.min.js
 **/graph/frontend/etc/build/base.min.js
