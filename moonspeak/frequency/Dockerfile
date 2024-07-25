@@ -25,6 +25,7 @@ COPY --chown=www-data openapi.yaml   ./
 COPY --chown=www-data manage.py      ./
 COPY --chown=www-data frequency/     frequency/
 COPY --chown=www-data frequencyapp/  frequencyapp/
+COPY --chown=www-data locale/        locale/
 
 
 FROM base AS tests

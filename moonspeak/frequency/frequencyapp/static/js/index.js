@@ -68,6 +68,9 @@ function sendFile(file) {
 window.onload = () => {
     initPitchZoom();
 
+    const root = document.getElementById('root');
+    console.log(gettext("artem this is to be translated"))
+
     const text_button_elem = document.getElementById("submit_textinput");
     text_button_elem.onclick = () => {
         submitUserInput();

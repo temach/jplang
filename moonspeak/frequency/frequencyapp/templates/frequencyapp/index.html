@@ -1,11 +1,14 @@
 {% load static %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Frequency</title>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="UTF-8">
+    <title>{% translate "Frequency" %}</title>
     <link rel="stylesheet" type="text/css" href="{% static 'css/index.css' %}">
-  </head>
-  <body>
+</head>
+<body>
 
     {% csrf_token %}
 
@@ -35,5 +38,8 @@
 
     <script type="module" src="{% static 'js/index.js' %}"></script>
 
-  </body>
+    <!-- load translation scripts -->
+    <script src="{% url 'javascript-catalog' %}"></script>
+</body>
 </html>
+

@@ -17,8 +17,19 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+from frequencyapp import views as frequencyapp_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('frequencyapp.urls')),
+    path('api/submit', frequencyapp_views.submit, name='submit'),
+    path('api/result/<uuid:task_id>', frequencyapp_views.result, name='result'),
 ]
+
+
+from django.conf.urls.i18n import i18n_patterns
+from django.views.i18n import JavaScriptCatalog
+
+urlpatterns += i18n_patterns(
+    path('', frequencyapp_views.index, name='index'),
+    path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),
+)
