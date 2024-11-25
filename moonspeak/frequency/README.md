@@ -2,11 +2,12 @@ evomaster:
 /opt/evomaster/bin/evomaster  --blackBox true --bbTargetUrl http://localhost:8005  --bbSwaggerUrl file:///opt/moonspeak/openapi.yaml  --outputFormat JS_JEST --maxTime 60s
 
 
-dev-proxy urlsToWatch:
+dev-proxy urlsToWatch
 {
     "http://*/*",
     "https://*/*"
-}
+} 
+can not use just "*" pattern, because of stupid regex https://github.com/microsoft/dev-proxy/blob/ecb4e1d56e327204f359152f7aff1057663edfe6/dev-proxy/ProxyEngine.cs#L324
 
 
 schemathesis:
