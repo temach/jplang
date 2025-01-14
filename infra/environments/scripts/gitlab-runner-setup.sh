@@ -19,10 +19,10 @@ docker run -d --name gitlab-runner --restart always \
     --memory=300m --cpus="0.5" \
     gitlab/gitlab-runner:latest
 
-# Register runner manually:
+# Then register the runner manually (when prompted enter 'docker' executor and 'docker:latest' image):
 # docker run --rm -it -v gitlab-runner-config:/etc/gitlab-runner gitlab/gitlab-runner:latest register --url https://gitlab.com --token XYZ
 #
-# Edit runner config manually (docker cp config to host, edit, cp back and restart gitlab-runner):
+# Edit runner config manually (docker cp /etc/gitlab-runner/config.toml config to host, edit, cp back and restart gitlab-runner):
 #     privileged = false
 #     volumes = ["/var/run/docker.sock:/var/run/docker.sock", "/cache"]
 
