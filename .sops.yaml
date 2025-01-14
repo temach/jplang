@@ -2,7 +2,7 @@
 # ssh into that machine to get further instructions on how to configure your SSH tunnel.
 #
 # Run the tunnel and run sops editor in another terminal:
-# ssh sops_tunnel_sops
+# ssh sops-tunnel-kms
 # sops --keyservice tcp://127.0.0.1:5000 secret.yaml
 #
 creation_rules:
